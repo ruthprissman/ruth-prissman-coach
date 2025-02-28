@@ -22,7 +22,14 @@ const Index = () => {
           {/* Header with Logo Section */}
           <section className="pt-24 pb-10 px-4 relative">
             <div className="container mx-auto relative z-10">
-              <div className="flex flex-col md:flex-row items-center justify-end gap-4 mb-8">
+              <div className="flex flex-row-reverse items-center justify-center md:justify-start gap-4 mb-8">
+                <div className="flex-shrink-0">
+                  <img 
+                    src="https://www.dropbox.com/scl/fi/b1z4t77ol2ip239d6yi2w/logo.png?raw=1" 
+                    alt="רות פריסמן - קוד הנפש" 
+                    className="w-20 h-20 md:w-24 md:h-24 object-contain"
+                  />
+                </div>
                 <div className="text-right">
                   <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-alef text-[#4A235A] gold-text-shadow">
                     רות פריסמן - קוד הנפש
@@ -31,13 +38,6 @@ const Index = () => {
                     מבט חדש על חיים מוכרים
                   </p>
                 </div>
-                <div className="flex-shrink-0">
-                  <img 
-                    src="https://www.dropbox.com/scl/fi/b1z4t77ol2ip239d6yi2w/logo.png?raw=1" 
-                    alt="רות פריסמן - קוד הנפש" 
-                    className="w-16 h-16 md:w-20 md:h-20 object-contain"
-                  />
-                </div>
               </div>
             </div>
           </section>
@@ -45,8 +45,8 @@ const Index = () => {
           {/* Hero Section */}
           <section className="pb-20 px-4 relative">
             <div className="container mx-auto relative z-10">
-              <div className="max-w-3xl mx-auto text-right">
-                <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-gold-sm mb-8 max-w-2xl mr-0 ml-auto">
+              <div className="mx-auto text-right max-w-3xl">
+                <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-gold-sm mb-8 mr-0 ml-auto">
                   <p className="text-[#4A235A] mb-4 text-lg">
                     ברוכים הבאים לאתר שלי! אני רות פריסמן, מטפלת בשיטת "קוד הנפש" - גישה ייחודית המאפשרת מבט חדש על אתגרי החיים והתמודדויות יומיומיות.
                   </p>
@@ -75,7 +75,7 @@ const Index = () => {
           {/* Services Section */}
           <section className="py-16 px-4 bg-white/60 backdrop-blur-sm">
             <div className="container mx-auto">
-              <div className="text-right mb-12">
+              <div className="text-right mb-12 max-w-4xl mx-auto">
                 <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">
                   מה מיוחד בשיטה שלי?
                 </h2>
@@ -85,7 +85,7 @@ const Index = () => {
                 </p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 <div className="bg-white/70 p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/80">
                   <div className="h-20 w-20 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
                     <svg className="w-10 h-10 text-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -142,7 +142,7 @@ const Index = () => {
           <section className="py-16 px-4 relative">
             <div className="absolute inset-0 bg-gold/5"></div>
             <div className="container mx-auto relative z-10">
-              <div className="text-right mb-12">
+              <div className="text-right mb-12 max-w-4xl mx-auto">
                 <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">
                   מה אומרים עליי
                 </h2>
@@ -151,7 +151,7 @@ const Index = () => {
                 </p>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 {[
                   {
                     quote: "הטיפול עם רות נתן לי כלים חדשים להתמודדות עם אתגרים יומיומיים. הגישה שלה שינתה את חיי לחלוטין.",
@@ -207,7 +207,7 @@ const Index = () => {
           {/* Subscribe Section */}
           <section className="py-16 px-4 relative">
             <div className="container mx-auto">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-10">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-10 max-w-5xl mx-auto">
                 <div className="w-full md:w-1/2 text-right">
                   <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">
                     בואי להיות חלק מהקהילה
@@ -233,26 +233,28 @@ const Index = () => {
           
           {/* Contact CTA */}
           <section className="py-16 px-4 bg-gold/10 backdrop-blur-sm">
-            <div className="container mx-auto text-right">
-              <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">
-                מוכנה להתחיל?
-              </h2>
-              <p className="text-[#4A235A] max-w-2xl mr-0 ml-auto mb-8">
-                פנייה ראשונה היא הצעד החשוב ביותר. אני כאן כדי להקשיב ולהציע את הדרך הנכונה עבורך.
-              </p>
-              <div className="flex justify-end space-x-4 space-x-reverse">
-                <a 
-                  href="/contact" 
-                  className="bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300"
-                >
-                  צרי קשר עכשיו
-                </a>
-                <a 
-                  href="tel:0556620273" 
-                  className="bg-white text-[#4A235A] font-bold py-3 px-6 rounded-lg transition-colors duration-300 border border-gold/20"
-                >
-                  055-6620273
-                </a>
+            <div className="container mx-auto">
+              <div className="text-right max-w-4xl mx-auto">
+                <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">
+                  מוכנה להתחיל?
+                </h2>
+                <p className="text-[#4A235A] max-w-2xl mr-0 ml-auto mb-8">
+                  פנייה ראשונה היא הצעד החשוב ביותר. אני כאן כדי להקשיב ולהציע את הדרך הנכונה עבורך.
+                </p>
+                <div className="flex justify-end space-x-4 space-x-reverse">
+                  <a 
+                    href="/contact" 
+                    className="bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300"
+                  >
+                    צרי קשר עכשיו
+                  </a>
+                  <a 
+                    href="tel:0556620273" 
+                    className="bg-white text-[#4A235A] font-bold py-3 px-6 rounded-lg transition-colors duration-300 border border-gold/20"
+                  >
+                    055-6620273
+                  </a>
+                </div>
               </div>
             </div>
           </section>

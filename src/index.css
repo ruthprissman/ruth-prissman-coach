@@ -92,6 +92,10 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-alef text-[#4A235A];
   }
+  
+  html, body {
+    @apply overflow-x-hidden;
+  }
 }
 
 @layer components {
@@ -119,5 +123,10 @@
   
   .shadow-gold-sm {
     box-shadow: 0 2px 5px rgba(207, 181, 59, 0.3);
+  }
+  
+  /* Fix for RTL alignment in container */
+  .container {
+    @apply mx-auto;
   }
 }
