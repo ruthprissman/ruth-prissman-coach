@@ -116,4 +116,8 @@
     color: var(--gold);
     @apply mr-2;
   }
+  
+  .shadow-gold-sm {
+    box-shadow: 0 2px 5px rgba(207, 181, 59, 0.3);
+  }
 }

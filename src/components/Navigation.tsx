@@ -48,25 +48,19 @@ export function Navigation() {
             </button>
           </div>
 
-          {/* Desktop navigation */}
-          <div className="hidden md:flex space-x-6 space-x-reverse">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.path}
-                className="golden-nav-item px-3 py-2 text-[#333333] hover:text-gold transition-colors duration-300"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex items-center">
-            <Link to="/" className="text-2xl font-bold text-[#4A235A] hover:opacity-90 transition-opacity">
-              <span className={cn("transition-all duration-300", scrolled ? "text-2xl" : "text-3xl")}>
-                רות פריסמן
-              </span>
-            </Link>
+          <div className="flex-grow flex justify-end">
+            {/* Desktop navigation */}
+            <div className="hidden md:flex space-x-6 space-x-reverse">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  className="golden-nav-item px-3 py-2 text-[#333333] hover:text-gold transition-colors duration-300"
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 

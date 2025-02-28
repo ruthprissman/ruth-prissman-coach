@@ -19,16 +19,33 @@ const Index = () => {
         <Navigation />
         
         <main className="flex-grow">
+          {/* Header with Logo Section */}
+          <section className="pt-24 pb-10 px-4 relative">
+            <div className="container mx-auto relative z-10">
+              <div className="flex flex-col md:flex-row items-center justify-end gap-4 mb-8">
+                <div className="text-right">
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-alef text-[#4A235A] gold-text-shadow">
+                    רות פריסמן - קוד הנפש
+                  </h1>
+                  <p className="text-lg md:text-xl text-purple-light mt-2 font-alef gold-text-shadow">
+                    מבט חדש על חיים מוכרים
+                  </p>
+                </div>
+                <div className="flex-shrink-0">
+                  <img 
+                    src="https://www.dropbox.com/scl/fi/b1z4t77ol2ip239d6yi2w/logo.png?raw=1" 
+                    alt="רות פריסמן - קוד הנפש" 
+                    className="w-16 h-16 md:w-20 md:h-20 object-contain"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+          
           {/* Hero Section */}
-          <section className="pt-36 pb-20 px-4 relative">
+          <section className="pb-20 px-4 relative">
             <div className="container mx-auto relative z-10">
               <div className="max-w-3xl mx-auto text-right">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-alef text-[#4A235A] mb-4 gold-text-shadow">
-                  רות פריסמן - קוד הנפש
-                </h1>
-                <p className="text-xl md:text-2xl text-purple-light mb-8 font-alef gold-text-shadow">
-                  מבט חדש על חיים מוכרים
-                </p>
                 <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-gold-sm mb-8 max-w-2xl mr-0 ml-auto">
                   <p className="text-[#4A235A] mb-4 text-lg">
                     ברוכים הבאים לאתר שלי! אני רות פריסמן, מטפלת בשיטת "קוד הנפש" - גישה ייחודית המאפשרת מבט חדש על אתגרי החיים והתמודדויות יומיומיות.
