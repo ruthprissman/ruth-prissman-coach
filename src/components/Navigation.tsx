@@ -34,7 +34,7 @@ export function Navigation() {
 
   return (
     <nav className={cn(
-      "fixed top-0 w-full z-50 transition-all duration-300",
+      "fixed top-0 w-full z-50 transition-colors duration-300",
       scrolled ? "bg-white/90 backdrop-blur-sm shadow-md" : "bg-transparent"
     )}>
       <div className="container mx-auto px-4 py-3">
@@ -42,7 +42,7 @@ export function Navigation() {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-purple-dark p-2 focus:outline-none"
+              className="text-[#4A235A] p-2 focus:outline-none"
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -54,7 +54,7 @@ export function Navigation() {
               <Link
                 key={item.name}
                 to={item.path}
-                className="golden-nav-item px-3 py-2 text-purple-dark hover:text-gold transition-colors duration-300"
+                className="golden-nav-item px-3 py-2 text-[#333333] hover:text-gold transition-colors duration-300"
               >
                 {item.name}
               </Link>
@@ -62,7 +62,7 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center">
-            <Link to="/" className="text-2xl font-bold text-purple-dark hover:opacity-90 transition-opacity">
+            <Link to="/" className="text-2xl font-bold text-[#4A235A] hover:opacity-90 transition-opacity">
               <span className={cn("transition-all duration-300", scrolled ? "text-2xl" : "text-3xl")}>
                 רות פריסמן
               </span>
@@ -72,13 +72,13 @@ export function Navigation() {
 
         {/* Mobile navigation */}
         {isMenuOpen && (
-          <div className="md:hidden absolute top-full right-0 w-full bg-white/95 backdrop-blur-sm shadow-lg animate-fade-in">
+          <div className="md:hidden absolute top-full right-0 w-full bg-white/95 backdrop-blur-sm shadow-lg">
             <div className="flex flex-col py-2">
               {navItems.map((item) => (
                 <Link
                   key={item.name}
                   to={item.path}
-                  className="px-4 py-3 text-purple-dark hover:bg-gray-100 hover:text-gold transition-colors duration-200 text-right"
+                  className="px-4 py-3 text-[#333333] hover:bg-gray-100 hover:text-gold transition-colors duration-200 text-right"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}

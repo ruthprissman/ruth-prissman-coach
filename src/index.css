@@ -35,7 +35,7 @@
 
     --radius: 0.5rem;
 
-    --purple-dark: #1A1F2C;
+    --purple-dark: #4A235A;
     --purple-light: #7E69AB;
     --gold: #CFB53B;
 
@@ -90,7 +90,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-alef text-purple-dark;
+    @apply font-alef text-[#4A235A];
   }
 }
 
@@ -115,20 +115,5 @@
     content: "•";
     color: var(--gold);
     @apply mr-2;
-  }
-  
-  .animate-fade-in {
-    animation: fadeIn 0.8s ease-out forwards;
-  }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
   }
 }
