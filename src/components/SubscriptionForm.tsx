@@ -26,8 +26,8 @@ export function SubscriptionForm() {
 
   return (
     <div className="w-full max-w-md mx-auto backdrop-blur-sm bg-white/40 p-6 rounded-lg shadow-gold-sm">
-      <h3 className="text-xl font-alef mb-3 text-gray-800 gold-text-shadow">הצטרפי לרשימת התפוצה</h3>
-      <p className="text-gray-600 mb-4">קבלי עדכונים, טיפים ומאמרים ישירות לתיבת המייל שלך</p>
+      <h3 className="text-xl font-alef mb-3 text-purple-dark gold-text-shadow">הצטרפי לרשימת התפוצה</h3>
+      <p className="text-purple-light mb-4">קבלי עדכונים, טיפים ומאמרים ישירות לתיבת המייל שלך</p>
       
       <form onSubmit={handleSubmit} className="flex flex-col space-y-3">
         <Input

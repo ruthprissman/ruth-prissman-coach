@@ -38,7 +38,7 @@ const Index = () => {
         className="min-h-screen bg-cover bg-center relative" 
         style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/3k8uim201uuhjsylidogq/clear-background.jpg?raw=1)' }}
       >
-        <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]"></div>
         
         <Navigation />
         
@@ -47,12 +47,20 @@ const Index = () => {
           <section className="pt-36 pb-20 px-4 relative">
             <div className="container mx-auto text-center relative z-10">
               <div className="max-w-3xl mx-auto animate-on-scroll opacity-0">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 mb-4 gold-text-shadow">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold font-alef text-purple-dark mb-4 gold-text-shadow">
                   רות פריסמן - קוד הנפש
                 </h1>
-                <p className="text-xl md:text-2xl text-gray-700 mb-8 gold-text-shadow font-alef">
+                <p className="text-xl md:text-2xl text-purple-light mb-8 font-alef gold-text-shadow">
                   מבט חדש על חיים מוכרים
                 </p>
+                <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-gold-sm mb-8 max-w-2xl mx-auto">
+                  <p className="text-purple-dark mb-4 text-lg">
+                    ברוכים הבאים לאתר שלי! אני רות פריסמן, מטפלת בשיטת "קוד הנפש" - גישה ייחודית המאפשרת מבט חדש על אתגרי החיים והתמודדויות יומיומיות.
+                  </p>
+                  <p className="text-purple-dark text-lg">
+                    אני מאמינה שלכל אחד יש את הכוח לשנות את חייו, ותפקידי הוא לעזור לך למצוא את המפתחות לשינוי אמיתי ומתמשך בחייך.
+                  </p>
+                </div>
                 <div className="flex justify-center space-x-4 space-x-reverse">
                   <a 
                     href="/appointment" 
@@ -62,7 +70,7 @@ const Index = () => {
                   </a>
                   <a 
                     href="/about" 
-                    className="bg-white/80 hover:bg-white text-gray-800 font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-gold-sm border border-gold/20"
+                    className="bg-white/80 hover:bg-white text-purple-dark font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-gold-sm border border-gold/20"
                   >
                     למידע נוסף
                   </a>
@@ -75,10 +83,10 @@ const Index = () => {
           <section className="py-16 px-4 bg-white/60 backdrop-blur-sm">
             <div className="container mx-auto">
               <div className="text-center mb-12 animate-on-scroll opacity-0">
-                <h2 className="text-3xl font-bold text-gray-800 mb-4 gold-text-shadow">
+                <h2 className="text-3xl font-bold text-purple-dark mb-4 gold-text-shadow">
                   מה מיוחד בשיטה שלי?
                 </h2>
-                <p className="text-gray-600 max-w-2xl mx-auto">
+                <p className="text-purple-light max-w-2xl mx-auto">
                   שיטת "קוד הנפש" מאפשרת מבט חדש על חוויות וקשיים שמלווים אותנו שנים, 
                   ומציעה דרכים פשוטות ויעילות לשינוי ולצמיחה אישית.
                 </p>
@@ -92,10 +100,10 @@ const Index = () => {
                       <path d="M12 7v5l3 3"></path>
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2 text-center gold-text-shadow">
+                  <h3 className="text-xl font-bold text-purple-dark mb-2 text-center gold-text-shadow">
                     פגישות אישיות
                   </h3>
-                  <p className="text-gray-600 text-center">
+                  <p className="text-purple-dark text-center">
                     פגישות אישיות המותאמות לצרכיך ומטרותיך, בדרך לשינוי משמעותי ומתמשך.
                   </p>
                 </div>
@@ -109,10 +117,10 @@ const Index = () => {
                       <path d="M9 17h6"></path>
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2 text-center gold-text-shadow">
+                  <h3 className="text-xl font-bold text-purple-dark mb-2 text-center gold-text-shadow">
                     סדנאות קבוצתיות
                   </h3>
-                  <p className="text-gray-600 text-center">
+                  <p className="text-purple-dark text-center">
                     סדנאות מעצימות בקבוצה קטנה ותומכת, המאפשרות למידה הדדית וגילויים חדשים.
                   </p>
                 </div>
@@ -126,10 +134,10 @@ const Index = () => {
                       <path d="M7 17h10"></path>
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2 text-center gold-text-shadow">
+                  <h3 className="text-xl font-bold text-purple-dark mb-2 text-center gold-text-shadow">
                     מאמרים ותרגילים
                   </h3>
-                  <p className="text-gray-600 text-center">
+                  <p className="text-purple-dark text-center">
                     מגוון רחב של מאמרים ותרגילים מעשיים, המאפשרים צמיחה והתפתחות גם בבית.
                   </p>
                 </div>
@@ -142,10 +150,10 @@ const Index = () => {
             <div className="absolute inset-0 bg-gold/5"></div>
             <div className="container mx-auto relative z-10">
               <div className="text-center mb-12 animate-on-scroll opacity-0">
-                <h2 className="text-3xl font-bold text-gray-800 mb-4 gold-text-shadow">
+                <h2 className="text-3xl font-bold text-purple-dark mb-4 gold-text-shadow">
                   מה אומרים עליי
                 </h2>
-                <p className="text-gray-600 max-w-2xl mx-auto">
+                <p className="text-purple-light max-w-2xl mx-auto">
                   התגובות של אנשים שעברו תהליך משמעותי בעזרת שיטת "קוד הנפש"
                 </p>
               </div>
@@ -182,10 +190,10 @@ const Index = () => {
                         </svg>
                       ))}
                     </div>
-                    <p className="text-gray-600 mb-4 text-center">
+                    <p className="text-purple-dark mb-4 text-center">
                       "{testimonial.quote}"
                     </p>
-                    <p className="text-gray-800 font-semibold text-center">
+                    <p className="text-purple-dark font-semibold text-center">
                       {testimonial.author}
                     </p>
                   </div>
@@ -208,18 +216,18 @@ const Index = () => {
             <div className="container mx-auto">
               <div className="flex flex-col md:flex-row justify-between items-center gap-10">
                 <div className="w-full md:w-1/2 text-right animate-on-scroll opacity-0">
-                  <h2 className="text-3xl font-bold text-gray-800 mb-4 gold-text-shadow">
+                  <h2 className="text-3xl font-bold text-purple-dark mb-4 gold-text-shadow">
                     בואי להיות חלק מהקהילה
                   </h2>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-purple-dark mb-6">
                     הצטרפי לרשימת התפוצה שלי וקבלי טיפים ומאמרים שיעזרו לך לחיות חיים מודעים יותר, 
                     עם כלים פרקטיים להתמודדות עם אתגרי היומיום.
                   </p>
                   <ul className="mb-6">
-                    <li className="golden-bullet mb-2">עדכונים על מאמרים חדשים</li>
-                    <li className="golden-bullet mb-2">טיפים מעשיים לחיי היומיום</li>
-                    <li className="golden-bullet mb-2">הזמנות לסדנאות והרצאות</li>
-                    <li className="golden-bullet">גישה לתכנים בלעדיים</li>
+                    <li className="golden-bullet mb-2 text-purple-dark">עדכונים על מאמרים חדשים</li>
+                    <li className="golden-bullet mb-2 text-purple-dark">טיפים מעשיים לחיי היומיום</li>
+                    <li className="golden-bullet mb-2 text-purple-dark">הזמנות לסדנאות והרצאות</li>
+                    <li className="golden-bullet text-purple-dark">גישה לתכנים בלעדיים</li>
                   </ul>
                 </div>
                 
@@ -233,10 +241,10 @@ const Index = () => {
           {/* Contact CTA */}
           <section className="py-16 px-4 bg-gold/10 backdrop-blur-sm">
             <div className="container mx-auto text-center animate-on-scroll opacity-0">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4 gold-text-shadow">
+              <h2 className="text-3xl font-bold text-purple-dark mb-4 gold-text-shadow">
                 מוכנה להתחיל?
               </h2>
-              <p className="text-gray-600 max-w-2xl mx-auto mb-8">
+              <p className="text-purple-dark max-w-2xl mx-auto mb-8">
                 פנייה ראשונה היא הצעד החשוב ביותר. אני כאן כדי להקשיב ולהציע את הדרך הנכונה עבורך.
               </p>
               <div className="flex justify-center space-x-4 space-x-reverse">
@@ -248,7 +256,7 @@ const Index = () => {
                 </a>
                 <a 
                   href="tel:0556620273" 
-                  className="bg-white text-gray-800 font-bold py-3 px-6 rounded-lg transition-all duration-300 border border-gold/20"
+                  className="bg-white text-purple-dark font-bold py-3 px-6 rounded-lg transition-all duration-300 border border-gold/20"
                 >
                   055-6620273
                 </a>

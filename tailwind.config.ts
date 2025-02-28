@@ -67,6 +67,11 @@ export default {
 					light: '#d4af37',
 					DEFAULT: '#CFB53B',
 					dark: '#996515',
+				},
+				purple: {
+					light: '#7E69AB',
+					DEFAULT: '#6E59A5',
+					dark: '#1A1F2C',
 				}
 			},
 			fontFamily: {

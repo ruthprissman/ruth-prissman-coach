@@ -39,35 +39,34 @@ export function Navigation() {
     )}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            <Link to="/" className="text-2xl font-bold text-gold hover:opacity-90 transition-opacity">
-              <span className={cn("transition-all duration-300", scrolled ? "text-2xl" : "text-3xl")}>
-                רות פריסמן
-              </span>
-            </Link>
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-purple-dark p-2 focus:outline-none"
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
 
           {/* Desktop navigation */}
-          <div className="hidden md:flex space-x-6 flex-row-reverse">
+          <div className="hidden md:flex space-x-6 space-x-reverse">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.path}
-                className="golden-nav-item px-3 py-2 text-gray-700 hover:text-gold transition-colors duration-300"
+                className="golden-nav-item px-3 py-2 text-purple-dark hover:text-gold transition-colors duration-300"
               >
                 {item.name}
               </Link>
             ))}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gold p-2 focus:outline-none"
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+          <div className="flex items-center">
+            <Link to="/" className="text-2xl font-bold text-purple-dark hover:opacity-90 transition-opacity">
+              <span className={cn("transition-all duration-300", scrolled ? "text-2xl" : "text-3xl")}>
+                רות פריסמן
+              </span>
+            </Link>
           </div>
         </div>
 
@@ -79,7 +78,7 @@ export function Navigation() {
                 <Link
                   key={item.name}
                   to={item.path}
-                  className="px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-gold transition-colors duration-200"
+                  className="px-4 py-3 text-purple-dark hover:bg-gray-100 hover:text-gold transition-colors duration-200 text-right"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}

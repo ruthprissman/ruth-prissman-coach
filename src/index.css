@@ -35,6 +35,10 @@
 
     --radius: 0.5rem;
 
+    --purple-dark: #1A1F2C;
+    --purple-light: #7E69AB;
+    --gold: #CFB53B;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -86,7 +90,7 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-alef;
+    @apply font-alef text-purple-dark;
   }
 }
 
@@ -95,12 +99,36 @@
     text-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
   }
   
+  .purple-text {
+    color: var(--purple-dark);
+  }
+  
+  .purple-light-text {
+    color: var(--purple-light);
+  }
+  
   .golden-nav-item {
     @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:right-0 after:bg-gold after:origin-bottom-left after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-right;
   }
 
   .golden-bullet::before {
     content: "•";
-    @apply text-gold mr-2;
+    color: var(--gold);
+    @apply mr-2;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
