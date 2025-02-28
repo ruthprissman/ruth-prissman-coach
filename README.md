@@ -1,6 +1,9 @@
-# Welcome to your Lovable project
+
+# רות פריסמן - קוד הנפש
 
 ## Project info
+
+A professional and elegant Hebrew homepage for "רות פריסמן - קוד הנפש".
 
 **URL**: https://lovable.dev/projects/e56705ee-4360-432f-afaa-91e32155e877
 
@@ -52,7 +55,7 @@ npm run dev
 
 ## What technologies are used for this project?
 
-This project is built with .
+This project is built with:
 
 - Vite
 - TypeScript
