@@ -10,14 +10,14 @@ const NotFound = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <div 
-        className="min-h-screen bg-cover bg-center relative" 
-        style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/3k8uim201uuhjsylidogq/clear-background.jpg?raw=1)' }}
+        className="min-h-screen bg-cover bg-center bg-fixed relative" 
+        style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/mn961lxdmrzb3hu61jr8c/clear-background.jpg?rlkey=te75ba634sz277355u5onqvuy&st=qxb55gpi&raw=1)' }}
       >
-        <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]"></div>
         
         <Navigation />
         
-        <main className="flex-grow flex items-center justify-center px-4">
+        <main className="flex-grow flex items-center justify-center px-4 relative z-10">
           <div className="bg-white/70 backdrop-blur-sm p-8 rounded-lg shadow-gold-sm max-w-md w-full text-center">
             <h1 className="text-4xl font-bold text-gray-800 mb-4 gold-text-shadow">404</h1>
             <p className="text-xl text-gray-600 mb-6">הדף המבוקש לא נמצא</p>
