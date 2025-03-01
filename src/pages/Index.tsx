@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -11,7 +12,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <div 
         className="min-h-screen bg-cover bg-center bg-fixed relative w-full h-full" 
-        style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/mn961lxdmrzb3hu61jr8c/clear-background.jpg?raw=1)' }}
+        style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/mn961lxdmrzb3hu61jr8c/clear-background.jpg?rlkey=te75ba634sz277355u5onqvuy&st=qxb55gpi&raw=1)' }}
       >
         <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]"></div>
         
@@ -21,9 +22,9 @@ const Index = () => {
           {/* Header with Logo Section */}
           <section className="pt-24 pb-10 px-4 relative">
             <div className="container mx-auto relative z-10">
-              <div className="flex flex-row items-center justify-end gap-4 mb-8">
+              <div className="flex flex-row-reverse items-center justify-end gap-4 mb-8">
                 <img 
-                  src="https://www.dropbox.com/scl/fi/azdu7fp5k6yp5m1v72ggn/logo.png?raw=1" 
+                  src="https://www.dropbox.com/scl/fi/azdu7fp5k6yp5m1v72ggn/logo.png?rlkey=uo9zfon43x3mxhqi2xgl813it&st=5sj644gg&raw=1" 
                   alt="רות פריסמן - קוד הנפש" 
                   className="w-20 h-20 md:w-24 md:h-24 object-contain"
                 />
