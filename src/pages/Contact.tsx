@@ -135,11 +135,11 @@ export default function Contact() {
                 </div>
               </div>
 
-              {/* Contact Buttons */}
+              {/* Contact Buttons - Updated to use a darker color and centered */}
               <div className="flex flex-wrap gap-4 justify-center mt-8">
                 <Button
                   asChild
-                  className="bg-gold-DEFAULT hover:bg-gold-dark text-white font-medium px-6"
+                  className="bg-[#1A1F2C] hover:bg-[#333] text-white font-medium px-6"
                 >
                   <a href="tel:+972556620273" className="flex gap-2 items-center">
                     <Phone size={18} />
@@ -149,7 +149,7 @@ export default function Contact() {
                 
                 <Button
                   asChild
-                  className="bg-gold-DEFAULT hover:bg-gold-dark text-white font-medium px-6"
+                  className="bg-[#1A1F2C] hover:bg-[#333] text-white font-medium px-6"
                 >
                   <a href="https://api.whatsapp.com/send?phone=+972556620273" className="flex gap-2 items-center">
                     <MessageSquare size={18} />
@@ -159,9 +159,9 @@ export default function Contact() {
                 
                 <Button
                   asChild
-                  className="bg-gold-DEFAULT hover:bg-gold-dark text-white font-medium px-6"
+                  className="bg-[#1A1F2C] hover:bg-[#333] text-white font-medium px-6"
                 >
-                  <a href="mailto:RuthPrissman@gmail.com" className="flex gap-2 items-center">
+                  <a href="mailto:RuthPrissman@gmail.com?subject=פנייה מהאתר" className="flex gap-2 items-center">
                     <Mail size={18} />
                     <span>שלח אימייל</span>
                   </a>
