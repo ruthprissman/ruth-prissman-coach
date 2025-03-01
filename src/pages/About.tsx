@@ -16,15 +16,15 @@ export default function About() {
             אודות רות פריסמן – קוד הנפש
           </h1>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <div className="md:col-span-2 space-y-6 text-right">
-              <p className="text-lg">
+              <p className="text-lg text-right">
                 רות פריסמן היא מטפלת רגשית מוסמכת עם ניסיון של למעלה מעשרים שנה בהנחיית אנשים במסע שלהם לגילוי עצמי וצמיחה אישית. עם רקע בפסיכולוגיה ולימודי רוחניות, רות פיתחה את "קוד הנפש" - שיטה ייחודית המשלבת תובנות מודרניות עם חוכמה עתיקה.
               </p>
-              <p className="text-lg">
+              <p className="text-lg text-right">
                 בקליניקה הפרטית שלה ברמת גן, רות מלווה מטופלים בתהליכי שינוי משמעותיים, מסייעת להם לפתוח דלתות חדשות ולהתגבר על אתגרים רגשיים מורכבים.
               </p>
-              <p className="text-lg">
+              <p className="text-lg text-right">
                 "קוד הנפש" היא שיטה המבוססת על הבנה עמוקה של הקשר בין רגשות, מחשבות והתנהגויות. השיטה מאפשרת למטופלים להבין את המנגנונים הנפשיים המניעים אותם, לזהות דפוסים מגבילים ולפתח את היכולת להתמודד עם מצבים מאתגרים בדרך מודעת ומעצימה.
               </p>
             </div>
@@ -38,25 +38,25 @@ export default function About() {
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md mb-16">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md mb-12 text-right">
             <h2 className="text-2xl font-alef text-[#4A235A] mb-6 text-center">ערכי הליבה וגישת הטיפול</h2>
             <div className="space-y-4 text-right">
               <div className="flex items-center justify-end gap-4">
-                <p className="text-lg">מסע של גילוי עצמי – פיתוח מודעות עצמית היא אבן יסוד בהבנת הקשר בין חוויות העבר לדפוסי ההווה</p>
+                <p className="text-lg text-right">מסע של גילוי עצמי – פיתוח מודעות עצמית היא אבן יסוד בהבנת הקשר בין חוויות העבר לדפוסי ההווה</p>
                 <Sun className="text-gold-DEFAULT flex-shrink-0" size={24} />
               </div>
               <div className="flex items-center justify-end gap-4">
-                <p className="text-lg">צמיחה רגשית – פיתוח כלים לעיבוד רגשות ושליטה בתגובות רגשיות, המאפשרים התמודדות יעילה עם אתגרים</p>
+                <p className="text-lg text-right">צמיחה רגשית – פיתוח כלים לעיבוד רגשות ושליטה בתגובות רגשיות, המאפשרים התמודדות יעילה עם אתגרים</p>
                 <Heart className="text-gold-DEFAULT flex-shrink-0" size={24} />
               </div>
               <div className="flex items-center justify-end gap-4">
-                <p className="text-lg">טרנספורמציה – שינוי מהותי המתרחש כאשר משחררים דפוסים מגבילים ופותחים דלת לאפשרויות חדשות</p>
+                <p className="text-lg text-right">טרנספורמציה – שינוי מהותי המתרחש כאשר משחררים דפוסים מגבילים ופותחים דלת לאפשרויות חדשות</p>
                 <Leaf className="text-gold-DEFAULT flex-shrink-0" size={24} />
               </div>
             </div>
           </div>
 
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h3 className="text-xl font-alef text-[#4A235A] mb-4">רוצה לשמוע עוד על השיטה?</h3>
             <Button asChild className="bg-gold-DEFAULT hover:bg-gold-dark text-white font-medium px-6">
               <Link to="/contact">צרו קשר עם רות</Link>
