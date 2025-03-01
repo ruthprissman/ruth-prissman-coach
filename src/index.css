@@ -87,6 +87,7 @@
 
   body {
     @apply bg-background text-foreground font-heebo;
+    direction: rtl;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -125,7 +126,7 @@
     box-shadow: 0 2px 5px rgba(207, 181, 59, 0.3);
   }
   
-  /* Fix for RTL alignment in container */
+  /* Center container contents properly for RTL */
   .container {
     @apply mx-auto;
   }

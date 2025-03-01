@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -22,19 +21,21 @@ const Index = () => {
           {/* Header with Logo Section */}
           <section className="pt-24 pb-10 px-4 relative">
             <div className="container mx-auto relative z-10">
-              <div className="flex flex-row-reverse items-center justify-end gap-4 mb-8">
-                <img 
-                  src="https://www.dropbox.com/scl/fi/azdu7fp5k6yp5m1v72ggn/logo.png?rlkey=uo9zfon43x3mxhqi2xgl813it&st=5sj644gg&raw=1" 
-                  alt="רות פריסמן - קוד הנפש" 
-                  className="w-20 h-20 md:w-24 md:h-24 object-contain"
-                />
-                <div className="text-right">
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-alef text-[#4A235A] gold-text-shadow">
-                    רות פריסמן - קוד הנפש
-                  </h1>
-                  <p className="text-lg md:text-xl text-purple-light mt-2 font-alef gold-text-shadow">
-                    מבט חדש על חיים מוכרים
-                  </p>
+              <div className="flex flex-col items-center justify-center mb-8">
+                <div className="flex flex-row-reverse items-center justify-center gap-4">
+                  <img 
+                    src="https://www.dropbox.com/scl/fi/azdu7fp5k6yp5m1v72ggn/logo.png?rlkey=uo9zfon43x3mxhqi2xgl813it&st=5sj644gg&raw=1" 
+                    alt="רות פריסמן - קוד הנפש" 
+                    className="w-20 h-20 md:w-24 md:h-24 object-contain"
+                  />
+                  <div className="text-center">
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-alef text-[#4A235A] gold-text-shadow">
+                      רות פריסמן - קוד הנפש
+                    </h1>
+                    <p className="text-lg md:text-xl text-purple-light mt-2 font-alef gold-text-shadow">
+                      מבט חדש על חיים מוכרים
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -44,7 +45,7 @@ const Index = () => {
           <section className="pb-20 px-4 relative">
             <div className="container mx-auto relative z-10">
               <div className="mx-auto text-right max-w-3xl">
-                <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-gold-sm mb-8 mr-0 ml-auto">
+                <div className="backdrop-blur-sm p-6 rounded-lg mb-8 mr-0 ml-auto">
                   <p className="text-[#4A235A] mb-4 text-lg">
                     ברוכים הבאים לאתר שלי! אני רות פריסמן, מטפלת בשיטת "קוד הנפש" - גישה ייחודית המאפשרת מבט חדש על אתגרי החיים והתמודדויות יומיומיות.
                   </p>
@@ -61,7 +62,7 @@ const Index = () => {
                   </a>
                   <a 
                     href="/about" 
-                    className="bg-white/80 hover:bg-white text-[#4A235A] font-bold py-3 px-6 rounded-lg transition-colors duration-300 shadow-gold-sm border border-gold/20"
+                    className="bg-white/40 hover:bg-white/60 text-[#4A235A] font-bold py-3 px-6 rounded-lg transition-colors duration-300 shadow-gold-sm border border-gold/20"
                   >
                     למידע נוסף
                   </a>
@@ -71,7 +72,7 @@ const Index = () => {
           </section>
           
           {/* Services Section */}
-          <section className="py-16 px-4 bg-white/60 backdrop-blur-sm">
+          <section className="py-16 px-4 bg-transparent backdrop-blur-sm">
             <div className="container mx-auto">
               <div className="text-right mb-12 max-w-4xl mx-auto">
                 <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">
@@ -84,7 +85,7 @@ const Index = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <div className="bg-white/70 p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/80">
+                <div className="backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/20">
                   <div className="h-20 w-20 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
                     <svg className="w-10 h-10 text-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"></path>
@@ -99,7 +100,7 @@ const Index = () => {
                   </p>
                 </div>
                 
-                <div className="bg-white/70 p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/80">
+                <div className="backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/20">
                   <div className="h-20 w-20 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
                     <svg className="w-10 h-10 text-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"></path>
@@ -116,7 +117,7 @@ const Index = () => {
                   </p>
                 </div>
                 
-                <div className="bg-white/70 p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/80">
+                <div className="backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/20">
                   <div className="h-20 w-20 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
                     <svg className="w-10 h-10 text-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
@@ -166,7 +167,7 @@ const Index = () => {
                 ].map((testimonial, index) => (
                   <div 
                     key={index} 
-                    className="bg-white/70 backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/80"
+                    className="backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/20"
                   >
                     <div className="flex justify-center mb-4">
                       {[...Array(5)].map((_, i) => (
@@ -230,7 +231,7 @@ const Index = () => {
           </section>
           
           {/* Contact CTA */}
-          <section className="py-16 px-4 bg-gold/10 backdrop-blur-sm">
+          <section className="py-16 px-4 bg-transparent backdrop-blur-sm">
             <div className="container mx-auto">
               <div className="text-right max-w-4xl mx-auto">
                 <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">

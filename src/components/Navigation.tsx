@@ -50,7 +50,7 @@ export function Navigation() {
           
           <div className="flex-grow flex justify-end">
             {/* Desktop navigation */}
-            <div className="hidden md:flex space-x-6 space-x-reverse">
+            <div className="hidden md:flex items-center space-x-6 space-x-reverse">
               {navItems.map((item) => (
                 <Link
                   key={item.name}
@@ -66,7 +66,7 @@ export function Navigation() {
 
         {/* Mobile navigation */}
         {isMenuOpen && (
-          <div className="md:hidden absolute top-full right-0 w-full bg-white/95 backdrop-blur-sm shadow-lg">
+          <div className="md:hidden absolute top-full right-0 w-full bg-white/80 backdrop-blur-sm shadow-lg">
             <div className="flex flex-col py-2">
               {navItems.map((item) => (
                 <Link
