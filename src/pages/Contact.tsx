@@ -135,11 +135,11 @@ export default function Contact() {
                 </div>
               </div>
 
-              {/* Contact Buttons - Updated with new colors */}
+              {/* Contact Buttons - Updated with new colors and target blank for WhatsApp */}
               <div className="flex flex-wrap gap-4 justify-center mt-8">
                 <Button
                   asChild
-                  className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6"
+                  className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
                 >
                   <a href="tel:+972556620273" className="flex gap-2 items-center">
                     <Phone size={18} />
@@ -149,9 +149,14 @@ export default function Contact() {
                 
                 <Button
                   asChild
-                  className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6"
+                  className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
                 >
-                  <a href="https://api.whatsapp.com/send?phone=+972556620273" className="flex gap-2 items-center">
+                  <a 
+                    href="https://api.whatsapp.com/send?phone=+972556620273" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex gap-2 items-center"
+                  >
                     <MessageSquare size={18} />
                     <span>שלח וואטסאפ</span>
                   </a>
@@ -159,9 +164,12 @@ export default function Contact() {
                 
                 <Button
                   asChild
-                  className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6"
+                  className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
                 >
-                  <a href="mailto:RuthPrissman@gmail.com?subject=פנייה מהאתר" className="flex gap-2 items-center">
+                  <a 
+                    href={`mailto:RuthPrissman@gmail.com?subject=${encodeURIComponent('פנייה מהאתר')}`} 
+                    className="flex gap-2 items-center"
+                  >
                     <Mail size={18} />
                     <span>שלח אימייל</span>
                   </a>
@@ -170,7 +178,7 @@ export default function Contact() {
             </div>
 
             {/* Contact Form */}
-            <div className="backdrop-blur-sm rounded-xl p-6 shadow-md">
+            <div className="backdrop-blur-sm rounded-xl p-6 shadow-md" id="contact-form">
               <h2 className="text-2xl font-alef text-[#4A235A] text-right mb-6">השאירו פרטים ואחזור אליכם</h2>
               
               <Form {...form}>
@@ -226,7 +234,7 @@ export default function Contact() {
                         <FormControl>
                           <Textarea 
                             placeholder="יש להזין את תוכן ההודעה" 
-                            className="min-h-[120px] text-right" 
+                            className="min-h-[120px] text-right dir-rtl" 
                             {...field} 
                           />
                         </FormControl>
@@ -238,7 +246,7 @@ export default function Contact() {
                   <div className="pt-4 text-center">
                     <Button 
                       type="submit" 
-                      className="bg-gold-DEFAULT hover:bg-gold-dark text-white font-medium px-8 py-2 w-full md:w-auto"
+                      className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-8 py-2 w-full md:w-auto border border-gold-DEFAULT shadow-md"
                     >
                       שלח פנייה
                     </Button>

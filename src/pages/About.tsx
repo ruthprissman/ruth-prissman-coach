@@ -61,8 +61,8 @@ export default function About() {
 
           <div className="text-center">
             <h3 className="text-xl font-alef text-[#4A235A] mb-4">רוצה לשמוע עוד על השיטה?</h3>
-            <Button asChild className="bg-gold-DEFAULT hover:bg-gold-dark text-white font-medium px-6">
-              <Link to="/contact">צרו קשר עם רות</Link>
+            <Button asChild className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm">
+              <Link to="/contact#contact-form">צרו קשר עם רות</Link>
             </Button>
           </div>
         </div>
