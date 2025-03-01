@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -22,7 +23,7 @@ const Index = () => {
           <section className="pt-24 pb-10 px-4 relative">
             <div className="container mx-auto relative z-10">
               <div className="flex flex-col items-center justify-center mb-8">
-                <div className="flex flex-row-reverse items-center justify-center gap-4">
+                <div className="flex flex-row items-center justify-center gap-4">
                   <img 
                     src="https://www.dropbox.com/scl/fi/azdu7fp5k6yp5m1v72ggn/logo.png?rlkey=uo9zfon43x3mxhqi2xgl813it&st=5sj644gg&raw=1" 
                     alt="רות פריסמן - קוד הנפש" 

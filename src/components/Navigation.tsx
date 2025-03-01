@@ -48,7 +48,7 @@ export function Navigation() {
             </button>
           </div>
           
-          <div className="flex-grow flex justify-end">
+          <div className="flex-grow flex justify-start text-right">
             {/* Desktop navigation */}
             <div className="hidden md:flex items-center space-x-6 space-x-reverse">
               {navItems.map((item) => (
