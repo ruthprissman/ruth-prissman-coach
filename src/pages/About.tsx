@@ -38,7 +38,7 @@ export default function About() {
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md mb-12">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md mb-12 text-right">
             <h2 className="text-2xl font-alef text-[#4A235A] mb-6 text-center">ערכי הליבה וגישת הטיפול</h2>
             <div className="space-y-4 text-right">
               <div className="flex items-center justify-end gap-4">
