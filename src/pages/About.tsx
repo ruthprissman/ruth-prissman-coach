@@ -41,20 +41,20 @@ export default function About() {
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md mb-12 text-right">
+          <div className="backdrop-blur-sm rounded-xl p-6 shadow-md mb-12 text-right">
             <h2 className="text-2xl font-alef text-[#4A235A] mb-6 text-center">ערכי הליבה וגישת הטיפול</h2>
             <div className="space-y-4 text-right">
-              <div className="flex items-center justify-end gap-4">
+              <div className="flex flex-row-reverse items-center gap-4">
+                <p className="text-lg text-right flex-grow">מסע של גילוי עצמי – פיתוח מודעות עצמית היא אבן יסוד בהבנת הקשר בין חוויות העבר לדפוסי ההווה</p>
                 <Sun className="text-gold-DEFAULT flex-shrink-0" size={24} />
-                <p className="text-lg text-right">מסע של גילוי עצמי – פיתוח מודעות עצמית היא אבן יסוד בהבנת הקשר בין חוויות העבר לדפוסי ההווה</p>
               </div>
-              <div className="flex items-center justify-end gap-4">
+              <div className="flex flex-row-reverse items-center gap-4">
+                <p className="text-lg text-right flex-grow">צמיחה רגשית – פיתוח כלים לעיבוד רגשות ושליטה בתגובות רגשיות, המאפשרים התמודדות יעילה עם אתגרים</p>
                 <Heart className="text-gold-DEFAULT flex-shrink-0" size={24} />
-                <p className="text-lg text-right">צמיחה רגשית – פיתוח כלים לעיבוד רגשות ושליטה בתגובות רגשיות, המאפשרים התמודדות יעילה עם אתגרים</p>
               </div>
-              <div className="flex items-center justify-end gap-4">
+              <div className="flex flex-row-reverse items-center gap-4">
+                <p className="text-lg text-right flex-grow">טרנספורמציה – שינוי מהותי המתרחש כאשר משחררים דפוסים מגבילים ופותחים דלת לאפשרויות חדשות</p>
                 <Leaf className="text-gold-DEFAULT flex-shrink-0" size={24} />
-                <p className="text-lg text-right">טרנספורמציה – שינוי מהותי המתרחש כאשר משחררים דפוסים מגבילים ופותחים דלת לאפשרויות חדשות</p>
               </div>
             </div>
           </div>
