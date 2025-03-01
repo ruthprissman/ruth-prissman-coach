@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const navItems = [
   { name: 'אודות', path: '/about' },
@@ -17,6 +17,7 @@ const navItems = [
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,7 +56,10 @@ export function Navigation() {
                 <Link
                   key={item.name}
                   to={item.path}
-                  className="golden-nav-item px-3 py-2 text-[#333333] hover:text-gold transition-colors duration-300"
+                  className={cn(
+                    "golden-nav-item px-3 py-2 text-[#333333] hover:text-gold transition-colors duration-300",
+                    location.pathname === item.path && "text-gold after:scale-x-100"
+                  )}
                 >
                   {item.name}
                 </Link>
@@ -72,7 +76,10 @@ export function Navigation() {
                 <Link
                   key={item.name}
                   to={item.path}
-                  className="px-4 py-3 text-[#333333] hover:bg-gray-100 hover:text-gold transition-colors duration-200 text-right"
+                  className={cn(
+                    "px-4 py-3 text-[#333333] hover:bg-gray-100 hover:text-gold transition-colors duration-200 text-right",
+                    location.pathname === item.path && "text-gold bg-gray-50"
+                  )}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}
