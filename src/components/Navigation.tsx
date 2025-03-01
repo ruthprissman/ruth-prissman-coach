@@ -39,15 +39,6 @@ export function Navigation() {
     )}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-[#4A235A] p-2 focus:outline-none"
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-
           <div className="flex-grow flex justify-end">
             {/* Desktop navigation */}
             <div className="hidden md:flex space-x-6 space-x-reverse">
@@ -61,6 +52,15 @@ export function Navigation() {
                 </Link>
               ))}
             </div>
+          </div>
+          
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-[#4A235A] p-2 focus:outline-none"
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
 

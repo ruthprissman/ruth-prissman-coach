@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -11,8 +10,8 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <div 
-        className="min-h-screen bg-cover bg-center bg-fixed relative" 
-        style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/3k8uim201uuhjsylidogq/clear-background.jpg?raw=1)' }}
+        className="min-h-screen bg-cover bg-center bg-fixed relative w-full h-full" 
+        style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/mn961lxdmrzb3hu61jr8c/clear-background.jpg?raw=1)' }}
       >
         <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]"></div>
         
@@ -22,14 +21,12 @@ const Index = () => {
           {/* Header with Logo Section */}
           <section className="pt-24 pb-10 px-4 relative">
             <div className="container mx-auto relative z-10">
-              <div className="flex flex-row-reverse items-center justify-center md:justify-start gap-4 mb-8">
-                <div className="flex-shrink-0">
-                  <img 
-                    src="https://www.dropbox.com/scl/fi/b1z4t77ol2ip239d6yi2w/logo.png?raw=1" 
-                    alt="רות פריסמן - קוד הנפש" 
-                    className="w-20 h-20 md:w-24 md:h-24 object-contain"
-                  />
-                </div>
+              <div className="flex flex-row items-center justify-end gap-4 mb-8">
+                <img 
+                  src="https://www.dropbox.com/scl/fi/azdu7fp5k6yp5m1v72ggn/logo.png?raw=1" 
+                  alt="רות פריסמן - קוד הנפש" 
+                  className="w-20 h-20 md:w-24 md:h-24 object-contain"
+                />
                 <div className="text-right">
                   <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-alef text-[#4A235A] gold-text-shadow">
                     רות פריסמן - קוד הנפש
@@ -207,7 +204,7 @@ const Index = () => {
           {/* Subscribe Section */}
           <section className="py-16 px-4 relative">
             <div className="container mx-auto">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-10 max-w-5xl mx-auto">
+              <div className="flex flex-col md:flex-row-reverse justify-between items-center gap-10 max-w-5xl mx-auto">
                 <div className="w-full md:w-1/2 text-right">
                   <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">
                     בואי להיות חלק מהקהילה
