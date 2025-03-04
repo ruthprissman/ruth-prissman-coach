@@ -57,7 +57,6 @@ export default function Contact() {
     return `mailto:RuthPrissman@gmail.com?subject=${subject}&body=${body}`;
   };
 
-  // Add new function for quick email sending
   const prepareQuickMailtoLink = () => {
     const subject = encodeURIComponent('פניה ישירה מהאתר');
     const body = encodeURIComponent('שלום רות,\n\nאשמח ליצור איתך קשר בנושא:\n\n');
@@ -103,7 +102,7 @@ export default function Contact() {
       setFormSubmitted(true);
       
       toast.success("הפנייה נשלחה בהצלחה!", {
-        description: "רות תיצור איתך קשר בהקדם.",
+        description: "ר��ת תיצור איתך קשר בהקדם.",
       });
       
       form.reset();
@@ -225,18 +224,13 @@ export default function Contact() {
                   </a>
                 </Button>
                 
-                <Button
-                  asChild
-                  className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
+                <a 
+                  href={prepareQuickMailtoLink()}
+                  className="inline-flex items-center justify-center gap-2 bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm rounded-md h-10"
                 >
-                  <a 
-                    href={prepareQuickMailtoLink()}
-                    className="flex gap-2 items-center"
-                  >
-                    <Mail size={18} />
-                    <span>שלח אימייל</span>
-                  </a>
-                </Button>
+                  <Mail size={18} />
+                  <span>שלח אימייל</span>
+                </a>
               </div>
             </div>
 
