@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -241,7 +240,7 @@ const Stories = () => {
                   </p>
                   
                   <div className="text-right mb-4">
-                    <p className="text-right font-bold text-lg text-[#4A235A]">
+                    <p className="text-right text-md text-gray-500">
                       {hebrewDates[story.id] || formatHebrewDate(story.published_at)}
                     </p>
                     <p className="text-right text-md text-gray-500">
