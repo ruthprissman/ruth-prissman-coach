@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -59,8 +58,7 @@ export function Navigation() {
             </button>
           </div>
           
-          {/* Desktop navigation */}
-          <div className="hidden md:flex items-center space-x-6 space-x-reverse mr-auto">
+          <div className="hidden md:flex items-center space-x-6 space-x-reverse">
             {navItems.map((item) => (
               <Link
                 key={item.name}
@@ -77,7 +75,6 @@ export function Navigation() {
           </div>
         </div>
 
-        {/* Mobile navigation */}
         {isMenuOpen && (
           <div className="md:hidden absolute top-full right-0 w-full bg-white/80 backdrop-blur-sm shadow-lg">
             <div className="flex flex-col py-2">

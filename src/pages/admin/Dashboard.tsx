@@ -96,7 +96,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Return to Homepage Button */}
+      {/* Return to Homepage Button - Updated with Home icon from lucide-react */}
       <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 flex items-center">
         <Home className="h-5 w-5 mr-2" />
         <span>חזרה לדף הבית</span>
