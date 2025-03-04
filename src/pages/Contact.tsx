@@ -66,10 +66,16 @@ export default function Contact() {
   // עיבוד שגיאות Formspree והצגת הודעות ידידותיות למשתמש
   useEffect(() => {
     if (formspreeState.errors) {
-      // בדיקה אם יש שגיאה של "Form not found"
-      if (formspreeState.errors.hasOwnProperty('_form') && 
-          Array.isArray(formspreeState.errors._form) && 
-          formspreeState.errors._form.includes("Form not found")) {
+      // בדיקה אם קיימת שגיאה כלשהי
+      let isFormNotFoundError = false;
+      
+      // בדיקה אם יש שגיאה בסטרינג
+      const errorStr = JSON.stringify(formspreeState.errors);
+      if (errorStr.includes("Form not found") || errorStr.includes("FORM_NOT_FOUND")) {
+        isFormNotFoundError = true;
+      }
+      
+      if (isFormNotFoundError) {
         setFormError("מזהה הטופס אינו תקין. אנא צור קשר באמצעות הטלפון או האימייל ישירות.");
         console.error("Form ID not valid:", FORM_ID);
       } else {
