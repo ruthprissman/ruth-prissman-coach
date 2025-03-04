@@ -8,12 +8,15 @@ import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StorySubscriptionForm } from '@/components/StorySubscriptionForm';
-import { HebrewDateConverter } from 'kosher-zmanim';
+import * as kosherZmanim from 'kosher-zmanim';
 
 // Supabase configuration
 const supabaseUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3cXdsbHRyZnZva2psYXVmZ3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA4NjU0MjYsImV4cCI6MjA1NjQ0MTQyNn0.G2JhvsEw4Q24vgt9SS9_nOMPtOdOqTGpus8zEJ5USD8';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Debug kosher-zmanim exports
+console.log('kosherZmanim library:', kosherZmanim);
 
 interface Story {
   id: number;
@@ -84,14 +87,22 @@ const Stories = () => {
   const formatHebrewDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      const converter = new HebrewDateConverter();
-      const hebrewDate = converter.gregorianToHebrew(
-        date.getFullYear(),
-        date.getMonth() + 1,
-        date.getDate()
-      );
-      
-      return `${hebrewDate.day} ${hebrewDate.monthName} ${hebrewDate.year}`;
+      // Check if we have the correct import by using the actual export
+      if (kosherZmanim.JewishCalendar) {
+        const jewishCalendar = new kosherZmanim.JewishCalendar(date);
+        return `${jewishCalendar.getJewishDayOfMonth()} ${jewishCalendar.getJewishMonthName()} ${jewishCalendar.getJewishYear()}`;
+      } else if (kosherZmanim.HebrewDateConverter) {
+        const converter = new kosherZmanim.HebrewDateConverter();
+        const hebrewDate = converter.gregorianToHebrew(
+          date.getFullYear(),
+          date.getMonth() + 1,
+          date.getDate()
+        );
+        return `${hebrewDate.day} ${hebrewDate.monthName} ${hebrewDate.year}`;
+      } else {
+        console.error('No suitable method found in kosher-zmanim');
+        return '';
+      }
     } catch (error) {
       console.error('Error converting to Hebrew date:', error);
       return '';
