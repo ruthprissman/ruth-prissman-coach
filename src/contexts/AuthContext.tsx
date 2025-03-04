@@ -10,6 +10,7 @@ type AuthContextType = {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  createAdminUser: (email: string, password: string) => Promise<{ error: Error | null }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,6 +73,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: null };
   };
 
+  const createAdminUser = async (email: string, password: string) => {
+    setIsLoading(true);
+    const { error } = await supabase.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        data: {
+          role: 'admin'
+        }
+      }
+    });
+    setIsLoading(false);
+    
+    if (error) {
+      toast({
+        title: "יצירת משתמש נכשלה",
+        description: `❌ ${error.message}`,
+        variant: "destructive",
+      });
+      return { error };
+    }
+
+    toast({
+      title: "משתמש מנהל נוצר בהצלחה!",
+      description: "✅ כעת תוכל/י להתחבר עם פרטים אלו",
+    });
+    
+    return { error: null };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     toast({
@@ -81,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, isLoading, signIn, signOut, createAdminUser }}>
       {children}
     </AuthContext.Provider>
   );
