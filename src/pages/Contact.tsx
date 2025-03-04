@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -23,17 +22,13 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-// חשוב! נדרש להגדיר את זה בטופס Formspree חדש עם מזהה חדש
-// שים לב: יש להירשם לאתר Formspree ולהגדיר טופס חדש עם כתובת האימייל ruthprissman@gmail.com
-const FORM_ID = "mleyywbb"; // יש להחליף עם מזהה חדש אחרי שתיצור טופס חדש
+const FORM_ID = "mrbenwzn";
 
 export default function Contact() {
-  // Use the Formspree hook properly
   const [formspreeState, submitToFormspree] = useFormspreeForm(FORM_ID);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   
-  // ניקוי שגיאות כשהקומפוננטה נטענת
   useEffect(() => {
     setFormError(null);
   }, []);
@@ -50,7 +45,6 @@ export default function Contact() {
 
   const formValues = form.watch();
 
-  // הכנת קישור mailto עם נתוני הטופס הדינמיים
   const prepareMailtoLink = () => {
     const subject = encodeURIComponent(`פנייה מהאתר - ${formValues.name || ''}`);
     const body = encodeURIComponent(`
@@ -63,13 +57,10 @@ export default function Contact() {
     return `mailto:RuthPrissman@gmail.com?subject=${subject}&body=${body}`;
   };
 
-  // עיבוד שגיאות Formspree והצגת הודעות ידידותיות למשתמש
   useEffect(() => {
     if (formspreeState.errors) {
-      // בדיקה אם קיימת שגיאה כלשהי
       let isFormNotFoundError = false;
       
-      // בדיקה אם יש שגיאה בסטרינג
       const errorStr = JSON.stringify(formspreeState.errors);
       if (errorStr.includes("Form not found") || errorStr.includes("FORM_NOT_FOUND")) {
         isFormNotFoundError = true;
@@ -89,7 +80,6 @@ export default function Contact() {
     try {
       setFormError(null);
       
-      // בדיקה נוספת לוודא שיש דרך אחת לפחות ליצור קשר
       if (!data.phone && !data.email) {
         toast.error("אנא הזן מספר טלפון או כתובת אימייל כדי שנוכל ליצור איתך קשר", {
           duration: 5000,
@@ -97,28 +87,22 @@ export default function Contact() {
         return;
       }
       
-      // שליחה ל-Formspree
       await submitToFormspree(data);
       
-      // בדיקה אם יש שגיאות לאחר השליחה
       if (formspreeState.errors) {
         throw new Error("שגיאת שליחה");
       }
       
-      // אם הגענו לכאן, השליחה הצליחה
       setFormSubmitted(true);
       
-      // הצגת הודעת הצלחה
       toast.success("הפנייה נשלחה בהצלחה!", {
         description: "רות תיצור איתך קשר בהקדם.",
       });
       
-      // ניקוי הטופס
       form.reset();
     } catch (error) {
       console.error("Submission error:", error);
       
-      // אפשרות ליצור קשר ישירות במקרה של שגיאה
       toast.error("אירעה שגיאה בשליחת הטופס", {
         description: (
           <div className="text-right">
@@ -145,7 +129,6 @@ export default function Contact() {
           </h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            {/* Contact Information */}
             <div className="backdrop-blur-sm rounded-xl p-6 shadow-md space-y-8">
               <h2 className="text-2xl font-alef text-[#4A235A] text-right mb-6">פרטי התקשרות</h2>
               
@@ -181,7 +164,6 @@ export default function Contact() {
                 </div>
               </div>
 
-              {/* Meeting Options */}
               <h2 className="text-2xl font-alef text-[#4A235A] text-right mt-8 mb-6">אפשרויות פגישה</h2>
               
               <div className="space-y-6">
@@ -210,7 +192,6 @@ export default function Contact() {
                 </div>
               </div>
 
-              {/* Contact Buttons */}
               <div className="flex flex-wrap gap-4 justify-center mt-8">
                 <Button
                   asChild
@@ -252,7 +233,6 @@ export default function Contact() {
               </div>
             </div>
 
-            {/* Contact Form */}
             <div className="backdrop-blur-sm rounded-xl p-6 shadow-md" id="contact-form">
               <h2 className="text-2xl font-alef text-[#4A235A] text-right mb-6">השאירו פרטים ואחזור אליכם</h2>
               
@@ -269,7 +249,7 @@ export default function Contact() {
                 </div>
               ) : (
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" action="https://formspree.io/f/mleyywbb" method="POST">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" action={`https://formspree.io/f/${FORM_ID}`} method="POST">
                     <FormField
                       control={form.control}
                       name="name"
@@ -340,7 +320,6 @@ export default function Contact() {
                       </Button>
                     </div>
 
-                    {/* שגיאת שליחה */}
                     {formError && (
                       <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
                         <p className="text-center text-red-600">{formError}</p>
