@@ -10,7 +10,9 @@ type AuthContextType = {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  createAdminUser: (email: string, password: string) => Promise<{ error: Error | null }>;
+  createAdminUser: (email: string, password: string) => Promise<{ error: Error | null, message?: string }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null, message?: string }>;
+  checkAdminExists: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,20 +75,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: null };
   };
 
+  // בדיקה האם קיים כבר מנהל במערכת
+  const checkAdminExists = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'admin')
+        .limit(1);
+      
+      if (error) throw error;
+      
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Error checking if admin exists:', error);
+      return false;
+    }
+  };
+
   const createAdminUser = async (email: string, password: string) => {
     setIsLoading(true);
-    const { error } = await supabase.auth.signUp({ 
-      email, 
-      password,
-      options: {
-        data: {
-          role: 'admin'
-        }
-      }
-    });
-    setIsLoading(false);
     
-    if (error) {
+    try {
+      // בדיקה האם כבר קיים מנהל במערכת
+      const adminExists = await checkAdminExists();
+      
+      if (adminExists) {
+        setIsLoading(false);
+        toast({
+          title: "פעולה נדחתה",
+          description: "❌ קיים כבר מנהל במערכת. אם שכחת את הסיסמה, ניתן לאפס אותה דרך 'שחזור סיסמה'.",
+          variant: "destructive",
+        });
+        return { 
+          error: new Error("Admin already exists"), 
+          message: "קיים כבר מנהל במערכת. אם שכחת את הסיסמה, ניתן לאפס אותה דרך 'שחזור סיסמה'."
+        };
+      }
+      
+      // יצירת משתמש חדש
+      const { error: signUpError, data } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            role: 'admin'
+          }
+        }
+      });
+      
+      if (signUpError) throw signUpError;
+      
+      // יצירת רשומה בטבלת הפרופילים
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{ 
+            id: data.user.id, 
+            email,
+            role: 'admin'
+          }]);
+          
+        if (profileError) throw profileError;
+      }
+      
+      setIsLoading(false);
+      toast({
+        title: "משתמש מנהל נוצר בהצלחה!",
+        description: "✅ כעת תוכל/י להתחבר עם פרטים אלו",
+      });
+      
+      return { error: null };
+    } catch (error: any) {
+      setIsLoading(false);
       toast({
         title: "יצירת משתמש נכשלה",
         description: `❌ ${error.message}`,
@@ -94,13 +155,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return { error };
     }
+  };
 
-    toast({
-      title: "משתמש מנהל נוצר בהצלחה!",
-      description: "✅ כעת תוכל/י להתחבר עם פרטים אלו",
-    });
-    
-    return { error: null };
+  // פונקציה לאיפוס סיסמה
+  const resetPassword = async (email: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/admin/reset-password`,
+      });
+      
+      if (error) throw error;
+      
+      setIsLoading(false);
+      toast({
+        title: "בקשת איפוס סיסמה נשלחה",
+        description: "✅ נא לבדוק את תיבת האימייל שלך לקבלת הוראות נוספות.",
+      });
+      
+      return { error: null, message: "נא לבדוק את תיבת האימייל שלך" };
+    } catch (error: any) {
+      setIsLoading(false);
+      toast({
+        title: "בקשת איפוס סיסמה נכשלה",
+        description: `❌ ${error.message}`,
+        variant: "destructive",
+      });
+      return { error };
+    }
   };
 
   const signOut = async () => {
@@ -112,7 +194,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, signIn, signOut, createAdminUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      isLoading, 
+      signIn, 
+      signOut, 
+      createAdminUser, 
+      resetPassword,
+      checkAdminExists
+    }}>
       {children}
     </AuthContext.Provider>
   );
