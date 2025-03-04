@@ -12,6 +12,7 @@ import * as z from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { useForm as useFormspreeForm } from '@formspree/react';
+import { FieldValues } from 'react-hook-form';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "נא להזין שם מלא" }),
@@ -281,7 +282,7 @@ export default function Contact() {
                       </Button>
                     </div>
 
-                    {formspreeState.errors && formspreeState.errors.length > 0 && (
+                    {formspreeState.errors && (
                       <p className="text-lg text-center text-red-600 mt-4">
                         שגיאה בשליחת הפנייה. נסו שוב מאוחר יותר.
                       </p>
