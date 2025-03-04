@@ -11,7 +11,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
-// Fix the import to match the correct Formspree API
 import { useForm as useFormspreeForm } from '@formspree/react';
 
 const formSchema = z.object({
@@ -24,9 +23,10 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function Contact() {
-  // Fix the Formspree hook usage
+  // Fix Formspree hook usage and handle submission state properly
   const [formspreeState, formspreeSubmit] = useFormspreeForm("mleyywbb");
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -55,12 +55,16 @@ export default function Contact() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      // Submit to Formspree using the correct API
-      const result = await formspreeSubmit(data);
+      setIsSubmitting(true);
       
-      if (result.errors) {
-        console.error("Form errors:", result.errors);
+      // Submit to Formspree using the correct API
+      await formspreeSubmit(data);
+      
+      // Check Formspree submission state
+      if (formspreeState.errors && formspreeState.errors.length > 0) {
+        console.error("Form errors:", formspreeState.errors);
         toast.error("אירעה שגיאה בשליחת הטופס, אנא נסו שוב מאוחר יותר");
+        setIsSubmitting(false);
         return;
       }
       
@@ -77,6 +81,8 @@ export default function Contact() {
     } catch (error) {
       console.error("Submission error:", error);
       toast.error("אירעה שגיאה בשליחת הטופס, אנא נסו שוב מאוחר יותר");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -282,9 +288,9 @@ export default function Contact() {
                       <Button 
                         type="submit" 
                         className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-8 py-2 w-full md:w-auto border border-gold-DEFAULT shadow-md"
-                        disabled={formState.submitting}
+                        disabled={isSubmitting}
                       >
-                        {formState.submitting ? "שולח..." : "שלח פנייה"}
+                        {isSubmitting ? "שולח..." : "שלח פנייה"}
                       </Button>
                     </div>
                   </form>
