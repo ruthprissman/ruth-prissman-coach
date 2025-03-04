@@ -87,20 +87,38 @@ const Stories = () => {
   const formatHebrewDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      // Check if we have the correct import by using the actual export
+      
       if (kosherZmanim.JewishCalendar) {
         const jewishCalendar = new kosherZmanim.JewishCalendar(date);
-        return `${jewishCalendar.getJewishDayOfMonth()} ${jewishCalendar.getJewishMonthName()} ${jewishCalendar.getJewishYear()}`;
-      } else if (kosherZmanim.HebrewDateConverter) {
-        const converter = new kosherZmanim.HebrewDateConverter();
-        const hebrewDate = converter.gregorianToHebrew(
-          date.getFullYear(),
-          date.getMonth() + 1,
-          date.getDate()
-        );
-        return `${hebrewDate.day} ${hebrewDate.monthName} ${hebrewDate.year}`;
+        
+        // Get the month number and convert to name
+        const monthNumber = jewishCalendar.getJewishMonth();
+        let monthName = '';
+        
+        // Hebrew month names based on Jewish calendar
+        const hebrewMonths = [
+          'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול',
+          'תשרי', 'חשון', 'כסלו', 'טבת', 'שבט', 'אדר'
+        ];
+        
+        // Handle Adar I and Adar II in leap years
+        if (jewishCalendar.isJewishLeapYear() && monthNumber === 12) {
+          monthName = 'אדר א';
+        } else if (jewishCalendar.isJewishLeapYear() && monthNumber === 13) {
+          monthName = 'אדר ב';
+        } else {
+          monthName = hebrewMonths[monthNumber - 1];
+        }
+        
+        // Format Hebrew numbers for day (using numeric value directly)
+        const day = jewishCalendar.getJewishDayOfMonth();
+        
+        // Get Hebrew year
+        const year = jewishCalendar.getJewishYear();
+        
+        return `${day} ${monthName} ${year}`;
       } else {
-        console.error('No suitable method found in kosher-zmanim');
+        console.error('JewishCalendar not found in kosher-zmanim');
         return '';
       }
     } catch (error) {
