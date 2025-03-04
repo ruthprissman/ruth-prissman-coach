@@ -46,29 +46,6 @@ export function Footer() {
           </p>
         </div>
       </div>
-      
-      {/* Add double-click event logic for site logo */}
-      <script dangerouslySetInnerHTML={{
-        __html: `
-          document.addEventListener("DOMContentLoaded", function() {
-            const logo = document.getElementById("site-logo");
-            if (logo) {
-              let clickCount = 0;
-              let clickTimer;
-              logo.addEventListener("click", function(e) {
-                clickCount++;
-                if (clickCount === 1) {
-                  clickTimer = setTimeout(() => { clickCount = 0; }, 500);
-                } else if (clickCount === 2) {
-                  clearTimeout(clickTimer);
-                  clickCount = 0;
-                  window.location.href = "/admin-login";
-                }
-              });
-            }
-          });
-        `
-      }} />
     </footer>
   );
 }

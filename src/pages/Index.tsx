@@ -1,12 +1,48 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { SubscriptionForm } from '@/components/SubscriptionForm';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const logoRef = useRef(null);
+
+  useEffect(() => {
+    let clickCount = 0;
+    let clickTimer;
+    
+    const handleLogoClick = () => {
+      clickCount++;
+      
+      if (clickCount === 1) {
+        clickTimer = setTimeout(() => {
+          clickCount = 0;
+        }, 500);
+      } else if (clickCount === 2) {
+        clearTimeout(clickTimer);
+        clickCount = 0;
+        navigate('/admin-login');
+      }
+    };
+    
+    const logoElement = logoRef.current;
+    if (logoElement) {
+      logoElement.addEventListener('click', handleLogoClick);
+    }
+    
+    return () => {
+      if (logoElement) {
+        logoElement.removeEventListener('click', handleLogoClick);
+      }
+      if (clickTimer) {
+        clearTimeout(clickTimer);
+      }
+    };
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -25,9 +61,10 @@ const Index = () => {
               <div className="flex flex-col items-center justify-center mb-8">
                 <div className="flex flex-row items-center justify-center gap-4">
                   <img 
+                    ref={logoRef}
                     src="https://www.dropbox.com/scl/fi/azdu7fp5k6yp5m1v72ggn/logo.png?rlkey=uo9zfon43x3mxhqi2xgl813it&st=5sj644gg&raw=1" 
                     alt="רות פריסמן - קוד הנפש" 
-                    className="w-20 h-20 md:w-24 md:h-24 object-contain"
+                    className="w-20 h-20 md:w-24 md:h-24 object-contain cursor-pointer"
                   />
                   <div className="text-center">
                     <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-alef text-[#4A235A] gold-text-shadow">

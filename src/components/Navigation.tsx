@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Home } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -59,32 +59,21 @@ export function Navigation() {
             </button>
           </div>
           
-          <div className="flex-grow flex justify-start text-right">
-            {/* Logo */}
-            <div className="flex justify-center items-center mx-auto md:mx-0">
-              <Link to="/" id="site-logo" className="cursor-pointer">
-                <h1 className="text-xl md:text-2xl font-alef font-bold text-[#4A235A] gold-text-shadow">
-                  רות פריסמן - קוד הנפש
-                </h1>
+          {/* Desktop navigation */}
+          <div className="hidden md:flex items-center space-x-6 space-x-reverse mr-auto">
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                aria-label={item.isHome ? "דף הבית" : undefined}
+                className={cn(
+                  "golden-nav-item px-3 py-2 text-[#333333] hover:text-gold transition-colors duration-300 flex items-center",
+                  location.pathname === item.path && "text-gold after:scale-x-100"
+                )}
+              >
+                {item.icon ? item.icon : item.name}
               </Link>
-            </div>
-            
-            {/* Desktop navigation */}
-            <div className="hidden md:flex items-center space-x-6 space-x-reverse">
-              {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  aria-label={item.isHome ? "דף הבית" : undefined}
-                  className={cn(
-                    "golden-nav-item px-3 py-2 text-[#333333] hover:text-gold transition-colors duration-300 flex items-center",
-                    location.pathname === item.path && "text-gold after:scale-x-100"
-                  )}
-                >
-                  {item.icon ? item.icon : item.name}
-                </Link>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
 
