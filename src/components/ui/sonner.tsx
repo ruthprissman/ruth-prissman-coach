@@ -22,6 +22,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
           cancelButton:
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
+        duration: 5000, // הגדלת משך הזמן שהודעות טוסט מוצגות ל-5 שניות
+        style: {
+          direction: 'rtl', // הגדרת כיוון טקסט לתמיכה בעברית
+        },
       }}
       {...props}
     />

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -23,10 +23,20 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+// חשוב! נדרש להגדיר את זה בטופס Formspree חדש עם מזהה חדש
+// שים לב: יש להירשם לאתר Formspree ולהגדיר טופס חדש עם כתובת האימייל ruthprissman@gmail.com
+const FORM_ID = "mleyywbb"; // יש להחליף עם מזהה חדש אחרי שתיצור טופס חדש
+
 export default function Contact() {
   // Use the Formspree hook properly
-  const [formspreeState, submitToFormspree] = useFormspreeForm("mleyywbb");
+  const [formspreeState, submitToFormspree] = useFormspreeForm(FORM_ID);
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  
+  // ניקוי שגיאות כשהקומפוננטה נטענת
+  useEffect(() => {
+    setFormError(null);
+  }, []);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -40,7 +50,7 @@ export default function Contact() {
 
   const formValues = form.watch();
 
-  // Prepare mailto link with dynamic form data
+  // הכנת קישור mailto עם נתוני הטופס הדינמיים
   const prepareMailtoLink = () => {
     const subject = encodeURIComponent(`פנייה מהאתר - ${formValues.name || ''}`);
     const body = encodeURIComponent(`
@@ -53,24 +63,66 @@ export default function Contact() {
     return `mailto:RuthPrissman@gmail.com?subject=${subject}&body=${body}`;
   };
 
+  // עיבוד שגיאות Formspree והצגת הודעות ידידותיות למשתמש
+  useEffect(() => {
+    if (formspreeState.errors) {
+      // בדיקה אם יש שגיאה של "Form not found"
+      if (formspreeState.errors.hasOwnProperty('_form') && 
+          Array.isArray(formspreeState.errors._form) && 
+          formspreeState.errors._form.includes("Form not found")) {
+        setFormError("מזהה הטופס אינו תקין. אנא צור קשר באמצעות הטלפון או האימייל ישירות.");
+        console.error("Form ID not valid:", FORM_ID);
+      } else {
+        setFormError("אירעה שגיאה בשליחת הטופס. אנא נסה דרך אחרת ליצירת קשר.");
+        console.error("Formspree errors:", formspreeState.errors);
+      }
+    }
+  }, [formspreeState.errors]);
+
   const onSubmit = async (data: FormData) => {
     try {
-      // Submit to Formspree
+      setFormError(null);
+      
+      // בדיקה נוספת לוודא שיש דרך אחת לפחות ליצור קשר
+      if (!data.phone && !data.email) {
+        toast.error("אנא הזן מספר טלפון או כתובת אימייל כדי שנוכל ליצור איתך קשר", {
+          duration: 5000,
+        });
+        return;
+      }
+      
+      // שליחה ל-Formspree
       await submitToFormspree(data);
       
-      // If we get here, the submission was successful
+      // בדיקה אם יש שגיאות לאחר השליחה
+      if (formspreeState.errors) {
+        throw new Error("שגיאת שליחה");
+      }
+      
+      // אם הגענו לכאן, השליחה הצליחה
       setFormSubmitted(true);
       
-      // Show success toast
+      // הצגת הודעת הצלחה
       toast.success("הפנייה נשלחה בהצלחה!", {
         description: "רות תיצור איתך קשר בהקדם.",
       });
       
-      // Clear form
+      // ניקוי הטופס
       form.reset();
     } catch (error) {
       console.error("Submission error:", error);
-      toast.error("אירעה שגיאה בשליחת הטופס, אנא נסו שוב מאוחר יותר");
+      
+      // אפשרות ליצור קשר ישירות במקרה של שגיאה
+      toast.error("אירעה שגיאה בשליחת הטופס", {
+        description: (
+          <div className="text-right">
+            <p>אנא נסה ליצור קשר ישירות:</p>
+            <p><a href="tel:+972556620273" className="underline">055-6620273</a></p>
+            <p><a href="mailto:RuthPrissman@gmail.com" className="underline">RuthPrissman@gmail.com</a></p>
+          </div>
+        ),
+        duration: 10000,
+      });
     }
   };
 
@@ -282,10 +334,22 @@ export default function Contact() {
                       </Button>
                     </div>
 
-                    {formspreeState.errors && (
-                      <p className="text-lg text-center text-red-600 mt-4">
-                        שגיאה בשליחת הפנייה. נסו שוב מאוחר יותר.
-                      </p>
+                    {/* שגיאת שליחה */}
+                    {formError && (
+                      <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-center text-red-600">{formError}</p>
+                        <div className="text-center mt-3">
+                          <p className="text-gray-700">ניתן ליצור קשר ישירות:</p>
+                          <div className="flex justify-center gap-4 mt-2">
+                            <a href="tel:+972556620273" className="text-[#4A235A] hover:text-gold-DEFAULT underline">
+                              055-6620273
+                            </a>
+                            <a href="mailto:RuthPrissman@gmail.com" className="text-[#4A235A] hover:text-gold-DEFAULT underline">
+                              RuthPrissman@gmail.com
+                            </a>
+                          </div>
+                        </div>
+                      </div>
                     )}
                   </form>
                 </Form>
