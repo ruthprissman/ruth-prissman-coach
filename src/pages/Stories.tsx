@@ -31,6 +31,14 @@ const Stories = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hebrewDates, setHebrewDates] = useState<Record<number, string>>({});
+
+  // Helper function to get story image or use default
+  const getStoryImage = (imageUrl: string) => {
+    return imageUrl && imageUrl.trim() !== ""
+      ? imageUrl
+      : "https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/stories_img/default.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzdG9yaWVzX2ltZy9kZWZhdWx0LmpwZyIsImlhdCI6MTc0MTA5OTE1MCwiZXhwIjoyMzcxODE5MTUwfQ.k3rGaTGlhjgrqxFxiJT9H70Aaq89RbM_kDKuTxqTgcQ";
+  };
 
   useEffect(() => {
     const fetchStories = async () => {
@@ -49,6 +57,25 @@ const Stories = () => {
         if (data) {
           console.log('Fetched stories:', data);
           setStories(data);
+          
+          // Fetch Hebrew dates for all stories
+          const datePromises = data.map(async (story) => {
+            try {
+              const hebrewDate = await fetchHebrewDate(new Date(story.published_at));
+              return { id: story.id, hebrewDate };
+            } catch (err) {
+              console.error('Error fetching Hebrew date:', err);
+              return { id: story.id, hebrewDate: '' };
+            }
+          });
+          
+          const results = await Promise.all(datePromises);
+          const hebrewDatesMap = results.reduce((acc, { id, hebrewDate }) => {
+            acc[id] = hebrewDate;
+            return acc;
+          }, {} as Record<number, string>);
+          
+          setHebrewDates(hebrewDatesMap);
         }
       } catch (err: any) {
         console.error('Error fetching stories:', err);
@@ -65,6 +92,21 @@ const Stories = () => {
 
     fetchStories();
   }, []);
+
+  // Function to fetch Hebrew date from Hebcal API
+  const fetchHebrewDate = async (date: Date) => {
+    try {
+      const response = await fetch(
+        `https://www.hebcal.com/converter?cfg=json&gy=${date.getFullYear()}&gm=${date.getMonth()+1}&gd=${date.getDate()}&g2h=1&strict=1`
+      );
+      const data = await response.json();
+      return data.hebrew; // Returns formatted Hebrew date as a string
+    } catch (error) {
+      console.error('Error fetching Hebrew date:', error);
+      // Fallback to the kosher-zmanim implementation
+      return formatHebrewDate(date.toISOString());
+    }
+  };
 
   const handleOpenPDF = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -180,7 +222,7 @@ const Stories = () => {
                 >
                   <div className="mb-4 aspect-[3/2] overflow-hidden rounded-md">
                     <img 
-                      src={story.image_url} 
+                      src={getStoryImage(story.image_url)} 
                       alt={story.title} 
                       className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                       onError={(e) => {
@@ -199,11 +241,11 @@ const Stories = () => {
                   </p>
                   
                   <div className="text-right mb-4">
-                    <p className="text-sm text-gray-600 mb-1">
-                      🗓️ {formatHebrewDate(story.published_at)}
+                    <p className="text-right font-bold text-lg text-[#4A235A]">
+                      {hebrewDates[story.id] || formatHebrewDate(story.published_at)}
                     </p>
-                    <p className="text-sm text-gray-500">
-                      📅 {formatDate(story.published_at)}
+                    <p className="text-right text-md text-gray-500">
+                      {formatDate(story.published_at)}
                     </p>
                   </div>
                   
