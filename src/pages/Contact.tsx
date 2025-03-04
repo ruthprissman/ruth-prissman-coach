@@ -58,9 +58,18 @@ export default function Contact() {
   };
 
   const prepareQuickMailtoLink = () => {
+    console.log("Preparing quick mailto link");
     const subject = encodeURIComponent('פניה ישירה מהאתר');
     const body = encodeURIComponent('שלום רות,\n\nאשמח ליצור איתך קשר בנושא:\n\n');
     return `mailto:RuthPrissman@gmail.com?subject=${subject}&body=${body}`;
+  };
+  
+  const handleEmailClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    console.log("Email button clicked");
+    const mailtoLink = prepareQuickMailtoLink();
+    console.log("Generated mailto link:", mailtoLink);
+    window.location.href = mailtoLink;
   };
 
   useEffect(() => {
@@ -102,7 +111,7 @@ export default function Contact() {
       setFormSubmitted(true);
       
       toast.success("הפנייה נשלחה בהצלחה!", {
-        description: "ר��ת תיצור איתך קשר בהקדם.",
+        description: "רות תיצור איתך קשר בהקדם.",
       });
       
       form.reset();
@@ -224,13 +233,17 @@ export default function Contact() {
                   </a>
                 </Button>
                 
-                <a 
-                  href={prepareQuickMailtoLink()}
-                  className="inline-flex items-center justify-center gap-2 bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm rounded-md h-10"
+                <Button
+                  className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
+                  onClick={() => {
+                    console.log("Button clicked");
+                    const mailtoLink = prepareQuickMailtoLink();
+                    window.location.href = mailtoLink;
+                  }}
                 >
-                  <Mail size={18} />
+                  <Mail size={18} className="mr-2" />
                   <span>שלח אימייל</span>
-                </a>
+                </Button>
               </div>
             </div>
 
