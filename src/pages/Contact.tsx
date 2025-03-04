@@ -23,10 +23,9 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function Contact() {
-  // Fix Formspree hook usage and handle submission state properly
-  const [formspreeState, formspreeSubmit] = useFormspreeForm("mleyywbb");
+  // Use the Formspree hook properly
+  const [formspreeState, submitToFormspree] = useFormspreeForm("mleyywbb");
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -55,20 +54,10 @@ export default function Contact() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      setIsSubmitting(true);
+      // Submit to Formspree
+      await submitToFormspree(data);
       
-      // Submit to Formspree using the correct API
-      await formspreeSubmit(data);
-      
-      // Check Formspree submission state
-      if (formspreeState.errors && formspreeState.errors.length > 0) {
-        console.error("Form errors:", formspreeState.errors);
-        toast.error("אירעה שגיאה בשליחת הטופס, אנא נסו שוב מאוחר יותר");
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // If successful, mark as submitted
+      // If we get here, the submission was successful
       setFormSubmitted(true);
       
       // Show success toast
@@ -81,8 +70,6 @@ export default function Contact() {
     } catch (error) {
       console.error("Submission error:", error);
       toast.error("אירעה שגיאה בשליחת הטופס, אנא נסו שוב מאוחר יותר");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -164,7 +151,7 @@ export default function Contact() {
                 </div>
               </div>
 
-              {/* Contact Buttons - Updated with new colors and target blank for WhatsApp */}
+              {/* Contact Buttons */}
               <div className="flex flex-wrap gap-4 justify-center mt-8">
                 <Button
                   asChild
@@ -223,7 +210,7 @@ export default function Contact() {
                 </div>
               ) : (
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" action="https://formspree.io/f/mleyywbb" method="POST">
                     <FormField
                       control={form.control}
                       name="name"
@@ -288,11 +275,17 @@ export default function Contact() {
                       <Button 
                         type="submit" 
                         className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-8 py-2 w-full md:w-auto border border-gold-DEFAULT shadow-md"
-                        disabled={isSubmitting}
+                        disabled={formspreeState.submitting}
                       >
-                        {isSubmitting ? "שולח..." : "שלח פנייה"}
+                        {formspreeState.submitting ? "שולח..." : "שלח פנייה"}
                       </Button>
                     </div>
+
+                    {formspreeState.errors && formspreeState.errors.length > 0 && (
+                      <p className="text-lg text-center text-red-600 mt-4">
+                        שגיאה בשליחת הפנייה. נסו שוב מאוחר יותר.
+                      </p>
+                    )}
                   </form>
                 </Form>
               )}
