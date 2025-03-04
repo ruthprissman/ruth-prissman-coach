@@ -11,7 +11,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { useFormspree } from '@formspree/react';
+// Fix the import to match the correct Formspree API
+import { useForm as useFormspreeForm } from '@formspree/react';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "נא להזין שם מלא" }),
@@ -23,7 +24,8 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function Contact() {
-  const [formState, submitForm] = useFormspree("mleyywbb"); // Replace with your Formspree form ID
+  // Fix the Formspree hook usage
+  const [formspreeState, formspreeSubmit] = useFormspreeForm("mleyywbb");
   const [formSubmitted, setFormSubmitted] = useState(false);
   
   const form = useForm<FormData>({
@@ -53,11 +55,11 @@ export default function Contact() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      // Submit to Formspree
-      const response = await submitForm(data);
+      // Submit to Formspree using the correct API
+      const result = await formspreeSubmit(data);
       
-      if (response.errors) {
-        console.error("Form errors:", response.errors);
+      if (result.errors) {
+        console.error("Form errors:", result.errors);
         toast.error("אירעה שגיאה בשליחת הטופס, אנא נסו שוב מאוחר יותר");
         return;
       }
