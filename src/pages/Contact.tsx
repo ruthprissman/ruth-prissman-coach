@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -55,21 +56,6 @@ export default function Contact() {
     `);
     
     return `mailto:RuthPrissman@gmail.com?subject=${subject}&body=${body}`;
-  };
-
-  const prepareQuickMailtoLink = () => {
-    console.log("Preparing quick mailto link");
-    const subject = encodeURIComponent('פניה ישירה מהאתר');
-    const body = encodeURIComponent('שלום רות,\n\nאשמח ליצור איתך קשר בנושא:\n\n');
-    return `mailto:RuthPrissman@gmail.com?subject=${subject}&body=${body}`;
-  };
-  
-  const handleEmailClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    console.log("Email button clicked");
-    const mailtoLink = prepareQuickMailtoLink();
-    console.log("Generated mailto link:", mailtoLink);
-    window.location.href = mailtoLink;
   };
 
   useEffect(() => {
@@ -207,7 +193,7 @@ export default function Contact() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-4 justify-center mt-8">
+              <div className="flex flex-wrap justify-center gap-4 mt-8">
                 <Button
                   asChild
                   className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
@@ -231,18 +217,6 @@ export default function Contact() {
                     <MessageSquare size={18} />
                     <span>שלח וואטסאפ</span>
                   </a>
-                </Button>
-                
-                <Button
-                  className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
-                  onClick={() => {
-                    console.log("Button clicked");
-                    const mailtoLink = prepareQuickMailtoLink();
-                    window.location.href = mailtoLink;
-                  }}
-                >
-                  <Mail size={18} className="mr-2" />
-                  <span>שלח אימייל</span>
                 </Button>
               </div>
             </div>
