@@ -57,6 +57,13 @@ export default function Contact() {
     return `mailto:RuthPrissman@gmail.com?subject=${subject}&body=${body}`;
   };
 
+  // Add new function for quick email sending
+  const prepareQuickMailtoLink = () => {
+    const subject = encodeURIComponent('פניה ישירה מהאתר');
+    const body = encodeURIComponent('שלום רות,\n\nאשמח ליצור איתך קשר בנושא:\n\n');
+    return `mailto:RuthPrissman@gmail.com?subject=${subject}&body=${body}`;
+  };
+
   useEffect(() => {
     if (formspreeState.errors) {
       let isFormNotFoundError = false;
@@ -223,7 +230,7 @@ export default function Contact() {
                   className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
                 >
                   <a 
-                    href={prepareMailtoLink()}
+                    href={prepareQuickMailtoLink()}
                     className="flex gap-2 items-center"
                   >
                     <Mail size={18} />
