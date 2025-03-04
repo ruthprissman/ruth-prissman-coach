@@ -1,42 +1,9 @@
 
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
-  const navigate = useNavigate();
-  const [logoClicks, setLogoClicks] = useState(0);
-  const [lastClickTime, setLastClickTime] = useState(0);
-  
-  // Handler for logo double click
-  useEffect(() => {
-    const handleLogoClick = () => {
-      const now = Date.now();
-      if (now - lastClickTime < 500) {
-        // Double click detected
-        setLogoClicks(prevClicks => prevClicks + 1);
-        if (logoClicks >= 1) { // Navigate after the second click
-          navigate('/admin/login');
-          setLogoClicks(0);
-        }
-      } else {
-        // First click or too slow
-        setLogoClicks(1);
-      }
-      setLastClickTime(now);
-    };
-    
-    const logoElement = document.getElementById('site-logo');
-    if (logoElement) {
-      logoElement.addEventListener('click', handleLogoClick);
-    }
-    
-    return () => {
-      if (logoElement) {
-        logoElement.removeEventListener('click', handleLogoClick);
-      }
-    };
-  }, [logoClicks, lastClickTime, navigate]);
   
   return (
     <footer className="bg-white/80 backdrop-blur-sm mt-12 py-8 border-t border-gray-200">
@@ -73,12 +40,35 @@ export function Footer() {
         <div className="mt-8 pt-4 border-t border-gray-200 text-center">
           <p className="text-purple-dark text-sm">
             © {currentYear} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
-            <Link to="/admin/login" className="text-purple-dark hover:text-gold transition-colors ms-3 opacity-50">
+            <Link to="/admin-login" className="text-purple-dark hover:text-gold transition-colors ms-3 opacity-50">
               🔑 כניסת מנהל
             </Link>
           </p>
         </div>
       </div>
+      
+      {/* Add double-click event logic for site logo */}
+      <script dangerouslySetInnerHTML={{
+        __html: `
+          document.addEventListener("DOMContentLoaded", function() {
+            const logo = document.getElementById("site-logo");
+            if (logo) {
+              let clickCount = 0;
+              let clickTimer;
+              logo.addEventListener("click", function(e) {
+                clickCount++;
+                if (clickCount === 1) {
+                  clickTimer = setTimeout(() => { clickCount = 0; }, 500);
+                } else if (clickCount === 2) {
+                  clearTimeout(clickTimer);
+                  clickCount = 0;
+                  window.location.href = "/admin-login";
+                }
+              });
+            }
+          });
+        `
+      }} />
     </footer>
   );
 }

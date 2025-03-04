@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { 
   Users, Calendar, CreditCard, Mail, LogOut,
-  BarChart, User, Clock, DollarSign
+  BarChart, User, Clock, DollarSign, Home
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -96,6 +96,12 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Return to Homepage Button */}
+      <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 flex items-center">
+        <Home className="h-5 w-5 mr-2" />
+        <span>חזרה לדף הבית</span>
+      </Link>
+
       {/* Header */}
       <header className="bg-[#4A235A] text-white shadow-md">
         <div className="container mx-auto px-6 py-4">

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -60,6 +60,15 @@ export function Navigation() {
           </div>
           
           <div className="flex-grow flex justify-start text-right">
+            {/* Logo */}
+            <div className="flex justify-center items-center mx-auto md:mx-0">
+              <Link to="/" id="site-logo" className="cursor-pointer">
+                <h1 className="text-xl md:text-2xl font-alef font-bold text-[#4A235A] gold-text-shadow">
+                  רות פריסמן - קוד הנפש
+                </h1>
+              </Link>
+            </div>
+            
             {/* Desktop navigation */}
             <div className="hidden md:flex items-center space-x-6 space-x-reverse">
               {navItems.map((item) => (

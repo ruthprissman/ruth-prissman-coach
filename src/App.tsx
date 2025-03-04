@@ -38,6 +38,7 @@ const App = () => (
             
             {/* Admin Routes */}
             <Route path="/admin/login" element={<Login />} />
+            <Route path="/admin-login" element={<Login />} /> {/* Added new route for double-click access */}
             <Route path="/admin/reset-password" element={<ResetPassword />} />
             <Route 
               path="/admin/dashboard" 
