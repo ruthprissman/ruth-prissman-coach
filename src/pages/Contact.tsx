@@ -11,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
+import { useFormspree } from '@formspree/react';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "נא להזין שם מלא" }),
@@ -22,6 +23,9 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function Contact() {
+  const [formState, submitForm] = useFormspree("mleyywbb"); // Replace with your Formspree form ID
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -32,29 +36,46 @@ export default function Contact() {
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    // In a real application, you would send this data to a server
-    // For now, we'll just simulate a successful form submission
-    console.log("Form submitted:", data);
-    
-    // Prepare mailto link
-    const subject = encodeURIComponent(`פנייה מהאתר - ${data.name}`);
+  const formValues = form.watch();
+
+  // Prepare mailto link with dynamic form data
+  const prepareMailtoLink = () => {
+    const subject = encodeURIComponent(`פנייה מהאתר - ${formValues.name || ''}`);
     const body = encodeURIComponent(`
-      שם: ${data.name}
-      טלפון: ${data.phone || 'לא צוין'}
-      אימייל: ${data.email || 'לא צוין'}
-      הודעה: ${data.message}
+      שם: ${formValues.name || ''}
+      טלפון: ${formValues.phone || 'לא צוין'}
+      אימייל: ${formValues.email || 'לא צוין'}
+      הודעה: ${formValues.message || ''}
     `);
     
-    // Open mailto link
-    window.open(`mailto:RuthPrissman@gmail.com?subject=${subject}&body=${body}`);
-    
-    // Show success toast
-    toast.success("הפנייה נשלחה בהצלחה!", {
-      description: "רות תיצור איתך קשר בהקדם.",
-    });
-    
-    form.reset();
+    return `mailto:RuthPrissman@gmail.com?subject=${subject}&body=${body}`;
+  };
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      // Submit to Formspree
+      const response = await submitForm(data);
+      
+      if (response.errors) {
+        console.error("Form errors:", response.errors);
+        toast.error("אירעה שגיאה בשליחת הטופס, אנא נסו שוב מאוחר יותר");
+        return;
+      }
+      
+      // If successful, mark as submitted
+      setFormSubmitted(true);
+      
+      // Show success toast
+      toast.success("הפנייה נשלחה בהצלחה!", {
+        description: "רות תיצור איתך קשר בהקדם.",
+      });
+      
+      // Clear form
+      form.reset();
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast.error("אירעה שגיאה בשליחת הטופס, אנא נסו שוב מאוחר יותר");
+    }
   };
 
   return (
@@ -167,7 +188,7 @@ export default function Contact() {
                   className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
                 >
                   <a 
-                    href={`mailto:RuthPrissman@gmail.com?subject=${encodeURIComponent('פנייה מהאתר')}`} 
+                    href={prepareMailtoLink()}
                     className="flex gap-2 items-center"
                   >
                     <Mail size={18} />
@@ -181,78 +202,92 @@ export default function Contact() {
             <div className="backdrop-blur-sm rounded-xl p-6 shadow-md" id="contact-form">
               <h2 className="text-2xl font-alef text-[#4A235A] text-right mb-6">השאירו פרטים ואחזור אליכם</h2>
               
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-right block">שם מלא *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="יש להזין שם מלא" {...field} className="text-right" />
-                        </FormControl>
-                        <FormMessage className="text-right" />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-right block">טלפון</FormLabel>
-                        <FormControl>
-                          <Input placeholder="יש להזין מספר טלפון" {...field} className="text-right" />
-                        </FormControl>
-                        <FormMessage className="text-right" />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-right block">אימייל</FormLabel>
-                        <FormControl>
-                          <Input placeholder="יש להזין כתובת אימייל" {...field} className="text-right" />
-                        </FormControl>
-                        <FormMessage className="text-right" />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="message"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-right block">הודעה *</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="יש להזין את תוכן ההודעה" 
-                            className="min-h-[120px] text-right dir-rtl" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage className="text-right" />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="pt-4 text-center">
-                    <Button 
-                      type="submit" 
-                      className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-8 py-2 w-full md:w-auto border border-gold-DEFAULT shadow-md"
-                    >
-                      שלח פנייה
-                    </Button>
-                  </div>
-                </form>
-              </Form>
+              {formSubmitted ? (
+                <div className="text-center py-12">
+                  <div className="text-2xl font-alef text-[#4A235A] mb-4">הפנייה נשלחה בהצלחה!</div>
+                  <div className="text-lg text-gray-700">רות תיצור איתך קשר בהקדם.</div>
+                  <Button 
+                    onClick={() => setFormSubmitted(false)}
+                    className="mt-8 bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
+                  >
+                    שלח פנייה נוספת
+                  </Button>
+                </div>
+              ) : (
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-right block">שם מלא *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="יש להזין שם מלא" {...field} className="text-right" />
+                          </FormControl>
+                          <FormMessage className="text-right" />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-right block">טלפון</FormLabel>
+                          <FormControl>
+                            <Input placeholder="יש להזין מספר טלפון" {...field} className="text-right" />
+                          </FormControl>
+                          <FormMessage className="text-right" />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-right block">אימייל</FormLabel>
+                          <FormControl>
+                            <Input placeholder="יש להזין כתובת אימייל" {...field} className="text-right" />
+                          </FormControl>
+                          <FormMessage className="text-right" />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-right block">הודעה *</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="יש להזין את תוכן ההודעה" 
+                              className="min-h-[120px] text-right dir-rtl" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage className="text-right" />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="pt-4 text-center">
+                      <Button 
+                        type="submit" 
+                        className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-8 py-2 w-full md:w-auto border border-gold-DEFAULT shadow-md"
+                        disabled={formState.submitting}
+                      >
+                        {formState.submitting ? "שולח..." : "שלח פנייה"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              )}
             </div>
           </div>
         </div>
