@@ -88,6 +88,11 @@
   body {
     @apply bg-background text-foreground font-heebo;
     direction: rtl;
+    background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_assets/clear-background.svg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
   }
 
   h1, h2, h3, h4, h5, h6 {
