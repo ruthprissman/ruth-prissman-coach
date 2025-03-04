@@ -7,6 +7,7 @@ import { FileDown, ExternalLink } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StorySubscriptionForm } from '@/components/StorySubscriptionForm';
 
 // Supabase configuration
 const supabaseUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co';
@@ -66,13 +67,8 @@ const Stories = () => {
   };
 
   const handleDownloadPDF = (url: string, title: string) => {
-    // Create an invisible anchor element for downloading
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${title.replace(/\s+/g, '_')}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Open in new tab instead of downloading directly
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const formatDate = (dateString: string) => {
@@ -181,6 +177,11 @@ const Stories = () => {
               ))}
             </div>
           )}
+          
+          {/* Subscription Form */}
+          <div className="mt-20">
+            <StorySubscriptionForm />
+          </div>
         </div>
       </main>
       
