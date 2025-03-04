@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { User, Mail, UserMinus } from 'lucide-react';
+import { User, Mail, UserMinus, AlertCircle } from 'lucide-react';
 
 // Supabase configuration
 const supabaseUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co';
@@ -17,12 +17,28 @@ export function StorySubscriptionForm() {
   const [loading, setLoading] = useState(false);
   const [unsubscribeEmail, setUnsubscribeEmail] = useState('');
   const [showUnsubscribe, setShowUnsubscribe] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [unsubscribeEmailError, setUnsubscribeEmailError] = useState<string | null>(null);
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const subscribeToStories = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    setEmailError(null);
+    
     if (!email) {
+      setEmailError('נא להזין כתובת אימייל');
       toast.error('נא להזין כתובת אימייל');
+      return;
+    }
+    
+    if (!validateEmail(email)) {
+      setEmailError('❌ כתובת מייל לא תקינה. אנא הכנס/י מייל תקף.');
+      toast.error('כתובת מייל לא תקינה');
       return;
     }
     
@@ -53,7 +69,7 @@ export function StorySubscriptionForm() {
         console.error('Subscription error:', error);
         toast.error('שגיאה בהרשמה, נסה שוב מאוחר יותר.');
       } else {
-        toast.success('נרשמת בהצלחה! תקבלי עדכון כאשר יתפרסם סיפור חדש.');
+        toast.success('✅ נרשמת בהצלחה! תקבלי עדכון כאשר יתפרסם סיפור חדש.');
         setEmail('');
         setFirstName('');
       }
@@ -68,8 +84,17 @@ export function StorySubscriptionForm() {
   const unsubscribeFromStories = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    setUnsubscribeEmailError(null);
+    
     if (!unsubscribeEmail) {
+      setUnsubscribeEmailError('נא להזין כתובת אימייל להסרה');
       toast.error('נא להזין כתובת אימייל להסרה');
+      return;
+    }
+    
+    if (!validateEmail(unsubscribeEmail)) {
+      setUnsubscribeEmailError('❌ כתובת מייל לא תקינה. אנא הכנס/י מייל תקף.');
+      toast.error('כתובת מייל לא תקינה');
       return;
     }
     
@@ -127,17 +152,29 @@ export function StorySubscriptionForm() {
       {!showUnsubscribe ? (
         <>
           <form onSubmit={subscribeToStories} className="space-y-4">
-            <div className="relative">
-              <Mail className="absolute right-3 top-3 text-gray-400" size={16} />
-              <Input
-                type="email"
-                placeholder="האימייל שלך *"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pr-10 text-right"
-                required
-                dir="rtl"
-              />
+            <div className="space-y-1">
+              <div className="relative">
+                <Mail className="absolute right-3 top-3 text-gray-400" size={16} />
+                <Input
+                  type="email"
+                  placeholder="האימייל שלך *"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError(null);
+                  }}
+                  className={`pr-10 text-right ${emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                  required
+                  dir="rtl"
+                />
+              </div>
+              
+              {emailError && (
+                <div className="flex items-center text-red-500 text-sm mt-1 gap-1 justify-end">
+                  <span>{emailError}</span>
+                  <AlertCircle size={14} />
+                </div>
+              )}
             </div>
             
             <div className="relative">
@@ -173,17 +210,29 @@ export function StorySubscriptionForm() {
       ) : (
         <>
           <form onSubmit={unsubscribeFromStories} className="space-y-4">
-            <div className="relative">
-              <Mail className="absolute right-3 top-3 text-gray-400" size={16} />
-              <Input
-                type="email"
-                placeholder="האימייל שלך להסרה מהרשימה"
-                value={unsubscribeEmail}
-                onChange={(e) => setUnsubscribeEmail(e.target.value)}
-                className="pr-10 text-right"
-                required
-                dir="rtl"
-              />
+            <div className="space-y-1">
+              <div className="relative">
+                <Mail className="absolute right-3 top-3 text-gray-400" size={16} />
+                <Input
+                  type="email"
+                  placeholder="האימייל שלך להסרה מהרשימה"
+                  value={unsubscribeEmail}
+                  onChange={(e) => {
+                    setUnsubscribeEmail(e.target.value);
+                    if (unsubscribeEmailError) setUnsubscribeEmailError(null);
+                  }}
+                  className={`pr-10 text-right ${unsubscribeEmailError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                  required
+                  dir="rtl"
+                />
+              </div>
+              
+              {unsubscribeEmailError && (
+                <div className="flex items-center text-red-500 text-sm mt-1 gap-1 justify-end">
+                  <span>{unsubscribeEmailError}</span>
+                  <AlertCircle size={14} />
+                </div>
+              )}
             </div>
             
             <Button

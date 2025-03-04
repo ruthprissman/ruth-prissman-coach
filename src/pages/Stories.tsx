@@ -8,6 +8,7 @@ import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StorySubscriptionForm } from '@/components/StorySubscriptionForm';
+import { HebrewDateConverter } from 'kosher-zmanim';
 
 // Supabase configuration
 const supabaseUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co';
@@ -80,12 +81,29 @@ const Stories = () => {
     }).format(date);
   };
 
+  const formatHebrewDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const converter = new HebrewDateConverter();
+      const hebrewDate = converter.gregorianToHebrew(
+        date.getFullYear(),
+        date.getMonth() + 1,
+        date.getDate()
+      );
+      
+      return `${hebrewDate.day} ${hebrewDate.monthName} ${hebrewDate.year}`;
+    } catch (error) {
+      console.error('Error converting to Hebrew date:', error);
+      return '';
+    }
+  };
+
   return (
     <div className="relative min-h-screen flex flex-col bg-white">
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0 opacity-20" 
         style={{ 
-          backgroundImage: "url('https://www.dropbox.com/scl/fi/mn961lxdmrzb3hu61jr8c/clear-background.jpg?rlkey=te75ba634sz277355u5onqvuy&st=qxb55gpi&raw=1')" 
+          backgroundImage: "url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/clear-background.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzaXRlX2ltZ3MvY2xlYXItYmFja2dyb3VuZC5wbmciLCJpYXQiOjE3NDExMDE0OTMsImV4cCI6MjM3MTgyMTQ5M30.k9JPVqmzmFtfxa8jbYpr1Hi3T4l2ZaHQZdPy2gGpgvk')" 
         }}
       />
       
@@ -151,9 +169,14 @@ const Stories = () => {
                     {story.description}
                   </p>
                   
-                  <p className="text-sm text-gray-500 mb-4 text-right">
-                    {formatDate(story.published_at)}
-                  </p>
+                  <div className="text-right mb-4">
+                    <p className="text-sm text-gray-600 mb-1">
+                      🗓️ {formatHebrewDate(story.published_at)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      📅 {formatDate(story.published_at)}
+                    </p>
+                  </div>
                   
                   <div className="flex justify-between mt-auto">
                     <Button
