@@ -34,7 +34,7 @@ interface ArticleDialogProps {
 const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
   content_markdown: z.string().min(1, { message: "תוכן חובה" }),
-  category_id: z.string().nullable().transform(val => val ? parseInt(val) : null),
+  category_id: z.string().nullable().transform(val => val ? Number(val) : null),
   scheduled_publish: z.date().nullable(),
   contact_email: z.string().email({ message: "נא להזין אימייל תקין" }).nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   published_at: z.date().nullable(),
@@ -98,7 +98,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
       const formattedData = {
         title: data.title,
         content_markdown: data.content_markdown,
-        category_id: data.category_id,
+        category_id: data.category_id, // Now correctly transformed to number by zod
         scheduled_publish: data.scheduled_publish ? data.scheduled_publish.toISOString() : null,
         contact_email: data.contact_email,
         published_at: publishDate ? publishDate.toISOString() : null,

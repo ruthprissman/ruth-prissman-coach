@@ -21,7 +21,7 @@ export interface Article {
 export interface ArticleFormData {
   title: string;
   content_markdown: string;
-  category_id: string | null;  // Using string type since form inputs use strings
+  category_id: string | null;  // Using string type for select inputs
   scheduled_publish: Date | null;
   published_at: Date | null;
   contact_email: string | null;
