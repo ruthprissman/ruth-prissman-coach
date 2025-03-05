@@ -78,7 +78,7 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
     try {
       const { data, error } = await supabase
         .from('patients')
-        .select('id, name')
+        .select('*')  // Select all fields to match the Patient type
         .order('name');
 
       if (error) throw error;
