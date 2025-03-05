@@ -58,7 +58,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
   const dialogTitle = isEditMode ? "עריכת מאמר" : "מאמר חדש";
 
   // Form default values with proper type conversion for form schema
-  const defaultValues: FormValues = {
+  const defaultValues = {
     title: article?.title || '',
     content_markdown: article?.content_markdown || '',
     category_id: article?.category_id ? String(article.category_id) : null,

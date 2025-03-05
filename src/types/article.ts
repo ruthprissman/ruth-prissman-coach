@@ -22,7 +22,7 @@ export interface Article {
 export interface ArticleFormData {
   title: string;
   content_markdown: string;
-  category_id: number | null;
+  category_id: string | null;  // Changed from number to string for form compatibility
   scheduled_publish: Date | null;
   published_at: Date | null;
   contact_email: string | null;
