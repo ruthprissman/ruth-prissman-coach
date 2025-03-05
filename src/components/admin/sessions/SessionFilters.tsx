@@ -90,7 +90,7 @@ const SessionFilters: React.FC<SessionFiltersProps> = ({
               <SelectValue placeholder="כל המטופלים" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">כל המטופלים</SelectItem>
+              <SelectItem value="all">כל המטופלים</SelectItem>
               {patients.map((patient) => (
                 <SelectItem key={patient.id} value={patient.id.toString()}>
                   {patient.name}
@@ -111,7 +111,7 @@ const SessionFilters: React.FC<SessionFiltersProps> = ({
               <SelectValue placeholder="כל סוגי הפגישות" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">כל סוגי הפגישות</SelectItem>
+              <SelectItem value="all">כל סוגי הפגישות</SelectItem>
               <SelectItem value="Zoom">זום</SelectItem>
               <SelectItem value="Phone">טלפון</SelectItem>
               <SelectItem value="In-Person">פגישה פרונטלית</SelectItem>

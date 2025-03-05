@@ -11,15 +11,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const getSupabaseWithAuth = (accessToken?: string) => {
   if (!accessToken) return supabase;
   
-  return createClient(
-    supabaseUrl, 
-    supabaseAnonKey, 
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
+  try {
+    return createClient(
+      supabaseUrl, 
+      supabaseAnonKey, 
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
         }
       }
-    }
-  );
+    );
+  } catch (error) {
+    console.error('Error creating authenticated Supabase client:', error);
+    return supabase; // Fallback to anonymous client
+  }
 };

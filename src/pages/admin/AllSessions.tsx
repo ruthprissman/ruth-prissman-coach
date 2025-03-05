@@ -21,8 +21,8 @@ const AllSessions: React.FC = () => {
   const [filteredSessions, setFilteredSessions] = useState<SessionWithPatient[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [patientFilter, setPatientFilter] = useState<string>('');
-  const [meetingTypeFilter, setMeetingTypeFilter] = useState<string>('');
+  const [patientFilter, setPatientFilter] = useState<string>('all');
+  const [meetingTypeFilter, setMeetingTypeFilter] = useState<string>('all');
   const [dateRangeFilter, setDateRangeFilter] = useState<{
     from: Date | undefined;
     to: Date | undefined;
@@ -102,7 +102,12 @@ const AllSessions: React.FC = () => {
   }, [session]); // Re-fetch when auth session changes
 
   useEffect(() => {
-    applyFilters();
+    try {
+      applyFilters();
+    } catch (error) {
+      console.error('Error applying filters:', error);
+      setError('שגיאה בהחלת המסננים');
+    }
   }, [searchTerm, patientFilter, meetingTypeFilter, dateRangeFilter, sessions]);
 
   const applyFilters = () => {
@@ -111,19 +116,19 @@ const AllSessions: React.FC = () => {
     // Apply search term filter (patient name)
     if (searchTerm) {
       filtered = filtered.filter(session => 
-        session.patients.name.toLowerCase().includes(searchTerm.toLowerCase())
+        session.patients?.name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
     // Apply patient filter
-    if (patientFilter) {
+    if (patientFilter && patientFilter !== 'all') {
       filtered = filtered.filter(session => 
         session.patient_id.toString() === patientFilter
       );
     }
     
     // Apply meeting type filter
-    if (meetingTypeFilter) {
+    if (meetingTypeFilter && meetingTypeFilter !== 'all') {
       filtered = filtered.filter(session => 
         session.meeting_type === meetingTypeFilter
       );
@@ -147,8 +152,8 @@ const AllSessions: React.FC = () => {
 
   const resetFilters = () => {
     setSearchTerm('');
-    setPatientFilter('');
-    setMeetingTypeFilter('');
+    setPatientFilter('all');
+    setMeetingTypeFilter('all');
     setDateRangeFilter({ from: undefined, to: undefined });
   };
 
