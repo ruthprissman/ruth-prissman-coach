@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -61,7 +62,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
   const defaultValues: FormValues = {
     title: article?.title || '',
     content_markdown: article?.content_markdown || '',
-    category_id: article?.category_id ? String(article.category_id) : null,
+    category_id: article?.category_id !== null ? String(article.category_id) : null,
     scheduled_publish: article?.scheduled_publish ? new Date(article.scheduled_publish) : null,
     contact_email: article?.contact_email || '',
     published_at: article?.published_at ? new Date(article.published_at) : null,

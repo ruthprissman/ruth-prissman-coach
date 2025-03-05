@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
@@ -110,8 +111,8 @@ const ArticlesManagement: React.FC = () => {
             ? (a.title || '').localeCompare(b.title || '') 
             : (b.title || '').localeCompare(a.title || '');
         } else {
-          const dateA = a.published_at || a.created_at;
-          const dateB = b.published_at || b.created_at;
+          const dateA = a.published_at || a.updated_at;
+          const dateB = b.published_at || b.updated_at;
           
           return sortDirection === 'asc'
             ? new Date(dateA).getTime() - new Date(dateB).getTime()
