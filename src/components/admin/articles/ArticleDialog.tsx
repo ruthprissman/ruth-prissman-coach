@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -54,11 +53,11 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
   const isEditMode = !!article;
   const dialogTitle = isEditMode ? "עריכת מאמר" : "מאמר חדש";
 
-  // Form default values
-  const defaultValues: ArticleFormData = {
+  // Form default values with proper type conversion
+  const defaultValues: Omit<z.infer<typeof formSchema>, "category_id"> & { category_id: string | null } = {
     title: article?.title || '',
     content_markdown: article?.content_markdown || '',
-    category_id: article?.category_id || null,
+    category_id: article?.category_id ? article.category_id.toString() : null,
     scheduled_publish: article?.scheduled_publish ? new Date(article.scheduled_publish) : null,
     contact_email: article?.contact_email || '',
     published_at: article?.published_at ? new Date(article.published_at) : null,
@@ -75,7 +74,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
       form.reset(defaultValues);
       setActiveTab('edit');
     }
-  }, [article, isOpen, form]);
+  }, [article, isOpen, form, defaultValues]);
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsSaving(true);

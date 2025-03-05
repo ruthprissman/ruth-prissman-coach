@@ -18,4 +18,12 @@ export interface Article {
   categories?: Category;
 }
 
-export type ArticleFormData = Omit<Article, 'id' | 'created_at' | 'updated_at' | 'categories'>;
+// Updated to match the form schema's expected types
+export interface ArticleFormData {
+  title: string;
+  content_markdown: string;
+  category_id: number | null;
+  scheduled_publish: Date | null;
+  published_at: Date | null;
+  contact_email: string | null;
+}
