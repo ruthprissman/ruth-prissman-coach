@@ -6,7 +6,7 @@ interface MarkdownPreviewProps {
 }
 
 const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ markdown }) => {
-  // Very basic markdown to HTML conversion for preview purposes
+  // Very basic markdown to HTML conversion
   const renderMarkdown = () => {
     if (!markdown) return '';
     
@@ -23,19 +23,10 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ markdown }) => {
         return `<h3>${paragraph.substring(4)}</h3>`;
       }
       
-      // Process lists
-      if (paragraph.includes('\n- ')) {
-        const listItems = paragraph.split('\n- ');
-        const items = listItems.slice(1).map(item => `<li>${item}</li>`).join('');
-        return `<ul>${items}</ul>`;
-      }
-      
-      // Process bold and italic text
+      // Process basic formatting
       let processed = paragraph
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`(.*?)`/g, '<code>$1</code>')
-        .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
       
       return `<p>${processed}</p>`;
     }).join('');
@@ -45,7 +36,7 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ markdown }) => {
   
   return (
     <div 
-      className="markdown-preview prose prose-sm max-w-none"
+      className="markdown-preview prose max-w-none"
       dangerouslySetInnerHTML={{ __html: renderMarkdown() }}
     />
   );

@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Check, Clock, CalendarIcon, ArrowUpDown } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import ArticlesList from '@/components/admin/articles/ArticlesList';
@@ -33,13 +33,9 @@ const ArticlesManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
 
   const fetchData = useCallback(async () => {
-    if (isLoading && hasAttemptedFetch) return;
-    
     setIsLoading(true);
-    setHasAttemptedFetch(true);
     setError(null);
     
     try {
@@ -79,56 +75,47 @@ const ArticlesManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [authSession, toast, hasAttemptedFetch, isLoading]);
+  }, [authSession, toast]);
 
   useEffect(() => {
-    if (!hasAttemptedFetch) {
-      fetchData();
-    }
-  }, [fetchData, hasAttemptedFetch]);
+    fetchData();
+  }, [fetchData]);
 
+  // Filter and sort articles when dependencies change
   useEffect(() => {
     if (articles.length === 0) return;
     
-    try {
-      let filtered = [...articles];
-      
-      // Filter by search term - use both title and category name
-      if (searchTerm) {
-        filtered = filtered.filter(article => 
-          article.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          article.categories?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
-      
-      // Filter by category - ensure we're comparing strings
-      if (categoryFilter && categoryFilter !== 'all') {
-        filtered = filtered.filter(article => 
-          String(article.category_id) === categoryFilter
-        );
-      }
-      
-      // Sort by title or date
-      filtered.sort((a, b) => {
-        if (sortBy === 'title') {
-          return sortDirection === 'asc' 
-            ? (a.title || '').localeCompare(b.title || '') 
-            : (b.title || '').localeCompare(a.title || '');
-        } else {
-          // Use updated_at as the primary date field for consistency
-          const dateA = a.updated_at;
-          const dateB = b.updated_at;
-          
-          return sortDirection === 'asc'
-            ? new Date(dateA).getTime() - new Date(dateB).getTime()
-            : new Date(dateB).getTime() - new Date(dateA).getTime();
-        }
-      });
-      
-      setFilteredArticles(filtered);
-    } catch (error) {
-      console.error('Error applying filters:', error);
+    let filtered = [...articles];
+    
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(article => 
+        article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        article.categories?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
+    
+    // Filter by category
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(article => 
+        article.category_id === Number(categoryFilter)
+      );
+    }
+    
+    // Sort by title or date
+    filtered.sort((a, b) => {
+      if (sortBy === 'title') {
+        return sortDirection === 'asc' 
+          ? a.title.localeCompare(b.title) 
+          : b.title.localeCompare(a.title);
+      } else {
+        return sortDirection === 'asc'
+          ? new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
+          : new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      }
+    });
+    
+    setFilteredArticles(filtered);
   }, [searchTerm, categoryFilter, sortBy, sortDirection, articles]);
 
   const handleAddArticle = () => {
@@ -144,7 +131,6 @@ const ArticlesManagement: React.FC = () => {
   const handleArticleSaved = () => {
     setIsDialogOpen(false);
     setSelectedArticle(null);
-    setHasAttemptedFetch(false);
     fetchData();
     toast({
       title: "המאמר נשמר בהצלחה",
@@ -165,13 +151,6 @@ const ArticlesManagement: React.FC = () => {
     }
   };
 
-  const resetFilters = () => {
-    setSearchTerm('');
-    setCategoryFilter('all');
-    setSortBy('date');
-    setSortDirection('desc');
-  };
-
   return (
     <AdminLayout title="ניהול מאמרים">
       {isLoading ? (
@@ -182,35 +161,26 @@ const ArticlesManagement: React.FC = () => {
       ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <p className="text-red-600 font-medium text-lg">{error}</p>
-          <Button 
-            onClick={() => {
-              setHasAttemptedFetch(false);
-              fetchData();
-            }}
-            className="mt-4"
-          >
+          <Button onClick={fetchData} className="mt-4">
             נסה שוב
           </Button>
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <Button 
-              onClick={handleAddArticle}
-              className="shrink-0"
-            >
+          <div className="flex justify-between items-center">
+            <Button onClick={handleAddArticle}>
               <Plus className="ml-2 h-4 w-4" />
               מאמר חדש
             </Button>
             
-            <div className="flex flex-1 w-full sm:w-auto gap-2 max-w-md">
-              <div className="relative flex-1">
+            <div className="flex gap-4">
+              <div className="relative">
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="חיפוש לפי כותרת או קטגוריה..."
+                  placeholder="חיפוש..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-3 pr-9"
+                  className="pl-3 pr-9 w-64"
                 />
               </div>
               
@@ -221,7 +191,7 @@ const ArticlesManagement: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="all">כל הקטגוריות</SelectItem>
                   {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
+                    <SelectItem key={category.id} value={String(category.id)}>
                       {category.name}
                     </SelectItem>
                   ))}
@@ -230,47 +200,29 @@ const ArticlesManagement: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex gap-2 items-center justify-end">
+          <div className="flex gap-2 justify-end">
             <span className="text-sm text-muted-foreground">מיון לפי:</span>
-            <div className="flex gap-1">
-              <Button 
-                variant={sortBy === 'title' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => changeSortBy('title')}
-                className="text-xs"
-              >
-                כותרת {sortBy === 'title' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </Button>
-              <Button 
-                variant={sortBy === 'date' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => changeSortBy('date')}
-                className="text-xs"
-              >
-                תאריך {sortBy === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
-              </Button>
-            </div>
-            
-            {(searchTerm || categoryFilter !== 'all' || sortBy !== 'date' || sortDirection !== 'desc') && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={resetFilters}
-                className="text-xs"
-              >
-                איפוס סינון
-              </Button>
-            )}
+            <Button 
+              variant={sortBy === 'title' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => changeSortBy('title')}
+            >
+              כותרת {sortBy === 'title' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Button>
+            <Button 
+              variant={sortBy === 'date' ? 'default' : 'outline'} 
+              size="sm"
+              onClick={() => changeSortBy('date')}
+            >
+              תאריך {sortBy === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </Button>
           </div>
           
           <ArticlesList 
             articles={filteredArticles} 
             categories={categories}
             onEdit={handleEditArticle}
-            onRefresh={() => {
-              setHasAttemptedFetch(false);
-              fetchData();
-            }}
+            onRefresh={fetchData}
           />
 
           {isDialogOpen && (

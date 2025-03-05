@@ -21,8 +21,7 @@ export interface Article {
 export interface ArticleFormData {
   title: string;
   content_markdown: string;
-  category_id: string | null;  // Using string type for select inputs (will be transformed to number for API)
-  scheduled_publish: Date | null;
-  published_at: Date | null;
+  category_id: string; // Using string for select inputs
+  scheduled_publish: string | null;
   contact_email: string | null;
 }
