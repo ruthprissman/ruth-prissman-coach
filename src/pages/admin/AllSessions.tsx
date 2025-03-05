@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
@@ -37,18 +37,23 @@ const AllSessions: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session: authSession } = useAuth();
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
 
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
+    // Prevent multiple fetch attempts
+    if (isLoading && hasAttemptedFetch) return;
+    
     setIsLoading(true);
+    setHasAttemptedFetch(true);
     setError(null);
     
     try {
-      console.log("Fetching sessions, auth session:", !!session);
+      console.log("Fetching sessions, auth session:", !!authSession);
       
       // Get supabase client with auth token if available
-      const supabaseClient = session?.access_token 
-        ? getSupabaseWithAuth(session.access_token)
+      const supabaseClient = authSession?.access_token 
+        ? getSupabaseWithAuth(authSession.access_token)
         : supabase;
       
       // Fetch all sessions with patient information
@@ -95,60 +100,62 @@ const AllSessions: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [authSession, toast, hasAttemptedFetch, isLoading]);
 
+  // Only fetch data once when component mounts, not on every auth session change
   useEffect(() => {
-    fetchSessions();
-  }, [session]); // Re-fetch when auth session changes
+    if (!hasAttemptedFetch) {
+      fetchSessions();
+    }
+  }, [fetchSessions, hasAttemptedFetch]);
 
+  // Apply filters effect
   useEffect(() => {
+    if (sessions.length === 0) return;
+    
     try {
-      applyFilters();
+      let filtered = [...sessions];
+      
+      // Apply search term filter (patient name)
+      if (searchTerm) {
+        filtered = filtered.filter(session => 
+          session.patients?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      
+      // Apply patient filter
+      if (patientFilter && patientFilter !== 'all') {
+        filtered = filtered.filter(session => 
+          session.patient_id.toString() === patientFilter
+        );
+      }
+      
+      // Apply meeting type filter
+      if (meetingTypeFilter && meetingTypeFilter !== 'all') {
+        filtered = filtered.filter(session => 
+          session.meeting_type === meetingTypeFilter
+        );
+      }
+      
+      // Apply date range filter
+      if (dateRangeFilter.from) {
+        filtered = filtered.filter(session => 
+          new Date(session.session_date) >= dateRangeFilter.from!
+        );
+      }
+      
+      if (dateRangeFilter.to) {
+        filtered = filtered.filter(session => 
+          new Date(session.session_date) <= dateRangeFilter.to!
+        );
+      }
+      
+      setFilteredSessions(filtered);
     } catch (error) {
       console.error('Error applying filters:', error);
       setError('שגיאה בהחלת המסננים');
     }
   }, [searchTerm, patientFilter, meetingTypeFilter, dateRangeFilter, sessions]);
-
-  const applyFilters = () => {
-    let filtered = [...sessions];
-    
-    // Apply search term filter (patient name)
-    if (searchTerm) {
-      filtered = filtered.filter(session => 
-        session.patients?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    // Apply patient filter
-    if (patientFilter && patientFilter !== 'all') {
-      filtered = filtered.filter(session => 
-        session.patient_id.toString() === patientFilter
-      );
-    }
-    
-    // Apply meeting type filter
-    if (meetingTypeFilter && meetingTypeFilter !== 'all') {
-      filtered = filtered.filter(session => 
-        session.meeting_type === meetingTypeFilter
-      );
-    }
-    
-    // Apply date range filter
-    if (dateRangeFilter.from) {
-      filtered = filtered.filter(session => 
-        new Date(session.session_date) >= dateRangeFilter.from!
-      );
-    }
-    
-    if (dateRangeFilter.to) {
-      filtered = filtered.filter(session => 
-        new Date(session.session_date) <= dateRangeFilter.to!
-      );
-    }
-    
-    setFilteredSessions(filtered);
-  };
 
   const resetFilters = () => {
     setSearchTerm('');
@@ -171,8 +178,8 @@ const AllSessions: React.FC = () => {
     if (!sessionToDelete) return;
     
     try {
-      const supabaseClient = session?.access_token 
-        ? getSupabaseWithAuth(session.access_token)
+      const supabaseClient = authSession?.access_token 
+        ? getSupabaseWithAuth(authSession.access_token)
         : supabase;
         
       const { error } = await supabaseClient
@@ -188,6 +195,7 @@ const AllSessions: React.FC = () => {
       });
       
       // Refresh sessions list
+      setHasAttemptedFetch(false); // Allow a new fetch attempt
       fetchSessions();
     } catch (error: any) {
       console.error('Error deleting session:', error);
@@ -203,6 +211,7 @@ const AllSessions: React.FC = () => {
   };
 
   const handleSessionUpdated = () => {
+    setHasAttemptedFetch(false); // Allow a new fetch attempt
     fetchSessions();
     setIsEditDialogOpen(false);
     setEditingSession(null);
@@ -227,7 +236,10 @@ const AllSessions: React.FC = () => {
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <p className="text-red-600 font-medium text-lg">{error}</p>
           <button 
-            onClick={fetchSessions}
+            onClick={() => {
+              setHasAttemptedFetch(false);
+              fetchSessions();
+            }}
             className="mt-4 bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
           >
             נסה שוב
