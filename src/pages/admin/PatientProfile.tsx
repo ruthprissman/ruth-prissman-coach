@@ -30,6 +30,8 @@ const PatientProfile: React.FC = () => {
   const [editFormData, setEditFormData] = useState<Patient | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAddExerciseDialogOpen, setIsAddExerciseDialogOpen] = useState(false);
+  const [isDeleteSessionDialogOpen, setIsDeleteSessionDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -104,6 +106,43 @@ const PatientProfile: React.FC = () => {
   const handleEditSession = (session: Session) => {
     setSelectedSession(session);
     setIsEditSessionDialogOpen(true);
+  };
+
+  const handleDeleteSessionConfirm = (session: Session) => {
+    setSessionToDelete(session);
+    setIsDeleteSessionDialogOpen(true);
+  };
+
+  const handleDeleteSession = async () => {
+    if (!sessionToDelete) return;
+    
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('id', sessionToDelete.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "פגישה נמחקה בהצלחה",
+        description: `הפגישה נמחקה בהצלחה`,
+      });
+      
+      await fetchPatientData();
+    } catch (error: any) {
+      console.error('Error deleting session:', error);
+      toast({
+        title: "שגיאה במחיקת פגישה",
+        description: error.message || "אנא נסה שוב מאוחר יותר",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+      setIsDeleteSessionDialogOpen(false);
+      setSessionToDelete(null);
+    }
   };
 
   const handleSessionUpdated = () => {
@@ -327,15 +366,26 @@ const PatientProfile: React.FC = () => {
                 {sessions.map((session) => (
                   <div key={session.id} className="bg-white shadow rounded-lg p-6">
                     <div className="flex justify-between items-start">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditSession(session)}
-                        className="text-gray-500"
-                      >
-                        <Edit className="h-4 w-4 ml-2" />
-                        ערוך פגישה
-                      </Button>
+                      <div className="flex space-x-2 space-x-reverse">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditSession(session)}
+                          className="text-gray-500"
+                        >
+                          <Edit className="h-4 w-4 ml-2" />
+                          ערוך פגישה
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSessionConfirm(session)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 ml-2" />
+                          מחק פגישה
+                        </Button>
+                      </div>
                       <div className="flex flex-col items-end">
                         <div className="flex items-center mb-1">
                           {getMeetingTypeIcon(session.meeting_type)}
@@ -449,6 +499,41 @@ const PatientProfile: React.FC = () => {
                 <Button 
                   variant="outline" 
                   onClick={() => setIsDeleteDialogOpen(false)}
+                >
+                  ביטול
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={isDeleteSessionDialogOpen} onOpenChange={setIsDeleteSessionDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-center">מחיקת פגישה</DialogTitle>
+              </DialogHeader>
+              
+              <div className="py-4">
+                <p className="text-center">
+                  האם אתה בטוח שברצונך למחוק את הפגישה 
+                  {sessionToDelete && 
+                    ` מתאריך ${formatDate(sessionToDelete.session_date)}`}?
+                </p>
+                <p className="text-center text-muted-foreground mt-2">
+                  פעולה זו אינה ניתנת לביטול.
+                </p>
+              </div>
+              
+              <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
+                <Button 
+                  variant="destructive" 
+                  onClick={handleDeleteSession}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'מוחק...' : 'כן, מחק'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsDeleteSessionDialogOpen(false)}
                 >
                   ביטול
                 </Button>
