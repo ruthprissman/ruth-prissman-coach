@@ -31,6 +31,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
     { label: 'ניהול תרגילים', icon: <FileText className="ml-2 h-5 w-5" />, path: '/admin/exercises' },
   ];
 
+  // For debugging purposes
+  console.log('Current location:', location.pathname);
+  console.log('Nav items:', navItems.map(item => item.path));
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
@@ -54,6 +58,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
                   "flex items-center py-3 px-4 rounded-md hover:bg-gray-100 transition-colors",
                   location.pathname === item.path && "bg-primary/10 text-primary font-medium"
                 )}
+                onClick={() => {
+                  if (isMobile) {
+                    setSidebarOpen(false);
+                  }
+                }}
               >
                 {item.icon}
                 {item.label}
