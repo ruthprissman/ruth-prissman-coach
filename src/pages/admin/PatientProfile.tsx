@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -9,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { ArrowRight, CalendarPlus, Edit, Trash2, Monitor, Phone, User, Check, X } from 'lucide-react';
 import AddSessionDialog from '@/components/admin/AddSessionDialog';
 import SessionEditDialog from '@/components/admin/SessionEditDialog';
-import ExerciseManagerDialog from '@/components/admin/ExerciseManagerDialog';
+import AddExerciseDialog from '@/components/admin/AddExerciseDialog';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -30,6 +29,7 @@ const PatientProfile: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<Patient | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAddExerciseDialogOpen, setIsAddExerciseDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -38,7 +38,6 @@ const PatientProfile: React.FC = () => {
     
     setIsLoading(true);
     try {
-      // Fetch patient
       const { data: patientData, error: patientError } = await supabase
         .from('patients')
         .select('*')
@@ -50,7 +49,6 @@ const PatientProfile: React.FC = () => {
       setPatient(patientData);
       setEditFormData(patientData);
       
-      // Fetch sessions
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
         .select('*')
@@ -155,7 +153,6 @@ const PatientProfile: React.FC = () => {
     
     setIsSubmitting(true);
     try {
-      // First delete all sessions
       const { error: sessionsError } = await supabase
         .from('sessions')
         .delete()
@@ -163,7 +160,6 @@ const PatientProfile: React.FC = () => {
       
       if (sessionsError) throw sessionsError;
       
-      // Then delete the patient
       const { error: patientError } = await supabase
         .from('patients')
         .delete()
@@ -188,6 +184,14 @@ const PatientProfile: React.FC = () => {
       setIsSubmitting(false);
       setIsDeleteDialogOpen(false);
     }
+  };
+
+  const handleExerciseAdded = () => {
+    toast({
+      title: "תרגיל נוסף בהצלחה",
+      description: "התרגיל נוסף למאגר בהצלחה"
+    });
+    setIsAddExerciseDialogOpen(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -218,7 +222,7 @@ const PatientProfile: React.FC = () => {
       case 'Phone':
         return 'טלפון';
       case 'In-Person':
-        return 'פגישה פרונטלית';
+        return 'פגישה פרונטית';
       default:
         return type;
     }
@@ -240,7 +244,6 @@ const PatientProfile: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Back button */}
           <Button 
             variant="outline" 
             onClick={() => navigate('/admin/patients')}
@@ -250,7 +253,6 @@ const PatientProfile: React.FC = () => {
             חזרה לרשימת המטופלים
           </Button>
           
-          {/* Patient details card */}
           <div className="bg-white shadow rounded-lg p-6">
             <div className="flex justify-between items-start">
               <div className="flex space-x-2 space-x-reverse">
@@ -299,13 +301,12 @@ const PatientProfile: React.FC = () => {
             </div>
           </div>
           
-          {/* Sessions section */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <div className="flex gap-2">
                 <Button 
                   variant="outline"
-                  onClick={() => setIsExerciseManagerOpen(true)}
+                  onClick={() => setIsAddExerciseDialogOpen(true)}
                 >
                   ניהול מאגר תרגילים
                 </Button>
@@ -400,7 +401,6 @@ const PatientProfile: React.FC = () => {
             )}
           </div>
           
-          {/* Dialogs */}
           <AddSessionDialog 
             isOpen={isSessionDialogOpen} 
             onClose={() => setIsSessionDialogOpen(false)} 
@@ -417,12 +417,12 @@ const PatientProfile: React.FC = () => {
             />
           )}
           
-          <ExerciseManagerDialog
-            isOpen={isExerciseManagerOpen}
-            onClose={() => setIsExerciseManagerOpen(false)}
+          <AddExerciseDialog
+            isOpen={isAddExerciseDialogOpen}
+            onClose={() => setIsAddExerciseDialogOpen(false)}
+            onExerciseAdded={handleExerciseAdded}
           />
           
-          {/* Delete confirmation dialog */}
           <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
@@ -456,7 +456,6 @@ const PatientProfile: React.FC = () => {
             </DialogContent>
           </Dialog>
           
-          {/* Edit dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
