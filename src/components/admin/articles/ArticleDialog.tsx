@@ -31,10 +31,10 @@ interface ArticleDialogProps {
 }
 
 // Define the schema for form input validation
+// Note: category_id is string in the form but will be transformed to number for API
 const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
   content_markdown: z.string().min(1, { message: "תוכן חובה" }),
-  // Use string for the form and transform to number only when submitting
   category_id: z.string().nullable().transform(val => val ? Number(val) : null),
   scheduled_publish: z.date().nullable(),
   contact_email: z.string().email({ message: "נא להזין אימייל תקין" }).nullable().or(z.literal('')).transform(val => val === '' ? null : val),
