@@ -50,7 +50,7 @@ const ArticlesManagement: React.FC = () => {
           *,
           categories(*)
         `)
-        .order('updated_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (articlesError) throw articlesError;
       
@@ -109,9 +109,9 @@ const ArticlesManagement: React.FC = () => {
           ? a.title.localeCompare(b.title) 
           : b.title.localeCompare(a.title);
       } else {
-        return sortDirection === 'asc'
-          ? new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
-          : new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        const dateA = a.scheduled_publish ? new Date(a.scheduled_publish).getTime() : 0;
+        const dateB = b.scheduled_publish ? new Date(b.scheduled_publish).getTime() : 0;
+        return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
       }
     });
     

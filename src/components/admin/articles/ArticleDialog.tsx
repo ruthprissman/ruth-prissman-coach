@@ -82,8 +82,12 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         category_id: data.category_id ? parseInt(data.category_id) : null,
         scheduled_publish: data.scheduled_publish ? data.scheduled_publish.toISOString() : null,
         contact_email: data.contact_email || null,
-        updated_at: new Date().toISOString(),
       };
+      
+      // Check if scheduled publish date has passed and we should auto-publish
+      if (data.scheduled_publish && new Date(data.scheduled_publish) <= new Date()) {
+        formattedData['published_at'] = new Date().toISOString();
+      }
       
       if (isEditMode && article) {
         // Update existing article

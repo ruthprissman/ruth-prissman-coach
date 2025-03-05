@@ -13,8 +13,7 @@ export interface Article {
   scheduled_publish: string | null;
   published_at: string | null;
   contact_email: string | null;
-  updated_at: string;
-  categories?: Category;
+  created_at?: string;
 }
 
 // Form data interface with proper types for form inputs

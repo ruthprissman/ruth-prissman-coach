@@ -85,7 +85,7 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            {/* New Articles Management Route */}
+            {/* Articles Management Route */}
             <Route 
               path="/admin/articles" 
               element={
