@@ -14,6 +14,8 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/admin/Login";
 import ResetPassword from "./pages/admin/ResetPassword";
 import Dashboard from "./pages/admin/Dashboard";
+import PatientsList from "./pages/admin/PatientsList";
+import PatientProfile from "./pages/admin/PatientProfile";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/patients" 
+              element={
+                <ProtectedRoute>
+                  <PatientsList />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/patients/:id" 
+              element={
+                <ProtectedRoute>
+                  <PatientProfile />
                 </ProtectedRoute>
               } 
             />
