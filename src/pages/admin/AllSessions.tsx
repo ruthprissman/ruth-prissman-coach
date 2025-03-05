@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -8,7 +8,7 @@ import { Patient, Session } from '@/types/patient';
 import { supabase } from '@/lib/supabase';
 import { 
   Calendar, Monitor, Phone, User, Filter, ChevronDown, Edit, 
-  Search, CalendarRange, Calendar as CalendarIcon 
+  Search, CalendarRange, Calendar as CalendarIcon, Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -25,6 +25,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from '@/lib/utils';
 import SessionEditDialog from '@/components/admin/SessionEditDialog';
@@ -50,6 +58,8 @@ const AllSessions: React.FC = () => {
   });
   const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -149,6 +159,42 @@ const AllSessions: React.FC = () => {
   const handleEditSession = (session: Session) => {
     setEditingSession(session);
     setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteSession = (session: Session) => {
+    setSessionToDelete(session);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('id', sessionToDelete.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "הפגישה נמחקה בהצלחה",
+        description: "הפגישה הוסרה מהמערכת",
+      });
+      
+      // Refresh sessions list
+      fetchSessions();
+    } catch (error: any) {
+      console.error('Error deleting session:', error);
+      toast({
+        title: "שגיאה במחיקת הפגישה",
+        description: error.message || "אנא נסה שוב מאוחר יותר",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSessionToDelete(null);
+    }
   };
 
   const handleSessionUpdated = () => {
@@ -263,7 +309,7 @@ const AllSessions: React.FC = () => {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-start text-left font-normal"
+                      className="w-full justify-start text-right font-normal"
                     >
                       <CalendarRange className="ml-2 h-4 w-4" />
                       {dateRangeFilter.from ? (
@@ -327,12 +373,12 @@ const AllSessions: React.FC = () => {
                     {filteredSessions.map((session) => (
                       <tr key={session.id} className="hover:bg-gray-50">
                         <td className="py-4 px-6">
-                          <a 
-                            href={`/admin/patients/${session.patient_id}`}
+                          <Link 
+                            to={`/admin/patients/${session.patient_id}`}
                             className="text-primary hover:underline font-medium"
                           >
                             {session.patients.name}
-                          </a>
+                          </Link>
                         </td>
                         <td className="py-4 px-6 whitespace-nowrap">
                           {formatDate(session.session_date)}
@@ -345,14 +391,26 @@ const AllSessions: React.FC = () => {
                           </div>
                         </td>
                         <td className="py-4 px-6">
-                          <Button
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleEditSession(session)}
-                          >
-                            <Edit className="h-4 w-4 ml-2" />
-                            עריכה
-                          </Button>
+                          <div className="flex space-x-2 space-x-reverse">
+                            <Button
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditSession(session)}
+                              className="flex items-center"
+                            >
+                              <Edit className="h-4 w-4 ml-2" />
+                              עריכה
+                            </Button>
+                            <Button
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteSession(session)}
+                              className="flex items-center text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4 ml-2" />
+                              מחיקה
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -371,6 +429,40 @@ const AllSessions: React.FC = () => {
               onSessionUpdated={handleSessionUpdated}
             />
           )}
+          
+          {/* Delete confirmation dialog */}
+          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>מחיקת פגישה</DialogTitle>
+                <DialogDescription>
+                  {sessionToDelete && (
+                    <>
+                      האם אתה בטוח שברצונך למחוק את הפגישה מהתאריך {" "}
+                      {formatDate(sessionToDelete.session_date)}?
+                      <div className="mt-2 text-red-500">
+                        פעולה זו לא ניתנת לביטול לאחר אישור.
+                      </div>
+                    </>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="flex justify-between sm:justify-between">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                >
+                  ביטול
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={confirmDeleteSession}
+                >
+                  כן, מחק פגישה
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </AdminLayout>
