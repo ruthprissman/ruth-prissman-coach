@@ -13,7 +13,6 @@ export interface Article {
   scheduled_publish: string | null;
   published_at: string | null;
   contact_email: string | null;
-  created_at: string;
   updated_at: string;
   categories?: Category;
 }

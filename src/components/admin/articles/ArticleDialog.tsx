@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -119,7 +118,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
           .from('professional_content')
           .insert({
             ...formattedData,
-            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           });
           
         if (error) throw error;

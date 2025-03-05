@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
@@ -35,7 +34,6 @@ const ArticlesManagement: React.FC = () => {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
 
-  // Fetch articles and categories
   const fetchData = useCallback(async () => {
     if (isLoading && hasAttemptedFetch) return;
     
@@ -48,18 +46,16 @@ const ArticlesManagement: React.FC = () => {
         ? getSupabaseWithAuth(authSession.access_token)
         : supabase;
 
-      // Fetch articles with categories
       const { data: articlesData, error: articlesError } = await supabaseClient
         .from('professional_content')
         .select(`
           *,
           categories(*)
         `)
-        .order('created_at', { ascending: false });
+        .order('updated_at', { ascending: false });
 
       if (articlesError) throw articlesError;
       
-      // Fetch categories for filters
       const { data: categoriesData, error: categoriesError } = await supabaseClient
         .from('categories')
         .select('*')
@@ -83,21 +79,18 @@ const ArticlesManagement: React.FC = () => {
     }
   }, [authSession, toast, hasAttemptedFetch, isLoading]);
 
-  // Initial data fetch
   useEffect(() => {
     if (!hasAttemptedFetch) {
       fetchData();
     }
   }, [fetchData, hasAttemptedFetch]);
 
-  // Apply filters and sorting
   useEffect(() => {
     if (articles.length === 0) return;
     
     try {
       let filtered = [...articles];
       
-      // Apply search term filter
       if (searchTerm) {
         filtered = filtered.filter(article => 
           article.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,21 +98,18 @@ const ArticlesManagement: React.FC = () => {
         );
       }
       
-      // Apply category filter
       if (categoryFilter && categoryFilter !== 'all') {
         filtered = filtered.filter(article => 
           article.category_id?.toString() === categoryFilter
         );
       }
       
-      // Apply sorting
       filtered.sort((a, b) => {
         if (sortBy === 'title') {
           return sortDirection === 'asc' 
             ? (a.title || '').localeCompare(b.title || '') 
             : (b.title || '').localeCompare(a.title || '');
         } else {
-          // Sort by publication date or created date as fallback
           const dateA = a.published_at || a.created_at;
           const dateB = b.published_at || b.created_at;
           
@@ -198,7 +188,6 @@ const ArticlesManagement: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Actions Bar */}
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <Button 
               onClick={handleAddArticle}
@@ -235,7 +224,6 @@ const ArticlesManagement: React.FC = () => {
             </div>
           </div>
           
-          {/* Sorting Controls */}
           <div className="flex gap-2 items-center justify-end">
             <span className="text-sm text-muted-foreground">מיון לפי:</span>
             <div className="flex gap-1">
@@ -269,7 +257,6 @@ const ArticlesManagement: React.FC = () => {
             )}
           </div>
           
-          {/* Articles List */}
           <ArticlesList 
             articles={filteredArticles} 
             categories={categories}
@@ -280,7 +267,6 @@ const ArticlesManagement: React.FC = () => {
             }}
           />
 
-          {/* Article Dialog */}
           {isDialogOpen && (
             <ArticleDialog
               article={selectedArticle}
