@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+
+  // Close sidebar by default on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [isMobile]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -59,6 +66,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
                   location.pathname === item.path && "bg-primary/10 text-primary font-medium"
                 )}
                 onClick={() => {
+                  console.log(`Clicked on ${item.label} (${item.path})`);
                   if (isMobile) {
                     setSidebarOpen(false);
                   }
