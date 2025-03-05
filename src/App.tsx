@@ -17,6 +17,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import PatientsList from "./pages/admin/PatientsList";
 import PatientProfile from "./pages/admin/PatientProfile";
 import AllSessions from "./pages/admin/AllSessions";
+import ExerciseManagement from "./pages/admin/ExerciseManagement";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AllSessions />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/exercises" 
+              element={
+                <ProtectedRoute>
+                  <ExerciseManagement />
                 </ProtectedRoute>
               } 
             />

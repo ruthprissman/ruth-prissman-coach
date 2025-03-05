@@ -21,4 +21,8 @@ export interface Exercise {
   id: number;
   exercise_name: string;
   description: string | null;
+  file_url?: string | null;
+  patient_id?: number | null;
+  created_at?: string;
+  patient?: Patient;
 }
