@@ -64,6 +64,16 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     },
   });
 
+  // Watch the exercise_list field to sync sent_exercises status
+  const exerciseList = form.watch('exercise_list');
+  
+  useEffect(() => {
+    // If exercises were added and sent_exercises is false, update it
+    if (exerciseList && exerciseList.length > 0 && !form.getValues('sent_exercises')) {
+      form.setValue('sent_exercises', true);
+    }
+  }, [exerciseList, form]);
+
   useEffect(() => {
     // Fetch exercises for dropdown
     const fetchExercises = async () => {
@@ -85,6 +95,11 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
   }, []);
 
   const onSubmit = async (data: SessionFormValues) => {
+    // If there are exercises in the list but sent_exercises is false, update it
+    if (data.exercise_list && data.exercise_list.length > 0) {
+      data.sent_exercises = true;
+    }
+    
     const success = await onAddSession({
       patient_id: patientId,
       session_date: data.session_date.toISOString(),
@@ -257,6 +272,8 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                             const currentList = field.value || [];
                             if (!currentList.includes(value)) {
                               field.onChange([...currentList, value]);
+                              // Auto-set sent_exercises to true when adding an exercise
+                              form.setValue('sent_exercises', true);
                             }
                           }}
                         >
@@ -294,6 +311,12 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                                 const updatedList = [...form.watch('exercise_list')!];
                                 updatedList.splice(index, 1);
                                 form.setValue('exercise_list', updatedList);
+                                // If removing the last exercise, optionally set sent_exercises to false
+                                if (updatedList.length === 0) {
+                                  // Uncomment the line below if you want to automatically set sent_exercises to false
+                                  // when removing all exercises
+                                  // form.setValue('sent_exercises', false);
+                                }
                               }}
                             >
                               הסר

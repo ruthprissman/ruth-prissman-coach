@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -67,8 +66,15 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
     },
   });
 
+  const exerciseList = form.watch('exercise_list');
+  
   useEffect(() => {
-    // Fetch exercises for dropdown
+    if (exerciseList && exerciseList.length > 0 && !form.getValues('sent_exercises')) {
+      form.setValue('sent_exercises', true);
+    }
+  }, [exerciseList, form]);
+
+  useEffect(() => {
     const fetchExercises = async () => {
       try {
         const { data, error } = await supabase
@@ -90,6 +96,10 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   const onSubmit = async (data: SessionFormValues) => {
     setIsLoading(true);
     try {
+      if (data.exercise_list && data.exercise_list.length > 0) {
+        data.sent_exercises = true;
+      }
+      
       const { error } = await supabase
         .from('sessions')
         .update({
@@ -125,12 +135,11 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">עריכת פגישה</DialogTitle>
+          <DialogTitle className="text-center">ערוך פגישה</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Session Date */}
             <FormField
               control={form.control}
               name="session_date"
@@ -162,7 +171,6 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                         selected={field.value}
                         onSelect={(date) => {
                           if (date) {
-                            // Preserve the time part from the existing date
                             const newDate = new Date(date);
                             newDate.setHours(field.value.getHours());
                             newDate.setMinutes(field.value.getMinutes());
@@ -214,7 +222,6 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
               )}
             />
             
-            {/* Meeting Type */}
             <FormField
               control={form.control}
               name="meeting_type"
@@ -241,7 +248,6 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
               )}
             />
             
-            {/* Sent Exercises Switch */}
             <FormField
               control={form.control}
               name="sent_exercises"
@@ -260,7 +266,6 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
               )}
             />
             
-            {/* Exercise List */}
             <FormField
               control={form.control}
               name="exercise_list"
@@ -274,10 +279,10 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                       render={({ field }) => (
                         <Select
                           onValueChange={(value) => {
-                            // Add the selected value to the array if it's not already there
                             const currentList = field.value || [];
                             if (!currentList.includes(value)) {
                               field.onChange([...currentList, value]);
+                              form.setValue('sent_exercises', true);
                             }
                           }}
                         >
@@ -315,6 +320,9 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                                 const updatedList = [...form.watch('exercise_list')!];
                                 updatedList.splice(index, 1);
                                 form.setValue('exercise_list', updatedList);
+                                if (updatedList.length === 0) {
+                                  form.setValue('sent_exercises', false);
+                                }
                               }}
                             >
                               הסר
@@ -329,7 +337,6 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
               )}
             />
             
-            {/* Session Summary */}
             <FormField
               control={form.control}
               name="summary"
