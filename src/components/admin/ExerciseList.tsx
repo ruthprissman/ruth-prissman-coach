@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Exercise, Patient } from '@/types/patient';
+import { Exercise } from '@/types/patient';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import {
@@ -27,7 +27,7 @@ interface ExerciseListProps {
   refreshTrigger: number;
 }
 
-type SortField = 'exercise_name' | 'created_at' | 'patients.name';
+type SortField = 'exercise_name' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
 const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
@@ -45,27 +45,13 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
   const fetchExercises = async () => {
     setLoading(true);
     try {
-      let query = supabase
+      // Simplified query to fetch only exercises without patient relation
+      const { data, error } = await supabase
         .from('exercises')
-        .select(`
-          *,
-          patient:patient_id (
-            id,
-            name
-          )
-        `);
-
-      // Add sorting
-      if (sortField === 'patients.name') {
-        query = query.order('patient(name)', { ascending: sortDirection === 'asc' });
-      } else {
-        query = query.order(sortField, { ascending: sortDirection === 'asc' });
-      }
-
-      const { data, error } = await query;
+        .select('*')
+        .order(sortField, { ascending: sortDirection === 'asc' });
 
       if (error) throw error;
-
       setExercises(data || []);
     } catch (error: any) {
       console.error('Error fetching exercises:', error);
@@ -93,11 +79,11 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
   };
 
   const filteredExercises = exercises.filter(exercise => {
-    const patientName = exercise.patient?.name?.toLowerCase() || '';
     const exerciseName = exercise.exercise_name.toLowerCase();
+    const description = exercise.description?.toLowerCase() || '';
     const searchLower = searchQuery.toLowerCase();
     
-    return patientName.includes(searchLower) || exerciseName.includes(searchLower);
+    return exerciseName.includes(searchLower) || description.includes(searchLower);
   });
 
   const formatDate = (dateString?: string) => {
@@ -115,7 +101,7 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="חפש לפי שם מטופל או שם תרגיל..."
+            placeholder="חפש לפי שם תרגיל או תיאור..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -132,7 +118,6 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
             <SelectContent>
               <SelectItem value="exercise_name">שם תרגיל</SelectItem>
               <SelectItem value="created_at">תאריך יצירה</SelectItem>
-              <SelectItem value="patients.name">שם מטופל</SelectItem>
             </SelectContent>
           </Select>
           <Button
@@ -150,7 +135,6 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>שם מטופל</TableHead>
               <TableHead>שם תרגיל</TableHead>
               <TableHead className="hidden md:table-cell">תיאור</TableHead>
               <TableHead>תאריך יצירה</TableHead>
@@ -160,7 +144,7 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={4} className="text-center py-8">
                   <div className="flex justify-center">
                     <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
                   </div>
@@ -168,14 +152,13 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
               </TableRow>
             ) : filteredExercises.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={4} className="text-center py-8">
                   לא נמצאו תרגילים
                 </TableCell>
               </TableRow>
             ) : (
               filteredExercises.map((exercise) => (
                 <TableRow key={exercise.id}>
-                  <TableCell>{exercise.patient?.name || 'ללא מטופל'}</TableCell>
                   <TableCell>{exercise.exercise_name}</TableCell>
                   <TableCell className="hidden md:table-cell max-w-xs truncate">
                     {exercise.description || '-'}

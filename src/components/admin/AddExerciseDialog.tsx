@@ -1,10 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/lib/supabase';
-import { Patient } from '@/types/patient';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -21,13 +20,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -40,7 +32,6 @@ interface AddExerciseDialogProps {
 }
 
 const formSchema = z.object({
-  patient_id: z.string().optional(),
   exercise_name: z.string().min(1, { message: 'שם התרגיל נדרש' }),
   description: z.string().optional(),
   file: z.instanceof(File).optional(),
@@ -53,45 +44,23 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
   onClose,
   onExerciseAdded,
 }) => {
-  const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      patient_id: undefined,
       exercise_name: '',
       description: '',
       file: undefined,
     },
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (isOpen) {
-      fetchPatients();
       form.reset();
     }
   }, [isOpen, form]);
-
-  const fetchPatients = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('patients')
-        .select('*')  // Select all fields to match the Patient type
-        .order('name');
-
-      if (error) throw error;
-      setPatients(data || []);
-    } catch (error: any) {
-      console.error('Error fetching patients:', error);
-      toast({
-        title: 'שגיאה בטעינת רשימת המטופלים',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-  };
 
   const validateFileName = (file?: File): boolean => {
     if (!file) return true;
@@ -160,12 +129,11 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
         }
       }
 
-      // Insert exercise into database
+      // Insert exercise into database without patient_id
       const { error } = await supabase.from('exercises').insert({
         exercise_name: values.exercise_name,
         description: values.description || null,
         file_url: fileUrl,
-        patient_id: values.patient_id ? parseInt(values.patient_id) : null,
       });
 
       if (error) throw error;
@@ -197,36 +165,7 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="patient_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>מטופל (אופציונלי)</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="בחר מטופל" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">בחר מטופל</SelectItem>
-                      {patients.map((patient) => (
-                        <SelectItem key={patient.id} value={patient.id.toString()}>
-                          {patient.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">            
             <FormField
               control={form.control}
               name="exercise_name"
