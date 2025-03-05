@@ -30,10 +30,11 @@ interface ArticleDialogProps {
   onSave: () => void;
 }
 
-// Define the schema with proper type transformations
+// Define the schema for form input validation
 const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
   content_markdown: z.string().min(1, { message: "תוכן חובה" }),
+  // Use string for the form and transform to number only when submitting
   category_id: z.string().nullable().transform(val => val ? Number(val) : null),
   scheduled_publish: z.date().nullable(),
   contact_email: z.string().email({ message: "נא להזין אימייל תקין" }).nullable().or(z.literal('')).transform(val => val === '' ? null : val),
@@ -58,10 +59,11 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
   const isEditMode = !!article;
   const dialogTitle = isEditMode ? "עריכת מאמר" : "מאמר חדש";
 
-  // Create properly typed default values
+  // Create default form values - explicitly convert category_id to string for the form
   const defaultValues: FormValues = {
     title: article?.title || '',
     content_markdown: article?.content_markdown || '',
+    // Convert number to string for the form (Select expects string values)
     category_id: article?.category_id !== null ? String(article.category_id) : null,
     scheduled_publish: article?.scheduled_publish ? new Date(article.scheduled_publish) : null,
     contact_email: article?.contact_email || '',
@@ -95,10 +97,11 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         publishDate = new Date();
       }
 
+      // Prepare data for submission - Zod has already transformed category_id to number
       const formattedData = {
         title: data.title,
         content_markdown: data.content_markdown,
-        category_id: data.category_id, // Now correctly transformed to number by zod
+        category_id: data.category_id, // Already transformed to number by Zod
         scheduled_publish: data.scheduled_publish ? data.scheduled_publish.toISOString() : null,
         contact_email: data.contact_email,
         published_at: publishDate ? publishDate.toISOString() : null,
@@ -163,7 +166,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                 )}
               />
               
-              {/* Category */}
+              {/* Category - explicitly typing this as a string field for the form */}
               <FormField
                 control={form.control}
                 name="category_id"
@@ -182,7 +185,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                       <SelectContent>
                         <SelectItem value="">ללא קטגוריה</SelectItem>
                         {categories.map(category => (
-                          <SelectItem key={category.id} value={category.id.toString()}>
+                          <SelectItem key={category.id} value={String(category.id)}>
                             {category.name}
                           </SelectItem>
                         ))}

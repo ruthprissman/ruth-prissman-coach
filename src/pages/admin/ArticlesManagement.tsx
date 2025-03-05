@@ -47,6 +47,7 @@ const ArticlesManagement: React.FC = () => {
         ? getSupabaseWithAuth(authSession.access_token)
         : supabase;
 
+      // Get articles with their related categories
       const { data: articlesData, error: articlesError } = await supabaseClient
         .from('professional_content')
         .select(`
@@ -92,6 +93,7 @@ const ArticlesManagement: React.FC = () => {
     try {
       let filtered = [...articles];
       
+      // Filter by search term - use both title and category name
       if (searchTerm) {
         filtered = filtered.filter(article => 
           article.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -99,20 +101,23 @@ const ArticlesManagement: React.FC = () => {
         );
       }
       
+      // Filter by category - ensure we're comparing strings
       if (categoryFilter && categoryFilter !== 'all') {
         filtered = filtered.filter(article => 
-          article.category_id?.toString() === categoryFilter
+          String(article.category_id) === categoryFilter
         );
       }
       
+      // Sort by title or date
       filtered.sort((a, b) => {
         if (sortBy === 'title') {
           return sortDirection === 'asc' 
             ? (a.title || '').localeCompare(b.title || '') 
             : (b.title || '').localeCompare(a.title || '');
         } else {
-          const dateA = a.published_at || a.updated_at;
-          const dateB = b.published_at || b.updated_at;
+          // Use updated_at as the primary date field for consistency
+          const dateA = a.updated_at;
+          const dateB = b.updated_at;
           
           return sortDirection === 'asc'
             ? new Date(dateA).getTime() - new Date(dateB).getTime()
