@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -38,6 +39,9 @@ const formSchema = z.object({
   published_at: z.date().nullable(),
 });
 
+// Define the form values type based on the schema
+type FormValues = z.infer<typeof formSchema>;
+
 const ArticleDialog: React.FC<ArticleDialogProps> = ({
   article,
   categories,
@@ -53,17 +57,17 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
   const isEditMode = !!article;
   const dialogTitle = isEditMode ? "עריכת מאמר" : "מאמר חדש";
 
-  // Form default values with proper type conversion
-  const defaultValues: Omit<z.infer<typeof formSchema>, "category_id"> & { category_id: string | null } = {
+  // Form default values with proper type conversion for form schema
+  const defaultValues: FormValues = {
     title: article?.title || '',
     content_markdown: article?.content_markdown || '',
-    category_id: article?.category_id ? article.category_id.toString() : null,
+    category_id: article?.category_id ? String(article.category_id) : null,
     scheduled_publish: article?.scheduled_publish ? new Date(article.scheduled_publish) : null,
     contact_email: article?.contact_email || '',
     published_at: article?.published_at ? new Date(article.published_at) : null,
   };
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
@@ -76,7 +80,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
     }
   }, [article, isOpen, form, defaultValues]);
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  const onSubmit = async (data: FormValues) => {
     setIsSaving(true);
     
     try {
