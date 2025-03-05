@@ -6,13 +6,15 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Patient, Session } from '@/types/patient';
 import { supabase } from '@/lib/supabase';
-import { ArrowRight, CalendarPlus, Edit, Trash2 } from 'lucide-react';
+import { ArrowRight, CalendarPlus, Edit, Trash2, Monitor, Phone, User, Check, X } from 'lucide-react';
 import AddSessionDialog from '@/components/admin/AddSessionDialog';
-import { Textarea } from '@/components/ui/textarea';
+import SessionEditDialog from '@/components/admin/SessionEditDialog';
+import ExerciseManagerDialog from '@/components/admin/ExerciseManagerDialog';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
 const PatientProfile: React.FC = () => {
@@ -21,6 +23,9 @@ const PatientProfile: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSessionDialogOpen, setIsSessionDialogOpen] = useState(false);
+  const [isEditSessionDialogOpen, setIsEditSessionDialogOpen] = useState(false);
+  const [isExerciseManagerOpen, setIsExerciseManagerOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<Patient | null>(null);
@@ -96,6 +101,17 @@ const PatientProfile: React.FC = () => {
       });
       return false;
     }
+  };
+
+  const handleEditSession = (session: Session) => {
+    setSelectedSession(session);
+    setIsEditSessionDialogOpen(true);
+  };
+
+  const handleSessionUpdated = () => {
+    fetchPatientData();
+    setIsEditSessionDialogOpen(false);
+    setSelectedSession(null);
   };
 
   const handleUpdatePatient = async () => {
@@ -182,6 +198,32 @@ const PatientProfile: React.FC = () => {
     }
   };
 
+  const getMeetingTypeIcon = (type: string) => {
+    switch (type) {
+      case 'Zoom':
+        return <Monitor className="h-4 w-4 ml-2" />;
+      case 'Phone':
+        return <Phone className="h-4 w-4 ml-2" />;
+      case 'In-Person':
+        return <User className="h-4 w-4 ml-2" />;
+      default:
+        return null;
+    }
+  };
+
+  const getMeetingTypeText = (type: string) => {
+    switch (type) {
+      case 'Zoom':
+        return 'זום';
+      case 'Phone':
+        return 'טלפון';
+      case 'In-Person':
+        return 'פגישה פרונטלית';
+      default:
+        return type;
+    }
+  };
+
   return (
     <AdminLayout title="פרטי מטופל">
       {isLoading ? (
@@ -260,10 +302,18 @@ const PatientProfile: React.FC = () => {
           {/* Sessions section */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <Button onClick={() => setIsSessionDialogOpen(true)}>
-                <CalendarPlus className="h-4 w-4 ml-2" />
-                הוספת פגישה חדשה
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => setIsExerciseManagerOpen(true)}
+                >
+                  ניהול מאגר תרגילים
+                </Button>
+                <Button onClick={() => setIsSessionDialogOpen(true)}>
+                  <CalendarPlus className="h-4 w-4 ml-2" />
+                  הוספת פגישה חדשה
+                </Button>
+              </div>
               <h3 className="text-xl font-bold">היסטוריית פגישות</h3>
             </div>
             
@@ -276,25 +326,72 @@ const PatientProfile: React.FC = () => {
                 {sessions.map((session) => (
                   <div key={session.id} className="bg-white shadow rounded-lg p-6">
                     <div className="flex justify-between items-start">
-                      <div className="text-gray-500">
-                        {formatDate(session.session_date)}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditSession(session)}
+                        className="text-gray-500"
+                      >
+                        <Edit className="h-4 w-4 ml-2" />
+                        ערוך פגישה
+                      </Button>
+                      <div className="flex flex-col items-end">
+                        <div className="flex items-center mb-1">
+                          {getMeetingTypeIcon(session.meeting_type)}
+                          <span className="text-gray-700">
+                            {getMeetingTypeText(session.meeting_type)}
+                          </span>
+                        </div>
+                        <div className="text-gray-500">
+                          {formatDate(session.session_date)}
+                        </div>
                       </div>
-                      <h4 className="text-lg font-medium">פגישה #{session.id}</h4>
                     </div>
                     
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h5 className="font-medium mb-2">סיכום פגישה</h5>
-                        <div className="bg-gray-50 p-3 rounded border min-h-[100px]">
-                          {session.summary || 'אין סיכום'}
+                      <div className="space-y-4">
+                        <div>
+                          <h5 className="font-medium mb-2">סיכום פגישה</h5>
+                          <div className="bg-gray-50 p-3 rounded border min-h-[100px]">
+                            {session.summary || 'אין סיכום'}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="font-medium">נשלחו תרגילים?</h5>
+                            <div className="flex items-center">
+                              {session.sent_exercises ? (
+                                <>
+                                  <Check className="h-4 w-4 text-green-500 ml-1" />
+                                  <span className="text-green-600">כן</span>
+                                </>
+                              ) : (
+                                <>
+                                  <X className="h-4 w-4 text-red-500 ml-1" />
+                                  <span className="text-red-600">לא</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                       
                       <div>
                         <h5 className="font-medium mb-2">תרגילים שניתנו</h5>
-                        <div className="bg-gray-50 p-3 rounded border min-h-[100px]">
-                          {session.exercise || 'לא ניתנו תרגילים'}
-                        </div>
+                        {session.exercise_list && session.exercise_list.length > 0 ? (
+                          <div className="bg-gray-50 p-3 rounded border">
+                            <ul className="list-disc list-inside space-y-1">
+                              {session.exercise_list.map((exercise, index) => (
+                                <li key={index}>{exercise}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : (
+                          <div className="bg-gray-50 p-3 rounded border min-h-[100px]">
+                            לא ניתנו תרגילים
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -309,6 +406,20 @@ const PatientProfile: React.FC = () => {
             onClose={() => setIsSessionDialogOpen(false)} 
             onAddSession={handleAddSession}
             patientId={Number(id)}
+          />
+          
+          {selectedSession && (
+            <SessionEditDialog
+              isOpen={isEditSessionDialogOpen}
+              onClose={() => setIsEditSessionDialogOpen(false)}
+              session={selectedSession}
+              onSessionUpdated={handleSessionUpdated}
+            />
+          )}
+          
+          <ExerciseManagerDialog
+            isOpen={isExerciseManagerOpen}
+            onClose={() => setIsExerciseManagerOpen(false)}
           />
           
           {/* Delete confirmation dialog */}

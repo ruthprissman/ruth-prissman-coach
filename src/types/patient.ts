@@ -11,6 +11,14 @@ export interface Session {
   id: number;
   patient_id: number;
   session_date: string;
+  meeting_type: 'Zoom' | 'Phone' | 'In-Person';
+  sent_exercises: boolean;
+  exercise_list: string[] | null;
   summary: string | null;
-  exercise: string | null;
+}
+
+export interface Exercise {
+  id: number;
+  exercise_name: string;
+  description: string | null;
 }

@@ -16,6 +16,7 @@ import ResetPassword from "./pages/admin/ResetPassword";
 import Dashboard from "./pages/admin/Dashboard";
 import PatientsList from "./pages/admin/PatientsList";
 import PatientProfile from "./pages/admin/PatientProfile";
+import AllSessions from "./pages/admin/AllSessions";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <PatientProfile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/sessions" 
+              element={
+                <ProtectedRoute>
+                  <AllSessions />
                 </ProtectedRoute>
               } 
             />

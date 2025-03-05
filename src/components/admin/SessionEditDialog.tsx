@@ -9,7 +9,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Session, Exercise } from '@/types/patient';
 import { supabase } from '@/lib/supabase';
-import { CalendarIcon } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { CalendarIcon, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import {
@@ -28,11 +29,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { cn } from '@/lib/utils';
 
-interface AddSessionDialogProps {
+interface SessionEditDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddSession: (session: Omit<Session, 'id'>) => Promise<boolean>;
-  patientId: number;
+  session: Session;
+  onSessionUpdated: () => void;
 }
 
 const SessionSchema = z.object({
@@ -45,22 +46,24 @@ const SessionSchema = z.object({
 
 type SessionFormValues = z.infer<typeof SessionSchema>;
 
-const AddSessionDialog: React.FC<AddSessionDialogProps> = ({ 
+const SessionEditDialog: React.FC<SessionEditDialogProps> = ({ 
   isOpen, 
   onClose, 
-  onAddSession, 
-  patientId 
+  session, 
+  onSessionUpdated 
 }) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<SessionFormValues>({
     resolver: zodResolver(SessionSchema),
     defaultValues: {
-      session_date: new Date(),
-      meeting_type: 'In-Person',
-      sent_exercises: false,
-      exercise_list: [],
-      summary: '',
+      session_date: new Date(session.session_date),
+      meeting_type: session.meeting_type,
+      sent_exercises: session.sent_exercises,
+      exercise_list: session.exercise_list,
+      summary: session.summary,
     },
   });
 
@@ -85,18 +88,36 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
   }, []);
 
   const onSubmit = async (data: SessionFormValues) => {
-    const success = await onAddSession({
-      patient_id: patientId,
-      session_date: data.session_date.toISOString(),
-      meeting_type: data.meeting_type,
-      sent_exercises: data.sent_exercises,
-      exercise_list: data.exercise_list,
-      summary: data.summary,
-    });
-    
-    if (success) {
-      form.reset();
-      onClose();
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .update({
+          session_date: data.session_date.toISOString(),
+          meeting_type: data.meeting_type,
+          sent_exercises: data.sent_exercises,
+          exercise_list: data.exercise_list,
+          summary: data.summary,
+        })
+        .eq('id', session.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "פגישה עודכנה בהצלחה",
+        description: "פרטי הפגישה עודכנו במערכת",
+      });
+      
+      onSessionUpdated();
+    } catch (error: any) {
+      console.error('Error updating session:', error);
+      toast({
+        title: "שגיאה בעדכון פגישה",
+        description: error.message || "אנא נסה שוב מאוחר יותר",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -104,7 +125,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">הוספת פגישה חדשה</DialogTitle>
+          <DialogTitle className="text-center">עריכת פגישה</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
@@ -329,8 +350,8 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
             />
             
             <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'מוסיף...' : 'הוסף פגישה'}
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'מעדכן...' : 'עדכון פגישה'}
               </Button>
               <Button variant="outline" onClick={onClose} type="button">ביטול</Button>
             </DialogFooter>
@@ -341,4 +362,4 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
   );
 };
 
-export default AddSessionDialog;
+export default SessionEditDialog;
