@@ -10,7 +10,7 @@ import { ArrowRight, CalendarPlus, Edit, Trash2 } from 'lucide-react';
 import AddSessionDialog from '@/components/admin/AddSessionDialog';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
-import he from 'date-fns/locale/he';
+import { he } from 'date-fns/locale/he';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
