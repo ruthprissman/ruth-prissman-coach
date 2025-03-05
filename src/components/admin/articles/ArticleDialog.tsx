@@ -30,6 +30,7 @@ interface ArticleDialogProps {
   onSave: () => void;
 }
 
+// Define the schema with proper type transformations
 const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
   content_markdown: z.string().min(1, { message: "תוכן חובה" }),
@@ -57,7 +58,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
   const isEditMode = !!article;
   const dialogTitle = isEditMode ? "עריכת מאמר" : "מאמר חדש";
 
-  // Form default values with proper type conversion for form schema
+  // Create properly typed default values
   const defaultValues: FormValues = {
     title: article?.title || '',
     content_markdown: article?.content_markdown || '',
@@ -170,7 +171,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                   <FormItem>
                     <FormLabel>קטגוריה</FormLabel>
                     <Select 
-                      value={field.value?.toString() || ''} 
+                      value={field.value || ''} 
                       onValueChange={field.onChange}
                     >
                       <FormControl>

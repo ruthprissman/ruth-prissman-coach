@@ -18,7 +18,7 @@ export interface Article {
   categories?: Category;
 }
 
-// Updated to match the form schema's expected types
+// Form data interface with proper types for form inputs
 export interface ArticleFormData {
   title: string;
   content_markdown: string;
