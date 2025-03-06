@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -30,21 +29,17 @@ const DEFAULT_INITIAL_DATA = {
   ]
 };
 
-// Function to convert Markdown to EditorJS format
 const markdownToEditorJS = (markdown: string): any => {
   if (!markdown) return DEFAULT_INITIAL_DATA;
   
-  // This is a simplified conversion, production code would use a more robust parser
   const blocks = [];
   
-  // Split markdown by double newlines (paragraphs)
   const paragraphs = markdown.split('\n\n');
   
   for (let p of paragraphs) {
     p = p.trim();
     if (!p) continue;
     
-    // Check for header
     if (p.startsWith('# ')) {
       blocks.push({
         type: 'header',
@@ -60,39 +55,29 @@ const markdownToEditorJS = (markdown: string): any => {
         type: 'header',
         data: { text: p.substring(4), level: 3 }
       });
-    }
-    // Check for unordered list
-    else if (p.match(/^[*-] /m)) {
+    } else if (p.match(/^[*-] /m)) {
       const items = p.split('\n').map(item => item.replace(/^[*-] /, ''));
       blocks.push({
         type: 'list',
         data: { style: 'unordered', items }
       });
-    }
-    // Check for ordered list
-    else if (p.match(/^\d+\. /m)) {
+    } else if (p.match(/^\d+\. /m)) {
       const items = p.split('\n').map(item => item.replace(/^\d+\. /, ''));
       blocks.push({
         type: 'list',
         data: { style: 'ordered', items }
       });
-    }
-    // Check for blockquote
-    else if (p.startsWith('> ')) {
+    } else if (p.startsWith('> ')) {
       blocks.push({
         type: 'quote',
         data: { text: p.substring(2), caption: '' }
       });
-    }
-    // Check for code block
-    else if (p.startsWith('```') && p.endsWith('```')) {
+    } else if (p.startsWith('```') && p.endsWith('```')) {
       blocks.push({
         type: 'code',
         data: { code: p.substring(3, p.length - 3) }
       });
-    }
-    // Regular paragraph
-    else {
+    } else {
       blocks.push({
         type: 'paragraph',
         data: { text: p }
@@ -114,7 +99,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize EditorJS
   useEffect(() => {
     if (!containerRef.current || editorRef.current) return;
 
@@ -148,7 +132,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             link: {
               class: Link,
               config: {
-                endpoint: 'https://codex.so/upload', // This is optional
+                endpoint: 'https://codex.so/upload',
               }
             },
             marker: {
@@ -161,11 +145,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           onChange: async () => {
             const data = await editorRef.current?.save();
             
-            // Convert the EditorJS data to Markdown
             if (data) {
               const parser = new EditorJSParser();
               
-              // Register custom parse rules
               parser.registerBlockParser('header', (block: any) => {
                 const level = block.data.level;
                 const text = block.data.text;
@@ -191,7 +173,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 return `\`\`\`\n${block.data.code}\n\`\`\``;
               });
               
-              // Parse EditorJS data to Markdown
               let markdown = '';
               data.blocks.forEach((block: any) => {
                 const parsedBlock = parser.parseBlock(block);
@@ -224,10 +205,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     };
   }, [containerRef, initialValue, placeholder, onChange]);
 
-  // Update editor content when initialValue changes
   useEffect(() => {
     if (editorRef.current && isInitialized && initialValue) {
-      // Only update if the editor is already initialized
       editorRef.current.render(markdownToEditorJS(initialValue));
     }
   }, [initialValue, isInitialized]);
