@@ -116,16 +116,22 @@ class PublicationService {
       
       for (const pub of scheduledPublications) {
         const articleId = pub.content_id;
-        const professionalContent = pub.professional_content as ProfessionalContent;
+        // Check if professional_content exists and is properly shaped
+        const professionalContent = pub.professional_content as unknown as ProfessionalContent; 
+        
+        if (!professionalContent) {
+          console.error(`Missing professional content for article ${articleId}`);
+          continue;
+        }
         
         if (!articlePublicationsMap.has(articleId)) {
           // Initialize with article data
           articlePublicationsMap.set(articleId, {
             id: articleId,
-            title: professionalContent?.title || "Untitled",
-            content_markdown: professionalContent?.content_markdown || "",
-            category_id: professionalContent?.category_id || null,
-            contact_email: professionalContent?.contact_email || null,
+            title: professionalContent.title || "Untitled",
+            content_markdown: professionalContent.content_markdown || "",
+            category_id: professionalContent.category_id || null,
+            contact_email: professionalContent.contact_email || null,
             article_publications: []
           });
         }
@@ -346,15 +352,17 @@ class PublicationService {
       if (pubError) throw pubError;
       if (!publication) throw new Error('Publication not found');
 
-      const professionalContent = publication.professional_content as ProfessionalContent;
+      // Ensure professional_content is properly typed
+      const professionalContent = publication.professional_content as unknown as ProfessionalContent;
+      if (!professionalContent) throw new Error('Professional content not found');
       
       // Create article object
       const article: PublishReadyArticle = {
         id: publication.content_id,
-        title: professionalContent?.title || "Untitled",
-        content_markdown: professionalContent?.content_markdown || "",
-        category_id: professionalContent?.category_id || null,
-        contact_email: professionalContent?.contact_email || null,
+        title: professionalContent.title || "Untitled",
+        content_markdown: professionalContent.content_markdown || "",
+        category_id: professionalContent.category_id || null,
+        contact_email: professionalContent.contact_email || null,
         article_publications: [{
           id: publication.id,
           content_id: publication.content_id,

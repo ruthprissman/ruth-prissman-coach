@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -6,7 +5,7 @@ import { RefreshCw } from 'lucide-react';
 import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePublication } from '@/contexts/PublicationContext';
-import { FailedPublication, ProfessionalContent } from '@/types/article';
+import { FailedPublication, ProfessionalContent, PublicationWithContent } from '@/types/article';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -18,14 +17,6 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-
-interface PublicationWithContent {
-  id: number;
-  content_id: number;
-  publish_location: string;
-  scheduled_date: string;
-  professional_content?: ProfessionalContent;
-}
 
 const FailedPublicationsPanel: React.FC = () => {
   const [failedPublications, setFailedPublications] = useState<FailedPublication[]>([]);
@@ -64,7 +55,7 @@ const FailedPublicationsPanel: React.FC = () => {
       if (error) throw error;
       
       if (data) {
-        const failed: FailedPublication[] = data.map((pub: PublicationWithContent) => ({
+        const failed: FailedPublication[] = data.map((pub: any) => ({
           id: pub.id,
           content_id: pub.content_id,
           article_title: pub.professional_content?.title || "Untitled",

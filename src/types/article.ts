@@ -67,3 +67,12 @@ export interface FailedPublication {
   scheduled_date: string;
   error_message?: string;
 }
+
+// Adding new interface for the structure returned by Supabase
+export interface PublicationWithContent {
+  id: number;
+  content_id: number;
+  publish_location: string;
+  scheduled_date: string;
+  professional_content?: ProfessionalContent | null; // Changed to a single object that might be null
+}
