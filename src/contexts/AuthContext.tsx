@@ -26,15 +26,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Check for active session on mount
     const fetchSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error fetching session:', error);
-      }
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error fetching session:', error);
+        }
 
-      setSession(data.session);
-      setUser(data.session?.user || null);
-      setIsLoading(false);
+        setSession(data.session);
+        setUser(data.session?.user || null);
+      } catch (error) {
+        console.error('Unexpected error fetching session:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchSession();
@@ -43,9 +49,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.id);
+        
         setSession(newSession);
         setUser(newSession?.user || null);
-        setIsLoading(false);
         
         if (event === 'SIGNED_OUT') {
           // Clear cached auth clients on logout

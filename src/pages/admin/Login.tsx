@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,13 +29,22 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  console.log('Login page rendered. Current auth state:', { user: !!user, isLoading });
+  console.log('Current location state:', location.state);
+  
   // Extract the destination from location state or default to admin dashboard
   const from = (location.state as { from: { pathname: string } })?.from?.pathname || '/admin/dashboard';
   
   useEffect(() => {
+    console.log('Login useEffect running, checking admin...');
     const checkAdmin = async () => {
-      const exists = await checkAdminExists();
-      setAdminExists(exists);
+      try {
+        const exists = await checkAdminExists();
+        console.log('Admin exists check result:', exists);
+        setAdminExists(exists);
+      } catch (error) {
+        console.error('Error checking if admin exists:', error);
+      }
     };
     
     checkAdmin();
@@ -58,6 +66,8 @@ const Login: React.FC = () => {
   });
 
   const onSubmit = async (data: FormValues) => {
+    console.log('Form submitted:', isCreatingAdmin ? 'Creating admin' : 'Signing in');
+    
     if (isCreatingAdmin) {
       const { error } = await createAdminUser(data.email, data.password);
       if (!error) {
@@ -67,6 +77,7 @@ const Login: React.FC = () => {
     } else {
       const { error } = await signIn(data.email, data.password);
       if (!error) {
+        console.log('Sign in successful, navigating to:', from);
         navigate(from, { replace: true });
       }
     }
@@ -81,6 +92,7 @@ const Login: React.FC = () => {
   };
   
   if (user) {
+    console.log('User already authenticated, redirecting to dashboard');
     return <Navigate to="/admin/dashboard" replace />;
   }
   
@@ -100,7 +112,7 @@ const Login: React.FC = () => {
               <h1 className="text-2xl font-bold text-purple-dark">יצירת משתמש מנהל</h1>
               {adminExists && (
                 <p className="text-red-500 mt-2">
-                  קיים כבר מנהל במערכת. אם שכחת את הסיסמה, ניתן לאפס אותה דרך 'שחזור סיסמה'.
+                  קיים כבר מנ��ל במערכת. אם שכחת את הסיסמה, ניתן לאפס אותה דרך 'שחזור סיסמה'.
                 </p>
               )}
             </>

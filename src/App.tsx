@@ -21,6 +21,8 @@ import { PublicationProvider } from './contexts/PublicationContext';
 import { Toaster } from './components/ui/toaster';
 
 function App() {
+  console.log('App component rendering');
+  
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <AuthProvider>
@@ -33,7 +35,7 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/stories" element={<Stories />} />
 
-              {/* Admin auth routes */}
+              {/* Admin auth routes - Make sure these are outside ProtectedRoute */}
               <Route path="/admin/login" element={<Login />} />
               <Route path="/admin/reset-password" element={<ResetPassword />} />
               
