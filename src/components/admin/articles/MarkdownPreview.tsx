@@ -1,43 +1,30 @@
 
 import React from 'react';
+import MarkdownIt from 'markdown-it';
 
 interface MarkdownPreviewProps {
   markdown: string;
+  className?: string;
 }
 
-const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ markdown }) => {
-  // Very basic markdown to HTML conversion
-  const renderMarkdown = () => {
-    if (!markdown) return '';
-    
-    // Process paragraphs
-    let html = markdown.split('\n\n').map(paragraph => {
-      if (!paragraph.trim()) return '';
-      
-      // Process headings
-      if (paragraph.startsWith('# ')) {
-        return `<h1>${paragraph.substring(2)}</h1>`;
-      } else if (paragraph.startsWith('## ')) {
-        return `<h2>${paragraph.substring(3)}</h2>`;
-      } else if (paragraph.startsWith('### ')) {
-        return `<h3>${paragraph.substring(4)}</h3>`;
-      }
-      
-      // Process basic formatting
-      let processed = paragraph
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>');
-      
-      return `<p>${processed}</p>`;
-    }).join('');
-    
-    return html;
-  };
+const mdParser = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+});
+
+const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ 
+  markdown, 
+  className = '' 
+}) => {
+  if (!markdown) return <div className={`prose max-w-none ${className}`}></div>;
+  
+  const html = mdParser.render(markdown);
   
   return (
     <div 
-      className="markdown-preview prose max-w-none"
-      dangerouslySetInnerHTML={{ __html: renderMarkdown() }}
+      className={`prose max-w-none ${className}`}
+      dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 };

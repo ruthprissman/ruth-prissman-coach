@@ -16,13 +16,13 @@ import {
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Article, Category, PublishLocationType } from '@/types/article';
 import MarkdownPreview from '@/components/admin/articles/MarkdownPreview';
+import RichTextEditor from '@/components/admin/articles/RichTextEditor';
 import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { 
   Popover, 
@@ -388,6 +388,11 @@ const ArticleEditor: React.FC = () => {
     }
   };
 
+  const handleEditorChange = (content: string) => {
+    form.setValue('content_markdown', content, { shouldDirty: true });
+    setMarkdownPreview(content);
+  };
+
   return (
     <AdminLayout title={isEditMode ? "עריכת מאמר" : "מאמר חדש"}>
       {isLoading ? (
@@ -537,7 +542,7 @@ const ArticleEditor: React.FC = () => {
                         </PopoverContent>
                       </Popover>
                       <FormDescription>
-                        המאמר יפורסם אוטומטית בתאריך זה. 
+                        המאמר יפורסם אוטומatically בתאריך זה. 
                         {article?.published_at && (
                           <span className="font-semibold text-green-700"> (כבר פורסם)</span>
                         )}
@@ -640,16 +645,13 @@ const ArticleEditor: React.FC = () => {
                   name="content_markdown"
                   render={({ field }) => (
                     <FormItem className="md:col-span-1">
-                      <FormLabel>תוכן (Markdown)</FormLabel>
+                      <FormLabel>תוכן המאמר</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="תוכן המאמר בפורמט Markdown..." 
-                          className="min-h-[400px] font-mono resize-none"
-                          {...field} 
-                          onChange={(e) => {
-                            field.onChange(e);
-                            setMarkdownPreview(e.target.value);
-                          }}
+                        <RichTextEditor 
+                          initialValue={field.value} 
+                          onChange={handleEditorChange}
+                          placeholder="התחל לכתוב את תוכן המאמר כאן..."
+                          className="min-h-[400px]"
                         />
                       </FormControl>
                       <FormMessage />
