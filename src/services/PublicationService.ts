@@ -1,4 +1,3 @@
-
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -15,6 +14,13 @@ interface PublishReadyArticle {
 }
 
 /**
+ * Interface for email subscriber
+ */
+interface EmailSubscriber {
+  email: string;
+}
+
+/**
  * Service to handle article publications
  */
 class PublicationService {
@@ -23,6 +29,7 @@ class PublicationService {
   private isRunning = false;
   private checkInterval = 60000; // Check every minute
   private accessToken?: string;
+  private brevoApiKey?: string = "YOUR_BREVO_API_KEY"; // Replace with real key in production
 
   private constructor() {}
 
@@ -246,22 +253,81 @@ class PublicationService {
    */
   private async publishToEmail(article: PublishReadyArticle): Promise<void> {
     try {
-      // For now, just log that we would send an email
-      // In a real implementation, we would:
-      // 1. Get email subscribers from the database
-      // 2. Format the email content
-      // 3. Send via Brevo API
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
       
-      console.log(`Article ${article.id} would be emailed to subscribers`);
+      // 1. Fetch email subscribers from the database
+      const { data: subscribers, error } = await supabaseClient
+        .from('content_subscribers')
+        .select('email')
+        .eq('subscribed', true);
       
-      // TODO: Implement email sending via Brevo API
-      // This would involve:
-      // const { data: subscribers, error } = await supabaseClient
-      //   .from('content_subscribers')
-      //   .select('email')
-      //   .eq('subscribed', true);
-      //
-      // Then sending formatted emails to each subscriber
+      if (error) {
+        console.error("Error fetching email subscribers:", error);
+        throw error;
+      }
+      
+      if (!subscribers || subscribers.length === 0) {
+        console.log("No subscribers found. Skipping email sending.");
+        return;
+      }
+      
+      // 2. Format the email content with HTML
+      const formattedMarkdown = article.content_markdown
+        .replace(/\n/g, '<br/>') // Convert newlines to HTML breaks
+        .slice(0, 500) + (article.content_markdown.length > 500 ? '...<br/><br/><a href="YOUR_WEBSITE_URL/articles/' + article.id + '">קרא עוד באתר</a>' : '');
+      
+      const emailContent = `
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.5; direction: rtl; }
+              h1 { color: #333; }
+              p { font-size: 16px; }
+              .footer { margin-top: 20px; font-size: 12px; color: #888; }
+            </style>
+          </head>
+          <body>
+            <h1>${article.title}</h1>
+            <p>${formattedMarkdown}</p>
+            <div class="footer">
+              <p>אם אינך רוצה לקבל עוד מיילים, <a href="YOUR_WEBSITE_URL/unsubscribe">לחץ כאן להסרה</a></p>
+            </div>
+          </body>
+        </html>
+      `;
+      
+      // 3. Send email via Brevo API
+      if (!this.brevoApiKey) {
+        console.error("Missing Brevo API Key");
+        throw new Error("Missing Brevo API Key configuration");
+      }
+      
+      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": this.brevoApiKey
+        },
+        body: JSON.stringify({
+          sender: { 
+            email: "RuthPrissman@gmail.com", 
+            name: "רות פריסמן - קוד הנפש" 
+          },
+          to: subscribers.map((sub: EmailSubscriber) => ({ email: sub.email })),
+          subject: article.title,
+          htmlContent: emailContent
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to send email:", errorData);
+        throw new Error(`Failed to send email: ${JSON.stringify(errorData)}`);
+      }
+      
+      console.log(`Email sent successfully for article ${article.id} to ${subscribers.length} subscribers`);
       
     } catch (error) {
       console.error(`Error publishing article ${article.id} to email:`, error);
