@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -59,7 +58,7 @@ const FailedPublicationsPanel: React.FC = () => {
         const failed: FailedPublication[] = data.map(pub => ({
           id: pub.id,
           content_id: pub.content_id,
-          article_title: pub.professional_content.title,
+          article_title: pub.professional_content?.title || "Untitled",
           publish_location: pub.publish_location,
           scheduled_date: pub.scheduled_date,
         }));
@@ -123,7 +122,7 @@ const FailedPublicationsPanel: React.FC = () => {
     <div className="space-y-4 border p-4 rounded-md">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">פרסומים שלא בוצעו</h3>
-        <Button variant="outline" size="icon" onClick={handleRefresh}>
+        <Button variant="outline" size="icon" onClick={fetchFailedPublications}>
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
