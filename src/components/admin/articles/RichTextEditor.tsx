@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -98,6 +99,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const initialValueRef = useRef(initialValue);
 
   useEffect(() => {
     if (!containerRef.current || editorRef.current) return;
@@ -140,46 +142,50 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
               shortcut: 'CMD+SHIFT+M',
             }
           },
-          data: markdownToEditorJS(initialValue),
+          data: markdownToEditorJS(initialValueRef.current),
           placeholder: placeholder,
           onChange: async () => {
-            const data = await editorRef.current?.save();
-            
-            if (data) {
-              const parser = new EditorJSParser();
+            try {
+              const data = await editorRef.current?.save();
               
-              parser.registerBlockParser('header', (block: any) => {
-                const level = block.data.level;
-                const text = block.data.text;
-                return `${'#'.repeat(level)} ${text}`;
-              });
-              
-              parser.registerBlockParser('paragraph', (block: any) => {
-                return block.data.text;
-              });
-              
-              parser.registerBlockParser('list', (block: any) => {
-                const { style, items } = block.data;
-                return items.map((item: string, index: number) => 
-                  style === 'ordered' ? `${index + 1}. ${item}` : `- ${item}`
-                ).join('\n');
-              });
-              
-              parser.registerBlockParser('quote', (block: any) => {
-                return `> ${block.data.text}`;
-              });
-              
-              parser.registerBlockParser('code', (block: any) => {
-                return `\`\`\`\n${block.data.code}\n\`\`\``;
-              });
-              
-              let markdown = '';
-              data.blocks.forEach((block: any) => {
-                const parsedBlock = parser.parseBlock(block);
-                markdown += parsedBlock + '\n\n';
-              });
-              
-              onChange(markdown.trim());
+              if (data) {
+                const parser = new EditorJSParser();
+                
+                parser.registerBlockParser('header', (block: any) => {
+                  const level = block.data.level;
+                  const text = block.data.text;
+                  return `${'#'.repeat(level)} ${text}`;
+                });
+                
+                parser.registerBlockParser('paragraph', (block: any) => {
+                  return block.data.text;
+                });
+                
+                parser.registerBlockParser('list', (block: any) => {
+                  const { style, items } = block.data;
+                  return items.map((item: string, index: number) => 
+                    style === 'ordered' ? `${index + 1}. ${item}` : `- ${item}`
+                  ).join('\n');
+                });
+                
+                parser.registerBlockParser('quote', (block: any) => {
+                  return `> ${block.data.text}`;
+                });
+                
+                parser.registerBlockParser('code', (block: any) => {
+                  return `\`\`\`\n${block.data.code}\n\`\`\``;
+                });
+                
+                let markdown = '';
+                data.blocks.forEach((block: any) => {
+                  const parsedBlock = parser.parseBlock(block);
+                  markdown += parsedBlock + '\n\n';
+                });
+                
+                onChange(markdown.trim());
+              }
+            } catch (error) {
+              console.error('Error saving editor data:', error);
             }
           },
           onReady: () => {
@@ -198,16 +204,26 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     initEditor();
 
     return () => {
-      if (editorRef.current) {
-        editorRef.current.destroy();
+      if (editorRef.current && typeof editorRef.current.destroy === 'function') {
+        try {
+          editorRef.current.destroy();
+        } catch (error) {
+          console.error('Error destroying editor:', error);
+        }
         editorRef.current = null;
       }
     };
-  }, [containerRef, initialValue, placeholder, onChange]);
+  }, [containerRef, placeholder]); // Remove onChange and initialValue from dependencies
 
+  // Handle updates to initialValue in a separate effect
   useEffect(() => {
-    if (editorRef.current && isInitialized && initialValue) {
-      editorRef.current.render(markdownToEditorJS(initialValue));
+    if (editorRef.current && isInitialized && initialValue !== initialValueRef.current) {
+      initialValueRef.current = initialValue;
+      try {
+        editorRef.current.render(markdownToEditorJS(initialValue));
+      } catch (error) {
+        console.error('Error rendering editor with new value:', error);
+      }
     }
   }, [initialValue, isInitialized]);
 
