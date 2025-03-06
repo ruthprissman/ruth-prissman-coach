@@ -1,7 +1,6 @@
 
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
-import { Article, ArticlePublication } from "@/types/article";
-import { useToast } from "@/hooks/use-toast";
+import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
 /**
  * Interface for articles that are ready to be published
@@ -117,16 +116,16 @@ class PublicationService {
       
       for (const pub of scheduledPublications) {
         const articleId = pub.content_id;
-        const professionalContent = pub.professional_content;
+        const professionalContent = pub.professional_content as ProfessionalContent;
         
         if (!articlePublicationsMap.has(articleId)) {
           // Initialize with article data
           articlePublicationsMap.set(articleId, {
             id: articleId,
-            title: professionalContent.title || "Untitled",
-            content_markdown: professionalContent.content_markdown || "",
-            category_id: professionalContent.category_id,
-            contact_email: professionalContent.contact_email,
+            title: professionalContent?.title || "Untitled",
+            content_markdown: professionalContent?.content_markdown || "",
+            category_id: professionalContent?.category_id || null,
+            contact_email: professionalContent?.contact_email || null,
             article_publications: []
           });
         }
@@ -346,14 +345,16 @@ class PublicationService {
       
       if (pubError) throw pubError;
       if (!publication) throw new Error('Publication not found');
+
+      const professionalContent = publication.professional_content as ProfessionalContent;
       
       // Create article object
       const article: PublishReadyArticle = {
         id: publication.content_id,
-        title: publication.professional_content?.title || "Untitled",
-        content_markdown: publication.professional_content?.content_markdown || "",
-        category_id: publication.professional_content?.category_id,
-        contact_email: publication.professional_content?.contact_email,
+        title: professionalContent?.title || "Untitled",
+        content_markdown: professionalContent?.content_markdown || "",
+        category_id: professionalContent?.category_id || null,
+        contact_email: professionalContent?.contact_email || null,
         article_publications: [{
           id: publication.id,
           content_id: publication.content_id,
@@ -388,7 +389,6 @@ class PublicationService {
       // Mark as published
       await this.markPublicationAsDone(publicationId);
       
-      // We can't use the useToast hook directly in a class, so we'll use console.log instead
       console.log("Publication completed successfully");
       
     } catch (error: any) {
@@ -397,12 +397,5 @@ class PublicationService {
     }
   }
 }
-
-// Implementation of toast function that can be called from the class
-const toast = {
-  title: "",
-  description: "",
-  variant: "default" as const
-};
 
 export default PublicationService;
