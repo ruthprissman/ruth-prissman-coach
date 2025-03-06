@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Article, Category, PublishLocationType } from '@/types/article';
-import MarkdownPreview from '@/components/admin/articles/MarkdownPreview';
 import RichTextEditor from '@/components/admin/articles/RichTextEditor';
 import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -92,7 +91,6 @@ const ArticleEditor: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [markdownPreview, setMarkdownPreview] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [autoSaveInterval, setAutoSaveInterval] = useState<NodeJS.Timeout | null>(null);
 
@@ -162,8 +160,6 @@ const ArticleEditor: React.FC = () => {
           contact_email: data.contact_email || '',
           publish_locations: publishLocations,
         });
-
-        setMarkdownPreview(data.content_markdown);
       }
     } catch (error: any) {
       console.error('Error fetching article:', error);
@@ -389,8 +385,7 @@ const ArticleEditor: React.FC = () => {
   };
 
   const handleEditorChange = (content: string) => {
-    form.setValue('content_markdown', content, { shouldDirty: true });
-    setMarkdownPreview(content);
+    form.setValue('content_markdown', content, { shouldDirty: true, shouldValidate: true });
   };
 
   return (
@@ -542,7 +537,7 @@ const ArticleEditor: React.FC = () => {
                         </PopoverContent>
                       </Popover>
                       <FormDescription>
-                        המאמר יפורסם אוטומatically בתאריך זה. 
+                        המאמר יפורסם אוטומטית בתאריך זה. 
                         {article?.published_at && (
                           <span className="font-semibold text-green-700"> (כבר פורסם)</span>
                         )}
@@ -639,33 +634,24 @@ const ArticleEditor: React.FC = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="content_markdown"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-1">
-                      <FormLabel>תוכן המאמר</FormLabel>
-                      <FormControl>
-                        <RichTextEditor 
-                          initialValue={field.value} 
-                          onChange={handleEditorChange}
-                          placeholder="התחל לכתוב את תוכן המאמר כאן..."
-                          className="min-h-[400px]"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="md:col-span-1">
-                  <Label>תצוגה מקדימה</Label>
-                  <div className="border rounded-md p-4 min-h-[400px] overflow-y-auto bg-white">
-                    <MarkdownPreview markdown={markdownPreview} />
-                  </div>
-                </div>
-              </div>
+              <FormField
+                control={form.control}
+                name="content_markdown"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>תוכן המאמר</FormLabel>
+                    <FormControl>
+                      <RichTextEditor 
+                        initialValue={field.value} 
+                        onChange={handleEditorChange}
+                        placeholder="התחל לכתוב את תוכן המאמר כאן..."
+                        className="min-h-[400px] w-full"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <div className="flex justify-end gap-2">
                 <Button 

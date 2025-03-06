@@ -9,7 +9,6 @@ import Code from '@editorjs/code';
 import Link from '@editorjs/link';
 import Marker from '@editorjs/marker';
 import EditorJSParser from 'editorjs-parser';
-import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
 interface RichTextEditorProps {
@@ -182,7 +181,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                   markdown += parsedBlock + '\n\n';
                 });
                 
-                onChange(markdown.trim());
+                const trimmedMarkdown = markdown.trim();
+                onChange(trimmedMarkdown);
               }
             } catch (error) {
               console.error('Error saving editor data:', error);
