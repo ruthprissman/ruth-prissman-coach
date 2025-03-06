@@ -290,8 +290,17 @@ const ArticleEditor: React.FC = () => {
         if (error) throw error;
       }
       
-      const publicationsToUpsert = publicationsData
-        .filter(pub => !pub.isDeleted)
+      const newPublications = publicationsData
+        .filter(pub => !pub.isDeleted && !pub.id)
+        .map(pub => ({
+          content_id: articleId,
+          publish_location: pub.publish_location,
+          scheduled_date: pub.scheduled_date ? pub.scheduled_date.toISOString() : null,
+          published_date: pub.published_date,
+        }));
+      
+      const existingPublications = publicationsData
+        .filter(pub => !pub.isDeleted && pub.id)
         .map(pub => ({
           id: pub.id,
           content_id: articleId,
@@ -300,12 +309,20 @@ const ArticleEditor: React.FC = () => {
           published_date: pub.published_date,
         }));
       
-      if (publicationsToUpsert.length > 0) {
-        const { error } = await supabaseClient
+      if (newPublications.length > 0) {
+        const { error: insertError } = await supabaseClient
           .from('article_publications')
-          .upsert(publicationsToUpsert, { onConflict: 'id' });
+          .insert(newPublications);
         
-        if (error) throw error;
+        if (insertError) throw insertError;
+      }
+      
+      if (existingPublications.length > 0) {
+        const { error: updateError } = await supabaseClient
+          .from('article_publications')
+          .upsert(existingPublications);
+        
+        if (updateError) throw updateError;
       }
     } catch (error) {
       console.error('Error saving publications:', error);
@@ -543,7 +560,7 @@ const ArticleEditor: React.FC = () => {
                         </PopoverContent>
                       </Popover>
                       <FormDescription>
-                        תאריך פרסום ראשוני (ניתן לקבוע תאריכי פרסום ספציפיים לכל פלטפורמה)
+                        תאריך פרסום ראשוני (ניתן לק��וע תאריכי פרסום ספציפיים לכל פלטפורמה)
                         {article?.published_at && (
                           <span className="font-semibold text-green-700"> (כבר פורסם)</span>
                         )}
