@@ -14,6 +14,7 @@ export interface Article {
   published_at: string | null;
   contact_email: string | null;
   created_at?: string;
+  categories?: Category; // Add the joined category data
 }
 
 // Form data interface with proper types for form inputs

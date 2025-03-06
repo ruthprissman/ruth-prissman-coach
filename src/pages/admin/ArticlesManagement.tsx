@@ -91,7 +91,7 @@ const ArticlesManagement: React.FC = () => {
     if (searchTerm) {
       filtered = filtered.filter(article => 
         article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        article.categories?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        (article.categories?.name && article.categories.name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
