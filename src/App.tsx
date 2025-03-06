@@ -19,6 +19,7 @@ import PatientProfile from "./pages/admin/PatientProfile";
 import AllSessions from "./pages/admin/AllSessions";
 import ExerciseManagement from "./pages/admin/ExerciseManagement";
 import ArticlesManagement from "./pages/admin/ArticlesManagement";
+import ArticleEditor from "./pages/admin/ArticleEditor";
 
 const queryClient = new QueryClient();
 
@@ -85,12 +86,28 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            {/* Articles Management Route */}
+            {/* Articles Management Routes */}
             <Route 
               path="/admin/articles" 
               element={
                 <ProtectedRoute>
                   <ArticlesManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/articles/create" 
+              element={
+                <ProtectedRoute>
+                  <ArticleEditor />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/articles/edit/:id" 
+              element={
+                <ProtectedRoute>
+                  <ArticleEditor />
                 </ProtectedRoute>
               } 
             />

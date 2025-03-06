@@ -1,5 +1,6 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,6 @@ import { Plus, Search } from 'lucide-react';
 import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import ArticlesList from '@/components/admin/articles/ArticlesList';
-import ArticleDialog from '@/components/admin/articles/ArticleDialog';
 import { Article, Category } from '@/types/article';
 import {
   Select,
@@ -21,6 +21,7 @@ import {
 
 const ArticlesManagement: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { session: authSession } = useAuth();
   const [articles, setArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -31,8 +32,6 @@ const ArticlesManagement: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -119,23 +118,11 @@ const ArticlesManagement: React.FC = () => {
   }, [searchTerm, categoryFilter, sortBy, sortDirection, articles]);
 
   const handleAddArticle = () => {
-    setSelectedArticle(null);
-    setIsDialogOpen(true);
+    navigate('/admin/articles/create');
   };
 
   const handleEditArticle = (article: Article) => {
-    setSelectedArticle(article);
-    setIsDialogOpen(true);
-  };
-
-  const handleArticleSaved = () => {
-    setIsDialogOpen(false);
-    setSelectedArticle(null);
-    fetchData();
-    toast({
-      title: "המאמר נשמר בהצלחה",
-      description: "המאמר נשמר במערכת",
-    });
+    navigate(`/admin/articles/edit/${article.id}`);
   };
 
   const toggleSortDirection = () => {
@@ -224,16 +211,6 @@ const ArticlesManagement: React.FC = () => {
             onEdit={handleEditArticle}
             onRefresh={fetchData}
           />
-
-          {isDialogOpen && (
-            <ArticleDialog
-              article={selectedArticle}
-              categories={categories}
-              isOpen={isDialogOpen}
-              onClose={() => setIsDialogOpen(false)}
-              onSave={handleArticleSaved}
-            />
-          )}
         </div>
       )}
     </AdminLayout>

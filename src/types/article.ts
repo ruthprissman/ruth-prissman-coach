@@ -5,6 +5,15 @@ export interface Category {
   created_at?: string;
 }
 
+export interface PublishLocation {
+  id?: number;
+  content_id: number;
+  location: string; // website, email, whatsapp, etc.
+  scheduled_date: string | null;
+  published_date: string | null;
+  created_at?: string;
+}
+
 export interface Article {
   id: number;
   title: string;
@@ -15,6 +24,7 @@ export interface Article {
   contact_email: string | null;
   created_at?: string;
   categories?: Category; // Add the joined category data
+  publish_locations?: PublishLocation[];
 }
 
 // Form data interface with proper types for form inputs
@@ -24,4 +34,12 @@ export interface ArticleFormData {
   category_id: string; // Using string for select inputs
   scheduled_publish: string | null;
   contact_email: string | null;
+  publish_locations: {
+    website: boolean;
+    email: boolean;
+    whatsapp: boolean;
+    other: boolean;
+  };
 }
+
+export type PublishLocationType = 'website' | 'email' | 'whatsapp' | 'other';
