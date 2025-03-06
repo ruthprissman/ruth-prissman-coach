@@ -46,3 +46,13 @@ export interface PublicationFormData {
   published_date: string | null;
   isDeleted?: boolean;
 }
+
+// Interface for failed publications that need retry
+export interface FailedPublication {
+  id: number;
+  content_id: number;
+  article_title: string;
+  publish_location: PublishLocationType;
+  scheduled_date: string;
+  error_message?: string;
+}
