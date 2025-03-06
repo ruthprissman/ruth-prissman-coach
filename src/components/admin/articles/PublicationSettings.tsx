@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -54,12 +53,10 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
   onUpdate,
   onDelete
 }) => {
-  // Fixed type definition to explicitly include empty string as a valid type
   const [newLocation, setNewLocation] = React.useState<PublishLocationType | ''>('');
   const [newScheduledDate, setNewScheduledDate] = React.useState<Date | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Filter out locations that are already in use
   const availableLocations = PUBLISH_LOCATIONS.filter(
     location => !publications.some(pub => pub.publish_location === location && !pub.isDeleted)
   );
@@ -76,7 +73,6 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
       published_date: null
     });
 
-    // Reset form
     setNewLocation('');
     setNewScheduledDate(null);
     setError(null);
@@ -130,9 +126,15 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
                         onSelect={(date) => handleDateChange(index, date)}
                         disabled={(date) => date < new Date("1900-01-01")}
                         initialFocus
+                        className={cn("p-3 pointer-events-auto")}
                       />
                     </PopoverContent>
                   </Popover>
+                  {publication.scheduled_date && publication.scheduled_date < new Date() && (
+                    <p className="text-yellow-600 text-xs mt-1">
+                      ⚠️ תאריך זה כבר עבר
+                    </p>
+                  )}
                 </TableCell>
                 <TableCell>
                   {publication.published_date 
@@ -224,11 +226,17 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
                   mode="single"
                   selected={newScheduledDate}
                   onSelect={setNewScheduledDate}
-                  disabled={(date) => date < new Date()}
+                  disabled={(date) => date < new Date("1900-01-01")}
                   initialFocus
+                  className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
             </Popover>
+            {newScheduledDate && newScheduledDate < new Date() && (
+              <p className="text-yellow-600 text-xs mt-1">
+                ⚠️ תאריך זה כבר עבר
+              </p>
+            )}
           </div>
           
           <Button 
