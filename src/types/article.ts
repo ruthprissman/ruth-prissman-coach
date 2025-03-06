@@ -30,7 +30,7 @@ export interface Article {
 // Form data interface with proper types for form inputs
 export interface ArticleFormData {
   title: string;
-  content_markdown: string;
+  content_markdown: string | undefined; // עדכנו כדי לאפשר undefined כערך
   category_id: string | 'none'; // Updated to use 'none' instead of empty string
   scheduled_publish: string | null;
   contact_email: string | null;

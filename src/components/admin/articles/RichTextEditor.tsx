@@ -7,7 +7,6 @@ import Quote from '@editorjs/quote';
 import Code from '@editorjs/code';
 import Link from '@editorjs/link';
 import Marker from '@editorjs/marker';
-import EditorJSParser from 'editorjs-parser';
 import { RefreshCw } from 'lucide-react';
 
 interface RichTextEditorProps {
@@ -94,13 +93,6 @@ const markdownToEditorJS = (markdown: string): any => {
   return { blocks };
 };
 
-const hasValidContent = (markdown: string): boolean => {
-  if (!markdown) return false;
-  
-  const strippedContent = markdown.replace(/\s+/g, '').trim();
-  return strippedContent.length > 0;
-};
-
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
   initialValue = '',
   onChange,
@@ -115,8 +107,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [currentMarkdown, setCurrentMarkdown] = useState(initialValue);
 
   useEffect(() => {
-    if (initialValue && hasValidContent(initialValue)) {
-      console.log('Initial value has valid content, calling onChange');
+    if (initialValue) {
+      console.log('Initial value provided, calling onChange');
       onChange(initialValue);
     }
   }, []);
@@ -171,42 +163,41 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
               
               if (data) {
                 console.log('Editor data available:', data);
-                const parser = new EditorJSParser();
-                
-                parser.registerBlockParser('header', (block: any) => {
-                  const level = block.data.level;
-                  const text = block.data.text;
-                  return `${'#'.repeat(level)} ${text}`;
-                });
-                
-                parser.registerBlockParser('paragraph', (block: any) => {
-                  return block.data.text;
-                });
-                
-                parser.registerBlockParser('list', (block: any) => {
-                  const { style, items } = block.data;
-                  return items.map((item: string, index: number) => 
-                    style === 'ordered' ? `${index + 1}. ${item}` : `- ${item}`
-                  ).join('\n');
-                });
-                
-                parser.registerBlockParser('quote', (block: any) => {
-                  return `> ${block.data.text}`;
-                });
-                
-                parser.registerBlockParser('code', (block: any) => {
-                  return `\`\`\`\n${block.data.code}\n\`\`\``;
-                });
                 
                 let markdown = '';
-                data.blocks.forEach((block: any) => {
-                  const parsedBlock = parser.parseBlock(block);
-                  markdown += parsedBlock + '\n\n';
-                });
+                
+                for (const block of data.blocks) {
+                  switch (block.type) {
+                    case 'header':
+                      markdown += `${'#'.repeat(block.data.level)} ${block.data.text}\n\n`;
+                      break;
+                    case 'paragraph':
+                      markdown += `${block.data.text}\n\n`;
+                      break;
+                    case 'list':
+                      for (let i = 0; i < block.data.items.length; i++) {
+                        const item = block.data.items[i];
+                        markdown += block.data.style === 'ordered' 
+                          ? `${i + 1}. ${item}\n` 
+                          : `- ${item}\n`;
+                      }
+                      markdown += '\n';
+                      break;
+                    case 'quote':
+                      markdown += `> ${block.data.text}\n\n`;
+                      break;
+                    case 'code':
+                      markdown += `\`\`\`\n${block.data.code}\n\`\`\`\n\n`;
+                      break;
+                    default:
+                      if (block.data.text) {
+                        markdown += `${block.data.text}\n\n`;
+                      }
+                  }
+                }
                 
                 const trimmedMarkdown = markdown.trim();
                 console.log('Generated markdown:', trimmedMarkdown);
-                console.log('Has valid content:', hasValidContent(trimmedMarkdown));
                 
                 setCurrentMarkdown(trimmedMarkdown);
                 
@@ -221,7 +212,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             setIsLoading(false);
             setIsInitialized(true);
             
-            if (initialValueRef.current && hasValidContent(initialValueRef.current)) {
+            if (initialValueRef.current) {
               console.log('Calling onChange with initial value on ready');
               onChange(initialValueRef.current);
             }

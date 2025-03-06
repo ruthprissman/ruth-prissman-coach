@@ -61,15 +61,7 @@ import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
-  content_markdown: z.string().refine(
-    (content) => {
-      if (!content) return false;
-      
-      const strippedContent = content.replace(/\s+/g, '').trim();
-      return strippedContent.length > 0;
-    },
-    { message: "תוכן חובה" }
-  ),
+  content_markdown: z.string().optional(),
   category_id: z.string().nullable(),
   scheduled_publish: z.date().nullable(),
   contact_email: z.string().email({ message: "נא להזין אימייל תקין" }).nullable().or(z.literal('')),
@@ -235,7 +227,7 @@ const ArticleEditor: React.FC = () => {
       
       const formattedData = {
         title: data.title,
-        content_markdown: data.content_markdown,
+        content_markdown: data.content_markdown || '',
         category_id: data.category_id === NONE_CATEGORY ? null : parseInt(data.category_id as string),
         scheduled_publish: data.scheduled_publish ? data.scheduled_publish.toISOString() : null,
         contact_email: data.contact_email || null,
@@ -391,12 +383,10 @@ const ArticleEditor: React.FC = () => {
 
   const handleEditorChange = (content: string) => {
     console.log('Editor content updated in parent:', content);
-    console.log('Content length:', content.length);
-    console.log('Has content (simple check):', content && content.replace(/\s+/g, '').length > 0);
     
     form.setValue('content_markdown', content, { 
       shouldDirty: true,
-      shouldValidate: true,
+      shouldValidate: false,
       shouldTouch: true
     });
   };
