@@ -61,7 +61,20 @@ import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
-  content_markdown: z.string().min(1, { message: "תוכן חובה" }),
+  content_markdown: z.string().refine(
+    (content) => {
+      const strippedContent = content
+        .replace(/#+\s/g, '') // Remove headers
+        .replace(/>\s/g, '')  // Remove blockquotes
+        .replace(/[*-]\s/g, '') // Remove list markers
+        .replace(/\d+\.\s/g, '') // Remove ordered list markers
+        .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+        .replace(/\s+/g, ''); // Remove all whitespace
+      
+      return strippedContent.length > 0;
+    },
+    { message: "תוכן חובה" }
+  ),
   category_id: z.string().nullable(),
   scheduled_publish: z.date().nullable(),
   contact_email: z.string().email({ message: "נא להזין אימייל תקין" }).nullable().or(z.literal('')),
@@ -534,7 +547,7 @@ const ArticleEditor: React.FC = () => {
                         </PopoverContent>
                       </Popover>
                       <FormDescription>
-                        המאמר יפורסם אוטומטית בתאריך זה. 
+                        המאמר יפורסם אוטומatically בתאריך זה. 
                         {article?.published_at && (
                           <span className="font-semibold text-green-700"> (כבר פורסם)</span>
                         )}

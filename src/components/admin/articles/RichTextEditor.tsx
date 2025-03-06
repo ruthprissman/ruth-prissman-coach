@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -85,7 +84,31 @@ const markdownToEditorJS = (markdown: string): any => {
     }
   }
   
+  // If no blocks were created, add an empty paragraph
+  if (blocks.length === 0) {
+    blocks.push({
+      type: 'paragraph',
+      data: { text: '' }
+    });
+  }
+  
   return { blocks };
+};
+
+// Helper function to check if content is meaningful
+const hasValidContent = (markdown: string): boolean => {
+  if (!markdown) return false;
+  
+  // Remove all whitespace, newlines, and markdown symbols that don't contribute to content
+  const strippedContent = markdown
+    .replace(/#+\s/g, '') // Remove headers
+    .replace(/>\s/g, '')  // Remove blockquotes
+    .replace(/[*-]\s/g, '') // Remove list markers
+    .replace(/\d+\.\s/g, '') // Remove ordered list markers
+    .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+    .replace(/\s+/g, ''); // Remove all whitespace
+  
+  return strippedContent.length > 0;
 };
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
@@ -182,6 +205,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 });
                 
                 const trimmedMarkdown = markdown.trim();
+
+                // We keep the original Markdown (with all whitespace and formatting)
+                // but we validate if it has any meaningful content
                 onChange(trimmedMarkdown);
               }
             } catch (error) {
