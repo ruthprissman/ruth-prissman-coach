@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
@@ -14,8 +15,9 @@ import {
   RefreshCw
 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Article, Category, PublishLocationType } from '@/types/article';
+import { Article, Category, PublicationFormData, PublishLocationType } from '@/types/article';
 import RichTextEditor from '@/components/admin/articles/RichTextEditor';
+import PublicationSettings from '@/components/admin/articles/PublicationSettings';
 import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -28,7 +30,6 @@ import {
   PopoverContent, 
   PopoverTrigger 
 } from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -65,12 +66,6 @@ const formSchema = z.object({
   category_id: z.string().nullable(),
   scheduled_publish: z.date().nullable(),
   contact_email: z.string().email({ message: "נא להזין אימייל תקין" }).nullable().or(z.literal('')),
-  publish_locations: z.object({
-    website: z.boolean().default(true),
-    email: z.boolean().default(false),
-    whatsapp: z.boolean().default(false),
-    other: z.boolean().default(false),
-  }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -90,6 +85,7 @@ const ArticleEditor: React.FC = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [autoSaveInterval, setAutoSaveInterval] = useState<NodeJS.Timeout | null>(null);
+  const [publications, setPublications] = useState<PublicationFormData[]>([]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -99,12 +95,6 @@ const ArticleEditor: React.FC = () => {
       category_id: NONE_CATEGORY,
       scheduled_publish: null,
       contact_email: '',
-      publish_locations: {
-        website: true,
-        email: false,
-        whatsapp: false,
-        other: false,
-      },
     },
   });
 
@@ -124,7 +114,7 @@ const ArticleEditor: React.FC = () => {
         .select(`
           *,
           categories(*),
-          content_publish_options(*)
+          article_publications(*)
         `)
         .eq('id', Number(id))
         .single();
@@ -134,20 +124,15 @@ const ArticleEditor: React.FC = () => {
       setArticle(data);
 
       if (data) {
-        const publishLocations = {
-          website: false,
-          email: false,
-          whatsapp: false,
-          other: false,
-        };
+        // Convert API data to form data
+        const publicationData: PublicationFormData[] = data.article_publications?.map((pub: any) => ({
+          id: pub.id,
+          publish_location: pub.publish_location as PublishLocationType,
+          scheduled_date: pub.scheduled_date ? new Date(pub.scheduled_date) : null,
+          published_date: pub.published_date,
+        })) || [];
 
-        if (data.content_publish_options) {
-          data.content_publish_options.forEach((option: any) => {
-            if (option.location in publishLocations) {
-              publishLocations[option.location as keyof typeof publishLocations] = true;
-            }
-          });
-        }
+        setPublications(publicationData);
 
         form.reset({
           title: data.title,
@@ -155,7 +140,6 @@ const ArticleEditor: React.FC = () => {
           category_id: data.category_id ? String(data.category_id) : NONE_CATEGORY,
           scheduled_publish: data.scheduled_publish ? new Date(data.scheduled_publish) : null,
           contact_email: data.contact_email || '',
-          publish_locations: publishLocations,
         });
       }
     } catch (error: any) {
@@ -261,7 +245,7 @@ const ArticleEditor: React.FC = () => {
         articleId = newArticle.id;
       }
       
-      await savePublishLocations(articleId, data.publish_locations);
+      await savePublications(articleId, publications);
       
       setLastSaved(new Date());
       form.reset(data);
@@ -291,35 +275,46 @@ const ArticleEditor: React.FC = () => {
     }
   };
 
-  const savePublishLocations = async (articleId: number, locations: FormValues['publish_locations']) => {
-    const supabaseClient = authSession?.access_token 
-      ? getSupabaseWithAuth(authSession.access_token)
-      : supabase;
-    
+  const savePublications = async (articleId: number, publicationsData: PublicationFormData[]) => {
     try {
-      await supabaseClient
-        .from('content_publish_options')
-        .delete()
-        .eq('content_id', articleId);
+      const supabaseClient = authSession?.access_token 
+        ? getSupabaseWithAuth(authSession.access_token)
+        : supabase;
       
-      const locationsToInsert = Object.entries(locations)
-        .filter(([_, selected]) => selected)
-        .map(([location]) => ({
-          content_id: articleId,
-          location,
-          scheduled_date: new Date().toISOString(),
-          published_date: null,
-        }));
+      // Handle publications marked for deletion
+      const publicationsToDelete = publicationsData
+        .filter(pub => pub.isDeleted && pub.id)
+        .map(pub => pub.id);
       
-      if (locationsToInsert.length > 0) {
+      if (publicationsToDelete.length > 0) {
         const { error } = await supabaseClient
-          .from('content_publish_options')
-          .insert(locationsToInsert);
+          .from('article_publications')
+          .delete()
+          .in('id', publicationsToDelete);
         
         if (error) throw error;
       }
-    } catch (error: any) {
-      console.error('Error saving publish locations:', error);
+      
+      // Handle new and updated publications
+      const publicationsToUpsert = publicationsData
+        .filter(pub => !pub.isDeleted)
+        .map(pub => ({
+          id: pub.id,
+          content_id: articleId,
+          publish_location: pub.publish_location,
+          scheduled_date: pub.scheduled_date ? pub.scheduled_date.toISOString() : null,
+          published_date: pub.published_date,
+        }));
+      
+      if (publicationsToUpsert.length > 0) {
+        const { error } = await supabaseClient
+          .from('article_publications')
+          .upsert(publicationsToUpsert, { onConflict: 'id' });
+        
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error saving publications:', error);
       throw error;
     }
   };
@@ -351,8 +346,9 @@ const ArticleEditor: React.FC = () => {
         ? getSupabaseWithAuth(authSession.access_token)
         : supabase;
       
+      // First delete all publications
       await supabaseClient
-        .from('content_publish_options')
+        .from('article_publications')
         .delete()
         .eq('content_id', Number(id));
       
@@ -389,6 +385,22 @@ const ArticleEditor: React.FC = () => {
       shouldValidate: false,
       shouldTouch: true
     });
+  };
+  
+  const handleAddPublication = (publication: PublicationFormData) => {
+    setPublications(prev => [...prev, publication]);
+  };
+
+  const handleUpdatePublication = (index: number, updatedPublication: PublicationFormData) => {
+    setPublications(prev => 
+      prev.map((pub, i) => i === index ? updatedPublication : pub)
+    );
+  };
+
+  const handleDeletePublication = (index: number) => {
+    setPublications(prev => 
+      prev.map((pub, i) => i === index ? { ...pub, isDeleted: true } : pub)
+    );
   };
 
   return (
@@ -508,7 +520,7 @@ const ArticleEditor: React.FC = () => {
                   name="scheduled_publish"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>תאריך פרסום מתוכנן</FormLabel>
+                      <FormLabel>תאריך פרסום מתוכנן כללי</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -540,7 +552,7 @@ const ArticleEditor: React.FC = () => {
                         </PopoverContent>
                       </Popover>
                       <FormDescription>
-                        המאמר יפורסם אוטומatically בתאריך זה. 
+                        תאריך פרסום ראשוני (ניתן לקבוע תאריכי פרסום ספציפיים לכל פלטפורמה)
                         {article?.published_at && (
                           <span className="font-semibold text-green-700"> (כבר פורסם)</span>
                         )}
@@ -568,74 +580,13 @@ const ArticleEditor: React.FC = () => {
                 />
               </div>
               
-              <div className="border p-4 rounded-md">
-                <h3 className="text-lg font-medium mb-2">אפשרויות פרסום</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="publish_locations.website"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-x-reverse rtl:space-x-reverse">
-                        <FormControl>
-                          <Checkbox 
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">אתר</FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="publish_locations.email"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-x-reverse rtl:space-x-reverse">
-                        <FormControl>
-                          <Checkbox 
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">newsletter אימייל</FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="publish_locations.whatsapp"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-x-reverse rtl:space-x-reverse">
-                        <FormControl>
-                          <Checkbox 
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">וואטסאפ</FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="publish_locations.other"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center space-x-3 space-x-reverse rtl:space-x-reverse">
-                        <FormControl>
-                          <Checkbox 
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormLabel className="font-normal">אחר</FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
+              {/* Publication Settings Component */}
+              <PublicationSettings
+                publications={publications}
+                onAdd={handleAddPublication}
+                onUpdate={handleUpdatePublication}
+                onDelete={handleDeletePublication}
+              />
               
               <FormField
                 control={form.control}
