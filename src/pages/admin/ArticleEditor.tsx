@@ -63,6 +63,8 @@ const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
   content_markdown: z.string().refine(
     (content) => {
+      if (!content) return false;
+      
       const strippedContent = content
         .replace(/#+\s/g, '') // Remove headers
         .replace(/>\s/g, '')  // Remove blockquotes
@@ -395,7 +397,14 @@ const ArticleEditor: React.FC = () => {
   };
 
   const handleEditorChange = (content: string) => {
-    form.setValue('content_markdown', content, { shouldDirty: true, shouldValidate: true });
+    form.setValue('content_markdown', content, { 
+      shouldDirty: true,
+      shouldValidate: true,
+      shouldTouch: true
+    });
+    
+    console.log('Editor content updated:', content);
+    console.log('Has content:', content && content.replace(/\s+/g, '').length > 0);
   };
 
   return (

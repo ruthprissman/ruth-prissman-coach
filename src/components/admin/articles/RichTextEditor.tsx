@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -122,6 +123,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const initialValueRef = useRef(initialValue);
+  const [currentMarkdown, setCurrentMarkdown] = useState(initialValue);
+
+  // Force immediate onChange call on initialization with initial value if it exists
+  useEffect(() => {
+    if (initialValue && hasValidContent(initialValue)) {
+      onChange(initialValue);
+    }
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current || editorRef.current) return;
@@ -205,9 +214,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 });
                 
                 const trimmedMarkdown = markdown.trim();
-
-                // We keep the original Markdown (with all whitespace and formatting)
-                // but we validate if it has any meaningful content
+                
+                // Update the current markdown state
+                setCurrentMarkdown(trimmedMarkdown);
+                
+                // Always call onChange with the current content, 
+                // even if it appears empty - let the form handle validation
                 onChange(trimmedMarkdown);
               }
             } catch (error) {
@@ -217,6 +229,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           onReady: () => {
             setIsLoading(false);
             setIsInitialized(true);
+            
+            // Initial call to onChange with the current value
+            if (initialValueRef.current && hasValidContent(initialValueRef.current)) {
+              onChange(initialValueRef.current);
+            }
           }
         });
         
@@ -245,6 +262,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   useEffect(() => {
     if (editorRef.current && isInitialized && initialValue !== initialValueRef.current) {
       initialValueRef.current = initialValue;
+      setCurrentMarkdown(initialValue);
       try {
         editorRef.current.render(markdownToEditorJS(initialValue));
       } catch (error) {
