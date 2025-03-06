@@ -31,7 +31,7 @@ export interface Article {
 export interface ArticleFormData {
   title: string;
   content_markdown: string;
-  category_id: string; // Using string for select inputs
+  category_id: string | 'none'; // Updated to use 'none' instead of empty string
   scheduled_publish: string | null;
   contact_email: string | null;
   publish_locations: {

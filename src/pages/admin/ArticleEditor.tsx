@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
@@ -61,7 +60,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
-// Define the schema for form validation
 const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
   content_markdown: z.string().min(1, { message: "תוכן חובה" }),
@@ -81,6 +79,8 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const NONE_CATEGORY = "none";
+
 const ArticleEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
@@ -96,13 +96,12 @@ const ArticleEditor: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [autoSaveInterval, setAutoSaveInterval] = useState<NodeJS.Timeout | null>(null);
 
-  // Set up the form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
       content_markdown: '',
-      category_id: null,
+      category_id: NONE_CATEGORY,
       scheduled_publish: null,
       contact_email: '',
       publish_locations: {
@@ -114,7 +113,6 @@ const ArticleEditor: React.FC = () => {
     },
   });
 
-  // Function to fetch article data
   const fetchArticleData = useCallback(async () => {
     if (!isEditMode) {
       setIsLoading(false);
@@ -141,7 +139,6 @@ const ArticleEditor: React.FC = () => {
       setArticle(data);
 
       if (data) {
-        // Convert publish locations to form format
         const publishLocations = {
           website: false,
           email: false,
@@ -157,11 +154,10 @@ const ArticleEditor: React.FC = () => {
           });
         }
 
-        // Set form values
         form.reset({
           title: data.title,
           content_markdown: data.content_markdown,
-          category_id: data.category_id ? String(data.category_id) : null,
+          category_id: data.category_id ? String(data.category_id) : NONE_CATEGORY,
           scheduled_publish: data.scheduled_publish ? new Date(data.scheduled_publish) : null,
           contact_email: data.contact_email || '',
           publish_locations: publishLocations,
@@ -181,7 +177,6 @@ const ArticleEditor: React.FC = () => {
     }
   }, [authSession, id, isEditMode, form, toast]);
 
-  // Function to fetch categories
   const fetchCategories = useCallback(async () => {
     try {
       const supabaseClient = authSession?.access_token 
@@ -206,12 +201,10 @@ const ArticleEditor: React.FC = () => {
     }
   }, [authSession, toast]);
 
-  // Initial data fetch
   useEffect(() => {
     Promise.all([fetchArticleData(), fetchCategories()]);
   }, [fetchArticleData, fetchCategories]);
 
-  // Set up auto-save interval
   useEffect(() => {
     if (form.formState.isDirty && !autoSaveInterval) {
       const interval = setInterval(() => {
@@ -219,7 +212,7 @@ const ArticleEditor: React.FC = () => {
         if (formData.title && formData.content_markdown && isEditMode) {
           handleAutoSave(formData);
         }
-      }, 30000); // Auto-save every 30 seconds
+      }, 30000);
 
       setAutoSaveInterval(interval);
     }
@@ -231,7 +224,6 @@ const ArticleEditor: React.FC = () => {
     };
   }, [form.formState.isDirty, isEditMode, autoSaveInterval]);
 
-  // Function to save article 
   const saveArticle = async (data: FormValues, publishNow = false) => {
     setIsSaving(true);
     
@@ -240,16 +232,14 @@ const ArticleEditor: React.FC = () => {
         ? getSupabaseWithAuth(authSession.access_token)
         : supabase;
       
-      // Prepare data for submission
       const formattedData = {
         title: data.title,
         content_markdown: data.content_markdown,
-        category_id: data.category_id ? parseInt(data.category_id) : null,
+        category_id: data.category_id === NONE_CATEGORY ? null : parseInt(data.category_id as string),
         scheduled_publish: data.scheduled_publish ? data.scheduled_publish.toISOString() : null,
         contact_email: data.contact_email || null,
       };
       
-      // Check if we should publish now
       if (publishNow || (data.scheduled_publish && new Date(data.scheduled_publish) <= new Date())) {
         formattedData['published_at'] = new Date().toISOString();
       }
@@ -257,7 +247,6 @@ const ArticleEditor: React.FC = () => {
       let articleId: number;
       
       if (isEditMode && id) {
-        // Update existing article
         const { error } = await supabaseClient
           .from('professional_content')
           .update(formattedData)
@@ -267,7 +256,6 @@ const ArticleEditor: React.FC = () => {
         
         articleId = Number(id);
       } else {
-        // Create new article
         const { data: newArticle, error } = await supabaseClient
           .from('professional_content')
           .insert(formattedData)
@@ -280,14 +268,12 @@ const ArticleEditor: React.FC = () => {
         articleId = newArticle.id;
       }
       
-      // Save publish locations
       await savePublishLocations(articleId, data.publish_locations);
       
       setLastSaved(new Date());
-      form.reset(data); // Reset form to clear isDirty state but keep values
+      form.reset(data);
       
       if (!isEditMode) {
-        // Redirect to edit mode with the new article ID
         navigate(`/admin/articles/edit/${articleId}`);
         
         toast({
@@ -312,20 +298,17 @@ const ArticleEditor: React.FC = () => {
     }
   };
 
-  // Function to save publish locations
   const savePublishLocations = async (articleId: number, locations: FormValues['publish_locations']) => {
     const supabaseClient = authSession?.access_token 
       ? getSupabaseWithAuth(authSession.access_token)
       : supabase;
     
     try {
-      // First, delete all existing locations for this article
       await supabaseClient
         .from('content_publish_options')
         .delete()
         .eq('content_id', articleId);
       
-      // Then, insert new locations
       const locationsToInsert = Object.entries(locations)
         .filter(([_, selected]) => selected)
         .map(([location]) => ({
@@ -344,32 +327,27 @@ const ArticleEditor: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error saving publish locations:', error);
-      throw error; // Propagate the error
+      throw error;
     }
   };
 
-  // Handle form submission
   const onSubmit = async (data: FormValues) => {
     await saveArticle(data);
   };
 
-  // Handle manual publish now
   const handlePublishNow = async () => {
     const data = form.getValues();
     await saveArticle(data, true);
   };
 
-  // Handle auto-save
   const handleAutoSave = async (data: FormValues) => {
     try {
       await saveArticle(data);
     } catch (error) {
       console.error('Auto-save failed:', error);
-      // Silent failure for auto-save
     }
   };
 
-  // Handle delete article
   const handleDeleteArticle = async () => {
     if (!isEditMode || !id) return;
     
@@ -380,13 +358,11 @@ const ArticleEditor: React.FC = () => {
         ? getSupabaseWithAuth(authSession.access_token)
         : supabase;
       
-      // First delete related publish options
       await supabaseClient
         .from('content_publish_options')
         .delete()
         .eq('content_id', Number(id));
       
-      // Then delete the article
       const { error } = await supabaseClient
         .from('professional_content')
         .delete()
@@ -399,7 +375,6 @@ const ArticleEditor: React.FC = () => {
         description: "המאמר נמחק בהצלחה",
       });
       
-      // Navigate back to articles list
       navigate('/admin/articles');
     } catch (error: any) {
       console.error('Error deleting article:', error);
@@ -480,7 +455,6 @@ const ArticleEditor: React.FC = () => {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Title */}
                 <FormField
                   control={form.control}
                   name="title"
@@ -495,7 +469,6 @@ const ArticleEditor: React.FC = () => {
                   )}
                 />
                 
-                {/* Category */}
                 <FormField
                   control={form.control}
                   name="category_id"
@@ -503,7 +476,7 @@ const ArticleEditor: React.FC = () => {
                     <FormItem>
                       <FormLabel>קטגוריה</FormLabel>
                       <Select 
-                        value={field.value || ""}
+                        value={field.value || NONE_CATEGORY}
                         onValueChange={field.onChange}
                       >
                         <FormControl>
@@ -512,7 +485,7 @@ const ArticleEditor: React.FC = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">ללא קטגוריה</SelectItem>
+                          <SelectItem value={NONE_CATEGORY}>ללא קטגוריה</SelectItem>
                           {categories.map(category => (
                             <SelectItem key={category.id} value={String(category.id)}>
                               {category.name}
@@ -527,7 +500,6 @@ const ArticleEditor: React.FC = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Schedule Publish Date */}
                 <FormField
                   control={form.control}
                   name="scheduled_publish"
@@ -575,7 +547,6 @@ const ArticleEditor: React.FC = () => {
                   )}
                 />
                 
-                {/* Contact Email */}
                 <FormField
                   control={form.control}
                   name="contact_email"
@@ -594,7 +565,6 @@ const ArticleEditor: React.FC = () => {
                 />
               </div>
               
-              {/* Publishing Locations */}
               <div className="border p-4 rounded-md">
                 <h3 className="text-lg font-medium mb-2">אפשרויות פרסום</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -625,7 +595,7 @@ const ArticleEditor: React.FC = () => {
                             onCheckedChange={field.onChange}
                           />
                         </FormControl>
-                        <FormLabel className="font-normal">ניוזלטר אימייל</FormLabel>
+                        <FormLabel className="font-normal">newsletter אימייל</FormLabel>
                       </FormItem>
                     )}
                   />
@@ -664,7 +634,6 @@ const ArticleEditor: React.FC = () => {
                 </div>
               </div>
               
-              {/* Content */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
