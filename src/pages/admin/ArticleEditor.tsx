@@ -65,14 +65,7 @@ const formSchema = z.object({
     (content) => {
       if (!content) return false;
       
-      const strippedContent = content
-        .replace(/#+\s/g, '') // Remove headers
-        .replace(/>\s/g, '')  // Remove blockquotes
-        .replace(/[*-]\s/g, '') // Remove list markers
-        .replace(/\d+\.\s/g, '') // Remove ordered list markers
-        .replace(/```[\s\S]*?```/g, '') // Remove code blocks
-        .replace(/\s+/g, ''); // Remove all whitespace
-      
+      const strippedContent = content.replace(/\s+/g, '').trim();
       return strippedContent.length > 0;
     },
     { message: "תוכן חובה" }
@@ -397,14 +390,15 @@ const ArticleEditor: React.FC = () => {
   };
 
   const handleEditorChange = (content: string) => {
+    console.log('Editor content updated in parent:', content);
+    console.log('Content length:', content.length);
+    console.log('Has content (simple check):', content && content.replace(/\s+/g, '').length > 0);
+    
     form.setValue('content_markdown', content, { 
       shouldDirty: true,
       shouldValidate: true,
       shouldTouch: true
     });
-    
-    console.log('Editor content updated:', content);
-    console.log('Has content:', content && content.replace(/\s+/g, '').length > 0);
   };
 
   return (

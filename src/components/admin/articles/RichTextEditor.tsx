@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -85,7 +84,6 @@ const markdownToEditorJS = (markdown: string): any => {
     }
   }
   
-  // If no blocks were created, add an empty paragraph
   if (blocks.length === 0) {
     blocks.push({
       type: 'paragraph',
@@ -96,19 +94,10 @@ const markdownToEditorJS = (markdown: string): any => {
   return { blocks };
 };
 
-// Helper function to check if content is meaningful
 const hasValidContent = (markdown: string): boolean => {
   if (!markdown) return false;
   
-  // Remove all whitespace, newlines, and markdown symbols that don't contribute to content
-  const strippedContent = markdown
-    .replace(/#+\s/g, '') // Remove headers
-    .replace(/>\s/g, '')  // Remove blockquotes
-    .replace(/[*-]\s/g, '') // Remove list markers
-    .replace(/\d+\.\s/g, '') // Remove ordered list markers
-    .replace(/```[\s\S]*?```/g, '') // Remove code blocks
-    .replace(/\s+/g, ''); // Remove all whitespace
-  
+  const strippedContent = markdown.replace(/\s+/g, '').trim();
   return strippedContent.length > 0;
 };
 
@@ -125,9 +114,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const initialValueRef = useRef(initialValue);
   const [currentMarkdown, setCurrentMarkdown] = useState(initialValue);
 
-  // Force immediate onChange call on initialization with initial value if it exists
   useEffect(() => {
     if (initialValue && hasValidContent(initialValue)) {
+      console.log('Initial value has valid content, calling onChange');
       onChange(initialValue);
     }
   }, []);
@@ -177,9 +166,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           placeholder: placeholder,
           onChange: async () => {
             try {
+              console.log('Editor content changed, saving...');
               const data = await editorRef.current?.save();
               
               if (data) {
+                console.log('Editor data available:', data);
                 const parser = new EditorJSParser();
                 
                 parser.registerBlockParser('header', (block: any) => {
@@ -214,12 +205,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 });
                 
                 const trimmedMarkdown = markdown.trim();
+                console.log('Generated markdown:', trimmedMarkdown);
+                console.log('Has valid content:', hasValidContent(trimmedMarkdown));
                 
-                // Update the current markdown state
                 setCurrentMarkdown(trimmedMarkdown);
                 
-                // Always call onChange with the current content, 
-                // even if it appears empty - let the form handle validation
                 onChange(trimmedMarkdown);
               }
             } catch (error) {
@@ -227,11 +217,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             }
           },
           onReady: () => {
+            console.log('Editor is ready');
             setIsLoading(false);
             setIsInitialized(true);
             
-            // Initial call to onChange with the current value
             if (initialValueRef.current && hasValidContent(initialValueRef.current)) {
+              console.log('Calling onChange with initial value on ready');
               onChange(initialValueRef.current);
             }
           }
@@ -256,11 +247,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         editorRef.current = null;
       }
     };
-  }, [containerRef, placeholder]); // Remove onChange and initialValue from dependencies
+  }, [containerRef, placeholder]);
 
-  // Handle updates to initialValue in a separate effect
   useEffect(() => {
     if (editorRef.current && isInitialized && initialValue !== initialValueRef.current) {
+      console.log('Initial value changed, updating editor');
       initialValueRef.current = initialValue;
       setCurrentMarkdown(initialValue);
       try {
