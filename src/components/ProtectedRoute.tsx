@@ -8,8 +8,17 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, session } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    // Log authentication status for debugging
+    if (user) {
+      console.log('ProtectedRoute: User is authenticated', { userId: user.id });
+    } else if (!isLoading) {
+      console.log('ProtectedRoute: User is not authenticated, redirecting to login');
+    }
+  }, [user, isLoading]);
 
   if (isLoading) {
     return (

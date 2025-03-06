@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
@@ -98,6 +97,12 @@ const ArticleEditor: React.FC = () => {
     },
   });
 
+  const getSupabaseClient = useCallback(() => {
+    return authSession?.access_token 
+      ? getSupabaseWithAuth(authSession.access_token)
+      : supabase;
+  }, [authSession]);
+
   const fetchArticleData = useCallback(async () => {
     if (!isEditMode) {
       setIsLoading(false);
@@ -105,9 +110,7 @@ const ArticleEditor: React.FC = () => {
     }
 
     try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
+      const supabaseClient = getSupabaseClient();
 
       const { data, error } = await supabaseClient
         .from('professional_content')
@@ -124,7 +127,6 @@ const ArticleEditor: React.FC = () => {
       setArticle(data);
 
       if (data) {
-        // Convert API data to form data
         const publicationData: PublicationFormData[] = data.article_publications?.map((pub: any) => ({
           id: pub.id,
           publish_location: pub.publish_location as PublishLocationType,
@@ -152,13 +154,11 @@ const ArticleEditor: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [authSession, id, isEditMode, form, toast]);
+  }, [authSession, id, isEditMode, form, toast, getSupabaseClient]);
 
   const fetchCategories = useCallback(async () => {
     try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
+      const supabaseClient = getSupabaseClient();
 
       const { data, error } = await supabaseClient
         .from('categories')
@@ -176,7 +176,7 @@ const ArticleEditor: React.FC = () => {
         variant: "destructive",
       });
     }
-  }, [authSession, toast]);
+  }, [getSupabaseClient, toast]);
 
   useEffect(() => {
     Promise.all([fetchArticleData(), fetchCategories()]);
@@ -205,9 +205,7 @@ const ArticleEditor: React.FC = () => {
     setIsSaving(true);
     
     try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
+      const supabaseClient = getSupabaseClient();
       
       const formattedData = {
         title: data.title,
@@ -277,11 +275,8 @@ const ArticleEditor: React.FC = () => {
 
   const savePublications = async (articleId: number, publicationsData: PublicationFormData[]) => {
     try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
+      const supabaseClient = getSupabaseClient();
       
-      // Handle publications marked for deletion
       const publicationsToDelete = publicationsData
         .filter(pub => pub.isDeleted && pub.id)
         .map(pub => pub.id);
@@ -295,7 +290,6 @@ const ArticleEditor: React.FC = () => {
         if (error) throw error;
       }
       
-      // Handle new and updated publications
       const publicationsToUpsert = publicationsData
         .filter(pub => !pub.isDeleted)
         .map(pub => ({
@@ -342,11 +336,8 @@ const ArticleEditor: React.FC = () => {
     setIsDeleting(true);
     
     try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
+      const supabaseClient = getSupabaseClient();
       
-      // First delete all publications
       await supabaseClient
         .from('article_publications')
         .delete()
@@ -580,7 +571,6 @@ const ArticleEditor: React.FC = () => {
                 />
               </div>
               
-              {/* Publication Settings Component */}
               <PublicationSettings
                 publications={publications}
                 onAdd={handleAddPublication}

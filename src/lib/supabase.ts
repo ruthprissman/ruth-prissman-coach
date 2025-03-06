@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co';
@@ -6,19 +7,21 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // Create a singleton Supabase client with anon key
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Keep a reference to the auth client to avoid creating multiple instances
-let authClient: ReturnType<typeof createClient> | null = null;
+// Cache for authenticated clients to avoid creating multiple instances
+const authClientCache = new Map<string, ReturnType<typeof createClient>>();
 
 // Create a function to get a Supabase client with auth
 export const getSupabaseWithAuth = (accessToken?: string) => {
   if (!accessToken) return supabase;
   
   try {
-    // Return existing auth client if it exists to prevent multiple instances
-    if (authClient) return authClient;
+    // Return cached client if it exists for this token
+    if (authClientCache.has(accessToken)) {
+      return authClientCache.get(accessToken)!;
+    }
     
     // Create new authenticated client
-    authClient = createClient(
+    const authClient = createClient(
       supabaseUrl, 
       supabaseAnonKey, 
       {
@@ -30,9 +33,21 @@ export const getSupabaseWithAuth = (accessToken?: string) => {
       }
     );
     
+    // Cache the client
+    authClientCache.set(accessToken, authClient);
+    
     return authClient;
   } catch (error) {
     console.error('Error creating authenticated Supabase client:', error);
     return supabase; // Fallback to anonymous client
+  }
+};
+
+// Clear cached client when needed (e.g., on logout)
+export const clearAuthClientCache = (accessToken?: string) => {
+  if (accessToken) {
+    authClientCache.delete(accessToken);
+  } else {
+    authClientCache.clear();
   }
 };

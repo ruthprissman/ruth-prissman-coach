@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -33,14 +32,18 @@ const ArticlesManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const getSupabaseClient = useCallback(() => {
+    return authSession?.access_token 
+      ? getSupabaseWithAuth(authSession.access_token)
+      : supabase;
+  }, [authSession]);
+
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
+      const supabaseClient = getSupabaseClient();
 
       // Get articles with their related categories
       const { data: articlesData, error: articlesError } = await supabaseClient
@@ -74,19 +77,17 @@ const ArticlesManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [authSession, toast]);
+  }, [getSupabaseClient, toast]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Filter and sort articles when dependencies change
   useEffect(() => {
     if (articles.length === 0) return;
     
     let filtered = [...articles];
     
-    // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(article => 
         article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -94,14 +95,12 @@ const ArticlesManagement: React.FC = () => {
       );
     }
     
-    // Filter by category
     if (categoryFilter !== 'all') {
       filtered = filtered.filter(article => 
         article.category_id === Number(categoryFilter)
       );
     }
     
-    // Sort by title or date
     filtered.sort((a, b) => {
       if (sortBy === 'title') {
         return sortDirection === 'asc' 

@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, getSupabaseWithAuth, clearAuthClientCache } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
 type AuthContextType = {
@@ -42,9 +42,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        console.log('Auth state changed:', event, newSession?.user?.id);
         setSession(newSession);
         setUser(newSession?.user || null);
         setIsLoading(false);
+        
+        if (event === 'SIGNED_OUT') {
+          // Clear cached auth clients on logout
+          clearAuthClientCache();
+        }
       }
     );
 
@@ -186,6 +192,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    if (session?.access_token) {
+      clearAuthClientCache(session.access_token);
+    }
+    
     await supabase.auth.signOut();
     toast({
       title: "התנתקת בהצלחה",
