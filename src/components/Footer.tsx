@@ -40,7 +40,7 @@ export function Footer() {
         <div className="mt-8 pt-4 border-t border-gray-200 text-center">
           <p className="text-purple-dark text-sm">
             © {currentYear} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
-            <Link to="/admin-login" className="text-purple-dark hover:text-gold transition-colors ms-3 opacity-50">
+            <Link to="/admin/login" className="text-purple-dark hover:text-gold transition-colors ms-3 opacity-50">
               🔑 כניסת מנהל
             </Link>
           </p>

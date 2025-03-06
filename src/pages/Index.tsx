@@ -25,7 +25,7 @@ const Index = () => {
       } else if (clickCount === 2) {
         clearTimeout(clickTimer);
         clickCount = 0;
-        navigate('/admin-login');
+        navigate('/admin/login');
       }
     };
     
