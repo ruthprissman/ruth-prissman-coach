@@ -54,6 +54,7 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
   onUpdate,
   onDelete
 }) => {
+  // Fixed type definition to explicitly include empty string as a valid type
   const [newLocation, setNewLocation] = React.useState<PublishLocationType | ''>('');
   const [newScheduledDate, setNewScheduledDate] = React.useState<Date | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -178,7 +179,7 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
           <div className="w-full md:w-auto">
             <Select 
               value={newLocation} 
-              onValueChange={setNewLocation}
+              onValueChange={(value) => setNewLocation(value as PublishLocationType)}
             >
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="בחר מיקום פרסום" />
