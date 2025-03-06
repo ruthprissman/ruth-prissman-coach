@@ -63,10 +63,7 @@ const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
   content_markdown: z.string().min(1, { message: "תוכן חובה" }),
   category_id: z.string().nullable(),
-  scheduled_publish: z.date().nullable().refine(
-    (date) => !date || date > new Date(),
-    { message: "תאריך הפרסום חייב להיות בעתיד" }
-  ),
+  scheduled_publish: z.date().nullable(),
   contact_email: z.string().email({ message: "נא להזין אימייל תקין" }).nullable().or(z.literal('')),
   publish_locations: z.object({
     website: z.boolean().default(true),
@@ -236,7 +233,7 @@ const ArticleEditor: React.FC = () => {
         contact_email: data.contact_email || null,
       };
       
-      if (publishNow || (data.scheduled_publish && new Date(data.scheduled_publish) <= new Date())) {
+      if (publishNow || (data.scheduled_publish && new Date(data.scheduled_publish) <= new Date() && !article?.published_at)) {
         formattedData['published_at'] = new Date().toISOString();
       }
       
