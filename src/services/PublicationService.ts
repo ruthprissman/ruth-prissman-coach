@@ -1,4 +1,3 @@
-
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -30,7 +29,7 @@ class PublicationService {
   private isRunning = false;
   private checkInterval = 60000; // Check every minute
   private accessToken?: string;
-  // Updated URL to match the format that works with CURL
+  // Edge Function URL (correct format that works with CURL)
   private supabaseEdgeFunctionUrl: string = "https://uwqwlltrfvokjlaufguz.functions.supabase.co/send-email";
   private supabaseAnonKey: string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3cXdsbHRyZnZva2psYXVmZ3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA4NjU0MjYsImV4cCI6MjA1NjQ0MTQyNn0.G2JhvsEw4Q24vgt9SS9_nOMPtOdOqTGpus8zEJ5USD8";
 
@@ -300,19 +299,16 @@ class PublicationService {
         </html>
       `;
       
-      // 3. Send email via Supabase Edge Function
+      // 3. Send email via Supabase Edge Function with updated request format
       console.log(`Sending email for article ${article.id} to ${subscribers.length} subscribers via Edge Function`);
       
-      // Add detailed debugging information
-      console.log("Edge Function URL:", this.supabaseEdgeFunctionUrl);
-      console.log("Email recipients:", subscribers.map((sub: EmailSubscriber) => sub.email));
-      
       try {
+        // Using the updated endpoint and request format 
         const response = await fetch(this.supabaseEdgeFunctionUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "apikey": this.supabaseAnonKey // Using anon key instead of Authorization header
+            "apikey": this.supabaseAnonKey
           },
           body: JSON.stringify({
             emailList: subscribers.map((sub: EmailSubscriber) => sub.email),
@@ -325,7 +321,7 @@ class PublicationService {
           })
         });
         
-        // Add detailed response logging
+        // Log detailed response information for debugging
         console.log("Edge Function response status:", response.status);
         
         if (!response.ok) {
