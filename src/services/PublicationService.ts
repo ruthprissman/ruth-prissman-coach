@@ -1,3 +1,4 @@
+
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -300,30 +301,42 @@ class PublicationService {
       // 3. Send email via Supabase Edge Function
       console.log(`Sending email for article ${article.id} to ${subscribers.length} subscribers via Edge Function`);
       
-      const response = await fetch(this.supabaseEdgeFunctionUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": this.accessToken ? `Bearer ${this.accessToken}` : ""
-        },
-        body: JSON.stringify({
-          emailList: subscribers.map((sub: EmailSubscriber) => sub.email),
-          subject: article.title,
-          sender: { 
-            email: "RuthPrissman@gmail.com", 
-            name: "רות פריסמן - קוד הנפש" 
+      // Add detailed debugging information
+      console.log("Edge Function URL:", this.supabaseEdgeFunctionUrl);
+      console.log("Email recipients:", subscribers.map((sub: EmailSubscriber) => sub.email));
+      
+      try {
+        const response = await fetch(this.supabaseEdgeFunctionUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": this.accessToken ? `Bearer ${this.accessToken}` : ""
           },
-          htmlContent: emailContent
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Failed to send email:", errorData);
-        throw new Error(`Failed to send email: ${JSON.stringify(errorData)}`);
+          body: JSON.stringify({
+            emailList: subscribers.map((sub: EmailSubscriber) => sub.email),
+            subject: article.title,
+            sender: { 
+              email: "RuthPrissman@gmail.com", 
+              name: "רות פריסמן - קוד הנפש" 
+            },
+            htmlContent: emailContent
+          })
+        });
+        
+        // Add detailed response logging
+        console.log("Edge Function response status:", response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Failed to send email. Response:", errorText);
+          throw new Error(`Failed to send email: ${errorText}`);
+        }
+        
+        console.log(`Email sent successfully for article ${article.id} to ${subscribers.length} subscribers`);
+      } catch (fetchError) {
+        console.error("Fetch error when calling Edge Function:", fetchError);
+        throw fetchError;
       }
-      
-      console.log(`Email sent successfully for article ${article.id} to ${subscribers.length} subscribers`);
       
     } catch (error) {
       console.error(`Error publishing article ${article.id} to email:`, error);
