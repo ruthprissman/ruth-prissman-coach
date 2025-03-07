@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
-import { Edit, Trash2, Check, Clock, Eye } from 'lucide-react';
+import { Edit, Trash2, Check, Clock, Send } from 'lucide-react';
 import { Article, Category } from '@/types/article';
 import { 
   Table, 
@@ -18,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import PublishModal from './PublishModal';
 
 interface ArticlesListProps {
   articles: Article[];
@@ -36,6 +36,9 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
   const { session: authSession } = useAuth();
   const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  // Add state for the publish modal
+  const [articleToPublish, setArticleToPublish] = useState<Article | null>(null);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
   const getCategoryName = (categoryId: number | null) => {
     if (!categoryId) return '-';
@@ -103,34 +106,33 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
     setArticleToDelete(null);
   };
 
-  const handlePublishNow = async (article: Article) => {
-    try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
-      
-      const now = new Date().toISOString();
-      
-      const { error } = await supabaseClient
-        .from('professional_content')
-        .update({ published_at: now })
-        .eq('id', article.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "המאמר פורסם בהצלחה",
-        description: "המאמר זמין כעת לציבור",
-      });
-      
-      onRefresh();
-    } catch (error: any) {
-      console.error('Error publishing article:', error);
-      toast({
-        title: "שגיאה בפרסום המאמר",
-        description: error.message || "אנא נסה שוב מאוחר יותר",
-        variant: "destructive",
-      });
+  // Update the handlePublishNow function to open the modal
+  const handlePublishNow = (article: Article) => {
+    setArticleToPublish(article);
+    setIsPublishModalOpen(true);
+  };
+
+  // Handle successful publish
+  const handlePublishSuccess = () => {
+    onRefresh();
+  };
+
+  // Get article status based on publications
+  const getArticleStatus = (article: Article) => {
+    if (article.published_at) {
+      return (
+        <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-200">
+          <Check className="h-3 w-3 ml-1" />
+          פורסם
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="outline" className="bg-gray-100">
+          <Clock className="h-3 w-3 ml-1" />
+          טיוטה
+        </Badge>
+      );
     }
   };
 
@@ -158,19 +160,7 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
                   <TableCell className="font-medium">{article.title}</TableCell>
                   <TableCell>{getCategoryName(article.category_id)}</TableCell>
                   <TableCell>{formatDate(article.scheduled_publish)}</TableCell>
-                  <TableCell>
-                    {article.published_at ? (
-                      <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-200">
-                        <Check className="h-3 w-3 ml-1" />
-                        פורסם
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-gray-100">
-                        <Clock className="h-3 w-3 ml-1" />
-                        טיוטה
-                      </Badge>
-                    )}
-                  </TableCell>
+                  <TableCell>{getArticleStatus(article)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Button
@@ -187,15 +177,14 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
-                      {!article.published_at && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePublishNow(article)}
-                        >
-                          פרסם עכשיו
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePublishNow(article)}
+                      >
+                        <Send className="h-4 w-4 mr-1" />
+                        פרסם
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -233,6 +222,14 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Publish Modal */}
+      <PublishModal
+        article={articleToPublish}
+        isOpen={isPublishModalOpen}
+        onClose={() => setIsPublishModalOpen(false)}
+        onSuccess={handlePublishSuccess}
+      />
     </>
   );
 };

@@ -1,3 +1,4 @@
+
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -260,8 +261,7 @@ class PublicationService {
       // 1. Fetch email subscribers from the database
       const { data: subscribers, error } = await supabaseClient
         .from('content_subscribers')
-        .select('email')
-        .eq('subscribed', true);
+        .select('email');
       
       if (error) {
         console.error("Error fetching email subscribers:", error);

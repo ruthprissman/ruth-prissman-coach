@@ -17,6 +17,7 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { Article, Category, PublicationFormData, PublishLocationType } from '@/types/article';
 import RichTextEditor from '@/components/admin/articles/RichTextEditor';
 import PublicationSettings from '@/components/admin/articles/PublicationSettings';
+import PublishModal from '@/components/admin/articles/PublishModal';
 import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -85,6 +86,8 @@ const ArticleEditor: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [autoSaveInterval, setAutoSaveInterval] = useState<NodeJS.Timeout | null>(null);
   const [publications, setPublications] = useState<PublicationFormData[]>([]);
+  // Add state for publish modal
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -334,9 +337,20 @@ const ArticleEditor: React.FC = () => {
     await saveArticle(data);
   };
 
-  const handlePublishNow = async () => {
+  // Update the handlePublishNow function to open the modal instead of publishing directly
+  const handlePublishNow = () => {
+    // First, ensure the article is saved
     const data = form.getValues();
-    await saveArticle(data, true);
+    
+    if (form.formState.isDirty) {
+      // If form has unsaved changes, save first then open modal
+      saveArticle(data).then(() => {
+        setIsPublishModalOpen(true);
+      });
+    } else {
+      // If no unsaved changes, just open the modal
+      setIsPublishModalOpen(true);
+    }
   };
 
   const handleAutoSave = async (data: FormValues) => {
@@ -410,6 +424,12 @@ const ArticleEditor: React.FC = () => {
       prev.map((pub, i) => i === index ? { ...pub, isDeleted: true } : pub)
     );
   };
+  
+  // Add function to handle publish success
+  const handlePublishSuccess = useCallback(() => {
+    // Refresh the article data after successful publishing
+    fetchArticleData();
+  }, [fetchArticleData]);
 
   return (
     <AdminLayout title={isEditMode ? "עריכת מאמר" : "מאמר חדש"}>
@@ -437,7 +457,7 @@ const ArticleEditor: React.FC = () => {
                 </span>
               )}
               
-              {isEditMode && !article?.published_at && (
+              {isEditMode && (
                 <Button 
                   onClick={handlePublishNow} 
                   disabled={isSaving || !form.formState.isValid}
@@ -560,7 +580,7 @@ const ArticleEditor: React.FC = () => {
                         </PopoverContent>
                       </Popover>
                       <FormDescription>
-                        תאריך פרסום ראשוני (ניתן לק��וע תאריכי פרסום ספציפיים לכל פלטפורמה)
+                        תאריך פרסום ראשוני (ניתן לקבוע תאריכי פרסום ספציפיים לכל פלטפורמה)
                         {article?.published_at && (
                           <span className="font-semibold text-green-700"> (כבר פורסם)</span>
                         )}
@@ -634,6 +654,14 @@ const ArticleEditor: React.FC = () => {
               </div>
             </form>
           </Form>
+          
+          {/* Add Publish Modal */}
+          <PublishModal 
+            article={article}
+            isOpen={isPublishModalOpen}
+            onClose={() => setIsPublishModalOpen(false)}
+            onSuccess={handlePublishSuccess}
+          />
         </div>
       )}
     </AdminLayout>
