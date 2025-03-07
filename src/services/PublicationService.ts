@@ -1,4 +1,3 @@
-
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -30,7 +29,7 @@ class PublicationService {
   private isRunning = false;
   private checkInterval = 60000; // Check every minute
   private accessToken?: string;
-  private brevoApiKey?: string = "YOUR_BREVO_API_KEY"; // Replace with real key in production
+  private supabaseEdgeFunctionUrl: string = "https://uwqwlltrfvokjlaufguz.supabase.co/functions/v1/send-email";
 
   private constructor() {}
 
@@ -298,25 +297,22 @@ class PublicationService {
         </html>
       `;
       
-      // 3. Send email via Brevo API
-      if (!this.brevoApiKey) {
-        console.error("Missing Brevo API Key");
-        throw new Error("Missing Brevo API Key configuration");
-      }
+      // 3. Send email via Supabase Edge Function
+      console.log(`Sending email for article ${article.id} to ${subscribers.length} subscribers via Edge Function`);
       
-      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      const response = await fetch(this.supabaseEdgeFunctionUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "api-key": this.brevoApiKey
+          "Authorization": this.accessToken ? `Bearer ${this.accessToken}` : ""
         },
         body: JSON.stringify({
+          emailList: subscribers.map((sub: EmailSubscriber) => sub.email),
+          subject: article.title,
           sender: { 
             email: "RuthPrissman@gmail.com", 
             name: "רות פריסמן - קוד הנפש" 
           },
-          to: subscribers.map((sub: EmailSubscriber) => ({ email: sub.email })),
-          subject: article.title,
           htmlContent: emailContent
         })
       });
