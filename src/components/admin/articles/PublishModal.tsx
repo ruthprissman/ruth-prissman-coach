@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Check, Loader, Plus, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -43,19 +42,17 @@ const PublishModal: React.FC<PublishModalProps> = ({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [publishOptions, setPublishOptions] = useState<PublishOption[]>([]);
-  const [newLocation, setNewLocation] = useState<PublishLocationType | ''>('');
+  const [newLocation, setNewLocation] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [publishStatus, setPublishStatus] = useState<'idle' | 'publishing' | 'success' | 'error'>('idle');
   const [failedLocations, setFailedLocations] = useState<string[]>([]);
 
-  // Get Supabase client with auth if available
   const getSupabaseClient = () => {
     return authSession?.access_token 
       ? getSupabaseWithAuth(authSession.access_token)
       : supabase;
   };
 
-  // Fetch publishing options when the modal opens
   useEffect(() => {
     if (!isOpen || !article) return;
 
@@ -65,7 +62,6 @@ const PublishModal: React.FC<PublishModalProps> = ({
       try {
         const supabaseClient = getSupabaseClient();
         
-        // Get existing publication options
         const { data: publishOptionsData, error: optionsError } = await supabaseClient
           .from('article_publications')
           .select('*')
@@ -73,12 +69,11 @@ const PublishModal: React.FC<PublishModalProps> = ({
           
         if (optionsError) throw optionsError;
         
-        // Transform data for the UI
         const options: PublishOption[] = publishOptionsData?.map(option => ({
           id: option.id,
           content_id: option.content_id,
           publish_location: option.publish_location as PublishLocationType,
-          isSelected: false, // Default to not selected
+          isSelected: false,
           isPublished: !!option.published_date,
         })) || [];
         
@@ -98,7 +93,6 @@ const PublishModal: React.FC<PublishModalProps> = ({
     fetchPublishOptions();
   }, [article, isOpen, authSession, toast]);
 
-  // Handle checkbox toggle
   const handleToggleOption = (index: number) => {
     setPublishOptions(prev => 
       prev.map((option, i) => 
@@ -107,11 +101,9 @@ const PublishModal: React.FC<PublishModalProps> = ({
     );
   };
 
-  // Add new location
   const handleAddLocation = () => {
     if (!newLocation || !article) return;
     
-    // Check if this location already exists
     const exists = publishOptions.some(opt => opt.publish_location === newLocation);
     
     if (!exists) {
@@ -136,18 +128,15 @@ const PublishModal: React.FC<PublishModalProps> = ({
     }
   };
 
-  // Remove a new location that hasn't been saved yet
   const handleRemoveNewLocation = (index: number) => {
     setPublishOptions(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Get available locations (not already in the list)
   const getAvailableLocations = () => {
     const existingLocations = publishOptions.map(opt => opt.publish_location);
     return AVAILABLE_LOCATIONS.filter(loc => !existingLocations.includes(loc));
   };
 
-  // Save new locations to database
   const saveNewLocations = async () => {
     if (!article) return;
     
@@ -174,7 +163,6 @@ const PublishModal: React.FC<PublishModalProps> = ({
     }
   };
 
-  // Publish to selected locations
   const handlePublish = async () => {
     if (!article) return;
     
@@ -183,10 +171,8 @@ const PublishModal: React.FC<PublishModalProps> = ({
     setFailedLocations([]);
     
     try {
-      // First save any new locations
       await saveNewLocations();
 
-      // Get selected locations
       const selectedOptions = publishOptions.filter(opt => opt.isSelected);
       
       if (selectedOptions.length === 0) {
@@ -199,21 +185,16 @@ const PublishModal: React.FC<PublishModalProps> = ({
         return;
       }
       
-      // Handle publishing for each selected location
       const failedOnes: string[] = [];
       
-      // Get publication service instance
       const publicationService = PublicationService.getInstance();
       publicationService.start(authSession?.access_token);
       
-      // Process each location
       for (const option of selectedOptions) {
         try {
           if (option.id) {
-            // This is an existing publication, retry it
             await publicationService.retryPublication(option.id);
           } else {
-            // This is a new publication, fetch its ID first
             const supabaseClient = getSupabaseClient();
             const { data, error } = await supabaseClient
               .from('article_publications')
@@ -235,7 +216,6 @@ const PublishModal: React.FC<PublishModalProps> = ({
         }
       }
       
-      // Update UI based on results
       if (failedOnes.length > 0) {
         setFailedLocations(failedOnes);
         setPublishStatus('error');
@@ -251,7 +231,6 @@ const PublishModal: React.FC<PublishModalProps> = ({
           description: "המאמר פורסם בכל המיקומים שנבחרו",
         });
         
-        // Wait a moment and close
         setTimeout(() => {
           onSuccess();
           onClose();
@@ -270,9 +249,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
     }
   };
 
-  // Dialog for retrying failed publications
   const handleRetryFailed = () => {
-    // Mark failed locations as selected, others as not selected
     setPublishOptions(prev => 
       prev.map(opt => ({
         ...opt,
@@ -349,7 +326,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
                   </Label>
                   <Select 
                     value={newLocation} 
-                    onValueChange={setNewLocation}
+                    onValueChange={(value: string) => setNewLocation(value)}
                     disabled={isSubmitting || getAvailableLocations().length === 0}
                   >
                     <SelectTrigger id="new-location">
@@ -374,7 +351,6 @@ const PublishModal: React.FC<PublishModalProps> = ({
               </div>
             </div>
             
-            {/* Status indicator */}
             {publishStatus === 'publishing' && (
               <div className="flex justify-center py-2 text-primary">
                 <Loader className="h-5 w-5 animate-spin mr-2" />
