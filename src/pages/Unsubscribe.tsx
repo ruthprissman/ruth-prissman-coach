@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Mail, AlertCircle, CheckCircle, ArrowRight, Home } from 'lucide-react';
@@ -233,7 +232,7 @@ const UnsubscribePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50" dir="rtl">
+    <div className="min-h-screen flex flex-col" dir="rtl">
       <Navigation />
       <main className="flex-grow pt-20">
         <div className="container mx-auto px-4 py-12 max-w-md">

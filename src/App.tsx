@@ -21,6 +21,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import { PublicationProvider } from './contexts/PublicationContext';
 import { Toaster } from './components/ui/toaster';
 
+// Import only index.css, not App.css
+import './index.css';
+
 function App() {
   console.log('App component rendering');
   
