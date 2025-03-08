@@ -40,6 +40,15 @@ export interface EmailDeliveryStats {
 }
 
 /**
+ * Interface for static link
+ */
+interface StaticLink {
+  name: string;
+  text: string;
+  url: string | null;
+}
+
+/**
  * Service to handle article publications
  */
 class PublicationService {
@@ -540,6 +549,126 @@ class PublicationService {
   }
 
   /**
+   * Fetch static links from the database
+   * @returns Array of static links
+   */
+  private async fetchStaticLinks(): Promise<StaticLink[]> {
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      console.log("Fetching static links from static_links table");
+      
+      const { data, error } = await supabaseClient
+        .from('static_links')
+        .select('name, text, url');
+      
+      if (error) {
+        console.error("Error fetching static links:", error);
+        return [];
+      }
+      
+      if (!data || data.length === 0) {
+        console.log("No static links found in the database.");
+        return [];
+      }
+      
+      console.log(`Successfully fetched ${data.length} static links.`);
+      return data as StaticLink[];
+    } catch (error) {
+      console.error("Error in fetchStaticLinks:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Generate footer with static links
+   * @param recipientEmail The recipient email for unsubscribe link
+   * @returns HTML string with footer links
+   */
+  private async generateEmailFooter(recipientEmail: string): Promise<string> {
+    try {
+      const staticLinks = await this.fetchStaticLinks();
+      let footerLinks = [];
+      
+      // Add default links if not in the static_links table
+      const contactLink = staticLinks.find(link => link.name === 'contact');
+      footerLinks.push(contactLink && contactLink.url 
+        ? `<a href="${contactLink.url}" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">${contactLink.text || 'צור קשר'}</a>` 
+        : `<a href="/contact" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">צור קשר</a>`);
+      
+      const whatsappLink = staticLinks.find(link => link.name === 'whatsapp');
+      footerLinks.push(whatsappLink && whatsappLink.url 
+        ? `<a href="${whatsappLink.url}" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">${whatsappLink.text || 'שלח לי הודעה בוואטסאפ'}</a>` 
+        : `<a href="https://wa.me/972XXXXXXXXX" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">שלח לי הודעה בוואטסאפ</a>`);
+      
+      // Add unsubscribe link with dynamic email parameter
+      const unsubscribeUrl = `https://yourwebsite.com/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=newsletter`;
+      footerLinks.push(`<a href="${unsubscribeUrl}" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">להסרה מרשימת התפוצה</a>`);
+      
+      // Add any other static links
+      staticLinks.forEach(link => {
+        if (!['contact', 'whatsapp', 'unsubscribe', 'email'].includes(link.name) && link.url) {
+          footerLinks.push(`<a href="${link.url}" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">${link.text}</a>`);
+        } else if (!['contact', 'whatsapp', 'unsubscribe', 'email'].includes(link.name) && !link.url && link.text) {
+          footerLinks.push(`<strong style="margin: 0 10px;">${link.text}</strong>`);
+        }
+      });
+      
+      return `
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eaeaea; text-align: center;">
+          <div style="font-size: 14px; color: #666; margin-bottom: 15px;">
+            ${footerLinks.join(' | ')}
+          </div>
+          <div style="font-size: 12px; color: #999; margin-top: 10px;">
+            © ${new Date().getFullYear()} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
+          </div>
+        </div>
+      `;
+    } catch (error) {
+      console.error("Error generating email footer:", error);
+      // Fallback footer if something goes wrong
+      return `
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eaeaea; text-align: center;">
+          <div style="font-size: 14px; color: #666; margin-bottom: 15px;">
+            <a href="/contact" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">צור קשר</a> | 
+            <a href="https://yourwebsite.com/unsubscribe?email=${encodeURIComponent(recipientEmail)}" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">להסרה מרשימת התפוצה</a>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  /**
+   * Process dynamic content links
+   * @param content The markdown content
+   * @param articleTitle The article title for email subject
+   * @returns Processed content with dynamic links
+   */
+  private async processContentLinks(content: string, articleTitle: string): Promise<string> {
+    try {
+      const staticLinks = await this.fetchStaticLinks();
+      const emailLink = staticLinks.find(link => link.name === 'email');
+      
+      let processedContent = content;
+      
+      // Replace "כתבי לי" with email link
+      if (emailLink && emailLink.url) {
+        const emailRegex = /כתבי לי/g;
+        const encodedSubject = encodeURIComponent(`שאלה על ${articleTitle}`);
+        const emailHtml = `<a href="mailto:${emailLink.url}?subject=${encodedSubject}" style="color: #3273dc; text-decoration: underline;">כתבי לי</a>`;
+        processedContent = processedContent.replace(emailRegex, emailHtml);
+      }
+      
+      return processedContent;
+    } catch (error) {
+      console.error("Error processing content links:", error);
+      return content;
+    }
+  }
+
+  /**
    * Publish article to email subscribers
    */
   private async publishToEmail(article: PublishReadyArticle): Promise<void> {
@@ -557,91 +686,128 @@ class PublicationService {
       console.log(`Preparing to send email for article ${article.id} to ${subscriberEmails.length} active subscribers.`);
       
       // 2. Format the email content with HTML
-      const formattedMarkdown = article.content_markdown
-        .replace(/\n/g, '<br/>') // Convert newlines to HTML breaks
-        .slice(0, 500) + (article.content_markdown.length > 500 ? '...<br/><br/><a href="YOUR_WEBSITE_URL/articles/' + article.id + '">קרא עוד באתר</a>' : '');
+      const truncatedContent = article.content_markdown.slice(0, 500) + 
+        (article.content_markdown.length > 500 ? '...' : '');
       
-      const emailContent = `
-        <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.5; direction: rtl; }
-              h1 { color: #333; }
-              p { font-size: 16px; }
-              .footer { margin-top: 20px; font-size: 12px; color: #888; }
-            </style>
-          </head>
-          <body>
-            <h1>${article.title}</h1>
-            <p>${formattedMarkdown}</p>
-            <div class="footer">
-              <p>אם אינך רוצה לקבל עוד מיילים, <a href="YOUR_WEBSITE_URL/unsubscribe">לחץ כאן להסרה</a></p>
-            </div>
-          </body>
-        </html>
-      `;
+      // Process content to add dynamic links
+      const processedContent = await this.processContentLinks(truncatedContent, article.title);
       
-      // 3. Send email via Supabase Edge Function with updated request format
-      try {
-        console.log(`Calling Supabase Edge Function to send emails to ${subscriberEmails.length} subscribers`);
-        
-        // Using the updated endpoint and request format 
-        const response = await fetch(this.supabaseEdgeFunctionUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": this.supabaseAnonKey
-          },
-          body: JSON.stringify({
-            emailList: subscriberEmails,
-            subject: article.title,
-            sender: { 
-              email: "RuthPrissman@gmail.com", 
-              name: "רות פריסמן - קוד הנפש" 
-            },
-            htmlContent: emailContent
-          })
-        });
-        
-        // Log detailed response information for debugging
-        console.log("Edge Function response status:", response.status);
-        
-        const emailLogs: EmailLogEntry[] = [];
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Failed to send email. Response:", errorText);
+      // Convert newlines to HTML breaks
+      const formattedMarkdown = processedContent.replace(/\n/g, '<br/>');
+      
+      // Create email logs array for batch insertion
+      const emailLogs: EmailLogEntry[] = [];
+      
+      // Send individual emails to each subscriber
+      for (const recipientEmail of subscriberEmails) {
+        try {
+          // Generate footer with personalized unsubscribe link
+          const emailFooter = await this.generateEmailFooter(recipientEmail);
           
-          // Log all emails as failed
-          subscriberEmails.forEach(email => {
+          const readMoreUrl = `https://yourwebsite.com/articles/${article.id}`;
+          
+          const emailContent = `
+            <html>
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${article.title}</title>
+                <style>
+                  @media only screen and (max-width: 620px) {
+                    .email-container {
+                      width: 100% !important;
+                    }
+                    .content {
+                      padding: 10px !important;
+                    }
+                    h1 {
+                      font-size: 22px !important;
+                    }
+                    p, a {
+                      font-size: 16px !important;
+                    }
+                  }
+                </style>
+              </head>
+              <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; direction: rtl; background-color: #f5f5f5;">
+                <div style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/email-background.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; width: 100%; min-height: 100%;">
+                  <div class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); margin-top: 20px; margin-bottom: 20px; overflow: hidden;">
+                    <div style="background-color: #4a6da7; padding: 20px; text-align: center;">
+                      <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700;">${article.title}</h1>
+                    </div>
+                    <div class="content" style="padding: 20px 30px;">
+                      <p style="font-size: 16px; color: #333; margin-bottom: 20px; text-align: right;">${formattedMarkdown}</p>
+                      
+                      ${article.content_markdown.length > 500 ? 
+                        `<div style="text-align: center; margin: 30px 0;">
+                          <a href="${readMoreUrl}" style="background-color: #4a6da7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">קרא עוד באתר</a>
+                        </div>` : ''}
+                      
+                      ${emailFooter}
+                    </div>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `;
+
+          // 3. Send email via Supabase Edge Function
+          console.log(`Sending email to ${recipientEmail}`);
+          
+          const response = await fetch(this.supabaseEdgeFunctionUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": this.supabaseAnonKey
+            },
+            body: JSON.stringify({
+              emailList: [recipientEmail],
+              subject: article.title,
+              sender: { 
+                email: "RuthPrissman@gmail.com", 
+                name: "רות פריסמן - קוד הנפש" 
+              },
+              htmlContent: emailContent
+            })
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Failed to send email to ${recipientEmail}. Response:`, errorText);
+            
+            // Log failed email
             emailLogs.push({
               article_id: article.id,
-              email,
+              email: recipientEmail,
               status: 'failed',
               error_message: `Edge function error: ${errorText}`
             });
-          });
-          
-          throw new Error(`Failed to send email: ${errorText}`);
-        } else {
-          // For successful bulk sending, log all emails as sent
-          subscriberEmails.forEach(email => {
+          } else {
+            // Log successful email
             emailLogs.push({
               article_id: article.id,
-              email,
+              email: recipientEmail,
               status: 'sent'
             });
+            console.log(`Email sent successfully to ${recipientEmail}`);
+          }
+        } catch (emailError) {
+          console.error(`Error sending email to ${recipientEmail}:`, emailError);
+          
+          // Log failed email
+          emailLogs.push({
+            article_id: article.id,
+            email: recipientEmail,
+            status: 'failed',
+            error_message: emailError instanceof Error ? emailError.message : String(emailError)
           });
         }
-        
-        // Log the email sending results to the database
-        await this.logEmailResults(emailLogs);
-        
-        console.log(`Email sent successfully for article ${article.id} to ${subscriberEmails.length} subscribers`);
-      } catch (fetchError) {
-        console.error("Fetch error when calling Edge Function:", fetchError);
-        throw fetchError;
       }
+      
+      // Log the email sending results to the database
+      await this.logEmailResults(emailLogs);
+      
+      console.log(`Email publication process completed for article ${article.id}`);
       
     } catch (error) {
       console.error(`Error publishing article ${article.id} to email:`, error);
@@ -695,94 +861,134 @@ class PublicationService {
         article_publications: []
       };
       
-      // Format the email content
-      const formattedMarkdown = article.content_markdown
-        .replace(/\n/g, '<br/>')
-        .slice(0, 500) + (article.content_markdown.length > 500 ? '...<br/><br/><a href="YOUR_WEBSITE_URL/articles/' + article.id + '">קרא עוד באתר</a>' : '');
+      // Process content to add dynamic links
+      const processedContent = await this.processContentLinks(
+        article.content_markdown.slice(0, 500) + 
+          (article.content_markdown.length > 500 ? '...' : ''),
+        article.title
+      );
       
-      const emailContent = `
-        <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.5; direction: rtl; }
-              h1 { color: #333; }
-              p { font-size: 16px; }
-              .footer { margin-top: 20px; font-size: 12px; color: #888; }
-            </style>
-          </head>
-          <body>
-            <h1>${article.title}</h1>
-            <p>${formattedMarkdown}</p>
-            <div class="footer">
-              <p>אם אינך רוצה לקבל עוד מיילים, <a href="YOUR_WEBSITE_URL/unsubscribe">לחץ כאן להסרה</a></p>
-            </div>
-          </body>
-        </html>
-      `;
+      // Convert newlines to HTML breaks
+      const formattedMarkdown = processedContent.replace(/\n/g, '<br/>');
       
-      // Send emails to failed recipients
-      try {
-        console.log(`Retrying email sending to ${failedEmails.length} failed recipients`);
-        
-        const response = await fetch(this.supabaseEdgeFunctionUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": this.supabaseAnonKey
-          },
-          body: JSON.stringify({
-            emailList: failedEmails,
-            subject: article.title,
-            sender: { 
-              email: "RuthPrissman@gmail.com", 
-              name: "רות פריסמן - קוד הנפש" 
-            },
-            htmlContent: emailContent
-          })
-        });
-        
-        const emailLogs: EmailLogEntry[] = [];
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Failed to retry emails. Response:", errorText);
+      // Email logs array for batch insertion
+      const emailLogs: EmailLogEntry[] = [];
+      
+      // Send individual emails to each failed recipient
+      for (const recipientEmail of failedEmails) {
+        try {
+          // Generate footer with personalized unsubscribe link
+          const emailFooter = await this.generateEmailFooter(recipientEmail);
           
-          // Log all retry attempts as failed
-          failedEmails.forEach(email => {
+          const readMoreUrl = `https://yourwebsite.com/articles/${article.id}`;
+          
+          const emailContent = `
+            <html>
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${article.title}</title>
+                <style>
+                  @media only screen and (max-width: 620px) {
+                    .email-container {
+                      width: 100% !important;
+                    }
+                    .content {
+                      padding: 10px !important;
+                    }
+                    h1 {
+                      font-size: 22px !important;
+                    }
+                    p, a {
+                      font-size: 16px !important;
+                    }
+                  }
+                </style>
+              </head>
+              <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; direction: rtl; background-color: #f5f5f5;">
+                <div style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/email-background.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; width: 100%; min-height: 100%;">
+                  <div class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); margin-top: 20px; margin-bottom: 20px; overflow: hidden;">
+                    <div style="background-color: #4a6da7; padding: 20px; text-align: center;">
+                      <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700;">${article.title}</h1>
+                    </div>
+                    <div class="content" style="padding: 20px 30px;">
+                      <p style="font-size: 16px; color: #333; margin-bottom: 20px; text-align: right;">${formattedMarkdown}</p>
+                      
+                      ${article.content_markdown.length > 500 ? 
+                        `<div style="text-align: center; margin: 30px 0;">
+                          <a href="${readMoreUrl}" style="background-color: #4a6da7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">קרא עוד באתר</a>
+                        </div>` : ''}
+                      
+                      ${emailFooter}
+                    </div>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `;
+
+          console.log(`Retrying email to ${recipientEmail}`);
+          
+          const response = await fetch(this.supabaseEdgeFunctionUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": this.supabaseAnonKey
+            },
+            body: JSON.stringify({
+              emailList: [recipientEmail],
+              subject: article.title,
+              sender: { 
+                email: "RuthPrissman@gmail.com", 
+                name: "רות פריסמן - קוד הנפש" 
+              },
+              htmlContent: emailContent
+            })
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Failed to retry email to ${recipientEmail}. Response:`, errorText);
+            
+            // Log failed email
             emailLogs.push({
               article_id: article.id,
-              email,
+              email: recipientEmail,
               status: 'failed',
               error_message: `Retry failed: ${errorText}`
             });
-          });
-          
-          throw new Error(`Failed to retry emails: ${errorText}`);
-        } else {
-          // Log successful retries
-          failedEmails.forEach(email => {
+          } else {
+            // Log successful email
             emailLogs.push({
               article_id: article.id,
-              email,
+              email: recipientEmail,
               status: 'sent'
             });
+            console.log(`Email retry successful for ${recipientEmail}`);
+          }
+        } catch (emailError) {
+          console.error(`Error retrying email to ${recipientEmail}:`, emailError);
+          
+          // Log failed email
+          emailLogs.push({
+            article_id: article.id,
+            email: recipientEmail,
+            status: 'failed',
+            error_message: emailError instanceof Error ? emailError.message : String(emailError)
           });
         }
-        
-        // Log the email sending results to the database
-        await this.logEmailResults(emailLogs);
-        
-        // If all emails were sent successfully, ensure the article is marked as published
-        if (emailLogs.every(log => log.status === 'sent')) {
-          await this.ensureArticleIsPublished(article.id);
-        }
-        
-        console.log(`Successfully retried sending emails to ${failedEmails.length} recipients`);
-        return failedEmails.length;
-      } catch (fetchError) {
-        console.error("Error retrying failed emails:", fetchError);
-        throw fetchError;
       }
+      
+      // Log the email sending results to the database
+      await this.logEmailResults(emailLogs);
+      
+      // If all emails were sent successfully, ensure the article is marked as published
+      if (emailLogs.every(log => log.status === 'sent')) {
+        await this.ensureArticleIsPublished(article.id);
+      }
+      
+      console.log(`Successfully retried sending emails to ${failedEmails.length} recipients`);
+      return failedEmails.length;
     } catch (error) {
       console.error(`Error in retryFailedEmails for article ${articleId}:`, error);
       throw error;
@@ -930,3 +1136,4 @@ class PublicationService {
 }
 
 export default PublicationService;
+
