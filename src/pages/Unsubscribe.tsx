@@ -214,16 +214,7 @@ const UnsubscribePage: React.FC = () => {
   };
 
   return (
-    <div 
-      className="min-h-screen flex flex-col"
-      style={{
-        backgroundImage: "url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_assets/clear-background.svg')",
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
-        backgroundPosition: "center",
-      }}
-    >
+    <div className="min-h-screen flex flex-col unsubscribe-page">
       <Navigation />
       <main className="flex-grow">
         <div className="container mx-auto px-4 py-16 md:py-24 max-w-md">
@@ -378,8 +369,7 @@ const UnsubscribePage: React.FC = () => {
                     <Link to="/">
                       <Button 
                         type="button" 
-                        variant="outline"
-                        className="w-full"
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                       >
                         <Home className="ml-2 h-4 w-4" />
                         חזרה לדף הבית
