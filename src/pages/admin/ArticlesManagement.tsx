@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import ArticlesList from '@/components/admin/articles/ArticlesList';
 import FailedPublicationsPanel from '@/components/admin/articles/FailedPublicationsPanel';
@@ -18,6 +18,7 @@ const ArticlesManagement: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const fetchArticles = async () => {
     try {
@@ -85,10 +86,26 @@ const ArticlesManagement: React.FC = () => {
     navigate(`/admin/articles/edit/${article.id}`);
   };
   
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchArticles();
+    setIsRefreshing(false);
+  };
+  
   return (
     <AdminLayout title="ניהול מאמרים">
       <div className="space-y-6">
-        <div className="flex justify-end">
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            רענן רשימה
+          </Button>
+          
           <Button 
             onClick={() => navigate('/admin/articles/new')} 
             className="gap-2"

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
-import { Edit, Trash2, Check, Clock, Send } from 'lucide-react';
+import { Edit, Trash2, Check, Clock, Send, RefreshCw } from 'lucide-react';
 import { Article, Category } from '@/types/article';
 import { 
   Table, 
@@ -18,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import PublishModal from './PublishModal';
+import PublicationService, { EmailDeliveryStats } from '@/services/PublicationService';
 
 interface ArticlesListProps {
   articles: Article[];
@@ -36,9 +38,84 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
   const { session: authSession } = useAuth();
   const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  // Add state for the publish modal
   const [articleToPublish, setArticleToPublish] = useState<Article | null>(null);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [emailStats, setEmailStats] = useState<Map<number, EmailDeliveryStats>>(new Map());
+  const [retryingEmails, setRetryingEmails] = useState<number[]>([]);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+
+  useEffect(() => {
+    if (articles.length > 0) {
+      fetchEmailStats();
+    }
+  }, [articles]);
+
+  const fetchEmailStats = async () => {
+    try {
+      setIsLoadingStats(true);
+      const publicationService = PublicationService.getInstance();
+      publicationService.start(authSession?.access_token);
+      
+      const statsMap = new Map<number, EmailDeliveryStats>();
+      
+      // Process articles in batches to avoid too many parallel requests
+      const batchSize = 5;
+      for (let i = 0; i < articles.length; i += batchSize) {
+        const batch = articles.slice(i, i + batchSize);
+        const statsPromises = batch.map(article => 
+          publicationService.getEmailDeliveryStats(article.id)
+        );
+        
+        const batchResults = await Promise.all(statsPromises);
+        
+        batchResults.forEach((stats, index) => {
+          if (stats) {
+            statsMap.set(batch[index].id, stats);
+          }
+        });
+      }
+      
+      setEmailStats(statsMap);
+    } catch (error) {
+      console.error('Error fetching email stats:', error);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
+  const handleRetryFailedEmails = async (articleId: number) => {
+    try {
+      setRetryingEmails(prev => [...prev, articleId]);
+      
+      const publicationService = PublicationService.getInstance();
+      publicationService.start(authSession?.access_token);
+      
+      const retriedCount = await publicationService.retryFailedEmails(articleId);
+      
+      if (retriedCount > 0) {
+        toast({
+          title: "מיילים נשלחו שוב",
+          description: `נשלחו ${retriedCount} מיילים שנכשלו בעבר`,
+        });
+      } else {
+        toast({
+          title: "אין מיילים לשליחה חוזרת",
+          description: "לא נמצאו מיילים שנכשלו לשליחה חוזרת",
+        });
+      }
+      
+      // Update stats after retry
+      await fetchEmailStats();
+    } catch (error: any) {
+      toast({
+        title: "שליחה חוזרת נכשלה",
+        description: error.message || "אירעה שגיאה בשליחה חוזרת של המיילים",
+        variant: "destructive",
+      });
+    } finally {
+      setRetryingEmails(prev => prev.filter(id => id !== articleId));
+    }
+  };
 
   const getCategoryName = (categoryId: number | null) => {
     if (!categoryId) return '-';
@@ -106,15 +183,15 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
     setArticleToDelete(null);
   };
 
-  // Update the handlePublishNow function to open the modal
   const handlePublishNow = (article: Article) => {
     setArticleToPublish(article);
     setIsPublishModalOpen(true);
   };
 
-  // Handle successful publish
   const handlePublishSuccess = () => {
     onRefresh();
+    // Refresh email stats after successful publish
+    fetchEmailStats();
   };
 
   // Get article status based on publications
@@ -134,6 +211,53 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
         </Badge>
       );
     }
+  };
+
+  // Render email delivery status
+  const renderEmailDeliveryStatus = (articleId: number) => {
+    const stats = emailStats.get(articleId);
+    
+    if (!stats) {
+      return null;
+    }
+    
+    return (
+      <div className="mt-2 text-xs space-y-1">
+        {stats.totalSent > 0 && (
+          <div className="flex items-center">
+            <Badge variant="outline" className="bg-green-50 text-green-700 mr-1">
+              <Check className="h-3 w-3 ml-1" />
+              נשלח ל-{stats.totalSent} נמענים
+            </Badge>
+          </div>
+        )}
+        
+        {stats.totalFailed > 0 && (
+          <div className="flex items-center">
+            <Badge 
+              variant="outline" 
+              className="bg-red-50 text-red-700 mr-1"
+            >
+              נכשל עבור {stats.totalFailed} נמענים
+            </Badge>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 p-1 ml-1 hover:bg-red-50"
+              onClick={() => handleRetryFailedEmails(articleId)}
+              disabled={retryingEmails.includes(articleId)}
+            >
+              {retryingEmails.includes(articleId) ? (
+                <RefreshCw className="h-3 w-3 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3 w-3" />
+              )}
+              <span className="mr-1 text-xs">נסה שוב</span>
+            </Button>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -157,7 +281,12 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
             <TableBody>
               {articles.map((article) => (
                 <TableRow key={article.id}>
-                  <TableCell className="font-medium">{article.title}</TableCell>
+                  <TableCell className="font-medium">
+                    <div>
+                      {article.title}
+                      {renderEmailDeliveryStatus(article.id)}
+                    </div>
+                  </TableCell>
                   <TableCell>{getCategoryName(article.category_id)}</TableCell>
                   <TableCell>{formatDate(article.scheduled_publish)}</TableCell>
                   <TableCell>{getArticleStatus(article)}</TableCell>

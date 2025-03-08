@@ -1,3 +1,4 @@
+
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -18,6 +19,25 @@ interface PublishReadyArticle {
  */
 interface EmailSubscriber {
   email: string;
+}
+
+/**
+ * Interface for email log entry
+ */
+interface EmailLogEntry {
+  article_id: number;
+  email: string;
+  status: 'sent' | 'failed';
+  error_message?: string;
+}
+
+/**
+ * Interface for email delivery stats
+ */
+export interface EmailDeliveryStats {
+  articleId: number;
+  totalSent: number;
+  totalFailed: number;
 }
 
 /**
@@ -289,6 +309,138 @@ class PublicationService {
   }
 
   /**
+   * Log email sending status to email_logs table
+   * @param logs Array of email log entries
+   */
+  private async logEmailResults(logs: EmailLogEntry[]): Promise<void> {
+    if (!logs || logs.length === 0) return;
+    
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      console.log(`Logging ${logs.length} email delivery results to email_logs table`);
+      
+      const logsWithTimestamp = logs.map(log => ({
+        ...log,
+        sent_at: new Date().toISOString()
+      }));
+      
+      const { error } = await supabaseClient
+        .from('email_logs')
+        .insert(logsWithTimestamp);
+      
+      if (error) {
+        console.error("Error logging email results:", error);
+        throw error;
+      }
+      
+      console.log(`Successfully logged ${logs.length} email results`);
+    } catch (error) {
+      console.error("Error in logEmailResults:", error);
+    }
+  }
+
+  /**
+   * Fetch failed email recipients for an article
+   * @param articleId The article ID
+   * @returns Array of email addresses that failed
+   */
+  public async getFailedEmailRecipients(articleId: number): Promise<string[]> {
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      console.log(`Fetching failed email recipients for article ${articleId}`);
+      
+      const { data, error } = await supabaseClient
+        .from('email_logs')
+        .select('email')
+        .eq('article_id', articleId)
+        .eq('status', 'failed');
+      
+      if (error) {
+        console.error("Error fetching failed recipients:", error);
+        throw error;
+      }
+      
+      if (!data || data.length === 0) {
+        console.log(`No failed recipients found for article ${articleId}`);
+        return [];
+      }
+      
+      // Extract emails and remove duplicates
+      const failedEmails = [...new Set(data.map(item => item.email))];
+      console.log(`Found ${failedEmails.length} failed recipients for article ${articleId}`);
+      
+      return failedEmails;
+    } catch (error) {
+      console.error("Error in getFailedEmailRecipients:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get email delivery statistics for an article
+   * @param articleId The article ID
+   * @returns Email delivery stats
+   */
+  public async getEmailDeliveryStats(articleId: number): Promise<EmailDeliveryStats | null> {
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      // First, check sent emails
+      const { data: sentData, error: sentError } = await supabaseClient
+        .from('email_logs')
+        .select('count')
+        .eq('article_id', articleId)
+        .eq('status', 'sent')
+        .limit(1)
+        .single();
+      
+      if (sentError && sentError.code !== 'PGRST116') {
+        // PGRST116 is 'no rows returned' error, which is fine
+        console.error("Error fetching sent count:", sentError);
+        throw sentError;
+      }
+      
+      // Then, check failed emails
+      const { data: failedData, error: failedError } = await supabaseClient
+        .from('email_logs')
+        .select('count')
+        .eq('article_id', articleId)
+        .eq('status', 'failed')
+        .limit(1)
+        .single();
+      
+      if (failedError && failedError.code !== 'PGRST116') {
+        console.error("Error fetching failed count:", failedError);
+        throw failedError;
+      }
+      
+      const totalSent = sentData?.count || 0;
+      const totalFailed = failedData?.count || 0;
+      
+      if (totalSent === 0 && totalFailed === 0) {
+        return null; // No data available
+      }
+      
+      return {
+        articleId,
+        totalSent,
+        totalFailed
+      };
+    } catch (error) {
+      console.error("Error in getEmailDeliveryStats:", error);
+      return null;
+    }
+  }
+
+  /**
    * Publish article to email subscribers
    */
   private async publishToEmail(article: PublishReadyArticle): Promise<void> {
@@ -355,11 +507,36 @@ class PublicationService {
         // Log detailed response information for debugging
         console.log("Edge Function response status:", response.status);
         
+        const emailLogs: EmailLogEntry[] = [];
+        
         if (!response.ok) {
           const errorText = await response.text();
           console.error("Failed to send email. Response:", errorText);
+          
+          // Log all emails as failed
+          subscriberEmails.forEach(email => {
+            emailLogs.push({
+              article_id: article.id,
+              email,
+              status: 'failed',
+              error_message: `Edge function error: ${errorText}`
+            });
+          });
+          
           throw new Error(`Failed to send email: ${errorText}`);
+        } else {
+          // For successful bulk sending, log all emails as sent
+          subscriberEmails.forEach(email => {
+            emailLogs.push({
+              article_id: article.id,
+              email,
+              status: 'sent'
+            });
+          });
         }
+        
+        // Log the email sending results to the database
+        await this.logEmailResults(emailLogs);
         
         console.log(`Email sent successfully for article ${article.id} to ${subscriberEmails.length} subscribers`);
       } catch (fetchError) {
@@ -369,6 +546,141 @@ class PublicationService {
       
     } catch (error) {
       console.error(`Error publishing article ${article.id} to email:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retry sending emails to failed recipients
+   * @param articleId The article ID to retry
+   */
+  public async retryFailedEmails(articleId: number): Promise<number> {
+    try {
+      console.log(`Retrying failed emails for article ${articleId}`);
+      
+      // Fetch article details
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      const { data: article, error: articleError } = await supabaseClient
+        .from('professional_content')
+        .select('*')
+        .eq('id', articleId)
+        .single();
+      
+      if (articleError) {
+        console.error(`Error fetching article ${articleId}:`, articleError);
+        throw articleError;
+      }
+      
+      if (!article) {
+        throw new Error(`Article ${articleId} not found`);
+      }
+      
+      // Get failed email recipients
+      const failedEmails = await this.getFailedEmailRecipients(articleId);
+      
+      if (failedEmails.length === 0) {
+        console.log(`No failed emails to retry for article ${articleId}`);
+        return 0;
+      }
+      
+      // Create minimal article object for email publishing
+      const emailArticle: PublishReadyArticle = {
+        id: article.id,
+        title: article.title,
+        content_markdown: article.content_markdown,
+        category_id: article.category_id,
+        contact_email: article.contact_email,
+        article_publications: []
+      };
+      
+      // Format the email content
+      const formattedMarkdown = article.content_markdown
+        .replace(/\n/g, '<br/>')
+        .slice(0, 500) + (article.content_markdown.length > 500 ? '...<br/><br/><a href="YOUR_WEBSITE_URL/articles/' + article.id + '">קרא עוד באתר</a>' : '');
+      
+      const emailContent = `
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.5; direction: rtl; }
+              h1 { color: #333; }
+              p { font-size: 16px; }
+              .footer { margin-top: 20px; font-size: 12px; color: #888; }
+            </style>
+          </head>
+          <body>
+            <h1>${article.title}</h1>
+            <p>${formattedMarkdown}</p>
+            <div class="footer">
+              <p>אם אינך רוצה לקבל עוד מיילים, <a href="YOUR_WEBSITE_URL/unsubscribe">לחץ כאן להסרה</a></p>
+            </div>
+          </body>
+        </html>
+      `;
+      
+      // Send emails to failed recipients
+      try {
+        console.log(`Retrying email sending to ${failedEmails.length} failed recipients`);
+        
+        const response = await fetch(this.supabaseEdgeFunctionUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": this.supabaseAnonKey
+          },
+          body: JSON.stringify({
+            emailList: failedEmails,
+            subject: article.title,
+            sender: { 
+              email: "RuthPrissman@gmail.com", 
+              name: "רות פריסמן - קוד הנפש" 
+            },
+            htmlContent: emailContent
+          })
+        });
+        
+        const emailLogs: EmailLogEntry[] = [];
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Failed to retry emails. Response:", errorText);
+          
+          // Log all retry attempts as failed
+          failedEmails.forEach(email => {
+            emailLogs.push({
+              article_id: article.id,
+              email,
+              status: 'failed',
+              error_message: `Retry failed: ${errorText}`
+            });
+          });
+          
+          throw new Error(`Failed to retry emails: ${errorText}`);
+        } else {
+          // Log successful retries
+          failedEmails.forEach(email => {
+            emailLogs.push({
+              article_id: article.id,
+              email,
+              status: 'sent'
+            });
+          });
+        }
+        
+        // Log the email sending results to the database
+        await this.logEmailResults(emailLogs);
+        
+        console.log(`Successfully retried sending emails to ${failedEmails.length} recipients`);
+        return failedEmails.length;
+      } catch (fetchError) {
+        console.error("Error retrying failed emails:", fetchError);
+        throw fetchError;
+      }
+    } catch (error) {
+      console.error(`Error in retryFailedEmails for article ${articleId}:`, error);
       throw error;
     }
   }
