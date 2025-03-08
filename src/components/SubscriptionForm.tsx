@@ -2,26 +2,76 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 export function SubscriptionForm() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast.error('נא להזין כתובת אימייל');
+      toast({
+        title: "שגיאה",
+        description: "נא להזין כתובת אימייל",
+        variant: "destructive"
+      });
       return;
     }
     
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('תודה על ההרשמה!');
+    
+    try {
+      // Check if email already exists
+      const { data: existingData } = await supabase
+        .from('content_subscribers')
+        .select('id, is_subscribed')
+        .eq('email', email)
+        .maybeSingle();
+        
+      if (existingData) {
+        if (existingData.is_subscribed) {
+          toast({
+            title: "הודעה",
+            description: "כתובת האימייל כבר רשומה לרשימת התפוצה"
+          });
+        } else {
+          // Re-subscribe
+          await supabase
+            .from('content_subscribers')
+            .update({ is_subscribed: true, unsubscribed_at: null })
+            .eq('email', email);
+            
+          toast({
+            title: "הצלחה",
+            description: "נרשמת מחדש בהצלחה לרשימת התפוצה!"
+          });
+        }
+      } else {
+        // Add new subscriber
+        await supabase
+          .from('content_subscribers')
+          .insert({ email, is_subscribed: true });
+          
+        toast({
+          title: "הצלחה",
+          description: "תודה על ההרשמה לרשימת התפוצה!"
+        });
+      }
+      
       setEmail('');
+    } catch (error) {
+      console.error("Error subscribing:", error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בתהליך ההרשמה. אנא נסה שנית מאוחר יותר",
+        variant: "destructive"
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -46,6 +96,16 @@ export function SubscriptionForm() {
           {loading ? 'רק רגע...' : 'הצטרפי לרשימת התפוצה'}
         </Button>
       </form>
+      
+      <div className="mt-3 text-xs text-center text-purple-light">
+        <p>
+          בלחיצה על כפתור ההרשמה אני מאשר/ת קבלת תוכן שיווקי
+          <br />
+          <Link to="/unsubscribe" className="text-purple-dark hover:text-gold underline">
+            להסרה מרשימת התפוצה
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

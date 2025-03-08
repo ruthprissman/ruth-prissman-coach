@@ -4,6 +4,7 @@ import Index from './pages/Index';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Stories from './pages/Stories';
+import Unsubscribe from './pages/Unsubscribe';
 import NotFound from './pages/NotFound';
 import Login from './pages/admin/Login';
 import ResetPassword from './pages/admin/ResetPassword';
@@ -34,6 +35,7 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/stories" element={<Stories />} />
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
 
               {/* Admin auth routes - Make sure these are outside ProtectedRoute */}
               <Route path="/admin/login" element={<Login />} />
