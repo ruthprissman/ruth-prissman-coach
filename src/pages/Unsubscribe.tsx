@@ -218,7 +218,7 @@ const UnsubscribePage: React.FC = () => {
       <Navigation />
       <main className="flex-grow relative z-10">
         <div className="container mx-auto px-4 py-16 md:py-24 max-w-md">
-          <div className="bg-white/90 backdrop-blur-sm shadow-md rounded-lg p-8 mb-8">
+          <div className="bg-white/70 backdrop-blur-sm shadow-md rounded-lg p-8 mb-8">
             <div className="flex flex-col items-center mb-6">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
                 <Mail className="h-8 w-8 text-purple-600" />
@@ -305,7 +305,7 @@ const UnsubscribePage: React.FC = () => {
             
             {step === 'confirm' && (
               <div className="space-y-6">
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
+                <div className="p-4 bg-amber-50/90 border border-amber-200 rounded-md">
                   <div className="flex items-start">
                     <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 ml-2" />
                     <div>
@@ -411,7 +411,7 @@ const UnsubscribePage: React.FC = () => {
             
             {step === 'alreadyUnsubscribed' && (
               <div className="space-y-6">
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <div className="p-4 bg-blue-50/90 border border-blue-200 rounded-md">
                   <div className="flex items-start">
                     <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5 ml-2" />
                     <div>
@@ -451,7 +451,7 @@ const UnsubscribePage: React.FC = () => {
             
             {step === 'notFound' && (
               <div className="space-y-6">
-                <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+                <div className="p-4 bg-red-50/90 border border-red-200 rounded-md">
                   <div className="flex items-start">
                     <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 ml-2" />
                     <div>
