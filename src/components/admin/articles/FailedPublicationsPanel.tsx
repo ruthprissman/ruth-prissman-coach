@@ -94,6 +94,9 @@ const FailedPublicationsPanel: React.FC = () => {
         prev.filter(pub => pub.id !== publicationId)
       );
       
+      // Refresh the failed publications list
+      fetchFailedPublications();
+      
     } catch (error) {
       console.error('Error retrying publication:', error);
     } finally {

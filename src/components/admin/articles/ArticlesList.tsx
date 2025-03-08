@@ -97,6 +97,9 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
           title: "מיילים נשלחו שוב",
           description: `נשלחו ${retriedCount} מיילים שנכשלו בעבר`,
         });
+        
+        // After successful retry, refresh the article list to update the status
+        onRefresh();
       } else {
         toast({
           title: "אין מיילים לשליחה חוזרת",

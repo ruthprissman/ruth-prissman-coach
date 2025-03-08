@@ -1,4 +1,3 @@
-
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -309,6 +308,40 @@ class PublicationService {
   }
 
   /**
+   * Remove failed email logs before inserting successful ones
+   * @param articleId The article ID
+   * @param emails Array of email addresses
+   */
+  private async cleanupFailedEmails(articleId: number, emails: string[]): Promise<void> {
+    if (!emails || emails.length === 0) return;
+    
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      console.log(`Cleaning up ${emails.length} failed email logs for article ${articleId}`);
+      
+      for (const email of emails) {
+        const { error } = await supabaseClient
+          .from('email_logs')
+          .delete()
+          .eq('article_id', articleId)
+          .eq('email', email)
+          .eq('status', 'failed');
+        
+        if (error) {
+          console.error(`Error cleaning up failed email log for ${email}:`, error);
+        }
+      }
+      
+      console.log(`Cleanup completed for article ${articleId}`);
+    } catch (error) {
+      console.error(`Error in cleanupFailedEmails for article ${articleId}:`, error);
+    }
+  }
+
+  /**
    * Log email sending status to email_logs table
    * @param logs Array of email log entries
    */
@@ -321,6 +354,17 @@ class PublicationService {
         : supabase;
       
       console.log(`Logging ${logs.length} email delivery results to email_logs table`);
+      
+      // Group logs by status for more efficient processing
+      const successfulEmails = logs.filter(log => log.status === 'sent');
+      const failedEmails = logs.filter(log => log.status === 'failed');
+      
+      // Clean up failed records for successfully sent emails
+      if (successfulEmails.length > 0) {
+        const articleId = successfulEmails[0].article_id;
+        const emails = successfulEmails.map(log => log.email);
+        await this.cleanupFailedEmails(articleId, emails);
+      }
       
       const logsWithTimestamp = logs.map(log => ({
         ...log,
@@ -336,9 +380,64 @@ class PublicationService {
         throw error;
       }
       
+      // If we successfully sent all emails for an article, make sure the article is marked as published
+      if (successfulEmails.length > 0 && failedEmails.length === 0) {
+        const articleId = successfulEmails[0].article_id;
+        
+        // Check if there are any remaining failed emails for this article
+        const { data: remainingFailedEmails, error: countError } = await supabaseClient
+          .from('email_logs')
+          .select('count')
+          .eq('article_id', articleId)
+          .eq('status', 'failed');
+        
+        if (!countError && (!remainingFailedEmails || remainingFailedEmails.length === 0)) {
+          // No failed emails remain, ensure the article is marked as published
+          await this.ensureArticleIsPublished(articleId);
+        }
+      }
+      
       console.log(`Successfully logged ${logs.length} email results`);
     } catch (error) {
       console.error("Error in logEmailResults:", error);
+    }
+  }
+
+  /**
+   * Ensure that an article is marked as published
+   */
+  private async ensureArticleIsPublished(articleId: number): Promise<void> {
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      const { data, error } = await supabaseClient
+        .from('professional_content')
+        .select('published_at')
+        .eq('id', articleId)
+        .single();
+      
+      if (error) {
+        console.error(`Error checking article ${articleId} publish status:`, error);
+        return;
+      }
+      
+      // If the article is not already published, mark it as published now
+      if (!data.published_at) {
+        const { error: updateError } = await supabaseClient
+          .from('professional_content')
+          .update({ published_at: new Date().toISOString() })
+          .eq('id', articleId);
+        
+        if (updateError) {
+          console.error(`Error updating article ${articleId} publish status:`, updateError);
+        } else {
+          console.log(`Article ${articleId} has been marked as published`);
+        }
+      }
+    } catch (error) {
+      console.error(`Error in ensureArticleIsPublished for article ${articleId}:`, error);
     }
   }
 
@@ -673,6 +772,11 @@ class PublicationService {
         // Log the email sending results to the database
         await this.logEmailResults(emailLogs);
         
+        // If all emails were sent successfully, ensure the article is marked as published
+        if (emailLogs.every(log => log.status === 'sent')) {
+          await this.ensureArticleIsPublished(article.id);
+        }
+        
         console.log(`Successfully retried sending emails to ${failedEmails.length} recipients`);
         return failedEmails.length;
       } catch (fetchError) {
@@ -812,6 +916,9 @@ class PublicationService {
       
       // Mark as published
       await this.markPublicationAsDone(publicationId);
+      
+      // Also ensure the article itself is marked as published
+      await this.ensureArticleIsPublished(article.id);
       
       console.log("Publication completed successfully");
       
