@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -88,7 +87,7 @@
   body {
     @apply bg-background text-foreground font-heebo;
     direction: rtl;
-    background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_assets/clear-background.svg');
+    background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_assets/clear-background.svg') !important;
     background-repeat: no-repeat;
     background-size: cover;
     background-attachment: fixed;
