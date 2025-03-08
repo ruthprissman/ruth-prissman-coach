@@ -251,28 +251,56 @@ class PublicationService {
   }
 
   /**
-   * Publish article to email subscribers
+   * Fetch active email subscribers from the database
+   * @returns Array of unique email addresses
    */
-  private async publishToEmail(article: PublishReadyArticle): Promise<void> {
+  private async fetchActiveSubscribers(): Promise<string[]> {
     try {
       const supabaseClient = this.accessToken 
         ? getSupabaseWithAuth(this.accessToken)
         : supabase;
       
-      // 1. Fetch email subscribers from the database
+      // Fetch only active subscribers
       const { data: subscribers, error } = await supabaseClient
         .from('content_subscribers')
-        .select('email');
+        .select('email')
+        .eq('is_active', true);
       
       if (error) {
-        console.error("Error fetching email subscribers:", error);
+        console.error("Error fetching active email subscribers:", error);
         throw error;
       }
       
       if (!subscribers || subscribers.length === 0) {
-        console.log("No subscribers found. Skipping email sending.");
+        console.log("No active subscribers found.");
+        return [];
+      }
+      
+      // Extract emails and remove duplicates
+      const uniqueEmails = [...new Set(subscribers.map((sub: EmailSubscriber) => sub.email))];
+      
+      console.log(`Fetched ${uniqueEmails.length} unique active subscribers.`);
+      return uniqueEmails;
+    } catch (error) {
+      console.error("Error in fetchActiveSubscribers:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Publish article to email subscribers
+   */
+  private async publishToEmail(article: PublishReadyArticle): Promise<void> {
+    try {
+      // 1. Fetch active email subscribers from the database
+      const subscriberEmails = await this.fetchActiveSubscribers();
+      
+      if (subscriberEmails.length === 0) {
+        console.log("No active subscribers found. Skipping email sending.");
         return;
       }
+      
+      console.log(`Preparing to send email for article ${article.id} to ${subscriberEmails.length} active subscribers.`);
       
       // 2. Format the email content with HTML
       const formattedMarkdown = article.content_markdown
@@ -300,8 +328,6 @@ class PublicationService {
       `;
       
       // 3. Send email via Supabase Edge Function with updated request format
-      console.log(`Sending email for article ${article.id} to ${subscribers.length} subscribers via Edge Function`);
-      
       try {
         // Using the updated endpoint and request format 
         const response = await fetch(this.supabaseEdgeFunctionUrl, {
@@ -311,7 +337,7 @@ class PublicationService {
             "apikey": this.supabaseAnonKey
           },
           body: JSON.stringify({
-            emailList: subscribers.map((sub: EmailSubscriber) => sub.email),
+            emailList: subscriberEmails,
             subject: article.title,
             sender: { 
               email: "RuthPrissman@gmail.com", 
@@ -330,7 +356,7 @@ class PublicationService {
           throw new Error(`Failed to send email: ${errorText}`);
         }
         
-        console.log(`Email sent successfully for article ${article.id} to ${subscribers.length} subscribers`);
+        console.log(`Email sent successfully for article ${article.id} to ${subscriberEmails.length} subscribers`);
       } catch (fetchError) {
         console.error("Fetch error when calling Edge Function:", fetchError);
         throw fetchError;
