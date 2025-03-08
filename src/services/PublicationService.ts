@@ -29,7 +29,6 @@ class PublicationService {
   private isRunning = false;
   private checkInterval = 60000; // Check every minute
   private accessToken?: string;
-  // Edge Function URL (correct format that works with CURL)
   private supabaseEdgeFunctionUrl: string = "https://uwqwlltrfvokjlaufguz.functions.supabase.co/send-email";
   private supabaseAnonKey: string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3cXdsbHRyZnZva2psYXVmZ3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA4NjU0MjYsImV4cCI6MjA1NjQ0MTQyNn0.G2JhvsEw4Q24vgt9SS9_nOMPtOdOqTGpus8zEJ5USD8";
 
@@ -260,11 +259,13 @@ class PublicationService {
         ? getSupabaseWithAuth(this.accessToken)
         : supabase;
       
-      // Fetch only active subscribers
+      console.log("Fetching active subscribers from content_subscribers table");
+      
+      // Fetch only subscribed subscribers using the correct column name 'is_subscribed'
       const { data: subscribers, error } = await supabaseClient
         .from('content_subscribers')
         .select('email')
-        .eq('is_active', true);
+        .eq('is_subscribed', true);
       
       if (error) {
         console.error("Error fetching active email subscribers:", error);
@@ -272,14 +273,14 @@ class PublicationService {
       }
       
       if (!subscribers || subscribers.length === 0) {
-        console.log("No active subscribers found.");
+        console.log("No active subscribers found in the database.");
         return [];
       }
       
       // Extract emails and remove duplicates
       const uniqueEmails = [...new Set(subscribers.map((sub: EmailSubscriber) => sub.email))];
       
-      console.log(`Fetched ${uniqueEmails.length} unique active subscribers.`);
+      console.log(`Successfully fetched ${uniqueEmails.length} unique active subscribers.`);
       return uniqueEmails;
     } catch (error) {
       console.error("Error in fetchActiveSubscribers:", error);
@@ -292,6 +293,8 @@ class PublicationService {
    */
   private async publishToEmail(article: PublishReadyArticle): Promise<void> {
     try {
+      console.log(`Starting email publication process for article ${article.id}`);
+      
       // 1. Fetch active email subscribers from the database
       const subscriberEmails = await this.fetchActiveSubscribers();
       
@@ -329,6 +332,8 @@ class PublicationService {
       
       // 3. Send email via Supabase Edge Function with updated request format
       try {
+        console.log(`Calling Supabase Edge Function to send emails to ${subscriberEmails.length} subscribers`);
+        
         // Using the updated endpoint and request format 
         const response = await fetch(this.supabaseEdgeFunctionUrl, {
           method: "POST",
