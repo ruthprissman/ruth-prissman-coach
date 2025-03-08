@@ -8,10 +8,7 @@ import { Heart, Sun, Leaf } from 'lucide-react';
 
 export default function About() {
   return (
-    <div className="min-h-screen flex flex-col bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/mn961lxdmrzb3hu61jr8c/clear-background.jpg?rlkey=te75ba634sz277355u5onqvuy&st=qxb55gpi&raw=1)' }}>
-      <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]"></div>
-      
+    <div className="min-h-screen flex flex-col">
       <Navigation />
       <main className="flex-grow relative z-10">
         <div className="container mx-auto px-4 py-16 md:py-24">
@@ -41,7 +38,7 @@ export default function About() {
             </div>
           </div>
 
-          <div className="backdrop-blur-sm rounded-xl p-6 shadow-md mb-12 text-right">
+          <div className="backdrop-blur-sm bg-white/90 rounded-xl p-6 shadow-md mb-12 text-right">
             <h2 className="text-2xl font-alef text-[#4A235A] mb-6 text-center">ערכי הליבה וגישת הטיפול</h2>
             <div className="space-y-4 text-right">
               <div className="flex flex-row-reverse items-center gap-4">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Mail, AlertCircle, CheckCircle, ArrowRight, Home } from 'lucide-react';
@@ -236,7 +237,7 @@ const UnsubscribePage: React.FC = () => {
       <Navigation />
       <main className="flex-grow pt-20">
         <div className="container mx-auto px-4 py-12 max-w-md">
-          <div className="bg-white shadow-md rounded-lg p-8 mb-8">
+          <div className="bg-white/90 backdrop-blur-sm shadow-md rounded-lg p-8 mb-8">
             <div className="flex flex-col items-center mb-6">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
                 <Mail className="h-8 w-8 text-purple-600" />
