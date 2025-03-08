@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Mail, AlertCircle, CheckCircle, ArrowRight, Home } from 'lucide-react';
@@ -14,7 +13,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Footer } from '@/components/Footer';
 import { Navigation } from '@/components/Navigation';
 
-// Schema for form validation
 const formSchema = z.object({
   email: z.string().email({ message: 'נא להזין כתובת אימייל תקינה' }),
   listType: z.enum(['general', 'stories', 'all'], {
@@ -24,7 +22,6 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// List type mapping
 const listTypeNames: Record<string, string> = {
   general: 'תוכן כללי',
   stories: 'סיפורים קצרים',
@@ -36,7 +33,6 @@ const UnsubscribePage: React.FC = () => {
   const [step, setStep] = useState<'input' | 'confirm' | 'success' | 'notFound' | 'resubscribed' | 'alreadyUnsubscribed'>('input');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Initialize form with values from URL
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -46,7 +42,6 @@ const UnsubscribePage: React.FC = () => {
   });
 
   useEffect(() => {
-    // Auto-fill form from URL parameters
     const email = searchParams.get('email');
     const list = searchParams.get('list');
     
@@ -69,7 +64,6 @@ const UnsubscribePage: React.FC = () => {
       let isAlreadyUnsubscribed = false;
       let emailExists = false;
       
-      // Check if email exists in the respective table and is already unsubscribed
       if (values.listType === 'general' || values.listType === 'all') {
         const { data: generalData } = await supabase
           .from('content_subscribers')
@@ -110,7 +104,6 @@ const UnsubscribePage: React.FC = () => {
         return;
       }
       
-      // Update database based on list type
       if (values.listType === 'general' || values.listType === 'all') {
         const { error: generalError } = await supabase
           .from('content_subscribers')
@@ -135,7 +128,6 @@ const UnsubscribePage: React.FC = () => {
         if (storiesError) throw storiesError;
       }
       
-      // If all went well, show success step
       setStep('success');
       toast.success('הסרת המנוי בוצעה בהצלחה');
       
@@ -148,18 +140,13 @@ const UnsubscribePage: React.FC = () => {
   };
 
   const handleConfirm = () => {
-    // Get form values
     const values = form.getValues();
-    
-    // Perform form validation
     const result = formSchema.safeParse(values);
     if (!result.success) {
-      // If validation fails, show errors
       form.trigger();
       return;
     }
     
-    // Proceed to confirmation step
     setStep('confirm');
   };
   
@@ -176,16 +163,13 @@ const UnsubscribePage: React.FC = () => {
           .single();
           
         if (data) {
-          // Update existing record
           await supabase
             .from('content_subscribers')
             .update({ 
               is_subscribed: true,
-              // No longer updating unsubscribed_at field
             })
             .eq('email', values.email);
         } else {
-          // Insert new record
           await supabase
             .from('content_subscribers')
             .insert({ 
@@ -203,16 +187,13 @@ const UnsubscribePage: React.FC = () => {
           .single();
           
         if (data) {
-          // Update existing record
           await supabase
             .from('story_subscribers')
             .update({ 
               is_subscribed: true,
-              // No longer updating unsubscribed_at field
             })
             .eq('email', values.email);
         } else {
-          // Insert new record
           await supabase
             .from('story_subscribers')
             .insert({ 
@@ -233,10 +214,10 @@ const UnsubscribePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" dir="rtl">
+    <div className="min-h-screen flex flex-col">
       <Navigation />
-      <main className="flex-grow pt-20">
-        <div className="container mx-auto px-4 py-12 max-w-md">
+      <main className="flex-grow relative z-10">
+        <div className="container mx-auto px-4 py-16 md:py-24 max-w-md">
           <div className="bg-white/90 backdrop-blur-sm shadow-md rounded-lg p-8 mb-8">
             <div className="flex flex-col items-center mb-6">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
@@ -248,7 +229,6 @@ const UnsubscribePage: React.FC = () => {
               <div className="w-16 h-1 bg-gold rounded-full"></div>
             </div>
             
-            {/* Input Step */}
             {step === 'input' && (
               <Form {...form}>
                 <form className="space-y-6">
@@ -323,7 +303,6 @@ const UnsubscribePage: React.FC = () => {
               </Form>
             )}
             
-            {/* Confirm Step */}
             {step === 'confirm' && (
               <div className="space-y-6">
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
@@ -361,7 +340,6 @@ const UnsubscribePage: React.FC = () => {
               </div>
             )}
             
-            {/* Success Step */}
             {step === 'success' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-center mb-4">
@@ -403,7 +381,6 @@ const UnsubscribePage: React.FC = () => {
               </div>
             )}
             
-            {/* Resubscribed Step */}
             {step === 'resubscribed' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-center mb-4">
@@ -432,7 +409,6 @@ const UnsubscribePage: React.FC = () => {
               </div>
             )}
             
-            {/* Already Unsubscribed Step */}
             {step === 'alreadyUnsubscribed' && (
               <div className="space-y-6">
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
@@ -473,7 +449,6 @@ const UnsubscribePage: React.FC = () => {
               </div>
             )}
             
-            {/* Not Found Step */}
             {step === 'notFound' && (
               <div className="space-y-6">
                 <div className="p-4 bg-red-50 border border-red-200 rounded-md">
