@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Footer } from '@/components/Footer';
+import { Navigation } from '@/components/Navigation';
 
 // Schema for form validation
 const formSchema = z.object({
@@ -32,7 +33,7 @@ const listTypeNames: Record<string, string> = {
 
 const UnsubscribePage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState<'input' | 'confirm' | 'success' | 'notFound' | 'resubscribed'>('input');
+  const [step, setStep] = useState<'input' | 'confirm' | 'success' | 'notFound' | 'resubscribed' | 'alreadyUnsubscribed'>('input');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Initialize form with values from URL
@@ -65,33 +66,47 @@ const UnsubscribePage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Check if email exists in the respective table
+      let isAlreadyUnsubscribed = false;
       let emailExists = false;
       
-      // For general content list
+      // Check if email exists in the respective table and is already unsubscribed
       if (values.listType === 'general' || values.listType === 'all') {
         const { data: generalData } = await supabase
           .from('content_subscribers')
-          .select('email')
+          .select('email, is_subscribed')
           .eq('email', values.email)
-          .single();
+          .maybeSingle();
           
-        if (generalData) emailExists = true;
+        if (generalData) {
+          emailExists = true;
+          if (!generalData.is_subscribed) {
+            isAlreadyUnsubscribed = true;
+          }
+        }
       }
       
-      // For short stories list
       if (!emailExists && (values.listType === 'stories' || values.listType === 'all')) {
         const { data: storiesData } = await supabase
           .from('story_subscribers')
-          .select('email')
+          .select('email, is_subscribed')
           .eq('email', values.email)
-          .single();
+          .maybeSingle();
           
-        if (storiesData) emailExists = true;
+        if (storiesData) {
+          emailExists = true;
+          if (!storiesData.is_subscribed) {
+            isAlreadyUnsubscribed = true;
+          }
+        }
       }
       
       if (!emailExists) {
         setStep('notFound');
+        return;
+      }
+      
+      if (isAlreadyUnsubscribed) {
+        setStep('alreadyUnsubscribed');
         return;
       }
       
@@ -219,7 +234,8 @@ const UnsubscribePage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50" dir="rtl">
-      <main className="flex-grow">
+      <Navigation />
+      <main className="flex-grow pt-20">
         <div className="container mx-auto px-4 py-12 max-w-md">
           <div className="bg-white shadow-md rounded-lg p-8 mb-8">
             <div className="flex flex-col items-center mb-6">
@@ -361,15 +377,28 @@ const UnsubscribePage: React.FC = () => {
                     <br />אנו מקווים לראות אותך שוב בעתיד! 😊
                   </p>
                   
-                  <Button 
-                    type="button" 
-                    onClick={handleResubscribe}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                    disabled={isSubmitting}
-                  >
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                    {isSubmitting ? 'מבצע רישום...' : 'רוצה להצטרף חזרה? לחץ כאן להרשמה מחדש'}
-                  </Button>
+                  <div className="space-y-3">
+                    <Button 
+                      type="button" 
+                      onClick={handleResubscribe}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                      disabled={isSubmitting}
+                    >
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                      {isSubmitting ? 'מבצע רישום...' : 'רוצה להצטרף חזרה? לחץ כאן להרשמה מחדש'}
+                    </Button>
+                    
+                    <Link to="/">
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <Home className="ml-2 h-4 w-4" />
+                        חזרה לדף הבית
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
@@ -403,6 +432,47 @@ const UnsubscribePage: React.FC = () => {
               </div>
             )}
             
+            {/* Already Unsubscribed Step */}
+            {step === 'alreadyUnsubscribed' && (
+              <div className="space-y-6">
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5 ml-2" />
+                    <div>
+                      <h3 className="font-medium text-blue-800">כבר בוטל המנוי שלך</h3>
+                      <p className="text-sm text-blue-700 mt-1">
+                        האימייל <strong dir="ltr" className="inline-block">{form.getValues().email}</strong> כבר אינו רשום לרשימת התפוצה "{selectedListName}".
+                        <br />אין צורך בפעולה נוספת.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <Button 
+                    type="button" 
+                    onClick={handleResubscribe}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    disabled={isSubmitting}
+                  >
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                    {isSubmitting ? 'מבצע רישום...' : 'רוצה להצטרף חזרה? לחץ כאן להרשמה מחדש'}
+                  </Button>
+                  
+                  <Link to="/">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <Home className="ml-2 h-4 w-4" />
+                      חזרה לדף הבית
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+            
             {/* Not Found Step */}
             {step === 'notFound' && (
               <div className="space-y-6">
@@ -418,13 +488,26 @@ const UnsubscribePage: React.FC = () => {
                   </div>
                 </div>
                 
-                <Button 
-                  type="button" 
-                  onClick={() => setStep('input')}
-                  className="w-full"
-                >
-                  חזרה לטופס
-                </Button>
+                <div className="space-y-3">
+                  <Button 
+                    type="button" 
+                    onClick={() => setStep('input')}
+                    className="w-full"
+                  >
+                    חזרה לטופס
+                  </Button>
+                  
+                  <Link to="/">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <Home className="ml-2 h-4 w-4" />
+                      חזרה לדף הבית
+                    </Button>
+                  </Link>
+                </div>
               </div>
             )}
             
