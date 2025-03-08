@@ -1,3 +1,4 @@
+
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -583,6 +584,76 @@ class PublicationService {
   }
 
   /**
+   * Format URL to ensure it's valid
+   * @param url URL string to format
+   * @returns Properly formatted URL
+   */
+  private formatUrl(url: string | null): string | null {
+    if (!url) return null;
+    
+    url = url.trim();
+    
+    // Check if it's an email address
+    if (url.includes('@') && !url.startsWith('mailto:')) {
+      return `mailto:${url}`;
+    }
+    
+    // Check if it's a WhatsApp number
+    if (url.includes('whatsapp') || url.startsWith('+') || 
+        url.startsWith('972') || url.match(/^\d{10,15}$/)) {
+      
+      // Extract only numbers
+      const phoneNumber = url.replace(/\D/g, '');
+      
+      // Make sure it starts with country code
+      const formattedNumber = phoneNumber.startsWith('972') 
+        ? phoneNumber 
+        : `972${phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber}`;
+      
+      return `https://wa.me/${formattedNumber}`;
+    }
+    
+    // Add https:// if missing for regular URLs
+    if (!url.startsWith('http://') && !url.startsWith('https://') && 
+        !url.startsWith('mailto:') && !url.startsWith('#')) {
+      return `https://${url}`;
+    }
+    
+    return url;
+  }
+
+  /**
+   * Generate email links in HTML
+   * @param staticLinks Array of static links
+   * @returns Array of formatted HTML links
+   */
+  private generateEmailLinks(staticLinks: StaticLink[]): string[] {
+    return staticLinks.map(link => {
+      const formattedUrl = this.formatUrl(link.url);
+      
+      if (formattedUrl) {
+        return `
+          <p style="text-align: center; margin: 10px 0;">
+            <a href="${formattedUrl}" 
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+              ${link.text}
+            </a>
+          </p>
+        `;
+      } else if (link.text) {
+        // Display plain text as bold paragraph when no URL
+        return `
+          <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold;">
+            ${link.text}
+          </p>
+        `;
+      }
+      
+      return '';
+    }).filter(link => link !== '');
+  }
+
+  /**
    * Generate footer with static links
    * @param recipientEmail The recipient email for unsubscribe link
    * @returns HTML string with footer links
@@ -594,36 +665,68 @@ class PublicationService {
       
       // Add default links if not in the static_links table
       const contactLink = staticLinks.find(link => link.name === 'contact');
-      footerLinks.push(contactLink && contactLink.url 
-        ? `<a href="${contactLink.url}" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">${contactLink.text || 'צור קשר'}</a>` 
-        : `<a href="/contact" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">צור קשר</a>`);
+      const contactUrl = this.formatUrl(contactLink?.url || '/contact');
+      footerLinks.push(`
+        <p style="text-align: center; margin: 10px 0;">
+          <a href="${contactUrl}" 
+             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+            ${contactLink?.text || 'צור קשר'}
+          </a>
+        </p>
+      `);
       
       const whatsappLink = staticLinks.find(link => link.name === 'whatsapp');
-      footerLinks.push(whatsappLink && whatsappLink.url 
-        ? `<a href="${whatsappLink.url}" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">${whatsappLink.text || 'שלח לי הודעה בוואטסאפ'}</a>` 
-        : `<a href="https://wa.me/972XXXXXXXXX" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">שלח לי הודעה בוואטסאפ</a>`);
+      const whatsappUrl = this.formatUrl(whatsappLink?.url || '972556620273');
+      footerLinks.push(`
+        <p style="text-align: center; margin: 10px 0;">
+          <a href="${whatsappUrl}" 
+             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+            ${whatsappLink?.text || 'שלח לי הודעה בוואטסאפ'}
+          </a>
+        </p>
+      `);
       
       // Add unsubscribe link with dynamic email parameter
       const unsubscribeUrl = `https://yourwebsite.com/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=newsletter`;
-      footerLinks.push(`<a href="${unsubscribeUrl}" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">להסרה מרשימת התפוצה</a>`);
+      footerLinks.push(`
+        <p style="text-align: center; margin: 10px 0;">
+          <a href="${unsubscribeUrl}" 
+             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+            להסרה מרשימת התפוצה
+          </a>
+        </p>
+      `);
       
       // Add any other static links
       staticLinks.forEach(link => {
-        if (!['contact', 'whatsapp', 'unsubscribe', 'email'].includes(link.name) && link.url) {
-          footerLinks.push(`<a href="${link.url}" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">${link.text}</a>`);
-        } else if (!['contact', 'whatsapp', 'unsubscribe', 'email'].includes(link.name) && !link.url && link.text) {
-          footerLinks.push(`<strong style="margin: 0 10px;">${link.text}</strong>`);
+        if (!['contact', 'whatsapp', 'unsubscribe', 'email'].includes(link.name)) {
+          const formattedUrl = this.formatUrl(link.url);
+          
+          if (formattedUrl) {
+            footerLinks.push(`
+              <p style="text-align: center; margin: 10px 0;">
+                <a href="${formattedUrl}" 
+                   style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+                  ${link.text}
+                </a>
+              </p>
+            `);
+          } else if (link.text) {
+            footerLinks.push(`
+              <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold;">
+                ${link.text}
+              </p>
+            `);
+          }
         }
       });
       
       return `
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eaeaea; text-align: center;">
-          <div style="font-size: 14px; color: #666; margin-bottom: 15px;">
-            ${footerLinks.join(' | ')}
-          </div>
-          <div style="font-size: 12px; color: #999; margin-top: 10px;">
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eaeaea;">
+          ${footerLinks.join('')}
+          <p style="font-size: 12px; color: #999; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif;">
             © ${new Date().getFullYear()} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
-          </div>
+          </p>
         </div>
       `;
     } catch (error) {
@@ -631,10 +734,21 @@ class PublicationService {
       // Fallback footer if something goes wrong
       return `
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eaeaea; text-align: center;">
-          <div style="font-size: 14px; color: #666; margin-bottom: 15px;">
-            <a href="/contact" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">צור קשר</a> | 
-            <a href="https://yourwebsite.com/unsubscribe?email=${encodeURIComponent(recipientEmail)}" style="color: #3273dc; text-decoration: underline; margin: 0 10px;">להסרה מרשימת התפוצה</a>
-          </div>
+          <p style="margin: 10px 0;">
+            <a href="/contact" 
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+              צור קשר
+            </a>
+          </p>
+          <p style="margin: 10px 0;">
+            <a href="https://yourwebsite.com/unsubscribe?email=${encodeURIComponent(recipientEmail)}" 
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+              להסרה מרשימת התפוצה
+            </a>
+          </p>
+          <p style="font-size: 12px; color: #999; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif;">
+            © ${new Date().getFullYear()} רות פריסמן - קוד הנפש
+          </p>
         </div>
       `;
     }
@@ -654,10 +768,11 @@ class PublicationService {
       let processedContent = content;
       
       // Replace "כתבי לי" with email link
-      if (emailLink && emailLink.url) {
+      if (emailLink) {
         const emailRegex = /כתבי לי/g;
         const encodedSubject = encodeURIComponent(`שאלה על ${articleTitle}`);
-        const emailHtml = `<a href="mailto:${emailLink.url}?subject=${encodedSubject}" style="color: #3273dc; text-decoration: underline;">כתבי לי</a>`;
+        const emailUrl = this.formatUrl(emailLink.url) || `mailto:ruthprissman@gmail.com?subject=${encodedSubject}`;
+        const emailHtml = `<a href="${emailUrl}" style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">כתבי לי</a>`;
         processedContent = processedContent.replace(emailRegex, emailHtml);
       }
       
@@ -695,6 +810,10 @@ class PublicationService {
       // Convert newlines to HTML breaks
       const formattedMarkdown = processedContent.replace(/\n/g, '<br/>');
       
+      // Fetch static links for the email body
+      const staticLinks = await this.fetchStaticLinks();
+      const emailBodyLinks = this.generateEmailLinks(staticLinks);
+      
       // Create email logs array for batch insertion
       const emailLogs: EmailLogEntry[] = [];
       
@@ -713,6 +832,8 @@ class PublicationService {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>${article.title}</title>
                 <style>
+                  @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Heebo:wght@300;400;500;700&display=swap');
+                  
                   @media only screen and (max-width: 620px) {
                     .email-container {
                       width: 100% !important;
@@ -727,26 +848,46 @@ class PublicationService {
                       font-size: 16px !important;
                     }
                   }
+                  body {
+                    font-family: 'Heebo', sans-serif;
+                  }
+                  h1, h2, h3, a {
+                    font-family: 'Alef', sans-serif;
+                  }
                 </style>
               </head>
-              <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; direction: rtl; background-color: #f5f5f5;">
-                <div style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/email-background.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; width: 100%; min-height: 100%;">
-                  <div class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); margin-top: 20px; margin-bottom: 20px; overflow: hidden;">
-                    <div style="background-color: #4a6da7; padding: 20px; text-align: center;">
-                      <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700;">${article.title}</h1>
-                    </div>
-                    <div class="content" style="padding: 20px 30px;">
-                      <p style="font-size: 16px; color: #333; margin-bottom: 20px; text-align: right;">${formattedMarkdown}</p>
-                      
-                      ${article.content_markdown.length > 500 ? 
-                        `<div style="text-align: center; margin: 30px 0;">
-                          <a href="${readMoreUrl}" style="background-color: #4a6da7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">קרא עוד באתר</a>
-                        </div>` : ''}
-                      
-                      ${emailFooter}
-                    </div>
-                  </div>
-                </div>
+              <body style="margin: 0; padding: 0; font-family: 'Heebo', sans-serif; line-height: 1.6; direction: rtl; background-color: #f5f5f5;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
+                      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                        <tr>
+                          <td style="background-color: #4a6da7; padding: 20px; text-align: center;">
+                            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; font-family: 'Alef', sans-serif;">${article.title}</h1>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="content" style="padding: 30px;">
+                            <div style="font-size: 16px; color: #333; margin-bottom: 20px; text-align: right; font-family: 'Heebo', sans-serif;">
+                              ${formattedMarkdown}
+                            </div>
+                            
+                            ${article.content_markdown.length > 500 ? 
+                              `<div style="text-align: center; margin: 30px 0;">
+                                <a href="${readMoreUrl}" style="background-color: #4a6da7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
+                              </div>` : ''}
+                            
+                            <div style="margin: 30px 0;">
+                              ${emailBodyLinks.join('')}
+                            </div>
+                            
+                            ${emailFooter}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
               </body>
             </html>
           `;
@@ -871,6 +1012,10 @@ class PublicationService {
       // Convert newlines to HTML breaks
       const formattedMarkdown = processedContent.replace(/\n/g, '<br/>');
       
+      // Fetch static links for the email body
+      const staticLinks = await this.fetchStaticLinks();
+      const emailBodyLinks = this.generateEmailLinks(staticLinks);
+      
       // Email logs array for batch insertion
       const emailLogs: EmailLogEntry[] = [];
       
@@ -889,6 +1034,8 @@ class PublicationService {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>${article.title}</title>
                 <style>
+                  @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Heebo:wght@300;400;500;700&display=swap');
+                  
                   @media only screen and (max-width: 620px) {
                     .email-container {
                       width: 100% !important;
@@ -903,26 +1050,46 @@ class PublicationService {
                       font-size: 16px !important;
                     }
                   }
+                  body {
+                    font-family: 'Heebo', sans-serif;
+                  }
+                  h1, h2, h3, a {
+                    font-family: 'Alef', sans-serif;
+                  }
                 </style>
               </head>
-              <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; direction: rtl; background-color: #f5f5f5;">
-                <div style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/email-background.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; width: 100%; min-height: 100%;">
-                  <div class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); margin-top: 20px; margin-bottom: 20px; overflow: hidden;">
-                    <div style="background-color: #4a6da7; padding: 20px; text-align: center;">
-                      <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700;">${article.title}</h1>
-                    </div>
-                    <div class="content" style="padding: 20px 30px;">
-                      <p style="font-size: 16px; color: #333; margin-bottom: 20px; text-align: right;">${formattedMarkdown}</p>
-                      
-                      ${article.content_markdown.length > 500 ? 
-                        `<div style="text-align: center; margin: 30px 0;">
-                          <a href="${readMoreUrl}" style="background-color: #4a6da7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">קרא עוד באתר</a>
-                        </div>` : ''}
-                      
-                      ${emailFooter}
-                    </div>
-                  </div>
-                </div>
+              <body style="margin: 0; padding: 0; font-family: 'Heebo', sans-serif; line-height: 1.6; direction: rtl; background-color: #f5f5f5;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
+                      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                        <tr>
+                          <td style="background-color: #4a6da7; padding: 20px; text-align: center;">
+                            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; font-family: 'Alef', sans-serif;">${article.title}</h1>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td class="content" style="padding: 30px;">
+                            <div style="font-size: 16px; color: #333; margin-bottom: 20px; text-align: right; font-family: 'Heebo', sans-serif;">
+                              ${formattedMarkdown}
+                            </div>
+                            
+                            ${article.content_markdown.length > 500 ? 
+                              `<div style="text-align: center; margin: 30px 0;">
+                                <a href="${readMoreUrl}" style="background-color: #4a6da7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
+                              </div>` : ''}
+                            
+                            <div style="margin: 30px 0;">
+                              ${emailBodyLinks.join('')}
+                            </div>
+                            
+                            ${emailFooter}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
               </body>
             </html>
           `;
