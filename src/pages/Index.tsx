@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -46,10 +45,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div 
-        className="min-h-screen bg-cover bg-center bg-fixed relative w-full h-full" 
-        style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/mn961lxdmrzb3hu61jr8c/clear-background.jpg?rlkey=te75ba634sz277355u5onqvuy&st=qxb55gpi&raw=1)' }}
-      >
+      <div className="min-h-screen relative w-full h-full">
         <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]"></div>
         
         <Navigation />

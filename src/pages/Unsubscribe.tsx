@@ -214,14 +214,9 @@ const UnsubscribePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col unsubscribe-page relative">
-      <img 
-        src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/clear-background.svg" 
-        className="absolute top-0 left-0 w-full h-full object-cover opacity-30 -z-10"
-        alt="Background"
-      />
+    <div className="min-h-screen flex flex-col unsubscribe-page">
       <Navigation />
-      <main className="flex-grow relative">
+      <main className="flex-grow">
         <div className="container mx-auto px-4 py-16 md:py-24 max-w-md">
           <div className="bg-white/70 backdrop-blur-sm shadow-md rounded-lg p-8 mb-8">
             <div className="flex flex-col items-center mb-6">
