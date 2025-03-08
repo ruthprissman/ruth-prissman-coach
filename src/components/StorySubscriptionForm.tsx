@@ -41,7 +41,7 @@ export function StorySubscriptionForm() {
           // Re-subscribe
           await supabase
             .from('story_subscribers')
-            .update({ is_subscribed: true, unsubscribed_at: null })
+            .update({ is_subscribed: true })
             .eq('email', email);
             
           toast({
@@ -109,4 +109,3 @@ export function StorySubscriptionForm() {
     </div>
   );
 }
-

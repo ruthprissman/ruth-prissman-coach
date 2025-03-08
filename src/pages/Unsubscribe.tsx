@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Mail, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
+import { Mail, AlertCircle, CheckCircle, ArrowRight, Home } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,7 +32,7 @@ const listTypeNames: Record<string, string> = {
 
 const UnsubscribePage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState<'input' | 'confirm' | 'success' | 'notFound'>('input');
+  const [step, setStep] = useState<'input' | 'confirm' | 'success' | 'notFound' | 'resubscribed'>('input');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Initialize form with values from URL
@@ -165,8 +165,8 @@ const UnsubscribePage: React.FC = () => {
           await supabase
             .from('content_subscribers')
             .update({ 
-              is_subscribed: true, 
-              unsubscribed_at: null 
+              is_subscribed: true,
+              // No longer updating unsubscribed_at field
             })
             .eq('email', values.email);
         } else {
@@ -192,8 +192,8 @@ const UnsubscribePage: React.FC = () => {
           await supabase
             .from('story_subscribers')
             .update({ 
-              is_subscribed: true, 
-              unsubscribed_at: null 
+              is_subscribed: true,
+              // No longer updating unsubscribed_at field
             })
             .eq('email', values.email);
         } else {
@@ -208,7 +208,7 @@ const UnsubscribePage: React.FC = () => {
       }
       
       toast.success('נרשמת בהצלחה לרשימת התפוצה!');
-      setStep('input');
+      setStep('resubscribed');
     } catch (error) {
       console.error('Error resubscribing:', error);
       toast.error('אירעה שגיאה בתהליך ההרשמה');
@@ -227,7 +227,7 @@ const UnsubscribePage: React.FC = () => {
                 <Mail className="h-8 w-8 text-purple-600" />
               </div>
               <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">
-                הסרה מרשימת תפוצה
+                {step === 'resubscribed' ? 'הרשמה מחדש לרשימת תפוצה' : 'הסרה מרשימת תפוצה'}
               </h1>
               <div className="w-16 h-1 bg-gold rounded-full"></div>
             </div>
@@ -370,6 +370,35 @@ const UnsubscribePage: React.FC = () => {
                     <ArrowRight className="ml-2 h-4 w-4" />
                     {isSubmitting ? 'מבצע רישום...' : 'רוצה להצטרף חזרה? לחץ כאן להרשמה מחדש'}
                   </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* Resubscribed Step */}
+            {step === 'resubscribed' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-center mb-4">
+                  <CheckCircle className="h-16 w-16 text-green-500" />
+                </div>
+                
+                <div className="text-center">
+                  <h3 className="text-xl font-medium text-gray-900 mb-2">
+                    נרשמת בהצלחה!
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    נרשמת בהצלחה לרשימת "<strong>{selectedListName}</strong>".
+                    <br />אנו שמחים לראות אותך שוב! 😊
+                  </p>
+                  
+                  <Link to="/">
+                    <Button 
+                      type="button" 
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      <Home className="ml-2 h-4 w-4" />
+                      חזרה לדף הבית
+                    </Button>
+                  </Link>
                 </div>
               </div>
             )}
