@@ -15,13 +15,19 @@ const authClientCache = new Map<string, SupabaseTypedClient>();
 
 // Create a function to get a Supabase client with auth
 export const getSupabaseWithAuth = (accessToken?: string): SupabaseTypedClient => {
-  if (!accessToken) return supabase;
+  if (!accessToken) {
+    console.log("Warning: getSupabaseWithAuth called without accessToken");
+    return supabase;
+  }
   
   try {
     // Return cached client if it exists for this token
     if (authClientCache.has(accessToken)) {
+      console.log("Using cached authenticated Supabase client");
       return authClientCache.get(accessToken)!;
     }
+    
+    console.log("Creating new authenticated Supabase client");
     
     // Create new authenticated client
     const authClient = createClient(
@@ -50,7 +56,9 @@ export const getSupabaseWithAuth = (accessToken?: string): SupabaseTypedClient =
 export const clearAuthClientCache = (accessToken?: string) => {
   if (accessToken) {
     authClientCache.delete(accessToken);
+    console.log("Cleared specific auth client from cache");
   } else {
     authClientCache.clear();
+    console.log("Cleared all auth clients from cache");
   }
 };

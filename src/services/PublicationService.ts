@@ -31,11 +31,13 @@ class PublicationService {
   }
   
   public start(accessToken?: string): void {
+    console.log("PublicationService started with token:", accessToken ? "Token provided" : "No token");
     this.accessToken = accessToken;
   }
   
   // Add missing stop method
   public stop(): void {
+    console.log("PublicationService stopped");
     this.accessToken = undefined;
   }
 
@@ -75,6 +77,8 @@ class PublicationService {
   // Add missing retryFailedEmails method
   public async retryFailedEmails(articleId: number): Promise<number> {
     try {
+      console.log(`Retrying failed emails for article ${articleId} with auth token:`, this.accessToken ? "Token present" : "No token");
+      
       const supabaseClient = this.accessToken 
         ? getSupabaseWithAuth(this.accessToken)
         : supabase;
@@ -124,9 +128,11 @@ class PublicationService {
         published_at: article.published_at || null
       };
       
-      // Retry sending to failed emails - in a real implementation
-      // we would actually send emails here
+      // Call the publish to email function with the article and specific recipient list
       console.log(`Retrying to send emails for article ${articleId} to ${failedLogs.length} failed recipients`);
+      
+      // Call our email sending function with explicit authorization
+      await this.publishToEmail(publishReadyArticle, failedLogs.map(log => log.email));
       
       // Update the email logs to mark as sent
       const { error: updateError } = await supabaseClient
@@ -152,8 +158,32 @@ class PublicationService {
 
   // Helper methods for email publication
   private async fetchActiveSubscribers(): Promise<string[]> {
-    // Placeholder for fetching active subscribers from the database
-    return ['test@example.com'];
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+        
+      // Get active subscribers from database
+      const { data, error } = await supabaseClient
+        .from('subscribers')
+        .select('email')
+        .eq('active', true);
+        
+      if (error) {
+        console.error('Error fetching subscribers:', error);
+        return ['test@example.com']; // Fallback for testing
+      }
+      
+      if (!data || data.length === 0) {
+        console.log('No active subscribers found');
+        return ['test@example.com']; // Fallback for testing
+      }
+      
+      return data.map(sub => sub.email);
+    } catch (error) {
+      console.error('Error in fetchActiveSubscribers:', error);
+      return ['test@example.com']; // Fallback for testing
+    }
   }
   
   private async processContentLinks(content: string, title: string): Promise<string> {
@@ -183,8 +213,24 @@ class PublicationService {
   }
   
   private async logEmailResults(logs: EmailLogEntry[]): Promise<void> {
-    // Log email sending results to database
-    console.log('Logging email results:', logs);
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      // Insert email logs into database
+      const { error } = await supabaseClient
+        .from('email_logs')
+        .insert(logs);
+        
+      if (error) {
+        console.error('Error logging email results:', error);
+      }
+      
+      console.log('Email logs saved:', logs.length);
+    } catch (error) {
+      console.error('Error in logEmailResults:', error);
+    }
   }
   
   public async publishToWebsite(contentId: number): Promise<void> {
@@ -195,19 +241,20 @@ class PublicationService {
   /**
    * Publish article to email subscribers
    */
-  private async publishToEmail(article: PublishReadyArticle): Promise<void> {
+  private async publishToEmail(article: PublishReadyArticle, specificRecipients?: string[]): Promise<void> {
     try {
       console.log(`Starting email publication process for article ${article.id}`);
+      console.log(`Authorization token status: ${this.accessToken ? 'Present' : 'Missing'}`);
       
-      // 1. Fetch active email subscribers from the database
-      const subscriberEmails = await this.fetchActiveSubscribers();
+      // Use provided recipients or fetch subscribers
+      const subscriberEmails = specificRecipients || await this.fetchActiveSubscribers();
       
       if (subscriberEmails.length === 0) {
         console.log("No active subscribers found. Skipping email sending.");
         return;
       }
       
-      console.log(`Preparing to send email for article ${article.id} to ${subscriberEmails.length} active subscribers.`);
+      console.log(`Preparing to send email for article ${article.id} to ${subscriberEmails.length} recipients.`);
       
       // 2. Format the email content with HTML
       const truncatedContent = article.content_markdown.slice(0, 500) + 
@@ -219,7 +266,7 @@ class PublicationService {
       // Convert newlines to HTML breaks
       const formattedMarkdown = processedContent.replace(/\n/g, '<br/>');
       
-      // Fetch static links for the email body - ONLY PLACE we fetch static links
+      // Fetch static links for the email body
       const staticLinks = await this.fetchStaticLinks();
       const emailBodyLinks = this.generateEmailLinks(staticLinks);
       
@@ -229,140 +276,55 @@ class PublicationService {
       // Create email logs array for batch insertion
       const emailLogs: EmailLogEntry[] = [];
       
-      // Send individual emails to each subscriber
-      for (const recipientEmail of subscriberEmails) {
-        try {
-          // Generate footer with personalized unsubscribe link and contact link only if needed
-          const emailFooter = await this.generateEmailFooter(recipientEmail, !hasContactLink);
-          
-          const readMoreUrl = `https://ruth-prissman-coach.lovable.app/articles/${article.id}`;
-          
-          const emailContent = `
-            <html>
-              <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${article.title}</title>
-                <style>
-                  @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Heebo:wght@300;400;500;700&display=swap');
-                  
-                  body {
-                    font-family: 'Heebo', sans-serif;
-                    line-height: 1.8;
-                    color: #4A148C;
-                    text-align: center;
-                    background-color: transparent;
-                  }
-                  
-                  h1, h2, h3, h4, a, .title {
-                    font-family: 'Alef', sans-serif;
-                    font-weight: 700;
-                  }
-                  
-                  p {
-                    margin-bottom: 16px;
-                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
-                  }
-                  
-                  a {
-                    color: #4A148C;
-                    font-weight: bold;
-                    text-decoration: none;
-                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
-                    font-family: 'Alef', sans-serif;
-                    font-size: 18px;
-                  }
-                  
-                  .content-wrapper {
-                    padding: 30px 20px;
-                    background-color: transparent;
-                  }
-                  
-                  .title {
-                    color: #4A148C;
-                    margin: 0;
-                    font-size: 28px;
-                    font-weight: 700;
-                    font-family: 'Alef', sans-serif;
-                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
-                    padding: 20px;
-                    text-align: center;
-                  }
-                  
-                  .content {
-                    font-size: 16px;
-                    margin-bottom: 20px;
-                    line-height: 1.8;
-                    font-family: 'Heebo', sans-serif;
-                  }
-                  
-                  .cta-button {
-                    background-color: #4A148C;
-                    color: white;
-                    padding: 12px 24px;
-                    text-decoration: none;
-                    border-radius: 4px;
-                    font-weight: bold;
-                    display: inline-block;
-                    margin: 20px 0;
-                    text-shadow: none;
-                    font-family: 'Alef', sans-serif;
-                    font-size: 18px;
-                  }
-                  
-                  .link-section {
-                    margin: 30px 0;
-                  }
-                  
-                  .footer {
-                    margin-top: 40px;
-                    padding-top: 20px;
-                    border-top: 1px solid rgba(74, 20, 140, 0.2);
-                  }
-                </style>
-              </head>
-              <body>
-                <div class="content-wrapper">
-                  <h1 class="title">${article.title}</h1>
-                  
-                  <div class="content" dir="rtl">
-                    ${formattedMarkdown}
-                  </div>
-                  
-                  <a href="${readMoreUrl}" class="cta-button">
-                    להמשך קריאה
-                  </a>
-                  
-                  <div class="link-section">
-                    ${emailBodyLinks.join('')}
-                  </div>
-                  
-                  ${emailFooter}
-                </div>
-              </body>
-            </html>
-          `;
-          
-          // Implementation for sending email via edge function would go here
-          // For now, just log a success
-          console.log(`Email prepared for ${recipientEmail}`);
-          
-          // Add successful email to logs
+      // Call Supabase Edge Function to send emails
+      try {
+        const supabaseClient = this.accessToken 
+          ? getSupabaseWithAuth(this.accessToken) 
+          : supabase;
+        
+        console.log("Sending request with Authorization:", this.accessToken ? "Bearer token provided" : "No token");
+        
+        // Call our edge function to send emails
+        const { data, error } = await supabaseClient.functions.invoke('send-emails', {
+          body: {
+            article: {
+              id: article.id,
+              title: article.title,
+              content: formattedMarkdown,
+              readMoreUrl: `https://ruth-prissman-coach.lovable.app/articles/${article.id}`
+            },
+            recipients: subscriberEmails
+          },
+          headers: this.accessToken ? {
+            Authorization: `Bearer ${this.accessToken}`
+          } : {}
+        });
+        
+        if (error) {
+          console.error('Error calling send-emails function:', error);
+          throw error;
+        }
+        
+        console.log('Email sending response:', data);
+        
+        // Log successful sends
+        for (const email of subscriberEmails) {
           emailLogs.push({
             article_id: article.id,
-            email: recipientEmail,
+            email,
             status: 'sent'
           });
-          
-        } catch (emailError: any) {
-          console.error(`Error preparing email for ${recipientEmail}:`, emailError);
-          
-          // Add failed email to logs
+        }
+      } catch (err: any) {
+        console.error('Error sending emails via edge function:', err);
+        
+        // Log failed sends
+        for (const email of subscriberEmails) {
           emailLogs.push({
             article_id: article.id,
-            email: recipientEmail,
+            email,
             status: 'failed',
-            error_message: emailError.message || 'Unknown error preparing email'
+            error_message: err.message || 'Unknown error sending email'
           });
         }
       }
@@ -415,6 +377,8 @@ class PublicationService {
    */
   public async retryPublication(publicationId: number): Promise<void> {
     try {
+      console.log(`Retrying publication ${publicationId} with auth token:`, this.accessToken ? "Token present" : "No token");
+      
       const supabaseClient = this.accessToken 
         ? getSupabaseWithAuth(this.accessToken)
         : supabase;
