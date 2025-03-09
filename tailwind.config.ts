@@ -72,7 +72,6 @@ export default {
 					light: '#7E69AB',
 					DEFAULT: '#6E59A5',
 					dark: '#1A1F2C',
-					darkest: '#4A148C',
 				}
 			},
 			fontFamily: {
