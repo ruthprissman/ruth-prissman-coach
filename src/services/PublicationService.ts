@@ -831,6 +831,7 @@ class PublicationService {
                     line-height: 1.8;
                     color: #4A148C;
                     text-align: center;
+                    background-color: transparent;
                   }
                   
                   h1, h2, h3, h4, a, .title {
@@ -848,34 +849,33 @@ class PublicationService {
                     font-weight: bold;
                     text-decoration: none;
                     text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                    font-family: 'Alef', sans-serif;
                   }
                   
                   .content-wrapper {
                     padding: 30px 20px;
-                  }
-                  
-                  .title-bar {
-                    background-color: #3C1E70;
-                    padding: 20px;
-                    text-align: center;
+                    background-color: transparent;
                   }
                   
                   .title {
-                    color: white;
+                    color: #4A148C;
                     margin: 0;
                     font-size: 28px;
                     font-weight: 700;
-                    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+                    font-family: 'Alef', sans-serif;
+                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                    padding: 20px;
                   }
                   
                   .content {
                     font-size: 16px;
                     margin-bottom: 20px;
                     line-height: 1.8;
+                    font-family: 'Heebo', sans-serif;
                   }
                   
                   .cta-button {
-                    background-color: #3C1E70;
+                    background-color: #4A148C;
                     color: white;
                     padding: 12px 24px;
                     text-decoration: none;
@@ -884,6 +884,7 @@ class PublicationService {
                     display: inline-block;
                     margin: 20px 0;
                     text-shadow: none;
+                    font-family: 'Alef', sans-serif;
                   }
                   
                   .link-section {
@@ -900,12 +901,18 @@ class PublicationService {
                     display: block;
                     margin: 10px 0;
                     text-align: center;
+                    font-family: 'Alef', sans-serif;
+                    font-weight: bold;
+                    color: #4A148C;
+                    text-decoration: none;
+                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
                   }
                   
                   .copyright {
                     font-size: 12px;
                     margin-top: 20px;
                     text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                    font-family: 'Heebo', sans-serif;
                   }
                   
                   @media only screen and (max-width: 620px) {
@@ -928,9 +935,9 @@ class PublicationService {
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: transparent;">
                         <tr>
-                          <td class="title-bar">
+                          <td style="background-color: transparent;">
                             <h1 class="title">${article.title}</h1>
                           </td>
                         </tr>
@@ -942,7 +949,7 @@ class PublicationService {
                             
                             ${article.content_markdown.length > 500 ? 
                               `<div style="text-align: center;">
-                                <a href="${readMoreUrl}" class="cta-button">קרא עוד באתר</a>
+                                <a href="${readMoreUrl}" class="cta-button" style="font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
                               </div>` : ''}
                             
                             <div class="link-section">
@@ -1122,6 +1129,7 @@ class PublicationService {
                     line-height: 1.8;
                     color: #4A148C;
                     text-align: center;
+                    background-color: transparent;
                   }
                   
                   h1, h2, h3, h4, a, .title {
@@ -1139,34 +1147,33 @@ class PublicationService {
                     font-weight: bold;
                     text-decoration: none;
                     text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                    font-family: 'Alef', sans-serif;
                   }
                   
                   .content-wrapper {
                     padding: 30px 20px;
-                  }
-                  
-                  .title-bar {
-                    background-color: #3C1E70;
-                    padding: 20px;
-                    text-align: center;
+                    background-color: transparent;
                   }
                   
                   .title {
-                    color: white;
+                    color: #4A148C;
                     margin: 0;
                     font-size: 28px;
                     font-weight: 700;
-                    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+                    font-family: 'Alef', sans-serif;
+                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                    padding: 20px;
                   }
                   
                   .content {
                     font-size: 16px;
                     margin-bottom: 20px;
                     line-height: 1.8;
+                    font-family: 'Heebo', sans-serif;
                   }
                   
                   .cta-button {
-                    background-color: #3C1E70;
+                    background-color: #4A148C;
                     color: white;
                     padding: 12px 24px;
                     text-decoration: none;
@@ -1175,6 +1182,7 @@ class PublicationService {
                     display: inline-block;
                     margin: 20px 0;
                     text-shadow: none;
+                    font-family: 'Alef', sans-serif;
                   }
                   
                   .link-section {
@@ -1191,12 +1199,18 @@ class PublicationService {
                     display: block;
                     margin: 10px 0;
                     text-align: center;
+                    font-family: 'Alef', sans-serif;
+                    font-weight: bold;
+                    color: #4A148C;
+                    text-decoration: none;
+                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
                   }
                   
                   .copyright {
                     font-size: 12px;
                     margin-top: 20px;
                     text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                    font-family: 'Heebo', sans-serif;
                   }
                   
                   @media only screen and (max-width: 620px) {
@@ -1219,9 +1233,9 @@ class PublicationService {
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: transparent;">
                         <tr>
-                          <td class="title-bar">
+                          <td style="background-color: transparent;">
                             <h1 class="title">${article.title}</h1>
                           </td>
                         </tr>
@@ -1233,7 +1247,7 @@ class PublicationService {
                             
                             ${article.content_markdown.length > 500 ? 
                               `<div style="text-align: center;">
-                                <a href="${readMoreUrl}" class="cta-button">קרא עוד באתר</a>
+                                <a href="${readMoreUrl}" class="cta-button" style="font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
                               </div>` : ''}
                             
                             <div class="link-section">
@@ -1473,4 +1487,3 @@ class PublicationService {
 }
 
 export default PublicationService;
-
