@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -25,6 +26,15 @@ const DEFAULT_INITIAL_DATA = {
       }
     },
   ]
+};
+
+// Add debounce utility function
+const debounce = (func: Function, delay: number) => {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
 };
 
 const markdownToEditorJS = (markdown: string): any => {
@@ -150,11 +160,20 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     return markdown.trim();
   };
 
+  // Create a debounced content change handler
+  const debouncedHandleChange = useCallback(
+    debounce(() => {
+      if (!isEditorReady.current || !editorInstance.current) return;
+      console.log('Debounced change handler fired');
+      contentChangedRef.current = true;
+    }, 300),
+    []
+  );
+
   const handleContentChange = useCallback(() => {
-    if (!isEditorReady.current || !editorInstance.current) return;
-    
-    contentChangedRef.current = true;
-  }, []);
+    // Only use the debounced handler
+    debouncedHandleChange();
+  }, [debouncedHandleChange]);
 
   const saveContent = useCallback(async () => {
     if (!isEditorReady.current || !editorInstance.current || !contentChangedRef.current) return;
@@ -179,8 +198,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   }, []);
 
   useEffect(() => {
+    // Only set initial values when component mounts
     if (initialValue) {
       console.log('Initial value provided');
+      initialValueRef.current = initialValue;
       markdownRef.current = initialValue;
     }
   }, []);
@@ -228,20 +249,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         },
         data: markdownToEditorJS(initialValueRef.current),
         placeholder: placeholder,
-        onChange: () => {
-          console.log('Editor content changed, marking as changed');
-          handleContentChange();
-        },
+        onChange: handleContentChange, // Use our handler that calls the debounced function
         onReady: () => {
           console.log('Editor is ready');
           isLoading.current = false;
           isEditorReady.current = true;
-          
-          if (initialValueRef.current) {
-            console.log('Initial value on ready');
-            markdownRef.current = initialValueRef.current;
-            // Don't call onChange here to prevent initial server request
-          }
         }
       });
     } catch (error) {
@@ -250,6 +262,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, [placeholder, handleContentChange]);
 
+  // Initialize only once when component mounts
   useEffect(() => {
     initializeEditor();
 
@@ -268,12 +281,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     };
   }, [initializeEditor, saveContent]);
 
-  useEffect(() => {
-    if (!editorInstance.current && !isEditorReady.current && initialValue) {
-      initialValueRef.current = initialValue;
-      markdownRef.current = initialValue;
-    }
-  }, []);
+  // Remove the problematic useEffect that was syncing back from parent to editor
+  // This was causing the editor to reset on each parent form update
 
   useEffect(() => {
     const handleBeforeSubmit = async () => {
@@ -282,15 +291,19 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
     window.addEventListener('beforesubmit', handleBeforeSubmit);
     
-    const autoSaveInterval = setInterval(() => {
+    // Instead of an interval, we'll only save when focus is lost or when
+    // explicitly requested via form submission
+    const handleBlur = () => {
       if (contentChangedRef.current) {
         saveContent();
       }
-    }, 10000);
+    };
+    
+    document.addEventListener('blur', handleBlur, true);
 
     return () => {
       window.removeEventListener('beforesubmit', handleBeforeSubmit);
-      clearInterval(autoSaveInterval);
+      document.removeEventListener('blur', handleBlur, true);
     };
   }, [saveContent]);
 
