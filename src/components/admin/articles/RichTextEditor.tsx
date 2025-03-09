@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState, ReactNode, ReactElement } from 'react';
+
+import React, { useEffect, useRef, useState } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
@@ -7,7 +8,7 @@ import Quote from '@editorjs/quote';
 import Code from '@editorjs/code';
 import Link from '@editorjs/link';
 import Marker from '@editorjs/marker';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Save, AlertCircle } from 'lucide-react';
 
 export interface RichTextEditorRef {
   saveContent: () => Promise<boolean>;
@@ -100,7 +101,6 @@ const markdownToEditorJS = (markdown: string): any => {
 };
 
 const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(({
-  value,
   defaultValue = '',
   onChange,
   placeholder = 'התחל לכתוב כאן...',
@@ -113,6 +113,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
   const defaultValueRef = useRef(defaultValue);
   const contentRef = useRef(defaultValue);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   useEffect(() => {
     if (defaultValue) {
@@ -163,26 +164,28 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     if (!isEditorReady.current || !editorInstance.current) return false;
     
     try {
+      setIsSaving(true);
       console.log('Explicitly saving editor content');
       const data = await editorInstance.current.save();
       
       if (data) {
         const newMarkdown = convertToMarkdown(data);
-        
-        if (newMarkdown.trim() !== contentRef.current.trim()) {
-          contentRef.current = newMarkdown.trim();
-          onChange(newMarkdown.trim());
-          setHasUnsavedChanges(false);
-          return true;
-        }
+        contentRef.current = newMarkdown.trim();
+        onChange(newMarkdown.trim());
+        setHasUnsavedChanges(false);
+        setIsSaving(false);
+        return true;
       }
+      setIsSaving(false);
       return false;
     } catch (error) {
       console.error('Error saving editor data:', error);
+      setIsSaving(false);
       return false;
     }
   };
 
+  // This only marks content as changed without saving
   const handleContentChange = () => {
     if (!isEditorReady.current) return;
     setHasUnsavedChanges(true);
@@ -273,6 +276,11 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     hasUnsavedChanges: () => hasUnsavedChanges
   }));
 
+  // Manual save button
+  const handleManualSave = async () => {
+    await saveContent();
+  };
+
   return (
     <div className={`border rounded-md overflow-hidden bg-white ${className}`}>
       {isLoading.current && (
@@ -285,11 +293,37 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
         className="min-h-[400px] p-4"
         style={{ display: isLoading.current ? 'none' : 'block' }}
       />
-      {hasUnsavedChanges && (
-        <div className="bg-amber-50 text-amber-800 px-4 py-2 text-sm border-t">
-          יש שינויים שלא נשמרו
+      <div className="border-t p-2 flex justify-between items-center bg-gray-50">
+        <div className="text-sm text-muted-foreground flex items-center gap-2">
+          {hasUnsavedChanges && (
+            <>
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+              <span className="text-amber-800">יש שינויים שלא נשמרו</span>
+            </>
+          )}
         </div>
-      )}
+        <button
+          onClick={handleManualSave}
+          disabled={!hasUnsavedChanges || isSaving}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm ${
+            hasUnsavedChanges 
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+          }`}
+        >
+          {isSaving ? (
+            <>
+              <RefreshCw className="animate-spin h-4 w-4" />
+              שומר...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              שמור
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 });
