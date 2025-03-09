@@ -9,6 +9,11 @@ import Link from '@editorjs/link';
 import Marker from '@editorjs/marker';
 import { RefreshCw } from 'lucide-react';
 
+export interface RichTextEditorRef {
+  saveContent: () => Promise<boolean>;
+  hasUnsavedChanges: () => boolean;
+}
+
 interface RichTextEditorProps {
   value?: string;
   defaultValue?: string;
@@ -94,13 +99,13 @@ const markdownToEditorJS = (markdown: string): any => {
   return { blocks };
 };
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({
+const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(({
   value,
   defaultValue = '',
   onChange,
   placeholder = 'התחל לכתוב כאן...',
   className = '',
-}) => {
+}, ref) => {
   const editorInstance = useRef<EditorJS | null>(null);
   const isEditorReady = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -263,13 +268,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     };
   }, []);
 
-  React.useImperativeHandle(
-    React.forwardRef(() => null),
-    () => ({
-      saveContent,
-      hasUnsavedChanges: () => hasUnsavedChanges
-    })
-  );
+  React.useImperativeHandle(ref, () => ({
+    saveContent,
+    hasUnsavedChanges: () => hasUnsavedChanges
+  }));
 
   return (
     <div className={`border rounded-md overflow-hidden bg-white ${className}`}>
@@ -290,8 +292,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       )}
     </div>
   );
-};
+});
 
-export default React.forwardRef<{ saveContent: () => Promise<boolean>, hasUnsavedChanges: () => boolean }, RichTextEditorProps>(
-  (props, ref) => <RichTextEditor {...props} ref={ref} />
-);
+RichTextEditor.displayName = "RichTextEditor";
+
+export default RichTextEditor;
