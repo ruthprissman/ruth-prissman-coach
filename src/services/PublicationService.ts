@@ -672,18 +672,53 @@ class PublicationService {
   }
 
   /**
-   * Generate footer with minimal essential links
+   * Generate footer with static links
    * @param recipientEmail The recipient email for unsubscribe link
-   * @param includeContactLink Whether to include contact link in footer
    * @returns HTML string with footer links
    */
-  private async generateEmailFooter(recipientEmail: string, includeContactLink: boolean = false): Promise<string> {
+  private async generateEmailFooter(recipientEmail: string): Promise<string> {
     try {
-      // Create footer links array with only essential links
+      const staticLinks = await this.fetchStaticLinks();
       let footerLinks = [];
       
-      // Add contact link only if requested
-      if (includeContactLink) {
+      // Process each link according to the rules
+      staticLinks.forEach(link => {
+        const formattedUrl = this.formatUrl(link.url);
+        
+        // Handle WhatsApp link with icon
+        if (link.name === 'whatsapp') {
+          footerLinks.push(`
+            <p style="text-align: center; margin: 10px 0;">
+              <a href="${formattedUrl}" 
+                 style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); display: inline-flex; align-items: center; justify-content: center;">
+                <span style="margin-left: 5px;">📱</span> ${link.fixed_text}
+              </a>
+            </p>
+          `);
+        } 
+        // Regular link with URL
+        else if (formattedUrl && link.fixed_text) {
+          footerLinks.push(`
+            <p style="text-align: center; margin: 10px 0;">
+              <a href="${formattedUrl}" 
+                 style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+                ${link.fixed_text}
+              </a>
+            </p>
+          `);
+        } 
+        // Plain text without URL
+        else if (link.fixed_text) {
+          footerLinks.push(`
+            <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+              ${link.fixed_text}
+            </p>
+          `);
+        }
+      });
+      
+      // Add default contact link if not present
+      if (!staticLinks.some(link => link.name === 'contact')) {
         footerLinks.push(`
           <p style="text-align: center; margin: 10px 0;">
             <a href="https://ruth-prissman-coach.lovable.app/contact" 
@@ -694,7 +729,7 @@ class PublicationService {
         `);
       }
       
-      // Add dynamic unsubscribe link (always included)
+      // Add dynamic unsubscribe link
       const unsubscribeUrl = `https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=general`;
       footerLinks.push(`
         <p style="text-align: center; margin: 10px 0;">
@@ -715,9 +750,15 @@ class PublicationService {
       `;
     } catch (error) {
       console.error("Error generating email footer:", error);
-      // Fallback footer if something goes wrong - only essential elements
+      // Fallback footer if something goes wrong
       return `
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(74, 20, 140, 0.2); text-align: center;">
+          <p style="margin: 10px 0;">
+            <a href="https://ruth-prissman-coach.lovable.app/contact" 
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+              צור קשר
+            </a>
+          </p>
           <p style="margin: 10px 0;">
             <a href="https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=general" 
                style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
@@ -733,26 +774,13 @@ class PublicationService {
   }
 
   /**
-   * Process dynamic content links
+   * Process dynamic content links - MODIFIED to not inject links
    * @param content The markdown content
    * @param articleTitle The article title for email subject
    * @returns Processed content with dynamic links
    */
   private async processContentLinks(content: string, articleTitle: string): Promise<string> {
-    try {
-      // Format and enhance content without adding links
-      // This function now maintains content formatting but doesn't inject links
-      
-      let processedContent = content;
-      
-      // Apply any necessary content formatting (e.g., adding line breaks, styling)
-      // But don't add any links that could cause duplication
-      
-      return processedContent;
-    } catch (error) {
-      console.error("Error processing content:", error);
-      return content;
-    }
+    return content;
   }
 
   /**
@@ -776,18 +804,15 @@ class PublicationService {
       const truncatedContent = article.content_markdown.slice(0, 500) + 
         (article.content_markdown.length > 500 ? '...' : '');
       
-      // Process content to add formatting
+      // Process content to add dynamic links
       const processedContent = await this.processContentLinks(truncatedContent, article.title);
       
       // Convert newlines to HTML breaks
       const formattedMarkdown = processedContent.replace(/\n/g, '<br/>');
       
-      // Fetch static links for the email body - ONLY PLACE we fetch static links
+      // Fetch static links for the email body
       const staticLinks = await this.fetchStaticLinks();
       const emailBodyLinks = this.generateEmailLinks(staticLinks);
-      
-      // Check if a contact link exists in the static links
-      const hasContactLink = staticLinks.some(link => link.name === 'contact');
       
       // Create email logs array for batch insertion
       const emailLogs: EmailLogEntry[] = [];
@@ -795,8 +820,8 @@ class PublicationService {
       // Send individual emails to each subscriber
       for (const recipientEmail of subscriberEmails) {
         try {
-          // Generate footer with personalized unsubscribe link and contact link only if needed
-          const emailFooter = await this.generateEmailFooter(recipientEmail, !hasContactLink);
+          // Generate footer with personalized unsubscribe link
+          const emailFooter = await this.generateEmailFooter(recipientEmail);
           
           const readMoreUrl = `https://ruth-prissman-coach.lovable.app/articles/${article.id}`;
           
@@ -1075,17 +1100,14 @@ class PublicationService {
       const staticLinks = await this.fetchStaticLinks();
       const emailBodyLinks = this.generateEmailLinks(staticLinks);
       
-      // Check if a contact link exists in the static links
-      const hasContactLink = staticLinks.some(link => link.name === 'contact');
-      
       // Email logs array for batch insertion
       const emailLogs: EmailLogEntry[] = [];
       
       // Send individual emails to each failed recipient
       for (const recipientEmail of failedEmails) {
         try {
-          // Generate footer with personalized unsubscribe link and contact link only if needed
-          const emailFooter = await this.generateEmailFooter(recipientEmail, !hasContactLink);
+          // Generate footer with personalized unsubscribe link
+          const emailFooter = await this.generateEmailFooter(recipientEmail);
           
           const readMoreUrl = `https://ruth-prissman-coach.lovable.app/articles/${article.id}`;
           
