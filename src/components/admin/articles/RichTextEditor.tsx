@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -109,7 +108,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const onChangeRef = useRef(onChange);
   const contentChangedRef = useRef(false);
   
-  // Update ref when onChange changes (this doesn't trigger any renders)
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
@@ -152,12 +150,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     return markdown.trim();
   };
 
-  // Simple flag for content changes - no debounce needed
-  const handleContentChange = useCallback(() => {
+  const markContentAsChanged = useCallback(() => {
     contentChangedRef.current = true;
   }, []);
 
-  // Save content function - only called at specific points
   const saveContent = useCallback(async () => {
     if (!isEditorReady.current || !editorInstance.current) return;
     if (!contentChangedRef.current) return; // Skip saving if nothing changed
@@ -169,7 +165,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       if (data) {
         const newMarkdown = convertToMarkdown(data);
         
-        // Only update if there's an actual change
         if (newMarkdown.trim() !== markdownRef.current.trim()) {
           console.log('Content has changed, updating markdown and parent');
           markdownRef.current = newMarkdown.trim();
@@ -182,14 +177,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, []);
 
-  // Load initial value only once on mount
   useEffect(() => {
     if (initialValue) {
       console.log('Setting initial value on first mount only');
       initialValueRef.current = initialValue;
       markdownRef.current = initialValue;
     }
-  }, []); // Empty dependency array ensures it only runs once
+  }, []);
 
   const initializeEditor = useCallback(() => {
     if (!containerRef.current || isEditorReady.current || editorInstance.current) return;
@@ -215,6 +209,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           paragraph: {
             class: Paragraph,
             inlineToolbar: true,
+            config: {
+              preserveBlank: true
+            }
           },
           quote: {
             class: Quote,
@@ -234,25 +231,34 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         },
         data: markdownToEditorJS(initialValueRef.current),
         placeholder: placeholder,
-        onChange: handleContentChange,
         onReady: () => {
           console.log('Editor is ready');
           isLoading.current = false;
           isEditorReady.current = true;
+          
+          if (containerRef.current) {
+            containerRef.current.addEventListener('keyup', (e) => {
+              if (e.key !== 'Enter' && e.key !== ' ') {
+                markContentAsChanged();
+              }
+            });
+            
+            containerRef.current.addEventListener('mouseup', () => {
+              setTimeout(markContentAsChanged, 100);
+            });
+          }
         }
       });
     } catch (error) {
       console.error('EditorJS initialization error:', error);
       isLoading.current = false;
     }
-  }, [placeholder, handleContentChange]);
+  }, [placeholder, markContentAsChanged]);
 
-  // Initialize once on component mount
   useEffect(() => {
     initializeEditor();
 
     return () => {
-      // Save content before unmounting
       saveContent();
       
       if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
@@ -267,37 +273,41 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     };
   }, [initializeEditor, saveContent]);
 
-  // Save at specific events only
   useEffect(() => {
-    // Before form submission event
     const handleBeforeSubmit = () => {
       if (contentChangedRef.current) {
         saveContent();
       }
     };
 
-    // Before page unload
     const handleBeforeUnload = () => {
       if (contentChangedRef.current) {
         saveContent();
       }
     };
     
-    // When focus moves away from editor
-    const handleBlur = () => {
-      if (contentChangedRef.current) {
-        saveContent();
+    const handleBlur = (event: FocusEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.relatedTarget as Node)) {
+        if (contentChangedRef.current) {
+          saveContent();
+        }
       }
     };
     
     window.addEventListener('beforesubmit', handleBeforeSubmit);
     window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('blur', handleBlur, true);
+    
+    if (containerRef.current) {
+      containerRef.current.addEventListener('blur', handleBlur as EventListener, true);
+    }
 
     return () => {
       window.removeEventListener('beforesubmit', handleBeforeSubmit);
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('blur', handleBlur, true);
+      
+      if (containerRef.current) {
+        containerRef.current.removeEventListener('blur', handleBlur as EventListener, true);
+      }
     };
   }, [saveContent]);
 
