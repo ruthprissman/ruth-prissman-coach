@@ -284,7 +284,7 @@ class PublicationService {
         
         console.log("Sending request with Authorization:", this.accessToken ? "Bearer token provided" : "No token");
         
-        // Call our edge function to send emails
+        // IMPORTANT: Add explicit Authorization header for edge function
         const { data, error } = await supabaseClient.functions.invoke('send-emails', {
           body: {
             article: {
@@ -323,10 +323,12 @@ class PublicationService {
           emailLogs.push({
             article_id: article.id,
             email,
-            status: 'failed',
-            error_message: err.message || 'Unknown error sending email'
+            status: 'failed'
           });
         }
+        
+        // Rethrow the error to be caught by the caller
+        throw new Error(`Failed to send emails: ${err.message || 'Unknown error'}`);
       }
       
       // Log all email results to database
@@ -423,34 +425,41 @@ class PublicationService {
         article_publications: [publication]
       };
       
-      // Reset the publication status
+      // Reset the publication status temporarily to indicate we're processing
       await supabaseClient
         .from('article_publications')
         .update({ published_date: null })
         .eq('id', publicationId);
       
       // Republish based on the location
-      switch (publication.publish_location) {
-        case 'Website':
-          await this.publishToWebsite(article.id);
-          break;
-          
-        case 'Email':
-          await this.publishToEmail(article);
-          break;
-          
-        case 'WhatsApp':
-          await this.publishToWhatsApp(article);
-          break;
-          
-        default:
-          throw new Error(`Unknown publication location: ${publication.publish_location}`);
+      try {
+        switch (publication.publish_location) {
+          case 'Website':
+            await this.publishToWebsite(article.id);
+            break;
+            
+          case 'Email':
+            await this.publishToEmail(article);
+            break;
+            
+          case 'WhatsApp':
+            await this.publishToWhatsApp(article);
+            break;
+            
+          default:
+            throw new Error(`Unknown publication location: ${publication.publish_location}`);
+        }
+        
+        // Only mark as published if successful
+        await this.markPublicationAsDone(publicationId);
+        console.log(`Publication ${publicationId} successfully retried`);
+        
+      } catch (error) {
+        // If there's an error during publication, we need to update the UI
+        console.error(`Error publishing to ${publication.publish_location}:`, error);
+        // We rethrow here so the PublishModal can show the error
+        throw error;
       }
-      
-      // Mark as published
-      await this.markPublicationAsDone(publicationId);
-      
-      console.log(`Publication ${publicationId} successfully retried`);
       
     } catch (error) {
       console.error(`Error retrying publication ${publicationId}:`, error);

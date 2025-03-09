@@ -51,6 +51,7 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
     try {
       console.log(`Attempting to retry publication ${publicationId}`);
       console.log(`Session status: ${session ? 'Active session' : 'No session'}`);
+      console.log(`Session token: ${session?.access_token ? 'Token available' : 'No token'}`);
       
       const publicationService = PublicationService.getInstance();
       await publicationService.retryPublication(publicationId);
