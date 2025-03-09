@@ -1,4 +1,3 @@
-
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -896,6 +895,7 @@ class PublicationService {
                     font-family: 'Alef', sans-serif;
                     text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
                     padding: 20px;
+                    text-align: center;
                   }
                   
                   .content {
@@ -969,7 +969,7 @@ class PublicationService {
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: transparent;">
                         <tr>
                           <td style="background-color: transparent;">
-                            <h1 class="title">${article.title}</h1>
+                            <h1 class="title" style="text-align: center;">${article.title}</h1>
                           </td>
                         </tr>
                         <tr>
@@ -1181,6 +1181,7 @@ class PublicationService {
                     font-family: 'Alef', sans-serif;
                     text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
                     padding: 20px;
+                    text-align: center;
                   }
                   
                   .content {
@@ -1254,7 +1255,7 @@ class PublicationService {
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: transparent;">
                         <tr>
                           <td style="background-color: transparent;">
-                            <h1 class="title">${article.title}</h1>
+                            <h1 class="title" style="text-align: center;">${article.title}</h1>
                           </td>
                         </tr>
                         <tr>
