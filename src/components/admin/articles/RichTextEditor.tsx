@@ -118,6 +118,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const onChangeRef = useRef(onChange);
   const contentChangedRef = useRef(false);
   
+  // Update ref when onChange changes (this doesn't trigger any renders)
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
@@ -160,33 +161,34 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     return markdown.trim();
   };
 
-  // Create a debounced content change handler
-  const debouncedHandleChange = useCallback(
+  // Mark content as changed via debounce (but don't trigger parent updates)
+  const debouncedMarkAsChanged = useCallback(
     debounce(() => {
       if (!isEditorReady.current || !editorInstance.current) return;
-      console.log('Debounced change handler fired');
+      console.log('Content marked as changed (local only)');
       contentChangedRef.current = true;
     }, 300),
     []
   );
 
+  // Just mark content as changed locally, don't update parent
   const handleContentChange = useCallback(() => {
-    // Only use the debounced handler
-    debouncedHandleChange();
-  }, [debouncedHandleChange]);
+    debouncedMarkAsChanged();
+  }, [debouncedMarkAsChanged]);
 
+  // This is only called at specific save points (not during typing)
   const saveContent = useCallback(async () => {
-    if (!isEditorReady.current || !editorInstance.current || !contentChangedRef.current) return;
+    if (!isEditorReady.current || !editorInstance.current) return;
     
     try {
-      console.log('Saving editor content');
+      console.log('Explicitly saving editor content');
       const data = await editorInstance.current.save();
       
       if (data) {
         const newMarkdown = convertToMarkdown(data);
         
         if (newMarkdown.trim() !== markdownRef.current.trim()) {
-          console.log('Content changed, updating markdown');
+          console.log('Content has changed, updating markdown and parent');
           markdownRef.current = newMarkdown.trim();
           onChangeRef.current(newMarkdown.trim());
           contentChangedRef.current = false;
@@ -197,14 +199,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, []);
 
+  // Read the initial value only once on mount
   useEffect(() => {
-    // Only set initial values when component mounts
     if (initialValue) {
-      console.log('Initial value provided');
+      console.log('Setting initial value on first mount only');
       initialValueRef.current = initialValue;
       markdownRef.current = initialValue;
     }
-  }, []);
+  }, []); // Empty dependency array ensures it only runs once
 
   const initializeEditor = useCallback(() => {
     if (!containerRef.current || isEditorReady.current || editorInstance.current) return;
@@ -249,7 +251,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         },
         data: markdownToEditorJS(initialValueRef.current),
         placeholder: placeholder,
-        onChange: handleContentChange, // Use our handler that calls the debounced function
+        onChange: handleContentChange,
         onReady: () => {
           console.log('Editor is ready');
           isLoading.current = false;
@@ -262,11 +264,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, [placeholder, handleContentChange]);
 
-  // Initialize only once when component mounts
+  // Initialize once on component mount
   useEffect(() => {
     initializeEditor();
 
     return () => {
+      // Save content before unmounting
       saveContent();
       
       if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
@@ -281,28 +284,34 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     };
   }, [initializeEditor, saveContent]);
 
-  // Remove the problematic useEffect that was syncing back from parent to editor
-  // This was causing the editor to reset on each parent form update
-
+  // Save at specific events only
   useEffect(() => {
+    // Before form submission event
     const handleBeforeSubmit = async () => {
       await saveContent();
     };
 
-    window.addEventListener('beforesubmit', handleBeforeSubmit);
+    // Before page unload
+    const handleBeforeUnload = () => {
+      if (contentChangedRef.current) {
+        saveContent();
+      }
+    };
     
-    // Instead of an interval, we'll only save when focus is lost or when
-    // explicitly requested via form submission
+    // When focus moves away from editor
     const handleBlur = () => {
       if (contentChangedRef.current) {
         saveContent();
       }
     };
     
+    window.addEventListener('beforesubmit', handleBeforeSubmit);
+    window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('blur', handleBlur, true);
 
     return () => {
       window.removeEventListener('beforesubmit', handleBeforeSubmit);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('blur', handleBlur, true);
     };
   }, [saveContent]);
