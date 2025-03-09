@@ -1,3 +1,4 @@
+
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -40,12 +41,16 @@ export interface EmailDeliveryStats {
 }
 
 /**
- * Interface for static link
+ * Interface for static link with updated fields
  */
 interface StaticLink {
+  id: number;
   name: string;
-  text: string;
+  fixed_text: string;
   url: string | null;
+  position: number | null;
+  list_type: 'all' | 'general' | 'newsletter' | 'whatsapp' | null;
+  created_at: string;
 }
 
 /**
@@ -549,7 +554,7 @@ class PublicationService {
   }
 
   /**
-   * Fetch static links from the database
+   * Fetch static links from the database filtered by list_type
    * @returns Array of static links
    */
   private async fetchStaticLinks(): Promise<StaticLink[]> {
@@ -560,9 +565,11 @@ class PublicationService {
       
       console.log("Fetching static links from static_links table");
       
+      // Filter links where list_type is 'general' or 'all'
       const { data, error } = await supabaseClient
         .from('static_links')
-        .select('name, text, url');
+        .select('*')
+        .or('list_type.eq.general,list_type.eq.all');
       
       if (error) {
         console.error("Error fetching static links:", error);
@@ -622,7 +629,7 @@ class PublicationService {
   }
 
   /**
-   * Generate email links in HTML
+   * Generate email links in HTML with proper styling
    * @param staticLinks Array of static links
    * @returns Array of formatted HTML links
    */
@@ -630,20 +637,33 @@ class PublicationService {
     return staticLinks.map(link => {
       const formattedUrl = this.formatUrl(link.url);
       
-      if (formattedUrl) {
+      // Special handling for WhatsApp link with icon
+      if (link.name === 'whatsapp') {
+        return `
+          <p style="text-align: center; margin: 10px 0;">
+            <a href="${formattedUrl}" 
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); display: inline-flex; align-items: center; justify-content: center;">
+              <span style="margin-left: 5px;">📱</span> ${link.fixed_text}
+            </a>
+          </p>
+        `;
+      }
+      
+      // Regular link with URL
+      if (formattedUrl && link.fixed_text) {
         return `
           <p style="text-align: center; margin: 10px 0;">
             <a href="${formattedUrl}" 
                style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-              ${link.text}
+              ${link.fixed_text}
             </a>
           </p>
         `;
-      } else if (link.text) {
+      } else if (link.fixed_text) {
         // Display plain text as bold paragraph when no URL
         return `
           <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-            ${link.text}
+            ${link.fixed_text}
           </p>
         `;
       }
@@ -662,27 +682,56 @@ class PublicationService {
       const staticLinks = await this.fetchStaticLinks();
       let footerLinks = [];
       
-      // Add default links if not in the static_links table
-      footerLinks.push(`
-        <p style="text-align: center; margin: 10px 0;">
-          <a href="https://ruth-prissman-coach.lovable.app/contact" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-            צור קשר
-          </a>
-        </p>
-      `);
+      // Process each link according to the rules
+      staticLinks.forEach(link => {
+        const formattedUrl = this.formatUrl(link.url);
+        
+        // Handle WhatsApp link with icon
+        if (link.name === 'whatsapp') {
+          footerLinks.push(`
+            <p style="text-align: center; margin: 10px 0;">
+              <a href="${formattedUrl}" 
+                 style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); display: inline-flex; align-items: center; justify-content: center;">
+                <span style="margin-left: 5px;">📱</span> ${link.fixed_text}
+              </a>
+            </p>
+          `);
+        } 
+        // Regular link with URL
+        else if (formattedUrl && link.fixed_text) {
+          footerLinks.push(`
+            <p style="text-align: center; margin: 10px 0;">
+              <a href="${formattedUrl}" 
+                 style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+                ${link.fixed_text}
+              </a>
+            </p>
+          `);
+        } 
+        // Plain text without URL
+        else if (link.fixed_text) {
+          footerLinks.push(`
+            <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+              ${link.fixed_text}
+            </p>
+          `);
+        }
+      });
       
-      footerLinks.push(`
-        <p style="text-align: center; margin: 10px 0;">
-          <a href="https://wa.me/972556620273" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-            שלח לי הודעה בוואטסאפ
-          </a>
-        </p>
-      `);
+      // Add default contact link if not present
+      if (!staticLinks.some(link => link.name === 'contact')) {
+        footerLinks.push(`
+          <p style="text-align: center; margin: 10px 0;">
+            <a href="https://ruth-prissman-coach.lovable.app/contact" 
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+              צור קשר
+            </a>
+          </p>
+        `);
+      }
       
-      // Add unsubscribe link with dynamic email parameter
-      const unsubscribeUrl = `https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=newsletter`;
+      // Add dynamic unsubscribe link
+      const unsubscribeUrl = `https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=general`;
       footerLinks.push(`
         <p style="text-align: center; margin: 10px 0;">
           <a href="${unsubscribeUrl}" 
@@ -691,30 +740,6 @@ class PublicationService {
           </a>
         </p>
       `);
-      
-      // Add any other static links
-      staticLinks.forEach(link => {
-        if (!['contact', 'whatsapp', 'unsubscribe', 'email'].includes(link.name)) {
-          const formattedUrl = this.formatUrl(link.url);
-          
-          if (formattedUrl) {
-            footerLinks.push(`
-              <p style="text-align: center; margin: 10px 0;">
-                <a href="${formattedUrl}" 
-                   style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-                  ${link.text}
-                </a>
-              </p>
-            `);
-          } else if (link.text) {
-            footerLinks.push(`
-              <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-                ${link.text}
-              </p>
-            `);
-          }
-        }
-      });
       
       return `
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(74, 20, 140, 0.2);">
@@ -736,7 +761,7 @@ class PublicationService {
             </a>
           </p>
           <p style="margin: 10px 0;">
-            <a href="https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}" 
+            <a href="https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=general" 
                style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
               להסרה מרשימת התפוצה
             </a>
@@ -761,12 +786,18 @@ class PublicationService {
       
       let processedContent = content;
       
+      // Find the email link in the static links
+      const emailLink = staticLinks.find(link => link.name === 'email');
+      
       // Replace "כתבי לי" with email link
-      const emailRegex = /כתבי לי/g;
-      const encodedSubject = encodeURIComponent(`תגובה למאמר: ${articleTitle}`);
-      const emailUrl = `mailto:RuthPrissman@gmail.com?subject=${encodedSubject}`;
-      const emailHtml = `<a href="${emailUrl}" style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">כתבי לי</a>`;
-      processedContent = processedContent.replace(emailRegex, emailHtml);
+      if (emailLink) {
+        const emailRegex = /כתבי לי/g;
+        const encodedSubject = encodeURIComponent(`שאלה על ${articleTitle}`);
+        const emailAddress = emailLink.url || 'RuthPrissman@gmail.com';
+        const emailUrl = `mailto:${emailAddress}?subject=${encodedSubject}`;
+        const emailHtml = `<a href="${emailUrl}" style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">כתבי לי</a>`;
+        processedContent = processedContent.replace(emailRegex, emailHtml);
+      }
       
       return processedContent;
     } catch (error) {
@@ -956,20 +987,7 @@ class PublicationService {
                               ${emailBodyLinks.join('')}
                             </div>
                             
-                            <div class="footer">
-                              <a href="https://ruth-prissman-coach.lovable.app/contact" class="footer-link">
-                                צור קשר
-                              </a>
-                              <a href="https://wa.me/972556620273" class="footer-link">
-                                שלח לי הודעה בוואטסאפ
-                              </a>
-                              <a href="https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=newsletter" class="footer-link">
-                                להסרה מרשימת התפוצה
-                              </a>
-                              <p class="copyright">
-                                © ${new Date().getFullYear()} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
-                              </p>
-                            </div>
+                            ${emailFooter}
                           </td>
                         </tr>
                       </table>
@@ -1254,20 +1272,7 @@ class PublicationService {
                               ${emailBodyLinks.join('')}
                             </div>
                             
-                            <div class="footer">
-                              <a href="https://ruth-prissman-coach.lovable.app/contact" class="footer-link">
-                                צור קשר
-                              </a>
-                              <a href="https://wa.me/972556620273" class="footer-link">
-                                שלח לי הודעה בוואטסאפ
-                              </a>
-                              <a href="https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=newsletter" class="footer-link">
-                                להסרה מרשימת התפוצה
-                              </a>
-                              <p class="copyright">
-                                © ${new Date().getFullYear()} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
-                              </p>
-                            </div>
+                            ${emailFooter}
                           </td>
                         </tr>
                       </table>
