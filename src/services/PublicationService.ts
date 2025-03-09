@@ -1,3 +1,4 @@
+
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -859,3 +860,297 @@ class PublicationService {
           const emailFooter = await this.generateEmailFooter(recipientEmail);
           
           const readMoreUrl = `https://ruth-prissman-coach.lovable.app/articles/${article.id}`;
+          
+          // Format email with dynamic content
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html lang="he" dir="rtl">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <link href="https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+              <title>${article.title}</title>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: 'Heebo', sans-serif;
+                  direction: rtl;
+                  background-color: #f9f9f9;
+                  color: #4A148C;
+                }
+                
+                h1, h2, h3, h4, h5, h6, a, .title {
+                  font-family: 'Alef', sans-serif;
+                  font-weight: 700;
+                }
+                
+                .email-container {
+                  max-width: 600px;
+                  margin: 0 auto;
+                  background-image: url('https://ruth-prissman-coach.lovable.app/email-bg.jpg');
+                  background-size: cover;
+                  background-position: center;
+                  padding: 20px;
+                }
+                
+                .header {
+                  text-align: center;
+                  padding: 15px 0;
+                }
+                
+                .header img {
+                  max-width: 120px;
+                  height: auto;
+                }
+                
+                .title {
+                  font-family: 'Alef', sans-serif;
+                  font-size: 28px;
+                  font-weight: 700;
+                  color: #4A148C;
+                  text-align: center;
+                  padding: 10px 15px;
+                  text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                  margin: 20px 0;
+                }
+                
+                .content {
+                  font-family: 'Heebo', sans-serif;
+                  font-size: 16px;
+                  line-height: 1.5;
+                  color: #4A148C;
+                  padding: 15px;
+                  text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                }
+                
+                .cta-button {
+                  display: block;
+                  width: max-content;
+                  margin: 30px auto;
+                  padding: 12px 24px;
+                  background-color: #4A148C;
+                  color: white;
+                  text-decoration: none;
+                  border-radius: 5px;
+                  font-family: 'Alef', sans-serif;
+                  font-weight: 700;
+                  text-align: center;
+                }
+                
+                .footer {
+                  margin-top: 40px;
+                  text-align: center;
+                  font-size: 12px;
+                  color: #4A148C;
+                }
+                
+                @media only screen and (max-width: 480px) {
+                  .email-container {
+                    padding: 10px;
+                  }
+                  
+                  .title {
+                    font-size: 24px;
+                    padding: 8px 10px;
+                  }
+                  
+                  .content {
+                    font-size: 15px;
+                    padding: 10px;
+                  }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="email-container">
+                <div class="header">
+                  <img src="https://ruth-prissman-coach.lovable.app/logo.png" alt="רות פריסמן - קוד הנפש" />
+                </div>
+                
+                <h1 class="title">${article.title}</h1>
+                
+                <div class="content">
+                  ${formattedMarkdown}
+                </div>
+                
+                <a href="${readMoreUrl}" class="cta-button">
+                  המשיכו לקרוא
+                </a>
+                
+                <div class="links-section">
+                  ${emailBodyLinks.join('')}
+                </div>
+                
+                ${emailFooter}
+              </div>
+            </body>
+            </html>
+          `;
+          
+          // Prepare email data to send
+          const emailData = {
+            to: recipientEmail,
+            subject: `רות פריסמן - ${article.title}`,
+            html: emailHtml,
+            from: "RuthPrissman@gmail.com",
+            fromName: "רות פריסמן - קוד הנפש"
+          };
+          
+          try {
+            // Call edge function to send the email
+            const functionResponse = await fetch(this.supabaseEdgeFunctionUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.supabaseAnonKey}`
+              },
+              body: JSON.stringify(emailData)
+            });
+            
+            if (!functionResponse.ok) {
+              const errorText = await functionResponse.text();
+              throw new Error(`Failed to send email: ${errorText}`);
+            }
+            
+            // Add success log
+            emailLogs.push({
+              article_id: article.id,
+              email: recipientEmail,
+              status: 'sent'
+            });
+            
+            console.log(`Email sent successfully to ${recipientEmail}`);
+          } catch (sendError: any) {
+            console.error(`Error sending email to ${recipientEmail}:`, sendError);
+            
+            // Add failure log
+            emailLogs.push({
+              article_id: article.id,
+              email: recipientEmail,
+              status: 'failed',
+              error_message: sendError.message || 'Unknown error'
+            });
+          }
+        } catch (emailError: any) {
+          console.error(`Error preparing email for ${recipientEmail}:`, emailError);
+          
+          // Add failure log
+          emailLogs.push({
+            article_id: article.id,
+            email: recipientEmail,
+            status: 'failed',
+            error_message: emailError.message || 'Error preparing email'
+          });
+        }
+      }
+      
+      // Log all results to the database
+      await this.logEmailResults(emailLogs);
+      
+      console.log(`Email publication process completed for article ${article.id}`);
+    } catch (error) {
+      console.error(`Error in publishToEmail for article ${article.id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Mark a publication as done
+   */
+  private async markPublicationAsDone(publicationId: number): Promise<void> {
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      const { error } = await supabaseClient
+        .from('article_publications')
+        .update({ published_date: new Date().toISOString() })
+        .eq('id', publicationId);
+      
+      if (error) throw error;
+      
+      console.log(`Publication ${publicationId} marked as done`);
+    } catch (error) {
+      console.error(`Error marking publication ${publicationId} as done:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Publish to WhatsApp
+   * This is a placeholder for WhatsApp publishing functionality
+   */
+  private async publishToWhatsApp(article: PublishReadyArticle): Promise<void> {
+    console.log(`WhatsApp publication not implemented yet for article ${article.id}`);
+    // Implement WhatsApp publishing logic here
+  }
+
+  /**
+   * Retry a failed publication
+   * @param publicationId The publication ID to retry
+   */
+  public async retryPublication(publicationId: number): Promise<void> {
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      // Get the publication details
+      const { data: publication, error } = await supabaseClient
+        .from('article_publications')
+        .select(`
+          *,
+          professional_content:content_id (*)
+        `)
+        .eq('id', publicationId)
+        .single();
+      
+      if (error) throw error;
+      if (!publication) throw new Error('Publication not found');
+      
+      const articleData = publication.professional_content as unknown as ProfessionalContent;
+      
+      if (!articleData) throw new Error('Article data not found');
+      
+      // Create the article object
+      const article: PublishReadyArticle = {
+        id: articleData.id,
+        title: articleData.title || 'Untitled',
+        content_markdown: articleData.content_markdown || '',
+        category_id: articleData.category_id,
+        contact_email: articleData.contact_email,
+        article_publications: [publication]
+      };
+      
+      // Publish based on publication type
+      switch (publication.publish_location) {
+        case 'Website':
+          await this.publishToWebsite(article.id);
+          break;
+          
+        case 'Email':
+          await this.publishToEmail(article);
+          break;
+          
+        case 'WhatsApp':
+          await this.publishToWhatsApp(article);
+          break;
+          
+        default:
+          throw new Error(`Unsupported publication type: ${publication.publish_location}`);
+      }
+      
+      // Mark as published
+      await this.markPublicationAsDone(publicationId);
+      
+      console.log(`Publication ${publicationId} retried successfully`);
+    } catch (error) {
+      console.error(`Error retrying publication ${publicationId}:`, error);
+      throw error;
+    }
+  }
+}
+
+export default PublicationService;
