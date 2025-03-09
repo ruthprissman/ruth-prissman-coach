@@ -774,35 +774,13 @@ class PublicationService {
   }
 
   /**
-   * Process dynamic content links
+   * Process dynamic content links - MODIFIED to not inject links
    * @param content The markdown content
    * @param articleTitle The article title for email subject
    * @returns Processed content with dynamic links
    */
   private async processContentLinks(content: string, articleTitle: string): Promise<string> {
-    try {
-      const staticLinks = await this.fetchStaticLinks();
-      
-      let processedContent = content;
-      
-      // Find the email link in the static links
-      const emailLink = staticLinks.find(link => link.name === 'email');
-      
-      // Replace "כתבי לי" with email link
-      if (emailLink) {
-        const emailRegex = /כתבי לי/g;
-        const encodedSubject = encodeURIComponent(`שאלה על ${articleTitle}`);
-        const emailAddress = emailLink.url || 'RuthPrissman@gmail.com';
-        const emailUrl = `mailto:${emailAddress}?subject=${encodedSubject}`;
-        const emailHtml = `<a href="${emailUrl}" style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">כתבי לי</a>`;
-        processedContent = processedContent.replace(emailRegex, emailHtml);
-      }
-      
-      return processedContent;
-    } catch (error) {
-      console.error("Error processing content links:", error);
-      return content;
-    }
+    return content;
   }
 
   /**
