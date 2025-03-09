@@ -634,7 +634,7 @@ class PublicationService {
         return `
           <p style="text-align: center; margin: 10px 0;">
             <a href="${formattedUrl}" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
               ${link.text}
             </a>
           </p>
@@ -642,7 +642,7 @@ class PublicationService {
       } else if (link.text) {
         // Display plain text as bold paragraph when no URL
         return `
-          <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70;">
+          <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
             ${link.text}
           </p>
         `;
@@ -666,7 +666,7 @@ class PublicationService {
       footerLinks.push(`
         <p style="text-align: center; margin: 10px 0;">
           <a href="https://ruth-prissman-coach.lovable.app/contact" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
+             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
             צור קשר
           </a>
         </p>
@@ -675,7 +675,7 @@ class PublicationService {
       footerLinks.push(`
         <p style="text-align: center; margin: 10px 0;">
           <a href="https://wa.me/972556620273" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
+             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
             שלח לי הודעה בוואטסאפ
           </a>
         </p>
@@ -686,7 +686,7 @@ class PublicationService {
       footerLinks.push(`
         <p style="text-align: center; margin: 10px 0;">
           <a href="${unsubscribeUrl}" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
+             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
             להסרה מרשימת התפוצה
           </a>
         </p>
@@ -701,14 +701,14 @@ class PublicationService {
             footerLinks.push(`
               <p style="text-align: center; margin: 10px 0;">
                 <a href="${formattedUrl}" 
-                   style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
+                   style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
                   ${link.text}
                 </a>
               </p>
             `);
           } else if (link.text) {
             footerLinks.push(`
-              <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70;">
+              <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
                 ${link.text}
               </p>
             `);
@@ -717,9 +717,9 @@ class PublicationService {
       });
       
       return `
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eaeaea;">
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(74, 20, 140, 0.2);">
           ${footerLinks.join('')}
-          <p style="font-size: 12px; color: #555; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif;">
+          <p style="font-size: 12px; color: #4A148C; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
             © ${new Date().getFullYear()} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
           </p>
         </div>
@@ -728,20 +728,20 @@ class PublicationService {
       console.error("Error generating email footer:", error);
       // Fallback footer if something goes wrong
       return `
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eaeaea; text-align: center;">
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(74, 20, 140, 0.2); text-align: center;">
           <p style="margin: 10px 0;">
             <a href="https://ruth-prissman-coach.lovable.app/contact" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
               צור קשר
             </a>
           </p>
           <p style="margin: 10px 0;">
             <a href="https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
               להסרה מרשימת התפוצה
             </a>
           </p>
-          <p style="font-size: 12px; color: #555; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif;">
+          <p style="font-size: 12px; color: #4A148C; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
             © ${new Date().getFullYear()} רות פריסמן - קוד הנפש
           </p>
         </div>
@@ -763,9 +763,9 @@ class PublicationService {
       
       // Replace "כתבי לי" with email link
       const emailRegex = /כתבי לי/g;
-      const encodedSubject = encodeURIComponent(`שאלה על ${articleTitle}`);
-      const emailUrl = `mailto:ruthprissman@gmail.com?subject=${encodedSubject}`;
-      const emailHtml = `<a href="${emailUrl}" style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">כתבי לי</a>`;
+      const encodedSubject = encodeURIComponent(`תגובה למאמר: ${articleTitle}`);
+      const emailUrl = `mailto:RuthPrissman@gmail.com?subject=${encodedSubject}`;
+      const emailHtml = `<a href="${emailUrl}" style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">כתבי לי</a>`;
       processedContent = processedContent.replace(emailRegex, emailHtml);
       
       return processedContent;
@@ -826,48 +826,143 @@ class PublicationService {
                 <style>
                   @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Heebo:wght@300;400;500;700&display=swap');
                   
+                  body {
+                    font-family: 'Heebo', sans-serif;
+                    line-height: 1.8;
+                    color: #4A148C;
+                    text-align: center;
+                  }
+                  
+                  h1, h2, h3, h4, a, .title {
+                    font-family: 'Alef', sans-serif;
+                    font-weight: 700;
+                  }
+                  
+                  p {
+                    margin-bottom: 16px;
+                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                  }
+                  
+                  a {
+                    color: #4A148C;
+                    font-weight: bold;
+                    text-decoration: none;
+                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                  }
+                  
+                  .content-wrapper {
+                    padding: 30px 20px;
+                  }
+                  
+                  .title-bar {
+                    background-color: #3C1E70;
+                    padding: 20px;
+                    text-align: center;
+                  }
+                  
+                  .title {
+                    color: white;
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 700;
+                    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+                  }
+                  
+                  .content {
+                    font-size: 16px;
+                    margin-bottom: 20px;
+                    line-height: 1.8;
+                  }
+                  
+                  .cta-button {
+                    background-color: #3C1E70;
+                    color: white;
+                    padding: 12px 24px;
+                    text-decoration: none;
+                    border-radius: 4px;
+                    font-weight: bold;
+                    display: inline-block;
+                    margin: 20px 0;
+                    text-shadow: none;
+                  }
+                  
+                  .link-section {
+                    margin: 30px 0;
+                  }
+                  
+                  .footer {
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 1px solid rgba(74, 20, 140, 0.2);
+                  }
+                  
+                  .footer-link {
+                    display: block;
+                    margin: 10px 0;
+                    text-align: center;
+                  }
+                  
+                  .copyright {
+                    font-size: 12px;
+                    margin-top: 20px;
+                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                  }
+                  
                   @media only screen and (max-width: 620px) {
                     .email-container {
                       width: 100% !important;
                     }
-                    .content {
-                      padding: 10px !important;
+                    .content-wrapper {
+                      padding: 15px 10px !important;
                     }
-                    h1 {
+                    .title {
                       font-size: 22px !important;
                     }
-                    p, a {
+                    .content, p, a {
                       font-size: 16px !important;
                     }
                   }
                 </style>
               </head>
-              <body style="margin: 0; padding: 0; font-family: 'Heebo', sans-serif; line-height: 1.6; direction: rtl; background-color: transparent;">
+              <body style="margin: 0; padding: 0; direction: rtl; background-color: transparent;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.92); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
                         <tr>
-                          <td style="background-color: #3C1E70; padding: 20px; text-align: center;">
-                            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; font-family: 'Alef', sans-serif;">${article.title}</h1>
+                          <td class="title-bar">
+                            <h1 class="title">${article.title}</h1>
                           </td>
                         </tr>
                         <tr>
-                          <td class="content" style="padding: 30px; text-align: center;">
-                            <div style="font-size: 16px; color: #3C1E70; margin-bottom: 20px; text-align: center; font-family: 'Heebo', sans-serif; line-height: 1.8;">
+                          <td class="content-wrapper">
+                            <div class="content">
                               ${formattedMarkdown}
                             </div>
                             
                             ${article.content_markdown.length > 500 ? 
-                              `<div style="text-align: center; margin: 30px 0;">
-                                <a href="${readMoreUrl}" style="background-color: #3C1E70; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
+                              `<div style="text-align: center;">
+                                <a href="${readMoreUrl}" class="cta-button">קרא עוד באתר</a>
                               </div>` : ''}
                             
-                            <div style="margin: 30px 0;">
+                            <div class="link-section">
                               ${emailBodyLinks.join('')}
                             </div>
                             
-                            ${emailFooter}
+                            <div class="footer">
+                              <a href="https://ruth-prissman-coach.lovable.app/contact" class="footer-link">
+                                צור קשר
+                              </a>
+                              <a href="https://wa.me/972556620273" class="footer-link">
+                                שלח לי הודעה בוואטסאפ
+                              </a>
+                              <a href="https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=newsletter" class="footer-link">
+                                להסרה מרשימת התפוצה
+                              </a>
+                              <p class="copyright">
+                                © ${new Date().getFullYear()} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
+                              </p>
+                            </div>
                           </td>
                         </tr>
                       </table>
@@ -1022,48 +1117,143 @@ class PublicationService {
                 <style>
                   @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Heebo:wght@300;400;500;700&display=swap');
                   
+                  body {
+                    font-family: 'Heebo', sans-serif;
+                    line-height: 1.8;
+                    color: #4A148C;
+                    text-align: center;
+                  }
+                  
+                  h1, h2, h3, h4, a, .title {
+                    font-family: 'Alef', sans-serif;
+                    font-weight: 700;
+                  }
+                  
+                  p {
+                    margin-bottom: 16px;
+                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                  }
+                  
+                  a {
+                    color: #4A148C;
+                    font-weight: bold;
+                    text-decoration: none;
+                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                  }
+                  
+                  .content-wrapper {
+                    padding: 30px 20px;
+                  }
+                  
+                  .title-bar {
+                    background-color: #3C1E70;
+                    padding: 20px;
+                    text-align: center;
+                  }
+                  
+                  .title {
+                    color: white;
+                    margin: 0;
+                    font-size: 28px;
+                    font-weight: 700;
+                    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+                  }
+                  
+                  .content {
+                    font-size: 16px;
+                    margin-bottom: 20px;
+                    line-height: 1.8;
+                  }
+                  
+                  .cta-button {
+                    background-color: #3C1E70;
+                    color: white;
+                    padding: 12px 24px;
+                    text-decoration: none;
+                    border-radius: 4px;
+                    font-weight: bold;
+                    display: inline-block;
+                    margin: 20px 0;
+                    text-shadow: none;
+                  }
+                  
+                  .link-section {
+                    margin: 30px 0;
+                  }
+                  
+                  .footer {
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 1px solid rgba(74, 20, 140, 0.2);
+                  }
+                  
+                  .footer-link {
+                    display: block;
+                    margin: 10px 0;
+                    text-align: center;
+                  }
+                  
+                  .copyright {
+                    font-size: 12px;
+                    margin-top: 20px;
+                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                  }
+                  
                   @media only screen and (max-width: 620px) {
                     .email-container {
                       width: 100% !important;
                     }
-                    .content {
-                      padding: 10px !important;
+                    .content-wrapper {
+                      padding: 15px 10px !important;
                     }
-                    h1 {
+                    .title {
                       font-size: 22px !important;
                     }
-                    p, a {
+                    .content, p, a {
                       font-size: 16px !important;
                     }
                   }
                 </style>
               </head>
-              <body style="margin: 0; padding: 0; font-family: 'Heebo', sans-serif; line-height: 1.6; direction: rtl; background-color: transparent;">
+              <body style="margin: 0; padding: 0; direction: rtl; background-color: transparent;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.92); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
                         <tr>
-                          <td style="background-color: #3C1E70; padding: 20px; text-align: center;">
-                            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; font-family: 'Alef', sans-serif;">${article.title}</h1>
+                          <td class="title-bar">
+                            <h1 class="title">${article.title}</h1>
                           </td>
                         </tr>
                         <tr>
-                          <td class="content" style="padding: 30px; text-align: center;">
-                            <div style="font-size: 16px; color: #3C1E70; margin-bottom: 20px; text-align: center; font-family: 'Heebo', sans-serif; line-height: 1.8;">
+                          <td class="content-wrapper">
+                            <div class="content">
                               ${formattedMarkdown}
                             </div>
                             
                             ${article.content_markdown.length > 500 ? 
-                              `<div style="text-align: center; margin: 30px 0;">
-                                <a href="${readMoreUrl}" style="background-color: #3C1E70; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
+                              `<div style="text-align: center;">
+                                <a href="${readMoreUrl}" class="cta-button">קרא עוד באתר</a>
                               </div>` : ''}
                             
-                            <div style="margin: 30px 0;">
+                            <div class="link-section">
                               ${emailBodyLinks.join('')}
                             </div>
                             
-                            ${emailFooter}
+                            <div class="footer">
+                              <a href="https://ruth-prissman-coach.lovable.app/contact" class="footer-link">
+                                צור קשר
+                              </a>
+                              <a href="https://wa.me/972556620273" class="footer-link">
+                                שלח לי הודעה בוואטסאפ
+                              </a>
+                              <a href="https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=newsletter" class="footer-link">
+                                להסרה מרשימת התפוצה
+                              </a>
+                              <p class="copyright">
+                                © ${new Date().getFullYear()} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
+                              </p>
+                            </div>
                           </td>
                         </tr>
                       </table>
@@ -1283,3 +1473,4 @@ class PublicationService {
 }
 
 export default PublicationService;
+
