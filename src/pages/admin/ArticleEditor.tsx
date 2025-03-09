@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -11,7 +12,8 @@ import {
   Save, 
   Trash2, 
   Send,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Article, Category, PublicationFormData, PublishLocationType } from '@/types/article';
@@ -84,9 +86,10 @@ const ArticleEditor: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [autoSaveInterval, setAutoSaveInterval] = useState<NodeJS.Timeout | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [publications, setPublications] = useState<PublicationFormData[]>([]);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const editorRef = useRef<{ saveContent: () => Promise<boolean>, hasUnsavedChanges: () => boolean } | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -184,29 +187,45 @@ const ArticleEditor: React.FC = () => {
     Promise.all([fetchArticleData(), fetchCategories()]);
   }, [fetchArticleData, fetchCategories]);
 
+  // Monitor form changes to track unsaved changes
   useEffect(() => {
-    if (form.formState.isDirty && !autoSaveInterval) {
-      const interval = setInterval(() => {
-        const formData = form.getValues();
-        if (formData.title && formData.content_markdown && isEditMode) {
-          handleAutoSave(formData);
-        }
-      }, 30000);
+    const subscription = form.watch(() => {
+      setHasUnsavedChanges(true);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form]);
 
-      setAutoSaveInterval(interval);
-    }
-
-    return () => {
-      if (autoSaveInterval) {
-        clearInterval(autoSaveInterval);
+  // Add beforeunload event to warn when leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges || (editorRef.current && editorRef.current.hasUnsavedChanges())) {
+        // Standard way to show a confirmation dialog before leaving
+        e.preventDefault();
+        e.returnValue = 'יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?';
+        return e.returnValue;
       }
     };
-  }, [form.formState.isDirty, isEditMode, autoSaveInterval]);
 
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+  
   const saveArticle = async (data: FormValues, publishNow = false) => {
     setIsSaving(true);
     
     try {
+      // First save the editor content if there are changes
+      if (editorRef.current) {
+        const saved = await editorRef.current.saveContent();
+        if (saved) {
+          console.log('Editor content saved');
+        }
+      }
+      
       const supabaseClient = getSupabaseClient();
       
       const formattedData = {
@@ -248,6 +267,7 @@ const ArticleEditor: React.FC = () => {
       await savePublications(articleId, publications);
       
       setLastSaved(new Date());
+      setHasUnsavedChanges(false);
       form.reset(data);
       
       if (!isEditMode) {
@@ -339,20 +359,12 @@ const ArticleEditor: React.FC = () => {
   const handlePublishNow = () => {
     const data = form.getValues();
     
-    if (form.formState.isDirty) {
+    if (hasUnsavedChanges || (editorRef.current && editorRef.current.hasUnsavedChanges())) {
       saveArticle(data).then(() => {
         setIsPublishModalOpen(true);
       });
     } else {
       setIsPublishModalOpen(true);
-    }
-  };
-
-  const handleAutoSave = async (data: FormValues) => {
-    try {
-      await saveArticle(data);
-    } catch (error) {
-      console.error('Auto-save failed:', error);
     }
   };
 
@@ -406,23 +418,49 @@ const ArticleEditor: React.FC = () => {
   
   const handleAddPublication = (publication: PublicationFormData) => {
     setPublications(prev => [...prev, publication]);
+    setHasUnsavedChanges(true);
   };
 
   const handleUpdatePublication = (index: number, updatedPublication: PublicationFormData) => {
     setPublications(prev => 
       prev.map((pub, i) => i === index ? updatedPublication : pub)
     );
+    setHasUnsavedChanges(true);
   };
 
   const handleDeletePublication = (index: number) => {
     setPublications(prev => 
       prev.map((pub, i) => i === index ? { ...pub, isDeleted: true } : pub)
     );
+    setHasUnsavedChanges(true);
   };
 
   const handlePublishSuccess = useCallback(() => {
     fetchArticleData();
   }, [fetchArticleData]);
+
+  // Warn user before navigating away with unsaved changes
+  useEffect(() => {
+    const warningText = 'יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?';
+    
+    const handleBeforeNavigate = (e: PopStateEvent) => {
+      if (hasUnsavedChanges || (editorRef.current && editorRef.current.hasUnsavedChanges())) {
+        if (window.confirm(warningText)) {
+          return;
+        }
+        
+        // Stay on the page
+        e.preventDefault();
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+    
+    window.addEventListener('popstate', handleBeforeNavigate);
+    
+    return () => {
+      window.removeEventListener('popstate', handleBeforeNavigate);
+    };
+  }, [hasUnsavedChanges]);
 
   return (
     <AdminLayout title={isEditMode ? "עריכת מאמר" : "מאמר חדש"}>
@@ -436,7 +474,15 @@ const ArticleEditor: React.FC = () => {
           <div className="flex justify-between items-center">
             <Button
               variant="outline"
-              onClick={() => navigate('/admin/articles')}
+              onClick={() => {
+                if (hasUnsavedChanges || (editorRef.current && editorRef.current.hasUnsavedChanges())) {
+                  if (window.confirm('יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?')) {
+                    navigate('/admin/articles');
+                  }
+                } else {
+                  navigate('/admin/articles');
+                }
+              }}
               className="gap-2"
             >
               <ArrowRight className="h-4 w-4" />
@@ -498,7 +544,15 @@ const ArticleEditor: React.FC = () => {
                     <FormItem className="md:col-span-2">
                       <FormLabel>כותרת</FormLabel>
                       <FormControl>
-                        <Input placeholder="כותרת המאמר" {...field} className="text-xl" />
+                        <Input 
+                          placeholder="כותרת המאמר" 
+                          {...field} 
+                          className="text-xl"
+                          onChange={(e) => {
+                            field.onChange(e);
+                            setHasUnsavedChanges(true);
+                          }}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -513,7 +567,10 @@ const ArticleEditor: React.FC = () => {
                       <FormLabel>קטגוריה</FormLabel>
                       <Select 
                         value={field.value || NONE_CATEGORY}
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setHasUnsavedChanges(true);
+                        }}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -551,6 +608,9 @@ const ArticleEditor: React.FC = () => {
                                 "pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground"
                               )}
+                              onClick={() => {
+                                // Only handle the click event, not update the value
+                              }}
                             >
                               {field.value ? (
                                 format(field.value, "dd/MM/yyyy", { locale: he })
@@ -565,7 +625,10 @@ const ArticleEditor: React.FC = () => {
                           <Calendar
                             mode="single"
                             selected={field.value || undefined}
-                            onSelect={field.onChange}
+                            onSelect={(date) => {
+                              field.onChange(date);
+                              setHasUnsavedChanges(true);
+                            }}
                             disabled={(date) => date < new Date("1900-01-01")}
                             initialFocus
                             className="pointer-events-auto"
@@ -590,7 +653,15 @@ const ArticleEditor: React.FC = () => {
                     <FormItem>
                       <FormLabel>איש קשר (אימייל - אופציונלי)</FormLabel>
                       <FormControl>
-                        <Input placeholder="example@example.com" {...field} value={field.value || ''} />
+                        <Input 
+                          placeholder="example@example.com" 
+                          {...field} 
+                          value={field.value || ''} 
+                          onChange={(e) => {
+                            field.onChange(e);
+                            setHasUnsavedChanges(true);
+                          }}
+                        />
                       </FormControl>
                       <FormDescription>
                         אימייל ליצירת קשר שיוצג במאמר
@@ -616,6 +687,7 @@ const ArticleEditor: React.FC = () => {
                     <FormLabel>תוכן המאמר</FormLabel>
                     <FormControl>
                       <RichTextEditor 
+                        ref={editorRef}
                         defaultValue={field.value} 
                         onChange={handleEditorChange}
                         placeholder="התחל לכתוב את תוכן המאמר כאן..."
@@ -631,18 +703,33 @@ const ArticleEditor: React.FC = () => {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => navigate('/admin/articles')}
+                  onClick={() => {
+                    if (hasUnsavedChanges || (editorRef.current && editorRef.current.hasUnsavedChanges())) {
+                      if (window.confirm('יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?')) {
+                        navigate('/admin/articles');
+                      }
+                    } else {
+                      navigate('/admin/articles');
+                    }
+                  }}
                   disabled={isSaving}
                 >
                   ביטול
                 </Button>
                 <Button 
                   type="submit"
-                  disabled={isSaving || !form.formState.isDirty}
+                  disabled={isSaving || (!hasUnsavedChanges && !(editorRef.current && editorRef.current.hasUnsavedChanges()))}
                   className="gap-2"
                 >
                   {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {isSaving ? "שומר..." : "שמור"}
+                  {isSaving ? "שומר..." : (
+                    <>
+                      שמור
+                      {(hasUnsavedChanges || (editorRef.current && editorRef.current.hasUnsavedChanges())) && (
+                        <AlertCircle className="h-3 w-3 text-red-500 ml-1" />
+                      )}
+                    </>
+                  )}
                 </Button>
               </div>
             </form>

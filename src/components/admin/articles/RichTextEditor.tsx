@@ -1,5 +1,4 @@
-
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useState, ReactNode, ReactElement } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
@@ -107,23 +106,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const isLoading = useRef(false);
   const defaultValueRef = useRef(defaultValue);
-  const currentMarkdownRef = useRef(defaultValue);
-  const onChangeRef = useRef(onChange);
-  const contentChangedRef = useRef(false);
-  const isInitializedRef = useRef(false);
-  const mutationObserverRef = useRef<MutationObserver | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const contentRef = useRef(defaultValue);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
-  // Update onChange callback ref when it changes
-  useEffect(() => {
-    onChangeRef.current = onChange;
-  }, [onChange]);
-
-  // Set default value once on first mount
   useEffect(() => {
     if (defaultValue) {
       defaultValueRef.current = defaultValue;
-      currentMarkdownRef.current = defaultValue;
+      contentRef.current = defaultValue;
     }
   }, []);
 
@@ -165,41 +154,38 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     return markdown.trim();
   };
 
-  const markContentAsChanged = useCallback(() => {
-    if (!isEditing) {
-      setIsEditing(true);
-    }
-    contentChangedRef.current = true;
-  }, [isEditing]);
-
-  const saveContent = useCallback(async () => {
-    if (!isEditorReady.current || !editorInstance.current) return;
-    if (!contentChangedRef.current) return; // Skip saving if nothing changed
+  const saveContent = async () => {
+    if (!isEditorReady.current || !editorInstance.current) return false;
     
     try {
-      console.log('Saving editor content');
+      console.log('Explicitly saving editor content');
       const data = await editorInstance.current.save();
       
       if (data) {
         const newMarkdown = convertToMarkdown(data);
         
-        if (newMarkdown.trim() !== currentMarkdownRef.current.trim()) {
-          console.log('Content has changed, updating markdown and parent');
-          currentMarkdownRef.current = newMarkdown.trim();
-          onChangeRef.current(newMarkdown.trim());
-          setIsEditing(false);
-          contentChangedRef.current = false;
+        if (newMarkdown.trim() !== contentRef.current.trim()) {
+          contentRef.current = newMarkdown.trim();
+          onChange(newMarkdown.trim());
+          setHasUnsavedChanges(false);
+          return true;
         }
       }
+      return false;
     } catch (error) {
       console.error('Error saving editor data:', error);
+      return false;
     }
-  }, []);
+  };
 
-  const initializeEditor = useCallback(() => {
-    if (!containerRef.current || isEditorReady.current || editorInstance.current || isInitializedRef.current) return;
+  const handleContentChange = () => {
+    if (!isEditorReady.current) return;
+    setHasUnsavedChanges(true);
+  };
+
+  const initializeEditor = () => {
+    if (!containerRef.current || isEditorReady.current || editorInstance.current) return;
     
-    isInitializedRef.current = true;
     isLoading.current = true;
     
     try {
@@ -250,44 +236,21 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           console.log('Editor is ready');
           isLoading.current = false;
           isEditorReady.current = true;
-          
-          // Use MutationObserver to detect actual content changes
-          if (containerRef.current && !mutationObserverRef.current) {
-            mutationObserverRef.current = new MutationObserver(() => {
-              markContentAsChanged();
-            });
-            
-            mutationObserverRef.current.observe(containerRef.current, {
-              childList: true,
-              subtree: true,
-              characterData: true,
-              attributes: false
-            });
-          }
+        },
+        onChange: () => {
+          handleContentChange();
         }
       });
     } catch (error) {
       console.error('EditorJS initialization error:', error);
       isLoading.current = false;
     }
-  }, [placeholder, markContentAsChanged]);
+  };
 
-  // Initialize editor once on first mount
   useEffect(() => {
     initializeEditor();
 
-    // Cleanup on unmount
     return () => {
-      // Save any pending changes
-      saveContent();
-      
-      // Disconnect MutationObserver if it exists
-      if (mutationObserverRef.current) {
-        mutationObserverRef.current.disconnect();
-        mutationObserverRef.current = null;
-      }
-      
-      // Destroy editor if it exists
       if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
         try {
           editorInstance.current.destroy();
@@ -296,50 +259,17 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         }
         editorInstance.current = null;
         isEditorReady.current = false;
-        isInitializedRef.current = false;
       }
     };
-  }, [initializeEditor, saveContent]);
+  }, []);
 
-  // Set up event listeners for saving content
-  useEffect(() => {
-    const handleBeforeSubmit = () => {
-      if (contentChangedRef.current) {
-        saveContent();
-      }
-    };
-
-    const handleBeforeUnload = () => {
-      if (contentChangedRef.current) {
-        saveContent();
-      }
-    };
-    
-    const handleBlur = (event: FocusEvent) => {
-      // Only trigger save when focus moves completely outside the editor
-      if (containerRef.current && !containerRef.current.contains(event.relatedTarget as Node)) {
-        if (contentChangedRef.current) {
-          saveContent();
-        }
-      }
-    };
-    
-    window.addEventListener('beforesubmit', handleBeforeSubmit);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    if (containerRef.current) {
-      containerRef.current.addEventListener('blur', handleBlur as EventListener, true);
-    }
-
-    return () => {
-      window.removeEventListener('beforesubmit', handleBeforeSubmit);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      
-      if (containerRef.current) {
-        containerRef.current.removeEventListener('blur', handleBlur as EventListener, true);
-      }
-    };
-  }, [saveContent]);
+  React.useImperativeHandle(
+    React.forwardRef(() => null),
+    () => ({
+      saveContent,
+      hasUnsavedChanges: () => hasUnsavedChanges
+    })
+  );
 
   return (
     <div className={`border rounded-md overflow-hidden bg-white ${className}`}>
@@ -353,8 +283,15 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         className="min-h-[400px] p-4"
         style={{ display: isLoading.current ? 'none' : 'block' }}
       />
+      {hasUnsavedChanges && (
+        <div className="bg-amber-50 text-amber-800 px-4 py-2 text-sm border-t">
+          יש שינויים שלא נשמרו
+        </div>
+      )}
     </div>
   );
 };
 
-export default RichTextEditor;
+export default React.forwardRef<{ saveContent: () => Promise<boolean>, hasUnsavedChanges: () => boolean }, RichTextEditorProps>(
+  (props, ref) => <RichTextEditor {...props} ref={ref} />
+);
