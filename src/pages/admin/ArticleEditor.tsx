@@ -395,12 +395,12 @@ const ArticleEditor: React.FC = () => {
   };
 
   const handleEditorChange = (content: string) => {
-    console.log('Editor content updated in parent:', content);
+    console.log('Editor content updated in parent');
     
     form.setValue('content_markdown', content, { 
       shouldDirty: true,
       shouldValidate: false,
-      shouldTouch: true
+      shouldTouch: false
     });
   };
   

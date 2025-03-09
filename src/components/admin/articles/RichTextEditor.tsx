@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -114,6 +115,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const initialValueRef = useRef(initialValue);
   const markdownRef = useRef(initialValue);
   const onChangeRef = useRef(onChange);
+  const contentChangedRef = useRef(false);
   
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -157,36 +159,41 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     return markdown.trim();
   };
 
-  const handleContentChange = useCallback(
-    debounce(async () => {
-      if (!isEditorReady.current || !editorInstance.current) return;
+  // Simplified content change handler that only updates local state
+  const handleContentChange = useCallback(() => {
+    if (!isEditorReady.current || !editorInstance.current) return;
+    
+    // Mark that content has changed, but don't trigger onChange yet
+    contentChangedRef.current = true;
+  }, []);
+
+  // Only called on explicit save action
+  const saveContent = useCallback(async () => {
+    if (!isEditorReady.current || !editorInstance.current || !contentChangedRef.current) return;
+    
+    try {
+      console.log('Saving editor content');
+      const data = await editorInstance.current.save();
       
-      try {
-        console.log('Debounced content change handler executing');
-        const data = await editorInstance.current.save();
+      if (data) {
+        const newMarkdown = convertToMarkdown(data);
         
-        if (data) {
-          const newMarkdown = convertToMarkdown(data);
-          
-          if (newMarkdown.trim() !== markdownRef.current.trim()) {
-            console.log('Content changed, updating markdown');
-            markdownRef.current = newMarkdown.trim();
-            onChangeRef.current(newMarkdown.trim());
-          } else {
-            console.log('Content unchanged, skipping update');
-          }
+        if (newMarkdown.trim() !== markdownRef.current.trim()) {
+          console.log('Content changed, updating markdown');
+          markdownRef.current = newMarkdown.trim();
+          onChangeRef.current(newMarkdown.trim());
+          contentChangedRef.current = false;
         }
-      } catch (error) {
-        console.error('Error saving editor data:', error);
       }
-    }, 500),
-    []
-  );
+    } catch (error) {
+      console.error('Error saving editor data:', error);
+    }
+  }, []);
 
   useEffect(() => {
     if (initialValue) {
-      console.log('Initial value provided, calling onChange');
-      onChange(initialValue);
+      console.log('Initial value provided');
+      markdownRef.current = initialValue;
     }
   }, []);
 
@@ -234,7 +241,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         data: markdownToEditorJS(initialValueRef.current),
         placeholder: placeholder,
         onChange: () => {
-          console.log('Editor content changed, triggering debounced handler');
+          console.log('Editor content changed, marking as changed');
           handleContentChange();
         },
         onReady: () => {
@@ -243,8 +250,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           isEditorReady.current = true;
           
           if (initialValueRef.current) {
-            console.log('Calling onChange with initial value on ready');
-            onChange(initialValueRef.current);
+            console.log('Initial value on ready');
+            markdownRef.current = initialValueRef.current;
+            // Don't call onChange here to prevent initial server request
           }
         }
       });
@@ -252,12 +260,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       console.error('EditorJS initialization error:', error);
       isLoading.current = false;
     }
-  }, [placeholder, handleContentChange, onChange]);
+  }, [placeholder, handleContentChange]);
 
+  // Initialize editor once
   useEffect(() => {
     initializeEditor();
 
     return () => {
+      // Save content before unmounting
+      saveContent();
+      
       if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
         try {
           editorInstance.current.destroy();
@@ -270,6 +282,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     };
   }, []); // Run only once on component mount
 
+  // Handle initialValue changes
   useEffect(() => {
     if (editorInstance.current && isEditorReady.current && initialValue !== initialValueRef.current) {
       console.log('Initial value changed, updating editor');
@@ -283,6 +296,29 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       }
     }
   }, [initialValue]);
+
+  // Save content before form submission
+  useEffect(() => {
+    // Create a function to handle form submissions
+    const handleBeforeSubmit = async () => {
+      await saveContent();
+    };
+
+    // Add event listener for form submissions
+    window.addEventListener('beforesubmit', handleBeforeSubmit);
+    
+    // Periodically save content (every 10 seconds) if changed
+    const autoSaveInterval = setInterval(() => {
+      if (contentChangedRef.current) {
+        saveContent();
+      }
+    }, 10000);
+
+    return () => {
+      window.removeEventListener('beforesubmit', handleBeforeSubmit);
+      clearInterval(autoSaveInterval);
+    };
+  }, [saveContent]);
 
   return (
     <div className={`border rounded-md overflow-hidden bg-white ${className}`}>
