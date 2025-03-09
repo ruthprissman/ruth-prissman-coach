@@ -86,7 +86,6 @@ const ArticleEditor: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [autoSaveInterval, setAutoSaveInterval] = useState<NodeJS.Timeout | null>(null);
   const [publications, setPublications] = useState<PublicationFormData[]>([]);
-  // Add state for publish modal
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
   const form = useForm<FormValues>({
@@ -337,18 +336,14 @@ const ArticleEditor: React.FC = () => {
     await saveArticle(data);
   };
 
-  // Update the handlePublishNow function to open the modal instead of publishing directly
   const handlePublishNow = () => {
-    // First, ensure the article is saved
     const data = form.getValues();
     
     if (form.formState.isDirty) {
-      // If form has unsaved changes, save first then open modal
       saveArticle(data).then(() => {
         setIsPublishModalOpen(true);
       });
     } else {
-      // If no unsaved changes, just open the modal
       setIsPublishModalOpen(true);
     }
   };
@@ -424,10 +419,8 @@ const ArticleEditor: React.FC = () => {
       prev.map((pub, i) => i === index ? { ...pub, isDeleted: true } : pub)
     );
   };
-  
-  // Add function to handle publish success
+
   const handlePublishSuccess = useCallback(() => {
-    // Refresh the article data after successful publishing
     fetchArticleData();
   }, [fetchArticleData]);
 
@@ -655,7 +648,6 @@ const ArticleEditor: React.FC = () => {
             </form>
           </Form>
           
-          {/* Add Publish Modal */}
           <PublishModal 
             article={article}
             isOpen={isPublishModalOpen}

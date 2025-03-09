@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -200,7 +201,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 console.log('Generated markdown:', trimmedMarkdown);
                 
                 setCurrentMarkdown(trimmedMarkdown);
-                
                 onChange(trimmedMarkdown);
               }
             } catch (error) {
