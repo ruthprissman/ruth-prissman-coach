@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -94,14 +93,6 @@ const markdownToEditorJS = (markdown: string): any => {
   return { blocks };
 };
 
-const debounce = (func: Function, delay: number) => {
-  let timeoutId: NodeJS.Timeout;
-  return (...args: any[]) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
-};
-
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
   initialValue = '',
   onChange,
@@ -159,15 +150,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     return markdown.trim();
   };
 
-  // Simplified content change handler that only updates local state
   const handleContentChange = useCallback(() => {
     if (!isEditorReady.current || !editorInstance.current) return;
     
-    // Mark that content has changed, but don't trigger onChange yet
     contentChangedRef.current = true;
   }, []);
 
-  // Only called on explicit save action
   const saveContent = useCallback(async () => {
     if (!isEditorReady.current || !editorInstance.current || !contentChangedRef.current) return;
     
@@ -262,12 +250,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, [placeholder, handleContentChange]);
 
-  // Initialize editor once
   useEffect(() => {
     initializeEditor();
 
     return () => {
-      // Save content before unmounting
       saveContent();
       
       if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
@@ -280,34 +266,22 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         isEditorReady.current = false;
       }
     };
-  }, []); // Run only once on component mount
+  }, [initializeEditor, saveContent]);
 
-  // Handle initialValue changes
   useEffect(() => {
-    if (editorInstance.current && isEditorReady.current && initialValue !== initialValueRef.current) {
-      console.log('Initial value changed, updating editor');
+    if (!editorInstance.current && !isEditorReady.current && initialValue) {
       initialValueRef.current = initialValue;
       markdownRef.current = initialValue;
-      
-      try {
-        editorInstance.current.render(markdownToEditorJS(initialValue));
-      } catch (error) {
-        console.error('Error rendering editor with new value:', error);
-      }
     }
-  }, [initialValue]);
+  }, []);
 
-  // Save content before form submission
   useEffect(() => {
-    // Create a function to handle form submissions
     const handleBeforeSubmit = async () => {
       await saveContent();
     };
 
-    // Add event listener for form submissions
     window.addEventListener('beforesubmit', handleBeforeSubmit);
     
-    // Periodically save content (every 10 seconds) if changed
     const autoSaveInterval = setInterval(() => {
       if (contentChangedRef.current) {
         saveContent();
