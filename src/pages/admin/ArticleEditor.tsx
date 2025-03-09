@@ -616,7 +616,7 @@ const ArticleEditor: React.FC = () => {
                     <FormLabel>תוכן המאמר</FormLabel>
                     <FormControl>
                       <RichTextEditor 
-                        initialValue={field.value} 
+                        defaultValue={field.value} 
                         onChange={handleEditorChange}
                         placeholder="התחל לכתוב את תוכן המאמר כאן..."
                         className="min-h-[400px] w-full"

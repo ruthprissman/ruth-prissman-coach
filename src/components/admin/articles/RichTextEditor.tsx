@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
@@ -10,7 +11,8 @@ import Marker from '@editorjs/marker';
 import { RefreshCw } from 'lucide-react';
 
 interface RichTextEditorProps {
-  initialValue?: string;
+  value?: string;
+  defaultValue?: string;
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
@@ -94,7 +96,8 @@ const markdownToEditorJS = (markdown: string): any => {
 };
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
-  initialValue = '',
+  value,
+  defaultValue = '',
   onChange,
   placeholder = 'התחל לכתוב כאן...',
   className = '',
@@ -103,15 +106,26 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const isEditorReady = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const isLoading = useRef(false);
-  const initialValueRef = useRef(initialValue);
-  const markdownRef = useRef(initialValue);
+  const defaultValueRef = useRef(defaultValue);
+  const currentMarkdownRef = useRef(defaultValue);
   const onChangeRef = useRef(onChange);
   const contentChangedRef = useRef(false);
+  const isInitializedRef = useRef(false);
   const mutationObserverRef = useRef<MutationObserver | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   
+  // Update onChange callback ref when it changes
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  // Set default value once on first mount
+  useEffect(() => {
+    if (defaultValue) {
+      defaultValueRef.current = defaultValue;
+      currentMarkdownRef.current = defaultValue;
+    }
+  }, []);
 
   const convertToMarkdown = (data: any): string => {
     if (!data || !data.blocks || data.blocks.length === 0) return '';
@@ -152,8 +166,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   };
 
   const markContentAsChanged = useCallback(() => {
+    if (!isEditing) {
+      setIsEditing(true);
+    }
     contentChangedRef.current = true;
-  }, []);
+  }, [isEditing]);
 
   const saveContent = useCallback(async () => {
     if (!isEditorReady.current || !editorInstance.current) return;
@@ -166,10 +183,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       if (data) {
         const newMarkdown = convertToMarkdown(data);
         
-        if (newMarkdown.trim() !== markdownRef.current.trim()) {
+        if (newMarkdown.trim() !== currentMarkdownRef.current.trim()) {
           console.log('Content has changed, updating markdown and parent');
-          markdownRef.current = newMarkdown.trim();
+          currentMarkdownRef.current = newMarkdown.trim();
           onChangeRef.current(newMarkdown.trim());
+          setIsEditing(false);
           contentChangedRef.current = false;
         }
       }
@@ -178,18 +196,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, []);
 
-  useEffect(() => {
-    if (initialValue) {
-      console.log('Setting initial value on first mount only');
-      initialValueRef.current = initialValue;
-      markdownRef.current = initialValue;
-    }
-  }, []);
-
   const initializeEditor = useCallback(() => {
-    if (!containerRef.current || isEditorReady.current || editorInstance.current) return;
-
+    if (!containerRef.current || isEditorReady.current || editorInstance.current || isInitializedRef.current) return;
+    
+    isInitializedRef.current = true;
     isLoading.current = true;
+    
     try {
       console.log('Initializing editor...');
       editorInstance.current = new EditorJS({
@@ -209,7 +221,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           },
           paragraph: {
             class: Paragraph,
-            inlineToolbar: false, // Turn off inline toolbar to avoid focus issues
+            inlineToolbar: false,
             config: {
               preserveBlank: true,
               preserveLineBreaks: true
@@ -231,9 +243,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             shortcut: 'CMD+SHIFT+M',
           }
         },
-        data: markdownToEditorJS(initialValueRef.current),
+        data: markdownToEditorJS(defaultValueRef.current),
         placeholder: placeholder,
-        logLevel: 'ERROR', // Now we can use this since we've updated the type definitions
+        logLevel: 'ERROR',
         onReady: () => {
           console.log('Editor is ready');
           isLoading.current = false;
@@ -260,10 +272,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, [placeholder, markContentAsChanged]);
 
+  // Initialize editor once on first mount
   useEffect(() => {
     initializeEditor();
 
+    // Cleanup on unmount
     return () => {
+      // Save any pending changes
       saveContent();
       
       // Disconnect MutationObserver if it exists
@@ -272,6 +287,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         mutationObserverRef.current = null;
       }
       
+      // Destroy editor if it exists
       if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
         try {
           editorInstance.current.destroy();
@@ -280,10 +296,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         }
         editorInstance.current = null;
         isEditorReady.current = false;
+        isInitializedRef.current = false;
       }
     };
   }, [initializeEditor, saveContent]);
 
+  // Set up event listeners for saving content
   useEffect(() => {
     const handleBeforeSubmit = () => {
       if (contentChangedRef.current) {
