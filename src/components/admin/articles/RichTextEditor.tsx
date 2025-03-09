@@ -1,5 +1,4 @@
-
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
@@ -94,6 +93,14 @@ const markdownToEditorJS = (markdown: string): any => {
   return { blocks };
 };
 
+const debounce = (func: Function, delay: number) => {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
+
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
   initialValue = '',
   onChange,
@@ -106,6 +113,20 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const initialValueRef = useRef(initialValue);
   const [currentMarkdown, setCurrentMarkdown] = useState(initialValue);
+  const onChangeRef = useRef(onChange);
+  
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  const debouncedOnChange = useCallback(
+    debounce((markdown: string) => {
+      console.log('Debounced update triggered');
+      setCurrentMarkdown(markdown);
+      onChangeRef.current(markdown);
+    }, 300),
+    []
+  );
 
   useEffect(() => {
     if (initialValue) {
@@ -159,11 +180,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           placeholder: placeholder,
           onChange: async () => {
             try {
-              console.log('Editor content changed, saving...');
+              console.log('Editor content changed, preparing for debounced save...');
               const data = await editorRef.current?.save();
               
               if (data) {
-                console.log('Editor data available:', data);
+                console.log('Editor data available for debounced processing');
                 
                 let markdown = '';
                 
@@ -198,10 +219,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 }
                 
                 const trimmedMarkdown = markdown.trim();
-                console.log('Generated markdown:', trimmedMarkdown);
                 
-                setCurrentMarkdown(trimmedMarkdown);
-                onChange(trimmedMarkdown);
+                if (trimmedMarkdown !== currentMarkdown) {
+                  console.log('Content changed, applying debounced update');
+                  debouncedOnChange(trimmedMarkdown);
+                }
               }
             } catch (error) {
               console.error('Error saving editor data:', error);
@@ -238,13 +260,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         editorRef.current = null;
       }
     };
-  }, [containerRef, placeholder]);
+  }, [placeholder]);
 
   useEffect(() => {
     if (editorRef.current && isInitialized && initialValue !== initialValueRef.current) {
       console.log('Initial value changed, updating editor');
       initialValueRef.current = initialValue;
       setCurrentMarkdown(initialValue);
+      
       try {
         editorRef.current.render(markdownToEditorJS(initialValue));
       } catch (error) {
