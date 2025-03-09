@@ -1,50 +1,3 @@
-/**
- * Generate email links in HTML with proper styling
- * @param staticLinks Array of static links
- * @returns Array of formatted HTML links
- */
-private generateEmailLinks(staticLinks: StaticLink[]): string[] {
-  return staticLinks.map(link => {
-    const formattedUrl = this.formatUrl(link.url);
-    
-    // Special handling for WhatsApp link with icon
-    if (link.name === 'whatsapp') {
-      return `
-        <p style="text-align: center; margin: 15px 0;">
-          <a href="${formattedUrl}" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); display: inline-flex; align-items: center; justify-content: center; font-size: 18px;">
-            ${link.fixed_text}
-            <span style="margin-right: 8px; display: inline-block;">
-              <img src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/whatsapp-icon.png" 
-                   alt="WhatsApp" width="24" height="24" style="vertical-align: middle; border: none;" />
-            </span>
-          </a>
-        </p>
-      `;
-    }
-    
-    // Regular link with URL
-    if (formattedUrl && link.fixed_text) {
-      return `
-        <p style="text-align: center; margin: 15px 0;">
-          <a href="${formattedUrl}" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-size: 18px;">
-            ${link.fixed_text}
-          </a>
-        </p>
-      `;
-    } else if (link.fixed_text) {
-      // Display plain text as bold paragraph when no URL
-      return `
-        <p style="text-align: center; margin: 15px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-size: 18px;">
-          ${link.fixed_text}
-        </p>
-      `;
-    }
-    
-    return '';
-  }).filter(link => link !== '');
-}
 
 /**
  * Publish article to email subscribers
@@ -228,6 +181,118 @@ private async publishToEmail(article: PublishReadyArticle): Promise<void> {
     
   } catch (error) {
     console.error(`Error in publishToEmail for article ${article.id}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Publish article to WhatsApp
+ * Note: This is a placeholder method, actual implementation TBD
+ */
+private async publishToWhatsApp(article: PublishReadyArticle): Promise<void> {
+  // Placeholder for WhatsApp publication logic
+  console.log(`WhatsApp publication for article ${article.id} not yet implemented`);
+}
+
+/**
+ * Mark a publication as complete
+ */
+private async markPublicationAsDone(publicationId: number): Promise<void> {
+  try {
+    const supabaseClient = this.accessToken 
+      ? getSupabaseWithAuth(this.accessToken)
+      : supabase;
+    
+    const { error } = await supabaseClient
+      .from('article_publications')
+      .update({ published_date: new Date().toISOString() })
+      .eq('id', publicationId);
+    
+    if (error) throw error;
+    
+    console.log(`Publication ${publicationId} marked as published`);
+  } catch (error) {
+    console.error(`Error marking publication ${publicationId} as done:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Retry a failed publication
+ */
+public async retryPublication(publicationId: number): Promise<void> {
+  try {
+    const supabaseClient = this.accessToken 
+      ? getSupabaseWithAuth(this.accessToken)
+      : supabase;
+    
+    // Get the publication details
+    const { data: publication, error: pubError } = await supabaseClient
+      .from('article_publications')
+      .select(`
+        *,
+        professional_content:content_id (
+          id,
+          title,
+          content_markdown,
+          category_id,
+          contact_email
+        )
+      `)
+      .eq('id', publicationId)
+      .single();
+    
+    if (pubError || !publication) {
+      throw pubError || new Error(`Publication ${publicationId} not found`);
+    }
+    
+    const professionalContent = publication.professional_content as unknown as ProfessionalContent;
+    
+    if (!professionalContent) {
+      throw new Error(`Missing content for publication ${publicationId}`);
+    }
+    
+    // Create a publish-ready article object
+    const article: PublishReadyArticle = {
+      id: professionalContent.id,
+      title: professionalContent.title,
+      content_markdown: professionalContent.content_markdown,
+      category_id: professionalContent.category_id,
+      contact_email: professionalContent.contact_email,
+      article_publications: [publication]
+    };
+    
+    // Reset the publication status
+    await supabaseClient
+      .from('article_publications')
+      .update({ published_date: null })
+      .eq('id', publicationId);
+    
+    // Republish based on the location
+    switch (publication.publish_location) {
+      case 'Website':
+        await this.publishToWebsite(article.id);
+        break;
+        
+      case 'Email':
+        await this.publishToEmail(article);
+        break;
+        
+      case 'WhatsApp':
+        await this.publishToWhatsApp(article);
+        break;
+        
+      default:
+        throw new Error(`Unknown publication location: ${publication.publish_location}`);
+    }
+    
+    // Mark as published
+    await this.markPublicationAsDone(publicationId);
+    
+    console.log(`Publication ${publicationId} successfully retried`);
+    
+  } catch (error) {
+    console.error(`Error retrying publication ${publicationId}:`, error);
     throw error;
   }
 }
