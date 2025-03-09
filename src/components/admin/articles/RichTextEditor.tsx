@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -107,6 +108,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const markdownRef = useRef(initialValue);
   const onChangeRef = useRef(onChange);
   const contentChangedRef = useRef(false);
+  const mutationObserverRef = useRef<MutationObserver | null>(null);
   
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -208,9 +210,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           },
           paragraph: {
             class: Paragraph,
-            inlineToolbar: true,
+            inlineToolbar: false, // Turn off inline toolbar to avoid focus issues
             config: {
-              preserveBlank: true
+              preserveBlank: true,
+              preserveLineBreaks: true
             }
           },
           quote: {
@@ -231,20 +234,23 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         },
         data: markdownToEditorJS(initialValueRef.current),
         placeholder: placeholder,
+        logLevel: 'ERROR', // Reduce console logs
         onReady: () => {
           console.log('Editor is ready');
           isLoading.current = false;
           isEditorReady.current = true;
           
-          if (containerRef.current) {
-            containerRef.current.addEventListener('keyup', (e) => {
-              if (e.key !== 'Enter' && e.key !== ' ') {
-                markContentAsChanged();
-              }
+          // Use MutationObserver to detect actual content changes
+          if (containerRef.current && !mutationObserverRef.current) {
+            mutationObserverRef.current = new MutationObserver(() => {
+              markContentAsChanged();
             });
             
-            containerRef.current.addEventListener('mouseup', () => {
-              setTimeout(markContentAsChanged, 100);
+            mutationObserverRef.current.observe(containerRef.current, {
+              childList: true,
+              subtree: true,
+              characterData: true,
+              attributes: false
             });
           }
         }
@@ -260,6 +266,12 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
     return () => {
       saveContent();
+      
+      // Disconnect MutationObserver if it exists
+      if (mutationObserverRef.current) {
+        mutationObserverRef.current.disconnect();
+        mutationObserverRef.current = null;
+      }
       
       if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
         try {
@@ -287,6 +299,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     };
     
     const handleBlur = (event: FocusEvent) => {
+      // Only trigger save when focus moves completely outside the editor
       if (containerRef.current && !containerRef.current.contains(event.relatedTarget as Node)) {
         if (contentChangedRef.current) {
           saveContent();
