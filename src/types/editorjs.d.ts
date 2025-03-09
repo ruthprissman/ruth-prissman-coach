@@ -25,6 +25,7 @@ declare module '@editorjs/editorjs' {
     placeholder?: string;
     onChange?: (api: API, event: CustomEvent) => void;
     onReady?: () => void;
+    logLevel?: 'ERROR' | 'WARN' | 'INFO';
   }
 
   export interface API {

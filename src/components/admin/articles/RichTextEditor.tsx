@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -234,7 +233,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         },
         data: markdownToEditorJS(initialValueRef.current),
         placeholder: placeholder,
-        logLevel: 'ERROR', // Reduce console logs
+        logLevel: 'ERROR', // Now we can use this since we've updated the type definitions
         onReady: () => {
           console.log('Editor is ready');
           isLoading.current = false;
