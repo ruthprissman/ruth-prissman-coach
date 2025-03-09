@@ -1,4 +1,3 @@
-
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -635,7 +634,7 @@ class PublicationService {
         return `
           <p style="text-align: center; margin: 10px 0;">
             <a href="${formattedUrl}" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
               ${link.text}
             </a>
           </p>
@@ -643,7 +642,7 @@ class PublicationService {
       } else if (link.text) {
         // Display plain text as bold paragraph when no URL
         return `
-          <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold;">
+          <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70;">
             ${link.text}
           </p>
         `;
@@ -664,34 +663,30 @@ class PublicationService {
       let footerLinks = [];
       
       // Add default links if not in the static_links table
-      const contactLink = staticLinks.find(link => link.name === 'contact');
-      const contactUrl = this.formatUrl(contactLink?.url || '/contact');
       footerLinks.push(`
         <p style="text-align: center; margin: 10px 0;">
-          <a href="${contactUrl}" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
-            ${contactLink?.text || 'צור קשר'}
+          <a href="https://ruth-prissman-coach.lovable.app/contact" 
+             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
+            צור קשר
           </a>
         </p>
       `);
       
-      const whatsappLink = staticLinks.find(link => link.name === 'whatsapp');
-      const whatsappUrl = this.formatUrl(whatsappLink?.url || '972556620273');
       footerLinks.push(`
         <p style="text-align: center; margin: 10px 0;">
-          <a href="${whatsappUrl}" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
-            ${whatsappLink?.text || 'שלח לי הודעה בוואטסאפ'}
+          <a href="https://wa.me/972556620273" 
+             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
+            שלח לי הודעה בוואטסאפ
           </a>
         </p>
       `);
       
       // Add unsubscribe link with dynamic email parameter
-      const unsubscribeUrl = `https://yourwebsite.com/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=newsletter`;
+      const unsubscribeUrl = `https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=newsletter`;
       footerLinks.push(`
         <p style="text-align: center; margin: 10px 0;">
           <a href="${unsubscribeUrl}" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
             להסרה מרשימת התפוצה
           </a>
         </p>
@@ -706,14 +701,14 @@ class PublicationService {
             footerLinks.push(`
               <p style="text-align: center; margin: 10px 0;">
                 <a href="${formattedUrl}" 
-                   style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+                   style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
                   ${link.text}
                 </a>
               </p>
             `);
           } else if (link.text) {
             footerLinks.push(`
-              <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold;">
+              <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70;">
                 ${link.text}
               </p>
             `);
@@ -724,7 +719,7 @@ class PublicationService {
       return `
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eaeaea;">
           ${footerLinks.join('')}
-          <p style="font-size: 12px; color: #999; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif;">
+          <p style="font-size: 12px; color: #555; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif;">
             © ${new Date().getFullYear()} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
           </p>
         </div>
@@ -735,18 +730,18 @@ class PublicationService {
       return `
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eaeaea; text-align: center;">
           <p style="margin: 10px 0;">
-            <a href="/contact" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+            <a href="https://ruth-prissman-coach.lovable.app/contact" 
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
               צור קשר
             </a>
           </p>
           <p style="margin: 10px 0;">
-            <a href="https://yourwebsite.com/unsubscribe?email=${encodeURIComponent(recipientEmail)}" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">
+            <a href="https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}" 
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">
               להסרה מרשימת התפוצה
             </a>
           </p>
-          <p style="font-size: 12px; color: #999; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif;">
+          <p style="font-size: 12px; color: #555; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif;">
             © ${new Date().getFullYear()} רות פריסמן - קוד הנפש
           </p>
         </div>
@@ -763,18 +758,15 @@ class PublicationService {
   private async processContentLinks(content: string, articleTitle: string): Promise<string> {
     try {
       const staticLinks = await this.fetchStaticLinks();
-      const emailLink = staticLinks.find(link => link.name === 'email');
       
       let processedContent = content;
       
       // Replace "כתבי לי" with email link
-      if (emailLink) {
-        const emailRegex = /כתבי לי/g;
-        const encodedSubject = encodeURIComponent(`שאלה על ${articleTitle}`);
-        const emailUrl = this.formatUrl(emailLink.url) || `mailto:ruthprissman@gmail.com?subject=${encodedSubject}`;
-        const emailHtml = `<a href="${emailUrl}" style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3273dc; text-decoration: none;">כתבי לי</a>`;
-        processedContent = processedContent.replace(emailRegex, emailHtml);
-      }
+      const emailRegex = /כתבי לי/g;
+      const encodedSubject = encodeURIComponent(`שאלה על ${articleTitle}`);
+      const emailUrl = `mailto:ruthprissman@gmail.com?subject=${encodedSubject}`;
+      const emailHtml = `<a href="${emailUrl}" style="font-family: 'Alef', sans-serif; font-weight: bold; color: #3C1E70; text-decoration: none;">כתבי לי</a>`;
+      processedContent = processedContent.replace(emailRegex, emailHtml);
       
       return processedContent;
     } catch (error) {
@@ -823,7 +815,7 @@ class PublicationService {
           // Generate footer with personalized unsubscribe link
           const emailFooter = await this.generateEmailFooter(recipientEmail);
           
-          const readMoreUrl = `https://yourwebsite.com/articles/${article.id}`;
+          const readMoreUrl = `https://ruth-prissman-coach.lovable.app/articles/${article.id}`;
           
           const emailContent = `
             <html>
@@ -848,33 +840,27 @@ class PublicationService {
                       font-size: 16px !important;
                     }
                   }
-                  body {
-                    font-family: 'Heebo', sans-serif;
-                  }
-                  h1, h2, h3, a {
-                    font-family: 'Alef', sans-serif;
-                  }
                 </style>
               </head>
-              <body style="margin: 0; padding: 0; font-family: 'Heebo', sans-serif; line-height: 1.6; direction: rtl; background-color: #f5f5f5;">
+              <body style="margin: 0; padding: 0; font-family: 'Heebo', sans-serif; line-height: 1.6; direction: rtl; background-color: transparent;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
-                      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.92); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden;">
                         <tr>
-                          <td style="background-color: #4a6da7; padding: 20px; text-align: center;">
+                          <td style="background-color: #3C1E70; padding: 20px; text-align: center;">
                             <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; font-family: 'Alef', sans-serif;">${article.title}</h1>
                           </td>
                         </tr>
                         <tr>
-                          <td class="content" style="padding: 30px;">
-                            <div style="font-size: 16px; color: #333; margin-bottom: 20px; text-align: right; font-family: 'Heebo', sans-serif;">
+                          <td class="content" style="padding: 30px; text-align: center;">
+                            <div style="font-size: 16px; color: #3C1E70; margin-bottom: 20px; text-align: center; font-family: 'Heebo', sans-serif; line-height: 1.8;">
                               ${formattedMarkdown}
                             </div>
                             
                             ${article.content_markdown.length > 500 ? 
                               `<div style="text-align: center; margin: 30px 0;">
-                                <a href="${readMoreUrl}" style="background-color: #4a6da7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
+                                <a href="${readMoreUrl}" style="background-color: #3C1E70; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
                               </div>` : ''}
                             
                             <div style="margin: 30px 0;">
@@ -1025,7 +1011,7 @@ class PublicationService {
           // Generate footer with personalized unsubscribe link
           const emailFooter = await this.generateEmailFooter(recipientEmail);
           
-          const readMoreUrl = `https://yourwebsite.com/articles/${article.id}`;
+          const readMoreUrl = `https://ruth-prissman-coach.lovable.app/articles/${article.id}`;
           
           const emailContent = `
             <html>
@@ -1050,33 +1036,27 @@ class PublicationService {
                       font-size: 16px !important;
                     }
                   }
-                  body {
-                    font-family: 'Heebo', sans-serif;
-                  }
-                  h1, h2, h3, a {
-                    font-family: 'Alef', sans-serif;
-                  }
                 </style>
               </head>
-              <body style="margin: 0; padding: 0; font-family: 'Heebo', sans-serif; line-height: 1.6; direction: rtl; background-color: #f5f5f5;">
+              <body style="margin: 0; padding: 0; font-family: 'Heebo', sans-serif; line-height: 1.6; direction: rtl; background-color: transparent;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
-                      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.92); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden;">
                         <tr>
-                          <td style="background-color: #4a6da7; padding: 20px; text-align: center;">
+                          <td style="background-color: #3C1E70; padding: 20px; text-align: center;">
                             <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; font-family: 'Alef', sans-serif;">${article.title}</h1>
                           </td>
                         </tr>
                         <tr>
-                          <td class="content" style="padding: 30px;">
-                            <div style="font-size: 16px; color: #333; margin-bottom: 20px; text-align: right; font-family: 'Heebo', sans-serif;">
+                          <td class="content" style="padding: 30px; text-align: center;">
+                            <div style="font-size: 16px; color: #3C1E70; margin-bottom: 20px; text-align: center; font-family: 'Heebo', sans-serif; line-height: 1.8;">
                               ${formattedMarkdown}
                             </div>
                             
                             ${article.content_markdown.length > 500 ? 
                               `<div style="text-align: center; margin: 30px 0;">
-                                <a href="${readMoreUrl}" style="background-color: #4a6da7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
+                                <a href="${readMoreUrl}" style="background-color: #3C1E70; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
                               </div>` : ''}
                             
                             <div style="margin: 30px 0;">
@@ -1303,4 +1283,3 @@ class PublicationService {
 }
 
 export default PublicationService;
-
