@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
@@ -108,10 +108,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   placeholder = 'התחל לכתוב כאן...',
   className = '',
 }) => {
-  const editorRef = useRef<EditorJS | null>(null);
+  // Replace useState with useRef for editor instance to prevent re-renders
+  const editorInstance = useRef<EditorJS | null>(null);
+  const isEditorReady = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoading = useRef(false);
   const initialValueRef = useRef(initialValue);
   const markdownRef = useRef(initialValue);
   const onChangeRef = useRef(onChange);
@@ -120,6 +121,45 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  // Convert EditorJS data to markdown
+  const convertToMarkdown = (data: any): string => {
+    if (!data || !data.blocks || data.blocks.length === 0) return '';
+    
+    let markdown = '';
+    
+    for (const block of data.blocks) {
+      switch (block.type) {
+        case 'header':
+          markdown += `${'#'.repeat(block.data.level)} ${block.data.text}\n\n`;
+          break;
+        case 'paragraph':
+          markdown += `${block.data.text}\n\n`;
+          break;
+        case 'list':
+          for (let i = 0; i < block.data.items.length; i++) {
+            const item = block.data.items[i];
+            markdown += block.data.style === 'ordered' 
+              ? `${i + 1}. ${item}\n` 
+              : `- ${item}\n`;
+          }
+          markdown += '\n';
+          break;
+        case 'quote':
+          markdown += `> ${block.data.text}\n\n`;
+          break;
+        case 'code':
+          markdown += `\`\`\`\n${block.data.code}\n\`\`\`\n\n`;
+          break;
+        default:
+          if (block.data.text) {
+            markdown += `${block.data.text}\n\n`;
+          }
+      }
+    }
+    
+    return markdown.trim();
+  };
 
   const debouncedOnChange = useCallback(
     debounce((markdown: string) => {
@@ -139,12 +179,34 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, []);
 
+  const handleContentChange = async () => {
+    if (!isEditorReady.current) return;
+    
+    try {
+      console.log('Editor content changed, preparing for debounced save...');
+      const data = await editorInstance.current?.save();
+      
+      if (data) {
+        console.log('Editor data available for debounced processing');
+        const newMarkdown = convertToMarkdown(data);
+        
+        if (newMarkdown !== markdownRef.current) {
+          console.log('Content changed, applying debounced update');
+          debouncedOnChange(newMarkdown);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving editor data:', error);
+    }
+  };
+
   useEffect(() => {
-    if (!containerRef.current || editorRef.current) return;
+    if (!containerRef.current || isEditorReady.current) return;
 
     const initEditor = async () => {
-      setIsLoading(true);
+      isLoading.current = true;
       try {
+        console.log('Initializing editor...');
         const editor = new EditorJS({
           holder: containerRef.current!,
           tools: {
@@ -182,61 +244,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           },
           data: markdownToEditorJS(initialValueRef.current),
           placeholder: placeholder,
-          onChange: async () => {
-            try {
-              console.log('Editor content changed, preparing for debounced save...');
-              const data = await editorRef.current?.save();
-              
-              if (data) {
-                console.log('Editor data available for debounced processing');
-                
-                let markdown = '';
-                
-                for (const block of data.blocks) {
-                  switch (block.type) {
-                    case 'header':
-                      markdown += `${'#'.repeat(block.data.level)} ${block.data.text}\n\n`;
-                      break;
-                    case 'paragraph':
-                      markdown += `${block.data.text}\n\n`;
-                      break;
-                    case 'list':
-                      for (let i = 0; i < block.data.items.length; i++) {
-                        const item = block.data.items[i];
-                        markdown += block.data.style === 'ordered' 
-                          ? `${i + 1}. ${item}\n` 
-                          : `- ${item}\n`;
-                      }
-                      markdown += '\n';
-                      break;
-                    case 'quote':
-                      markdown += `> ${block.data.text}\n\n`;
-                      break;
-                    case 'code':
-                      markdown += `\`\`\`\n${block.data.code}\n\`\`\`\n\n`;
-                      break;
-                    default:
-                      if (block.data.text) {
-                        markdown += `${block.data.text}\n\n`;
-                      }
-                  }
-                }
-                
-                const trimmedMarkdown = markdown.trim();
-                
-                if (trimmedMarkdown !== markdownRef.current) {
-                  console.log('Content changed, applying debounced update');
-                  debouncedOnChange(trimmedMarkdown);
-                }
-              }
-            } catch (error) {
-              console.error('Error saving editor data:', error);
-            }
-          },
+          onChange: handleContentChange,
           onReady: () => {
             console.log('Editor is ready');
-            setIsLoading(false);
-            setIsInitialized(true);
+            isLoading.current = false;
+            isEditorReady.current = true;
             
             if (initialValueRef.current) {
               console.log('Calling onChange with initial value on ready');
@@ -245,44 +257,45 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           }
         });
         
-        editorRef.current = editor;
+        editorInstance.current = editor;
       } catch (error) {
         console.error('EditorJS initialization error:', error);
-        setIsLoading(false);
+        isLoading.current = false;
       }
     };
 
     initEditor();
 
     return () => {
-      if (editorRef.current && typeof editorRef.current.destroy === 'function') {
+      if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
         try {
-          editorRef.current.destroy();
+          editorInstance.current.destroy();
         } catch (error) {
           console.error('Error destroying editor:', error);
         }
-        editorRef.current = null;
+        editorInstance.current = null;
+        isEditorReady.current = false;
       }
     };
-  }, []); // Removed placeholder dependency to prevent re-renders
+  }, []); // Run only once on component mount
 
   useEffect(() => {
-    if (editorRef.current && isInitialized && initialValue !== initialValueRef.current) {
+    if (editorInstance.current && isEditorReady.current && initialValue !== initialValueRef.current) {
       console.log('Initial value changed, updating editor');
       initialValueRef.current = initialValue;
       markdownRef.current = initialValue;
       
       try {
-        editorRef.current.render(markdownToEditorJS(initialValue));
+        editorInstance.current.render(markdownToEditorJS(initialValue));
       } catch (error) {
         console.error('Error rendering editor with new value:', error);
       }
     }
-  }, [initialValue, isInitialized]);
+  }, [initialValue]);
 
   return (
     <div className={`border rounded-md overflow-hidden bg-white ${className}`}>
-      {isLoading && (
+      {isLoading.current && (
         <div className="flex justify-center items-center p-4">
           <RefreshCw className="animate-spin h-6 w-6 text-primary" />
         </div>
@@ -290,7 +303,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       <div 
         ref={containerRef} 
         className="min-h-[400px] p-4"
-        style={{ display: isLoading ? 'none' : 'block' }}
+        style={{ display: isLoading.current ? 'none' : 'block' }}
       />
     </div>
   );
