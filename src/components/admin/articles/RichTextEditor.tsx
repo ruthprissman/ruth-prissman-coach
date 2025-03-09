@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -112,9 +113,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const initialValueRef = useRef(initialValue);
-  const [currentMarkdown, setCurrentMarkdown] = useState(initialValue);
+  const markdownRef = useRef(initialValue);
   const onChangeRef = useRef(onChange);
   
+  // Update the onChange ref when it changes
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
@@ -122,8 +124,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const debouncedOnChange = useCallback(
     debounce((markdown: string) => {
       console.log('Debounced update triggered');
-      setCurrentMarkdown(markdown);
-      onChangeRef.current(markdown);
+      if (markdownRef.current !== markdown) {
+        markdownRef.current = markdown;
+        onChangeRef.current(markdown);
+      }
     }, 300),
     []
   );
@@ -220,7 +224,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 
                 const trimmedMarkdown = markdown.trim();
                 
-                if (trimmedMarkdown !== currentMarkdown) {
+                if (trimmedMarkdown !== markdownRef.current) {
                   console.log('Content changed, applying debounced update');
                   debouncedOnChange(trimmedMarkdown);
                 }
@@ -260,13 +264,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         editorRef.current = null;
       }
     };
-  }, [placeholder]);
+  }, []); // Removed placeholder dependency to prevent re-renders
 
   useEffect(() => {
     if (editorRef.current && isInitialized && initialValue !== initialValueRef.current) {
       console.log('Initial value changed, updating editor');
       initialValueRef.current = initialValue;
-      setCurrentMarkdown(initialValue);
+      markdownRef.current = initialValue;
       
       try {
         editorRef.current.render(markdownToEditorJS(initialValue));
