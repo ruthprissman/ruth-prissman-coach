@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -108,7 +107,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   placeholder = 'התחל לכתוב כאן...',
   className = '',
 }) => {
-  // Replace useState with useRef for editor instance to prevent re-renders
   const editorInstance = useRef<EditorJS | null>(null);
   const isEditorReady = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -117,12 +115,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const markdownRef = useRef(initialValue);
   const onChangeRef = useRef(onChange);
   
-  // Update the onChange ref when it changes
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
 
-  // Convert EditorJS data to markdown
   const convertToMarkdown = (data: any): string => {
     if (!data || !data.blocks || data.blocks.length === 0) return '';
     
@@ -161,14 +157,29 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     return markdown.trim();
   };
 
-  const debouncedOnChange = useCallback(
-    debounce((markdown: string) => {
-      console.log('Debounced update triggered');
-      if (markdownRef.current !== markdown) {
-        markdownRef.current = markdown;
-        onChangeRef.current(markdown);
+  const handleContentChange = useCallback(
+    debounce(async () => {
+      if (!isEditorReady.current || !editorInstance.current) return;
+      
+      try {
+        console.log('Debounced content change handler executing');
+        const data = await editorInstance.current.save();
+        
+        if (data) {
+          const newMarkdown = convertToMarkdown(data);
+          
+          if (newMarkdown.trim() !== markdownRef.current.trim()) {
+            console.log('Content changed, updating markdown');
+            markdownRef.current = newMarkdown.trim();
+            onChangeRef.current(newMarkdown.trim());
+          } else {
+            console.log('Content unchanged, skipping update');
+          }
+        }
+      } catch (error) {
+        console.error('Error saving editor data:', error);
       }
-    }, 300),
+    }, 500),
     []
   );
 
@@ -179,92 +190,72 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, []);
 
-  const handleContentChange = async () => {
-    if (!isEditorReady.current) return;
-    
+  const initializeEditor = useCallback(() => {
+    if (!containerRef.current || isEditorReady.current || editorInstance.current) return;
+
+    isLoading.current = true;
     try {
-      console.log('Editor content changed, preparing for debounced save...');
-      const data = await editorInstance.current?.save();
-      
-      if (data) {
-        console.log('Editor data available for debounced processing');
-        const newMarkdown = convertToMarkdown(data);
-        
-        if (newMarkdown !== markdownRef.current) {
-          console.log('Content changed, applying debounced update');
-          debouncedOnChange(newMarkdown);
-        }
-      }
-    } catch (error) {
-      console.error('Error saving editor data:', error);
-    }
-  };
-
-  useEffect(() => {
-    if (!containerRef.current || isEditorReady.current) return;
-
-    const initEditor = async () => {
-      isLoading.current = true;
-      try {
-        console.log('Initializing editor...');
-        const editor = new EditorJS({
-          holder: containerRef.current!,
-          tools: {
-            header: {
-              class: Header,
-              config: {
-                placeholder: 'כותרת',
-                levels: [1, 2, 3],
-                defaultLevel: 2
-              }
-            },
-            list: {
-              class: List,
-              inlineToolbar: true,
-            },
-            paragraph: {
-              class: Paragraph,
-              inlineToolbar: true,
-            },
-            quote: {
-              class: Quote,
-              inlineToolbar: true,
-            },
-            code: Code,
-            link: {
-              class: Link,
-              config: {
-                endpoint: 'https://codex.so/upload',
-              }
-            },
-            marker: {
-              class: Marker,
-              shortcut: 'CMD+SHIFT+M',
+      console.log('Initializing editor...');
+      editorInstance.current = new EditorJS({
+        holder: containerRef.current,
+        tools: {
+          header: {
+            class: Header,
+            config: {
+              placeholder: 'כותרת',
+              levels: [1, 2, 3],
+              defaultLevel: 2
             }
           },
-          data: markdownToEditorJS(initialValueRef.current),
-          placeholder: placeholder,
-          onChange: handleContentChange,
-          onReady: () => {
-            console.log('Editor is ready');
-            isLoading.current = false;
-            isEditorReady.current = true;
-            
-            if (initialValueRef.current) {
-              console.log('Calling onChange with initial value on ready');
-              onChange(initialValueRef.current);
+          list: {
+            class: List,
+            inlineToolbar: true,
+          },
+          paragraph: {
+            class: Paragraph,
+            inlineToolbar: true,
+          },
+          quote: {
+            class: Quote,
+            inlineToolbar: true,
+          },
+          code: Code,
+          link: {
+            class: Link,
+            config: {
+              endpoint: 'https://codex.so/upload',
             }
+          },
+          marker: {
+            class: Marker,
+            shortcut: 'CMD+SHIFT+M',
           }
-        });
-        
-        editorInstance.current = editor;
-      } catch (error) {
-        console.error('EditorJS initialization error:', error);
-        isLoading.current = false;
-      }
-    };
+        },
+        data: markdownToEditorJS(initialValueRef.current),
+        placeholder: placeholder,
+        onChange: () => {
+          console.log('Editor content changed, triggering debounced handler');
+          handleContentChange();
+        },
+        onReady: () => {
+          console.log('Editor is ready');
+          isLoading.current = false;
+          isEditorReady.current = true;
+          
+          if (initialValueRef.current) {
+            console.log('Calling onChange with initial value on ready');
+            onChange(initialValueRef.current);
+          }
+        }
+      });
+    } catch (error) {
+      console.error('EditorJS initialization error:', error);
+      isLoading.current = false;
+    }
+  }, [placeholder, handleContentChange, onChange]);
 
-    initEditor();
+  useEffect(() => {
+    initializeEditor();
 
     return () => {
       if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
