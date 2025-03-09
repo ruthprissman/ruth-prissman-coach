@@ -1,3 +1,4 @@
+
 import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { PublishReadyArticle } from '@/types/article';
 
@@ -103,6 +104,8 @@ class PublicationService {
           content_markdown,
           category_id,
           contact_email,
+          scheduled_publish,
+          published_at,
           article_publications (*)
         `)
         .eq('id', articleId)
@@ -113,10 +116,12 @@ class PublicationService {
         throw new Error('Failed to retrieve article information');
       }
       
-      // Create a publish-ready article object
+      // Create a publish-ready article object with all required properties
       const publishReadyArticle: PublishReadyArticle = {
         ...article,
-        article_publications: article.article_publications || []
+        article_publications: article.article_publications || [],
+        scheduled_publish: article.scheduled_publish || null,
+        published_at: article.published_at || null
       };
       
       // Retry sending to failed emails - in a real implementation
@@ -424,7 +429,9 @@ class PublicationService {
             title,
             content_markdown,
             category_id,
-            contact_email
+            contact_email,
+            scheduled_publish,
+            published_at
           )
         `)
         .eq('id', publicationId)
@@ -440,13 +447,15 @@ class PublicationService {
         throw new Error(`Missing content for publication ${publicationId}`);
       }
       
-      // Create a publish-ready article object
+      // Create a publish-ready article object with all required properties
       const article: PublishReadyArticle = {
         id: professionalContent.id,
         title: professionalContent.title,
         content_markdown: professionalContent.content_markdown,
         category_id: professionalContent.category_id,
         contact_email: professionalContent.contact_email,
+        scheduled_publish: professionalContent.scheduled_publish || null,
+        published_at: professionalContent.published_at || null,
         article_publications: [publication]
       };
       
@@ -493,6 +502,8 @@ interface ProfessionalContent {
   content_markdown: string;
   category_id: number | null;
   contact_email: string | null;
+  scheduled_publish?: string | null;
+  published_at?: string | null;
 }
 
 export default PublicationService;
