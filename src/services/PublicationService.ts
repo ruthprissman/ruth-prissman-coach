@@ -639,10 +639,14 @@ class PublicationService {
       // Special handling for WhatsApp link with icon
       if (link.name === 'whatsapp') {
         return `
-          <p style="text-align: center; margin: 10px 0;">
+          <p style="text-align: center; margin: 15px 0;">
             <a href="${formattedUrl}" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); display: inline-flex; align-items: center; justify-content: center;">
-              <span style="margin-left: 5px;">📱</span> ${link.fixed_text}
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); display: inline-flex; align-items: center; justify-content: center; font-size: 18px;">
+              ${link.fixed_text}
+              <span style="margin-right: 8px; display: inline-block;">
+                <img src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/whatsapp-icon.png" 
+                     alt="WhatsApp" width="24" height="24" style="vertical-align: middle; border: none;" />
+              </span>
             </a>
           </p>
         `;
@@ -651,9 +655,9 @@ class PublicationService {
       // Regular link with URL
       if (formattedUrl && link.fixed_text) {
         return `
-          <p style="text-align: center; margin: 10px 0;">
+          <p style="text-align: center; margin: 15px 0;">
             <a href="${formattedUrl}" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-size: 18px;">
               ${link.fixed_text}
             </a>
           </p>
@@ -661,7 +665,7 @@ class PublicationService {
       } else if (link.fixed_text) {
         // Display plain text as bold paragraph when no URL
         return `
-          <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+          <p style="text-align: center; margin: 15px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-size: 18px;">
             ${link.fixed_text}
           </p>
         `;
@@ -685,9 +689,9 @@ class PublicationService {
       // Add contact link only if requested
       if (includeContactLink) {
         footerLinks.push(`
-          <p style="text-align: center; margin: 10px 0;">
+          <p style="text-align: center; margin: 15px 0;">
             <a href="https://ruth-prissman-coach.lovable.app/contact" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-size: 18px;">
               צור קשר
             </a>
           </p>
@@ -697,9 +701,9 @@ class PublicationService {
       // Add dynamic unsubscribe link (always included)
       const unsubscribeUrl = `https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=general`;
       footerLinks.push(`
-        <p style="text-align: center; margin: 10px 0;">
+        <p style="text-align: center; margin: 15px 0;">
           <a href="${unsubscribeUrl}" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-size: 18px;">
             להסרה מרשימת התפוצה
           </a>
         </p>
@@ -708,7 +712,7 @@ class PublicationService {
       return `
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(74, 20, 140, 0.2);">
           ${footerLinks.join('')}
-          <p style="font-size: 12px; color: #4A148C; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+          <p style="font-size: 14px; color: #4A148C; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
             © ${new Date().getFullYear()} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
           </p>
         </div>
@@ -718,13 +722,13 @@ class PublicationService {
       // Fallback footer if something goes wrong - only essential elements
       return `
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(74, 20, 140, 0.2); text-align: center;">
-          <p style="margin: 10px 0;">
+          <p style="margin: 15px 0;">
             <a href="https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=general" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-size: 18px;">
               להסרה מרשימת התפוצה
             </a>
           </p>
-          <p style="font-size: 12px; color: #4A148C; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
+          <p style="font-size: 14px; color: #4A148C; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
             © ${new Date().getFullYear()} רות פריסמן - קוד הנפש
           </p>
         </div>
@@ -833,6 +837,7 @@ class PublicationService {
                     text-decoration: none;
                     text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
                     font-family: 'Alef', sans-serif;
+                    font-size: 18px;
                   }
                   
                   .content-wrapper {
@@ -869,6 +874,7 @@ class PublicationService {
                     margin: 20px 0;
                     text-shadow: none;
                     font-family: 'Alef', sans-serif;
+                    font-size: 18px;
                   }
                   
                   .link-section {
@@ -880,572 +886,3 @@ class PublicationService {
                     padding-top: 20px;
                     border-top: 1px solid rgba(74, 20, 140, 0.2);
                   }
-                  
-                  .footer-link {
-                    display: block;
-                    margin: 10px 0;
-                    text-align: center;
-                    font-family: 'Alef', sans-serif;
-                    font-weight: bold;
-                    color: #4A148C;
-                    text-decoration: none;
-                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
-                  }
-                  
-                  .copyright {
-                    font-size: 12px;
-                    margin-top: 20px;
-                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
-                    font-family: 'Heebo', sans-serif;
-                  }
-                  
-                  @media only screen and (max-width: 620px) {
-                    .email-container {
-                      width: 100% !important;
-                    }
-                    .content-wrapper {
-                      padding: 15px 10px !important;
-                    }
-                    .title {
-                      font-size: 22px !important;
-                    }
-                    .content, p, a {
-                      font-size: 16px !important;
-                    }
-                  }
-                </style>
-              </head>
-              <body style="margin: 0; padding: 0; direction: rtl; background-color: transparent;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                  <tr>
-                    <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: transparent;">
-                        <tr>
-                          <td style="background-color: transparent;">
-                            <h1 class="title" style="text-align: center;">${article.title}</h1>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td class="content-wrapper">
-                            <div class="content">
-                              ${formattedMarkdown}
-                            </div>
-                            
-                            ${article.content_markdown.length > 500 ? 
-                              `<div style="text-align: center;">
-                                <a href="${readMoreUrl}" class="cta-button" style="font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
-                              </div>` : ''}
-                            
-                            <div class="link-section">
-                              ${emailBodyLinks.join('')}
-                            </div>
-                            
-                            ${emailFooter}
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-              </body>
-            </html>
-          `;
-
-          // 3. Send email via Supabase Edge Function
-          console.log(`Sending email to ${recipientEmail}`);
-          
-          const response = await fetch(this.supabaseEdgeFunctionUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "apikey": this.supabaseAnonKey
-            },
-            body: JSON.stringify({
-              emailList: [recipientEmail],
-              subject: article.title,
-              sender: { 
-                email: "RuthPrissman@gmail.com", 
-                name: "רות פריסמן - קוד הנפש" 
-              },
-              htmlContent: emailContent
-            })
-          });
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Failed to send email to ${recipientEmail}. Response:`, errorText);
-            
-            // Log failed email
-            emailLogs.push({
-              article_id: article.id,
-              email: recipientEmail,
-              status: 'failed',
-              error_message: `Edge function error: ${errorText}`
-            });
-          } else {
-            // Log successful email
-            emailLogs.push({
-              article_id: article.id,
-              email: recipientEmail,
-              status: 'sent'
-            });
-            console.log(`Email sent successfully to ${recipientEmail}`);
-          }
-        } catch (emailError) {
-          console.error(`Error sending email to ${recipientEmail}:`, emailError);
-          
-          // Log failed email
-          emailLogs.push({
-            article_id: article.id,
-            email: recipientEmail,
-            status: 'failed',
-            error_message: emailError instanceof Error ? emailError.message : String(emailError)
-          });
-        }
-      }
-      
-      // Log the email sending results to the database
-      await this.logEmailResults(emailLogs);
-      
-      console.log(`Email publication process completed for article ${article.id}`);
-      
-    } catch (error) {
-      console.error(`Error publishing article ${article.id} to email:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Retry sending emails to failed recipients
-   * @param articleId The article ID to retry
-   */
-  public async retryFailedEmails(articleId: number): Promise<number> {
-    try {
-      console.log(`Retrying failed emails for article ${articleId}`);
-      
-      // Fetch article details
-      const supabaseClient = this.accessToken 
-        ? getSupabaseWithAuth(this.accessToken)
-        : supabase;
-      
-      const { data: article, error: articleError } = await supabaseClient
-        .from('professional_content')
-        .select('*')
-        .eq('id', articleId)
-        .single();
-      
-      if (articleError) {
-        console.error(`Error fetching article ${articleId}:`, articleError);
-        throw articleError;
-      }
-      
-      if (!article) {
-        throw new Error(`Article ${articleId} not found`);
-      }
-      
-      // Get failed email recipients
-      const failedEmails = await this.getFailedEmailRecipients(articleId);
-      
-      if (failedEmails.length === 0) {
-        console.log(`No failed emails to retry for article ${articleId}`);
-        return 0;
-      }
-      
-      // Create minimal article object for email publishing
-      const emailArticle: PublishReadyArticle = {
-        id: article.id,
-        title: article.title,
-        content_markdown: article.content_markdown,
-        category_id: article.category_id,
-        contact_email: article.contact_email,
-        article_publications: []
-      };
-      
-      // Process content to add dynamic links
-      const processedContent = await this.processContentLinks(
-        article.content_markdown.slice(0, 500) + 
-          (article.content_markdown.length > 500 ? '...' : ''),
-        article.title
-      );
-      
-      // Convert newlines to HTML breaks
-      const formattedMarkdown = processedContent.replace(/\n/g, '<br/>');
-      
-      // Fetch static links for the email body
-      const staticLinks = await this.fetchStaticLinks();
-      const emailBodyLinks = this.generateEmailLinks(staticLinks);
-      
-      // Check if a contact link exists in the static links
-      const hasContactLink = staticLinks.some(link => link.name === 'contact');
-      
-      // Email logs array for batch insertion
-      const emailLogs: EmailLogEntry[] = [];
-      
-      // Send individual emails to each failed recipient
-      for (const recipientEmail of failedEmails) {
-        try {
-          // Generate footer with personalized unsubscribe link and contact link only if needed
-          const emailFooter = await this.generateEmailFooter(recipientEmail, !hasContactLink);
-          
-          const readMoreUrl = `https://ruth-prissman-coach.lovable.app/articles/${article.id}`;
-          
-          const emailContent = `
-            <html>
-              <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${article.title}</title>
-                <style>
-                  @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Heebo:wght@300;400;500;700&display=swap');
-                  
-                  body {
-                    font-family: 'Heebo', sans-serif;
-                    line-height: 1.8;
-                    color: #4A148C;
-                    text-align: center;
-                    background-color: transparent;
-                  }
-                  
-                  h1, h2, h3, h4, a, .title {
-                    font-family: 'Alef', sans-serif;
-                    font-weight: 700;
-                  }
-                  
-                  p {
-                    margin-bottom: 16px;
-                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
-                  }
-                  
-                  a {
-                    color: #4A148C;
-                    font-weight: bold;
-                    text-decoration: none;
-                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
-                    font-family: 'Alef', sans-serif;
-                  }
-                  
-                  .content-wrapper {
-                    padding: 30px 20px;
-                    background-color: transparent;
-                  }
-                  
-                  .title {
-                    color: #4A148C;
-                    margin: 0;
-                    font-size: 28px;
-                    font-weight: 700;
-                    font-family: 'Alef', sans-serif;
-                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
-                    padding: 20px;
-                    text-align: center;
-                  }
-                  
-                  .content {
-                    font-size: 16px;
-                    margin-bottom: 20px;
-                    line-height: 1.8;
-                    font-family: 'Heebo', sans-serif;
-                  }
-                  
-                  .cta-button {
-                    background-color: #4A148C;
-                    color: white;
-                    padding: 12px 24px;
-                    text-decoration: none;
-                    border-radius: 4px;
-                    font-weight: bold;
-                    display: inline-block;
-                    margin: 20px 0;
-                    text-shadow: none;
-                    font-family: 'Alef', sans-serif;
-                  }
-                  
-                  .link-section {
-                    margin: 30px 0;
-                  }
-                  
-                  .footer {
-                    margin-top: 40px;
-                    padding-top: 20px;
-                    border-top: 1px solid rgba(74, 20, 140, 0.2);
-                  }
-                  
-                  .footer-link {
-                    display: block;
-                    margin: 10px 0;
-                    text-align: center;
-                    font-family: 'Alef', sans-serif;
-                    font-weight: bold;
-                    color: #4A148C;
-                    text-decoration: none;
-                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
-                  }
-                  
-                  .copyright {
-                    font-size: 12px;
-                    margin-top: 20px;
-                    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
-                    font-family: 'Heebo', sans-serif;
-                  }
-                  
-                  @media only screen and (max-width: 620px) {
-                    .email-container {
-                      width: 100% !important;
-                    }
-                    .content-wrapper {
-                      padding: 15px 10px !important;
-                    }
-                    .title {
-                      font-size: 22px !important;
-                    }
-                    .content, p, a {
-                      font-size: 16px !important;
-                    }
-                  }
-                </style>
-              </head>
-              <body style="margin: 0; padding: 0; direction: rtl; background-color: transparent;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
-                  <tr>
-                    <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: transparent;">
-                        <tr>
-                          <td style="background-color: transparent;">
-                            <h1 class="title" style="text-align: center;">${article.title}</h1>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td class="content-wrapper">
-                            <div class="content">
-                              ${formattedMarkdown}
-                            </div>
-                            
-                            ${article.content_markdown.length > 500 ? 
-                              `<div style="text-align: center;">
-                                <a href="${readMoreUrl}" class="cta-button" style="font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
-                              </div>` : ''}
-                            
-                            <div class="link-section">
-                              ${emailBodyLinks.join('')}
-                            </div>
-                            
-                            ${emailFooter}
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-              </body>
-            </html>
-          `;
-
-          console.log(`Retrying email to ${recipientEmail}`);
-          
-          const response = await fetch(this.supabaseEdgeFunctionUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "apikey": this.supabaseAnonKey
-            },
-            body: JSON.stringify({
-              emailList: [recipientEmail],
-              subject: article.title,
-              sender: { 
-                email: "RuthPrissman@gmail.com", 
-                name: "רות פריסמן - קוד הנפש" 
-              },
-              htmlContent: emailContent
-            })
-          });
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Failed to retry email to ${recipientEmail}. Response:`, errorText);
-            
-            // Log failed email
-            emailLogs.push({
-              article_id: article.id,
-              email: recipientEmail,
-              status: 'failed',
-              error_message: `Retry failed: ${errorText}`
-            });
-          } else {
-            // Log successful email
-            emailLogs.push({
-              article_id: article.id,
-              email: recipientEmail,
-              status: 'sent'
-            });
-            console.log(`Email retry successful for ${recipientEmail}`);
-          }
-        } catch (emailError) {
-          console.error(`Error retrying email to ${recipientEmail}:`, emailError);
-          
-          // Log failed email
-          emailLogs.push({
-            article_id: article.id,
-            email: recipientEmail,
-            status: 'failed',
-            error_message: emailError instanceof Error ? emailError.message : String(emailError)
-          });
-        }
-      }
-      
-      // Log the email sending results to the database
-      await this.logEmailResults(emailLogs);
-      
-      // If all emails were sent successfully, ensure the article is marked as published
-      if (emailLogs.every(log => log.status === 'sent')) {
-        await this.ensureArticleIsPublished(article.id);
-      }
-      
-      console.log(`Successfully retried sending emails to ${failedEmails.length} recipients`);
-      return failedEmails.length;
-    } catch (error) {
-      console.error(`Error in retryFailedEmails for article ${articleId}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Publish article to WhatsApp
-   */
-  private async publishToWhatsApp(article: PublishReadyArticle): Promise<void> {
-    try {
-      // For now, just log that we would send a WhatsApp message
-      // In a real implementation, we would:
-      // 1. Generate the WhatsApp message with title and summary
-      // 2. Add a link to the full article
-      // 3. Send via WhatsApp Business API
-      
-      const summary = article.content_markdown
-        .replace(/[*#_~`]/g, '') // Remove markdown
-        .slice(0, 300) + (article.content_markdown.length > 300 ? '...' : '');
-      
-      console.log(`Article ${article.id} would be sent to WhatsApp:`);
-      console.log(`Title: ${article.title}`);
-      console.log(`Summary: ${summary}`);
-      
-      // TODO: Implement WhatsApp sending
-      
-    } catch (error) {
-      console.error(`Error publishing article ${article.id} to WhatsApp:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Mark a publication as done by updating published_date
-   */
-  private async markPublicationAsDone(publicationId: number): Promise<void> {
-    try {
-      const supabaseClient = this.accessToken 
-        ? getSupabaseWithAuth(this.accessToken)
-        : supabase;
-      
-      const { error } = await supabaseClient
-        .from('article_publications')
-        .update({ published_date: new Date().toISOString() })
-        .eq('id', publicationId);
-      
-      if (error) throw error;
-      
-      console.log(`Publication ${publicationId} marked as done`);
-      
-    } catch (error) {
-      console.error(`Error marking publication ${publicationId} as done:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Manually retry a failed publication
-   */
-  public async retryPublication(publicationId: number): Promise<void> {
-    try {
-      const supabaseClient = this.accessToken 
-        ? getSupabaseWithAuth(this.accessToken)
-        : supabase;
-      
-      // Get the publication details
-      const { data: publication, error: pubError } = await supabaseClient
-        .from('article_publications')
-        .select(`
-          id,
-          content_id,
-          publish_location,
-          scheduled_date,
-          professional_content:content_id (
-            id,
-            title,
-            content_markdown,
-            category_id,
-            contact_email,
-            published_at
-          )
-        `)
-        .eq('id', publicationId)
-        .single();
-      
-      if (pubError) throw pubError;
-      if (!publication) throw new Error('Publication not found');
-
-      // Ensure professional_content is properly typed
-      const professionalContent = publication.professional_content as unknown as ProfessionalContent;
-      if (!professionalContent) throw new Error('Professional content not found');
-      
-      // Create article object
-      const article: PublishReadyArticle = {
-        id: publication.content_id,
-        title: professionalContent.title || "Untitled",
-        content_markdown: professionalContent.content_markdown || "",
-        category_id: professionalContent.category_id || null,
-        contact_email: professionalContent.contact_email || null,
-        article_publications: [{
-          id: publication.id,
-          content_id: publication.content_id,
-          publish_location: publication.publish_location,
-          scheduled_date: publication.scheduled_date,
-          published_date: null
-        }]
-      };
-      
-      // Publish based on the publication location
-      switch (publication.publish_location) {
-        case 'Website':
-          await this.publishToWebsite(article.id);
-          break;
-          
-        case 'Email':
-          await this.publishToEmail(article);
-          break;
-          
-        case 'WhatsApp':
-          await this.publishToWhatsApp(article);
-          break;
-          
-        case 'Other':
-          // Handle other publication types
-          break;
-        
-        default:
-          throw new Error(`Unknown publication location: ${publication.publish_location}`);
-      }
-      
-      // Mark as published
-      await this.markPublicationAsDone(publicationId);
-      
-      // Also ensure the article itself is marked as published
-      await this.ensureArticleIsPublished(article.id);
-      
-      console.log("Publication completed successfully");
-      
-    } catch (error: any) {
-      console.error(`Error retrying publication ${publicationId}:`, error);
-      throw error;
-    }
-  }
-}
-
-export default PublicationService;

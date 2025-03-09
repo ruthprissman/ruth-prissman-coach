@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
@@ -106,10 +106,30 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const initialValueRef = useRef(initialValue);
   const [currentMarkdown, setCurrentMarkdown] = useState(initialValue);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const contentChangeInProgressRef = useRef(false);
+
+  // Debounced onChange handler
+  const debouncedHandleChange = useCallback((markdown: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Only set a new timer if we're not already in the process of updating
+    if (!contentChangeInProgressRef.current) {
+      debounceTimerRef.current = setTimeout(() => {
+        if (markdown !== currentMarkdown) {
+          setCurrentMarkdown(markdown);
+          onChange(markdown);
+        }
+        debounceTimerRef.current = null;
+      }, 300);
+    }
+  }, [onChange, currentMarkdown]);
 
   useEffect(() => {
     if (initialValue) {
-      console.log('Initial value provided, calling onChange');
+      // This is only called once on mount
       onChange(initialValue);
     }
   }, []);
@@ -158,13 +178,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           data: markdownToEditorJS(initialValueRef.current),
           placeholder: placeholder,
           onChange: async () => {
+            // Skip rapid successive onChange events
+            if (contentChangeInProgressRef.current || debounceTimerRef.current) return;
+            
             try {
-              console.log('Editor content changed, saving...');
+              contentChangeInProgressRef.current = true;
+              
+              // Generate markdown from editor content
               const data = await editorRef.current?.save();
               
               if (data) {
-                console.log('Editor data available:', data);
-                
                 let markdown = '';
                 
                 for (const block of data.blocks) {
@@ -198,13 +221,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 }
                 
                 const trimmedMarkdown = markdown.trim();
-                console.log('Generated markdown:', trimmedMarkdown);
                 
-                setCurrentMarkdown(trimmedMarkdown);
-                onChange(trimmedMarkdown);
+                // Use debounced handler to update state
+                debouncedHandleChange(trimmedMarkdown);
               }
             } catch (error) {
               console.error('Error saving editor data:', error);
+            } finally {
+              contentChangeInProgressRef.current = false;
             }
           },
           onReady: () => {
@@ -213,7 +237,6 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             setIsInitialized(true);
             
             if (initialValueRef.current) {
-              console.log('Calling onChange with initial value on ready');
               onChange(initialValueRef.current);
             }
           }
@@ -229,6 +252,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     initEditor();
 
     return () => {
+      // Clean up debounce timer on component unmount
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      
       if (editorRef.current && typeof editorRef.current.destroy === 'function') {
         try {
           editorRef.current.destroy();
@@ -238,7 +266,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         editorRef.current = null;
       }
     };
-  }, [containerRef, placeholder]);
+  }, [containerRef, placeholder, debouncedHandleChange]);
 
   useEffect(() => {
     if (editorRef.current && isInitialized && initialValue !== initialValueRef.current) {
