@@ -1,3 +1,4 @@
+
 export interface Category {
   id: number;
   name: string;
@@ -74,8 +75,4 @@ export interface PublicationWithContent {
   publish_location: string;
   scheduled_date: string;
   professional_content?: ProfessionalContent | null; // Changed to a single object that might be null
-}
-
-export interface PublishReadyArticle extends ProfessionalContent {
-  article_publications: ArticlePublication[];
 }

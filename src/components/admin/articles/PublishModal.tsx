@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Check, Loader, Plus, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -12,7 +11,6 @@ import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import PublicationService from '@/services/PublicationService';
-import { usePublication } from '@/contexts/PublicationContext';
 
 interface PublishOption {
   id?: number;
@@ -41,7 +39,6 @@ const PublishModal: React.FC<PublishModalProps> = ({
   onSuccess 
 }) => {
   const { session: authSession } = useAuth();
-  const { retryPublication } = usePublication();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [publishOptions, setPublishOptions] = useState<PublishOption[]>([]);
@@ -146,7 +143,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
     const supabaseClient = getSupabaseClient();
     const newLocations = publishOptions.filter(opt => opt.isNew);
     
-    if (newLocations.length === 0) return [];
+    if (newLocations.length === 0) return;
     
     const locationsToInsert = newLocations.map(loc => ({
       content_id: article.id,
@@ -155,15 +152,11 @@ const PublishModal: React.FC<PublishModalProps> = ({
     }));
     
     try {
-      const { data, error } = await supabaseClient
+      const { error } = await supabaseClient
         .from('article_publications')
-        .insert(locationsToInsert)
-        .select('id, publish_location');
+        .insert(locationsToInsert);
         
       if (error) throw error;
-      
-      console.log('Saved new publication locations:', data);
-      return data || [];
     } catch (error: any) {
       console.error('Error saving new locations:', error);
       throw error;
@@ -178,9 +171,8 @@ const PublishModal: React.FC<PublishModalProps> = ({
     setFailedLocations([]);
     
     try {
-      // First save any new locations and get their IDs
-      const newLocationData = await saveNewLocations();
-      
+      await saveNewLocations();
+
       const selectedOptions = publishOptions.filter(opt => opt.isSelected);
       
       if (selectedOptions.length === 0) {
@@ -195,23 +187,27 @@ const PublishModal: React.FC<PublishModalProps> = ({
       
       const failedOnes: string[] = [];
       
-      // Process each selected publication
+      const publicationService = PublicationService.getInstance();
+      publicationService.start(authSession?.access_token);
+      
       for (const option of selectedOptions) {
         try {
-          // For existing publications
           if (option.id) {
-            await retryPublication(option.id);
-          } 
-          // For newly added publications, find their IDs from the saved data
-          else if (option.isNew) {
-            const savedLocation = newLocationData.find(loc => 
-              loc.publish_location === option.publish_location
-            );
-            
-            if (savedLocation?.id) {
-              await retryPublication(savedLocation.id);
+            await publicationService.retryPublication(option.id);
+          } else {
+            const supabaseClient = getSupabaseClient();
+            const { data, error } = await supabaseClient
+              .from('article_publications')
+              .select('id')
+              .eq('content_id', article.id)
+              .eq('publish_location', option.publish_location)
+              .single();
+              
+            if (error) throw error;
+            if (data?.id) {
+              await publicationService.retryPublication(data.id);
             } else {
-              throw new Error(`Could not find ID for new ${option.publish_location} publication`);
+              throw new Error(`Publication not found for ${option.publish_location}`);
             }
           }
         } catch (error: any) {
