@@ -28,15 +28,6 @@ const DEFAULT_INITIAL_DATA = {
   ]
 };
 
-// Add debounce utility function
-const debounce = (func: Function, delay: number) => {
-  let timeoutId: NodeJS.Timeout;
-  return (...args: any[]) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
-};
-
 const markdownToEditorJS = (markdown: string): any => {
   if (!markdown) return DEFAULT_INITIAL_DATA;
   
@@ -161,32 +152,24 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     return markdown.trim();
   };
 
-  // Mark content as changed via debounce (but don't trigger parent updates)
-  const debouncedMarkAsChanged = useCallback(
-    debounce(() => {
-      if (!isEditorReady.current || !editorInstance.current) return;
-      console.log('Content marked as changed (local only)');
-      contentChangedRef.current = true;
-    }, 300),
-    []
-  );
-
-  // Just mark content as changed locally, don't update parent
+  // Simple flag for content changes - no debounce needed
   const handleContentChange = useCallback(() => {
-    debouncedMarkAsChanged();
-  }, [debouncedMarkAsChanged]);
+    contentChangedRef.current = true;
+  }, []);
 
-  // This is only called at specific save points (not during typing)
+  // Save content function - only called at specific points
   const saveContent = useCallback(async () => {
     if (!isEditorReady.current || !editorInstance.current) return;
+    if (!contentChangedRef.current) return; // Skip saving if nothing changed
     
     try {
-      console.log('Explicitly saving editor content');
+      console.log('Saving editor content');
       const data = await editorInstance.current.save();
       
       if (data) {
         const newMarkdown = convertToMarkdown(data);
         
+        // Only update if there's an actual change
         if (newMarkdown.trim() !== markdownRef.current.trim()) {
           console.log('Content has changed, updating markdown and parent');
           markdownRef.current = newMarkdown.trim();
@@ -199,7 +182,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     }
   }, []);
 
-  // Read the initial value only once on mount
+  // Load initial value only once on mount
   useEffect(() => {
     if (initialValue) {
       console.log('Setting initial value on first mount only');
@@ -287,8 +270,10 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   // Save at specific events only
   useEffect(() => {
     // Before form submission event
-    const handleBeforeSubmit = async () => {
-      await saveContent();
+    const handleBeforeSubmit = () => {
+      if (contentChangedRef.current) {
+        saveContent();
+      }
     };
 
     // Before page unload
