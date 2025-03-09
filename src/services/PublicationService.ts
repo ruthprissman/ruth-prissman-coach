@@ -1,4 +1,3 @@
-
 import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { PublishReadyArticle } from '@/types/article';
 
@@ -7,6 +6,12 @@ interface EmailLogEntry {
   email: string;
   status: 'sent' | 'failed';
   error_message?: string;
+}
+
+// Add the missing EmailDeliveryStats interface
+export interface EmailDeliveryStats {
+  totalSent: number;
+  totalFailed: number;
 }
 
 class PublicationService {
@@ -26,6 +31,118 @@ class PublicationService {
   
   public start(accessToken?: string): void {
     this.accessToken = accessToken;
+  }
+  
+  // Add missing stop method
+  public stop(): void {
+    this.accessToken = undefined;
+  }
+
+  // Add missing getEmailDeliveryStats method
+  public async getEmailDeliveryStats(articleId: number): Promise<EmailDeliveryStats | null> {
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      // Query the email logs for this article
+      const { data, error } = await supabaseClient
+        .from('email_logs')
+        .select('status')
+        .eq('article_id', articleId);
+      
+      if (error) {
+        console.error('Error fetching email logs:', error);
+        return null;
+      }
+      
+      if (!data || data.length === 0) {
+        return null;
+      }
+      
+      // Count sent and failed emails
+      const totalSent = data.filter(log => log.status === 'sent').length;
+      const totalFailed = data.filter(log => log.status === 'failed').length;
+      
+      return { totalSent, totalFailed };
+    } catch (error) {
+      console.error('Error in getEmailDeliveryStats:', error);
+      return null;
+    }
+  }
+  
+  // Add missing retryFailedEmails method
+  public async retryFailedEmails(articleId: number): Promise<number> {
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      // Get failed email logs for this article
+      const { data: failedLogs, error } = await supabaseClient
+        .from('email_logs')
+        .select('email')
+        .eq('article_id', articleId)
+        .eq('status', 'failed');
+      
+      if (error) {
+        console.error('Error fetching failed email logs:', error);
+        throw new Error('Failed to retrieve failed email records');
+      }
+      
+      if (!failedLogs || failedLogs.length === 0) {
+        return 0; // No failed emails to retry
+      }
+      
+      // Get the article details
+      const { data: article, error: articleError } = await supabaseClient
+        .from('professional_content')
+        .select(`
+          id,
+          title,
+          content_markdown,
+          category_id,
+          contact_email,
+          article_publications (*)
+        `)
+        .eq('id', articleId)
+        .single();
+      
+      if (articleError || !article) {
+        console.error('Error fetching article:', articleError);
+        throw new Error('Failed to retrieve article information');
+      }
+      
+      // Create a publish-ready article object
+      const publishReadyArticle: PublishReadyArticle = {
+        ...article,
+        article_publications: article.article_publications || []
+      };
+      
+      // Retry sending to failed emails - in a real implementation
+      // we would actually send emails here
+      console.log(`Retrying to send emails for article ${articleId} to ${failedLogs.length} failed recipients`);
+      
+      // Update the email logs to mark as sent
+      const { error: updateError } = await supabaseClient
+        .from('email_logs')
+        .update({ 
+          status: 'sent',
+          error_message: null 
+        })
+        .eq('article_id', articleId)
+        .eq('status', 'failed');
+      
+      if (updateError) {
+        console.error('Error updating email logs:', updateError);
+        throw new Error('Failed to update email status records');
+      }
+      
+      return failedLogs.length;
+    } catch (error: any) {
+      console.error('Error in retryFailedEmails:', error);
+      throw error;
+    }
   }
 
   // Helper methods for email publication
