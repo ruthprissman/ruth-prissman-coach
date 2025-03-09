@@ -1,4 +1,3 @@
-
 import { supabase, getSupabaseWithAuth } from "@/lib/supabase";
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -44,9 +43,11 @@ export interface EmailDeliveryStats {
  * Interface for static link
  */
 interface StaticLink {
+  id: number;
   name: string;
-  text: string;
+  fixed_text: string;
   url: string | null;
+  list_type: string;
 }
 
 /**
@@ -1149,6 +1150,264 @@ class PublicationService {
     } catch (error) {
       console.error(`Error retrying publication ${publicationId}:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Retry sending emails to failed recipients for a specific article
+   * @param articleId The article ID
+   * @returns True if successful, false otherwise
+   */
+  public async retryFailedEmails(articleId: number): Promise<boolean> {
+    try {
+      console.log(`Retrying failed emails for article ${articleId}`);
+      
+      // Get article details
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      const { data: article, error: articleError } = await supabaseClient
+        .from('professional_content')
+        .select('id, title, content_markdown, contact_email')
+        .eq('id', articleId)
+        .single();
+      
+      if (articleError || !article) {
+        console.error(`Error fetching article ${articleId}:`, articleError);
+        return false;
+      }
+      
+      // Get failed email recipients
+      const failedEmails = await this.getFailedEmailRecipients(articleId);
+      
+      if (failedEmails.length === 0) {
+        console.log(`No failed emails found for article ${articleId}`);
+        return false;
+      }
+      
+      // Create article object
+      const articleObj: PublishReadyArticle = {
+        id: article.id,
+        title: article.title,
+        content_markdown: article.content_markdown,
+        category_id: null,
+        contact_email: article.contact_email,
+        article_publications: [{
+          content_id: article.id,
+          publish_location: 'Email',
+          scheduled_date: new Date().toISOString(),
+          published_date: null
+        }]
+      };
+      
+      // Clean up failed emails before retrying
+      await this.cleanupFailedEmails(articleId, failedEmails);
+      
+      // Create email logs array for batch insertion
+      const emailLogs: EmailLogEntry[] = [];
+      
+      // Process content to add dynamic links
+      const truncatedContent = article.content_markdown.slice(0, 500) + 
+        (article.content_markdown.length > 500 ? '...' : '');
+      const processedContent = await this.processContentLinks(truncatedContent, article.title);
+      const formattedMarkdown = processedContent.replace(/\n/g, '<br/>');
+      
+      // Fetch static links for the email body
+      const staticLinks = await this.fetchStaticLinks();
+      const emailBodyLinks = this.generateEmailLinks(staticLinks, article.title);
+      
+      // Send to each failed recipient
+      for (const recipientEmail of failedEmails) {
+        try {
+          // Generate footer with personalized unsubscribe link
+          const emailFooter = await this.generateEmailFooter(recipientEmail);
+          
+          const readMoreUrl = `https://ruth-prissman-coach.lovable.app/articles/${article.id}`;
+          
+          // Format email with dynamic content
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html lang="he" dir="rtl">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <link href="https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+              <title>${article.title}</title>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: 'Heebo', sans-serif;
+                  direction: rtl;
+                  background-color: #f9f9f9;
+                  color: #4A148C;
+                }
+                
+                h1, h2, h3, h4, h5, h6, a, .title {
+                  font-family: 'Alef', sans-serif;
+                  font-weight: 700;
+                }
+                
+                .email-container {
+                  max-width: 600px;
+                  margin: 0 auto;
+                  background-image: url('https://ruth-prissman-coach.lovable.app/email-bg.jpg');
+                  background-size: cover;
+                  background-position: center;
+                  padding: 20px;
+                }
+                
+                .header {
+                  text-align: center;
+                  padding: 15px 0;
+                }
+                
+                .header img {
+                  max-width: 120px;
+                  height: auto;
+                }
+                
+                .title {
+                  font-family: 'Alef', sans-serif;
+                  font-size: 28px;
+                  font-weight: 700;
+                  color: #4A148C;
+                  text-align: center;
+                  padding: 10px 15px;
+                  text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                  margin: 20px 0;
+                }
+                
+                .content {
+                  font-family: 'Heebo', sans-serif;
+                  font-size: 16px;
+                  line-height: 1.5;
+                  color: #4A148C;
+                  padding: 15px;
+                  text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                }
+                
+                .cta-button {
+                  display: block;
+                  width: max-content;
+                  margin: 30px auto;
+                  padding: 12px 24px;
+                  background-color: #4A148C;
+                  color: white;
+                  text-decoration: none;
+                  border-radius: 5px;
+                  font-family: 'Alef', sans-serif;
+                  font-weight: 700;
+                  text-align: center;
+                }
+                
+                .footer {
+                  margin-top: 40px;
+                  text-align: center;
+                  font-size: 12px;
+                  color: #4A148C;
+                }
+                
+                @media only screen and (max-width: 480px) {
+                  .email-container {
+                    padding: 10px;
+                  }
+                  
+                  .title {
+                    font-size: 24px;
+                    padding: 8px 10px;
+                  }
+                  
+                  .content {
+                    font-size: 15px;
+                    padding: 10px;
+                  }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="email-container">
+                <div class="header">
+                  <img src="https://ruth-prissman-coach.lovable.app/logo.png" alt="רות פריסמן - קוד הנפש" />
+                </div>
+                
+                <h1 class="title">${article.title}</h1>
+                
+                <div class="content">
+                  ${formattedMarkdown}
+                </div>
+                
+                <a href="${readMoreUrl}" class="cta-button">
+                  המשיכו לקרוא
+                </a>
+                
+                <div class="links-section">
+                  ${emailBodyLinks.join('')}
+                </div>
+                
+                ${emailFooter}
+              </div>
+            </body>
+            </html>
+          `;
+          
+          // Prepare email data to send
+          const emailData = {
+            to: recipientEmail,
+            subject: `רות פריסמן - ${article.title}`,
+            html: emailHtml,
+            from: "RuthPrissman@gmail.com",
+            fromName: "רות פריסמן - קוד הנפש"
+          };
+          
+          // Call edge function to send the email
+          const functionResponse = await fetch(this.supabaseEdgeFunctionUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${this.supabaseAnonKey}`
+            },
+            body: JSON.stringify(emailData)
+          });
+          
+          if (!functionResponse.ok) {
+            const errorText = await functionResponse.text();
+            throw new Error(`Failed to send email: ${errorText}`);
+          }
+          
+          // Add success log
+          emailLogs.push({
+            article_id: article.id,
+            email: recipientEmail,
+            status: 'sent'
+          });
+          
+          console.log(`Email resent successfully to ${recipientEmail}`);
+        } catch (sendError: any) {
+          console.error(`Error resending email to ${recipientEmail}:`, sendError);
+          
+          // Add failure log
+          emailLogs.push({
+            article_id: article.id,
+            email: recipientEmail,
+            status: 'failed',
+            error_message: sendError.message || 'Unknown error'
+          });
+        }
+      }
+      
+      // Log all results to the database
+      await this.logEmailResults(emailLogs);
+      
+      // Check if all resends were successful
+      const allSuccessful = emailLogs.every(log => log.status === 'sent');
+      
+      console.log(`Email retry process completed for article ${articleId}. Success: ${allSuccessful}`);
+      return allSuccessful;
+    } catch (error) {
+      console.error(`Error in retryFailedEmails for article ${articleId}:`, error);
+      return false;
     }
   }
 }

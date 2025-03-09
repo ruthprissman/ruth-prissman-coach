@@ -1,16 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Mail, Phone } from 'lucide-react';
-
-interface StaticLink {
-  id: number;
-  name: string;
-  fixed_text: string;
-  url: string | null;
-  list_type: string;
-}
+import { Mail, Phone, MessageCircle } from 'lucide-react';
+import { StaticLink } from '@/types/links';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -50,7 +42,7 @@ export function Footer() {
           rel="noopener noreferrer"
         >
           {link.fixed_text}
-          <Phone className="h-4 w-4" />
+          <MessageCircle className="h-4 w-4" />
         </a>
       );
     }
