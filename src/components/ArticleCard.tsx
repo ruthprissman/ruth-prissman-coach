@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Article } from '@/types/article';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { convertToHebrewDate } from '@/utils/dateUtils';
+import { convertToHebrewDateSync } from '@/utils/dateUtils';
 
 interface ArticleCardProps {
   article: Article;
@@ -12,12 +13,43 @@ const DEFAULT_IMAGE = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/objec
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   const [isRead, setIsRead] = useState(false);
+  const [hebrewDate, setHebrewDate] = useState('');
   
   // Check if the article has been read (from localStorage)
   useEffect(() => {
     const readArticles = JSON.parse(localStorage.getItem('readArticles') || '[]');
     setIsRead(readArticles.includes(article.id));
   }, [article.id]);
+  
+  // Format Hebrew date
+  useEffect(() => {
+    // Get publication date - prioritize article_publications published_date if available
+    const publicationDate = article.article_publications && 
+      article.article_publications.length > 0 && 
+      article.article_publications[0].published_date
+        ? article.article_publications[0].published_date
+        : article.published_at;
+    
+    if (publicationDate) {
+      const date = new Date(publicationDate);
+      // Use synchronous version for component rendering
+      const formattedDate = convertToHebrewDateSync(date);
+      setHebrewDate(formattedDate);
+      
+      // Also try to get the async version which might be more accurate
+      const fetchHebrewDate = async () => {
+        try {
+          const { convertToHebrewDate } = await import('@/utils/dateUtils');
+          const asyncDate = await convertToHebrewDate(date);
+          setHebrewDate(asyncDate);
+        } catch (error) {
+          console.error('Error fetching async Hebrew date:', error);
+        }
+      };
+      
+      fetchHebrewDate();
+    }
+  }, [article]);
   
   // Mark article as read when clicked
   const markAsRead = () => {
@@ -46,11 +78,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
     article.article_publications[0].published_date
       ? article.article_publications[0].published_date
       : article.published_at;
-  
-  // Get Hebrew date
-  const hebrewDate = publicationDate
-    ? convertToHebrewDate(new Date(publicationDate))
-    : '';
   
   return (
     <Link 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
@@ -7,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { ChevronRight, Calendar, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { convertToHebrewDate } from '@/utils/dateUtils';
+import { convertToHebrewDateSync } from '@/utils/dateUtils';
 import { Label } from '@/components/ui/label';
 
 interface SiteLink {
@@ -23,6 +24,7 @@ const ArticleView = () => {
   const [article, setArticle] = useState<Article | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [siteLinks, setSiteLinks] = useState<SiteLink[]>([]);
+  const [hebrewDate, setHebrewDate] = useState('');
   
   useEffect(() => {
     const fetchArticle = async () => {
@@ -43,6 +45,25 @@ const ArticleView = () => {
         }
         
         setArticle(data as Article);
+        
+        // Get publication date and format Hebrew date
+        const publicationDate = getPublicationDate(data as Article);
+        if (publicationDate) {
+          const date = new Date(publicationDate);
+          
+          // Use synchronous version first
+          const syncHebrewDate = convertToHebrewDateSync(date);
+          setHebrewDate(syncHebrewDate);
+          
+          // Try to get the async version which might be more accurate
+          try {
+            const { convertToHebrewDate } = await import('@/utils/dateUtils');
+            const asyncHebrewDate = await convertToHebrewDate(date);
+            setHebrewDate(asyncHebrewDate);
+          } catch (error) {
+            console.error('Error fetching async Hebrew date:', error);
+          }
+        }
         
         // Fetch site links
         const { data: linksData, error: linksError } = await supabase
@@ -107,7 +128,7 @@ const ArticleView = () => {
   };
   
   // Get the most recent publication date - prioritize article_publications
-  const getPublicationDate = () => {
+  const getPublicationDate = (article: Article | null) => {
     if (!article) return null;
     
     if (article.article_publications && article.article_publications.length > 0) {
@@ -127,12 +148,6 @@ const ArticleView = () => {
       year: 'numeric',
     }).format(date);
   };
-  
-  // Get Hebrew date
-  const publicationDate = getPublicationDate();
-  const hebrewDate = publicationDate 
-    ? convertToHebrewDate(new Date(publicationDate))
-    : '';
   
   // Convert markdown to HTML
   const createMarkup = (content: string | null) => {
@@ -181,7 +196,7 @@ const ArticleView = () => {
                   <span className="text-gold-dark">{hebrewDate}</span>
                 </div>
                 <span className="hidden sm:block text-gray-400">|</span>
-                <span>{formatDate(publicationDate)}</span>
+                <span>{formatDate(getPublicationDate(article))}</span>
                 
                 {article.categories && (
                   <>
