@@ -130,11 +130,19 @@ const ArticleView = () => {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
     
+    console.log('Original dateString:', dateString);
+    const initialDate = new Date(dateString);
+    console.log('After new Date():', initialDate);
+    
     // First convert the UTC date to Israel time zone
-    const israelDate = toZonedTime(new Date(dateString), 'Asia/Jerusalem');
+    const israelDate = toZonedTime(initialDate, 'Asia/Jerusalem');
+    console.log('After toZonedTime:', israelDate);
     
     // Then format it to display only the date part
-    return format(israelDate, 'dd MMMM yyyy', { locale: he });
+    const formattedDate = format(israelDate, 'dd MMMM yyyy', { locale: he });
+    console.log('Final formatted date:', formattedDate);
+    
+    return formattedDate;
   };
   
   const createMarkup = (content: string | null) => {
