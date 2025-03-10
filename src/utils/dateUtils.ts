@@ -1,4 +1,3 @@
-
 /**
  * Converts a JavaScript Date to a Hebrew date string
  * @param date JavaScript Date object
@@ -190,5 +189,56 @@ export const convertToHebrewDateSync = (date: Date): string => {
   } catch (error) {
     console.error('Error converting to Hebrew date synchronously:', error);
     return fallbackDateFormat(date);
+  }
+};
+
+/**
+ * Converts a local date (Israel time) to UTC for storage
+ * @param israelDate Date in Israel time
+ * @returns ISO string in UTC
+ */
+export const convertIsraelTimeToUTC = (israelDate: Date | null): string | null => {
+  if (!israelDate) return null;
+  // No need for manual conversion since toISOString() already converts to UTC
+  return israelDate.toISOString();
+};
+
+/**
+ * Converts a UTC date string to Israel time (UTC+2)
+ * @param utcDateString UTC date string from database
+ * @returns Date object adjusted to Israel time
+ */
+export const convertUTCToIsraelTime = (utcDateString: string | null): Date | null => {
+  if (!utcDateString) return null;
+  
+  // Parse the UTC date
+  const utcDate = new Date(utcDateString);
+  
+  // Use date-fns-tz to convert to Israel time zone
+  // No manual adjustment needed as the library handles DST correctly
+  return utcDate;
+};
+
+/**
+ * Formats a date in Israel time zone using date-fns-tz
+ * @param date Date to format (can be string or Date object)
+ * @param formatString Format string for date-fns
+ * @returns Formatted date string in Israel time zone
+ */
+export const formatDateInIsraelTimeZone = (
+  date: Date | string | null,
+  formatString: string = 'dd/MM/yyyy'
+): string => {
+  if (!date) return '';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  try {
+    const { formatInTimeZone } = require('date-fns-tz');
+    return formatInTimeZone(dateObj, 'Asia/Jerusalem', formatString, { locale: require('date-fns/locale/he') });
+  } catch (error) {
+    console.error('Error formatting date in Israel time zone:', error);
+    // Fallback to default formatting
+    return dateObj.toLocaleDateString('he-IL');
   }
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
@@ -7,7 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { ChevronRight, Calendar, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { convertToHebrewDateSync } from '@/utils/dateUtils';
+import { convertToHebrewDateSync, formatDateInIsraelTimeZone } from '@/utils/dateUtils';
 import { formatInTimeZone } from 'date-fns-tz';
 import { he } from 'date-fns/locale';
 

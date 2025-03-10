@@ -87,8 +87,7 @@ const Articles = () => {
             
         if (!publicationDate) return false;
         
-        const israelPublicationDate = new Date(publicationDate.getTime() + (2 * 60 * 60 * 1000));
-        return israelPublicationDate >= monthAgo && israelPublicationDate <= now;
+        return publicationDate >= monthAgo && publicationDate <= now;
       });
     } else if (dateFilter === 'week') {
       const weekAgo = new Date();
@@ -102,8 +101,7 @@ const Articles = () => {
             
         if (!publicationDate) return false;
         
-        const israelPublicationDate = new Date(publicationDate.getTime() + (2 * 60 * 60 * 1000));
-        return israelPublicationDate >= weekAgo && israelPublicationDate <= now;
+        return publicationDate >= weekAgo && publicationDate <= now;
       });
     }
 

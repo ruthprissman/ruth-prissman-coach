@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Article } from '@/types/article';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { convertToHebrewDateSync } from '@/utils/dateUtils';
+import { convertToHebrewDateSync, formatDateInIsraelTimeZone } from '@/utils/dateUtils';
 import { formatInTimeZone } from 'date-fns-tz';
 import { he } from 'date-fns/locale';
 

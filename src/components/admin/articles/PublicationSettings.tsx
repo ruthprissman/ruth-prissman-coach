@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { he } from 'date-fns/locale/he';
+import { he } from 'date-fns/locale';
 import { Trash2, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { PublicationFormData, PublishLocationType } from '@/types/article';
+import { formatInTimeZone } from 'date-fns-tz';
 
 interface PublicationSettingsProps {
   publications: PublicationFormData[];
@@ -83,6 +84,11 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
     onUpdate(index, updated);
   };
 
+  const formatDateDisplay = (date: Date | null) => {
+    if (!date) return <span>בחר תאריך</span>;
+    return formatInTimeZone(date, 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he });
+  };
+
   return (
     <div className="space-y-4 border p-4 rounded-md">
       <h3 className="text-lg font-medium mb-2">הגדרות פרסום</h3>
@@ -111,11 +117,7 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
                           !publication.scheduled_date && "text-muted-foreground"
                         )}
                       >
-                        {publication.scheduled_date ? (
-                          format(publication.scheduled_date, "dd/MM/yyyy", { locale: he })
-                        ) : (
-                          <span>בחר תאריך</span>
-                        )}
+                        {formatDateDisplay(publication.scheduled_date)}
                         <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
                       </Button>
                     </PopoverTrigger>
@@ -138,7 +140,7 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
                 </TableCell>
                 <TableCell>
                   {publication.published_date 
-                    ? format(new Date(publication.published_date), "dd/MM/yyyy", { locale: he }) 
+                    ? formatInTimeZone(new Date(publication.published_date), 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he })
                     : 'טרם פורסם'}
                 </TableCell>
                 <TableCell>
@@ -214,7 +216,7 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
                   )}
                 >
                   {newScheduledDate ? (
-                    format(newScheduledDate, "dd/MM/yyyy", { locale: he })
+                    formatInTimeZone(newScheduledDate, 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he })
                   ) : (
                     <span>בחר תאריך פרסום</span>
                   )}

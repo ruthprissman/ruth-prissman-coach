@@ -12,11 +12,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import PublicationService from '@/services/PublicationService';
 import EmailPreviewModal from './EmailPreviewModal';
+import { formatInTimeZone } from 'date-fns-tz';
+import { he } from 'date-fns/locale';
 
 interface PublishOption {
   id?: number;
   content_id: number;
   publish_location: PublishLocationType;
+  scheduled_date?: string | null;
   isSelected: boolean;
   isPublished: boolean;
   isNew?: boolean;
@@ -76,6 +79,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
           id: option.id,
           content_id: option.content_id,
           publish_location: option.publish_location as PublishLocationType,
+          scheduled_date: option.scheduled_date,
           isSelected: false,
           isPublished: !!option.published_date,
         })) || [];
@@ -115,6 +119,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
         {
           content_id: article.id,
           publish_location: newLocation as PublishLocationType,
+          scheduled_date: new Date().toISOString(),
           isSelected: true,
           isPublished: false,
           isNew: true
@@ -151,7 +156,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
     const locationsToInsert = newLocations.map(loc => ({
       content_id: article.id,
       publish_location: loc.publish_location,
-      scheduled_date: new Date().toISOString(),
+      scheduled_date: loc.scheduled_date || new Date().toISOString(),
     }));
     
     try {
@@ -282,6 +287,11 @@ const PublishModal: React.FC<PublishModalProps> = ({
     setFailedLocations([]);
   };
 
+  const formatScheduledDate = (date: string | null | undefined) => {
+    if (!date) return '';
+    return formatInTimeZone(new Date(date), 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he });
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={isSubmitting ? undefined : onClose}>
@@ -317,6 +327,11 @@ const PublishModal: React.FC<PublishModalProps> = ({
                           />
                           <Label htmlFor={`location-${index}`} className="mr-2">
                             {option.publish_location}
+                            {option.scheduled_date && (
+                              <span className="text-xs text-gray-500 mr-2">
+                                ({formatScheduledDate(option.scheduled_date)})
+                              </span>
+                            )}
                           </Label>
                           
                           {option.isPublished && (
