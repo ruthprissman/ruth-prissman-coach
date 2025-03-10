@@ -41,9 +41,16 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
     }).format(date);
   };
   
+  // Get publication date - prioritize article_publications published_date if available
+  const publicationDate = article.article_publications && 
+    article.article_publications.length > 0 && 
+    article.article_publications[0].published_date
+      ? article.article_publications[0].published_date
+      : article.published_at;
+  
   // Get Hebrew date
-  const hebrewDate = article.published_at 
-    ? convertToHebrewDate(new Date(article.published_at))
+  const hebrewDate = publicationDate
+    ? convertToHebrewDate(new Date(publicationDate))
     : '';
   
   return (
@@ -69,7 +76,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
         <h2 className="text-xl font-alef font-bold text-purple-dark mb-2 line-clamp-2">{article.title}</h2>
         <div className="flex flex-col text-sm text-gray-600">
           <span className="mb-1 text-gold-dark">{hebrewDate}</span>
-          <span>{formatDate(article.published_at)}</span>
+          <span>{formatDate(publicationDate)}</span>
         </div>
         {article.categories && (
           <div className="mt-3">

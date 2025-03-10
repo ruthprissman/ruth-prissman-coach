@@ -24,12 +24,13 @@ const Articles = () => {
     const fetchArticles = async () => {
       setIsLoading(true);
       try {
-        // Fetch only published articles
+        // Fetch only published articles with article_publications
         const { data, error } = await supabase
           .from('professional_content')
           .select(`
             *,
-            categories (*)
+            categories (*),
+            article_publications (*)
           `)
           .not('published_at', 'is', null)
           .order('published_at', { ascending: false });
@@ -84,15 +85,29 @@ const Articles = () => {
     if (dateFilter === 'month') {
       const monthAgo = new Date();
       monthAgo.setMonth(monthAgo.getMonth() - 1);
-      filtered = filtered.filter(article => 
-        article.published_at && new Date(article.published_at) >= monthAgo && new Date(article.published_at) <= now
-      );
+      filtered = filtered.filter(article => {
+        // Get the most recent publication date
+        const publicationDate = article.article_publications && 
+          article.article_publications.length > 0 && 
+          article.article_publications[0].published_date
+            ? new Date(article.article_publications[0].published_date)
+            : article.published_at ? new Date(article.published_at) : null;
+            
+        return publicationDate && publicationDate >= monthAgo && publicationDate <= now;
+      });
     } else if (dateFilter === 'week') {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
-      filtered = filtered.filter(article => 
-        article.published_at && new Date(article.published_at) >= weekAgo && new Date(article.published_at) <= now
-      );
+      filtered = filtered.filter(article => {
+        // Get the most recent publication date
+        const publicationDate = article.article_publications && 
+          article.article_publications.length > 0 && 
+          article.article_publications[0].published_date
+            ? new Date(article.article_publications[0].published_date)
+            : article.published_at ? new Date(article.published_at) : null;
+            
+        return publicationDate && publicationDate >= weekAgo && publicationDate <= now;
+      });
     }
 
     setFilteredArticles(filtered);
@@ -114,7 +129,7 @@ const Articles = () => {
                 <Input
                   type="text"
                   placeholder="חיפוש מאמרים..."
-                  className="pr-10 text-right h-10"
+                  className="pr-10 text-right h-10 filter-input"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   dir="rtl"
@@ -157,6 +172,19 @@ const Articles = () => {
       </main>
       
       <Footer />
+      
+      {/* Add filter input styles */}
+      <style jsx>{`
+        .filter-input {
+          height: 40px !important;
+          text-align: right !important;
+        }
+
+        .write-to-me {
+          color: #4A235A !important;
+          font-weight: bold !important;
+        }
+      `}</style>
     </div>
   );
 };

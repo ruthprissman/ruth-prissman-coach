@@ -27,7 +27,7 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
           onValueChange={(value) => onCategoryChange(value === 'all' ? null : Number(value))}
           dir="rtl"
         >
-          <SelectTrigger id="category-filter" className="text-right h-10">
+          <SelectTrigger id="category-filter" className="text-right h-10 filter-input">
             <SelectValue placeholder="כל הקטגוריות" />
           </SelectTrigger>
           <SelectContent>
@@ -48,7 +48,7 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
           onValueChange={(value) => onDateFilterChange(value)}
           dir="rtl"
         >
-          <SelectTrigger id="date-filter" className="text-right h-10">
+          <SelectTrigger id="date-filter" className="text-right h-10 filter-input">
             <SelectValue placeholder="כל הזמנים" />
           </SelectTrigger>
           <SelectContent>

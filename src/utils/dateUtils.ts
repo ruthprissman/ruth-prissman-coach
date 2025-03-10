@@ -17,9 +17,20 @@ export const convertToHebrewDate = (date: Date): string => {
     // Get Hebrew date string
     let hebrewDate = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', options).format(date);
     
-    // Clean up the format to match the desired output format: כ"ד תשרי תשפ"ה
-    // Replace the day number with day number + quotation mark
-    hebrewDate = hebrewDate.replace(/(\d+)/, '$1"');
+    // Fix the Hebrew date format to match the desired output: כ"ד תשרי תשפ"ה
+    // First, extract day, month, and year
+    const parts = hebrewDate.split(' ');
+    if (parts.length >= 3) {
+      const day = parts[0];
+      const month = parts[1];
+      const year = parts[2];
+      
+      // Add the quotation mark to the day
+      const formattedDay = day + '"';
+      
+      // Return the formatted date
+      return `${formattedDay} ${month} ${year}`;
+    }
     
     return hebrewDate;
   } catch (error) {

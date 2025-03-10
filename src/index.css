@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -140,5 +141,22 @@
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
+  }
+  
+  /* Filter input styles */
+  .filter-input {
+    height: 40px !important;
+    text-align: right !important;
+  }
+  
+  /* Write to me link style */
+  .write-to-me {
+    color: #4A235A !important;
+    font-weight: bold !important;
+    transition: color 0.3s ease;
+  }
+  
+  .write-to-me:hover {
+    color: #7E69AB !important;
   }
 }

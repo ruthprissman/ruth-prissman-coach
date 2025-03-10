@@ -5,15 +5,24 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Article } from '@/types/article';
 import { supabase } from '@/lib/supabase';
-import { ChevronRight, Calendar } from 'lucide-react';
+import { ChevronRight, Calendar, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { convertToHebrewDate } from '@/utils/dateUtils';
+
+interface SiteLink {
+  id: number;
+  name: string;
+  fixed_text: string;
+  url: string | null;
+  list_type: string | null;
+}
 
 const ArticleView = () => {
   const { id } = useParams<{ id: string }>();
   const [article, setArticle] = useState<Article | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [siteLinks, setSiteLinks] = useState<SiteLink[]>([]);
   
   useEffect(() => {
     const fetchArticle = async () => {
@@ -23,7 +32,8 @@ const ArticleView = () => {
           .from('professional_content')
           .select(`
             *,
-            categories (*)
+            categories (*),
+            article_publications (*)
           `)
           .eq('id', id)
           .single();
@@ -33,6 +43,16 @@ const ArticleView = () => {
         }
         
         setArticle(data as Article);
+        
+        // Fetch site links
+        const { data: linksData, error: linksError } = await supabase
+          .from('static_links')
+          .select('*')
+          .or('list_type.eq.site,list_type.eq.all');
+          
+        if (!linksError && linksData) {
+          setSiteLinks(linksData);
+        }
         
         // Mark as read in localStorage
         const readArticles = JSON.parse(localStorage.getItem('readArticles') || '[]');
@@ -51,6 +71,52 @@ const ArticleView = () => {
     }
   }, [id]);
   
+  // Format URL for links
+  const formatUrl = (url: string | null): string | null => {
+    if (!url) return null;
+    
+    url = url.trim();
+    
+    // Check if it's an email address
+    if (url.includes('@') && !url.startsWith('mailto:')) {
+      return `mailto:${url}`;
+    }
+    
+    // Check if it's a WhatsApp number
+    if (url.includes('whatsapp') || url.startsWith('+') || 
+        url.startsWith('972') || url.match(/^\d{10,15}$/)) {
+      
+      // Extract only numbers
+      const phoneNumber = url.replace(/\D/g, '');
+      
+      // Make sure it starts with country code
+      const formattedNumber = phoneNumber.startsWith('972') 
+        ? phoneNumber 
+        : `972${phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber}`;
+      
+      return `https://wa.me/${formattedNumber}`;
+    }
+    
+    // Add https:// if missing for regular URLs
+    if (!url.startsWith('http://') && !url.startsWith('https://') && 
+        !url.startsWith('mailto:') && !url.startsWith('#')) {
+      return `https://${url}`;
+    }
+    
+    return url;
+  };
+  
+  // Get the most recent publication date
+  const getPublicationDate = () => {
+    if (!article) return null;
+    
+    if (article.article_publications && article.article_publications.length > 0) {
+      return article.article_publications.find(pub => pub.published_date)?.published_date || article.published_at;
+    }
+    
+    return article.published_at;
+  };
+  
   // Format the publication date
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
@@ -63,15 +129,16 @@ const ArticleView = () => {
   };
   
   // Get Hebrew date
-  const hebrewDate = article?.published_at 
-    ? convertToHebrewDate(new Date(article.published_at))
+  const publicationDate = getPublicationDate();
+  const hebrewDate = publicationDate 
+    ? convertToHebrewDate(new Date(publicationDate))
     : '';
   
   // Convert markdown to HTML
   const createMarkup = (content: string | null) => {
     if (!content) return { __html: '' };
     
-    // Basic markdown conversion (this is a simple implementation)
+    // Basic markdown conversion
     const htmlContent = content
       .replace(/\n\n/g, '</p><p>') // Convert paragraphs
       .replace(/\n/g, '<br />') // Convert line breaks
@@ -114,7 +181,7 @@ const ArticleView = () => {
                   <span className="text-gold-dark">{hebrewDate}</span>
                 </div>
                 <span className="hidden sm:block text-gray-400">|</span>
-                <span>{formatDate(article.published_at)}</span>
+                <span>{formatDate(publicationDate)}</span>
                 
                 {article.categories && (
                   <>
@@ -133,6 +200,43 @@ const ArticleView = () => {
                   className="text-gray-800 leading-relaxed"
                 />
               </div>
+              
+              {/* Contact info */}
+              {article.contact_email && (
+                <div className="mt-8 p-4 bg-purple-light/5 rounded-lg border border-purple-light/20">
+                  <a href={`mailto:${article.contact_email}`} className="write-to-me flex items-center">
+                    <MessageSquare size={18} className="ml-2" />
+                    כתבי לי: {article.contact_email}
+                  </a>
+                </div>
+              )}
+              
+              {/* Site links */}
+              {siteLinks.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <h3 className="text-lg font-alef font-bold text-purple-dark mb-3">קישורים נוספים</h3>
+                  <ul className="space-y-2">
+                    {siteLinks.map(link => {
+                      const url = formatUrl(link.url);
+                      if (url && link.fixed_text) {
+                        return (
+                          <li key={link.id} className="golden-bullet">
+                            <a 
+                              href={url} 
+                              className="text-purple-dark hover:text-gold transition-colors"
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                            >
+                              {link.fixed_text}
+                            </a>
+                          </li>
+                        );
+                      }
+                      return null;
+                    })}
+                  </ul>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-16">
@@ -148,6 +252,14 @@ const ArticleView = () => {
       </main>
       
       <Footer />
+      
+      {/* Add custom styles */}
+      <style jsx>{`
+        .write-to-me {
+          color: #4A235A !important;
+          font-weight: bold !important;
+        }
+      `}</style>
     </div>
   );
 };
