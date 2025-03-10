@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
@@ -223,8 +224,8 @@ const ArticleView = () => {
               )}
               
               {siteLinks.length > 0 && (
-                <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-                  <h3 className="text-lg font-alef font-bold text-purple-dark mb-3">קישורים נוספים</h3>
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  {/* Removed the title "קישורים נוספים" as requested */}
                   <div className="article-links">
                     {siteLinks.map(link => {
                       const url = formatUrl(link.url);
@@ -283,10 +284,23 @@ const ArticleView = () => {
         
         .styled-link {
           word-break: break-word;
+          color: #4A148C;
+        }
+        
+        .article-links {
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 15px;
         }
         
         .link-item {
           position: relative;
+          max-width: 50%;
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+          text-align: center;
         }
         
         .link-item::before {
