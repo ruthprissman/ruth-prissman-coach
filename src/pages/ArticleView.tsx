@@ -69,7 +69,10 @@ const ArticleView = () => {
           .select('*')
           .or('list_type.eq.site,list_type.eq.all');
           
-        if (!linksError && linksData) {
+        if (linksError) {
+          console.error('Error fetching site links:', linksError);
+        } else if (linksData) {
+          console.log("🔍 Fetched links from `static_links`:", linksData);
           setSiteLinks(linksData);
         }
         
@@ -222,26 +225,32 @@ const ArticleView = () => {
               {siteLinks.length > 0 && (
                 <div className="mt-8 pt-6 border-t border-gray-200 text-center">
                   <h3 className="text-lg font-alef font-bold text-purple-dark mb-3">קישורים נוספים</h3>
-                  <ul className="space-y-2 flex flex-col items-center">
+                  <div className="article-links">
                     {siteLinks.map(link => {
                       const url = formatUrl(link.url);
-                      if (url && link.fixed_text) {
+                      if (link.fixed_text) {
                         return (
-                          <li key={link.id} className="golden-bullet">
-                            <a 
-                              href={url} 
-                              className="text-purple-dark hover:text-gold transition-colors"
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                            >
-                              {link.fixed_text}
-                            </a>
-                          </li>
+                          <div key={link.id} className="link-item mb-4">
+                            {url ? (
+                              <a 
+                                href={url} 
+                                className="styled-link font-alef font-bold text-purple-dark hover:text-gold transition-colors block"
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                              >
+                                {link.fixed_text}
+                              </a>
+                            ) : (
+                              <span className="non-clickable font-alef font-bold text-gray-800 block">
+                                {link.fixed_text}
+                              </span>
+                            )}
+                          </div>
                         );
                       }
                       return null;
                     })}
-                  </ul>
+                  </div>
                 </div>
               )}
             </div>
@@ -272,10 +281,20 @@ const ArticleView = () => {
           color: #7E69AB !important;
         }
         
-        .golden-bullet::before {
+        .styled-link {
+          word-break: break-word;
+        }
+        
+        .link-item {
+          position: relative;
+        }
+        
+        .link-item::before {
           content: "•";
           color: var(--gold);
-          margin-right: 0.5rem;
+          position: absolute;
+          right: -1rem;
+          top: 0;
         }
         `}
       </style>
