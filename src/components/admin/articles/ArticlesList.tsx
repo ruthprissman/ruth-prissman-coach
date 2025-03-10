@@ -276,6 +276,7 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
               <TableRow>
                 <TableHead>כותרת</TableHead>
                 <TableHead>קטגוריה</TableHead>
+                <TableHead>תאריך יצירה</TableHead>
                 <TableHead>תאריך פרסום מתוכנן</TableHead>
                 <TableHead>סטטוס</TableHead>
                 <TableHead>פעולות</TableHead>
@@ -291,6 +292,7 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
                     </div>
                   </TableCell>
                   <TableCell>{getCategoryName(article.category_id)}</TableCell>
+                  <TableCell>{formatDate(article.created_at)}</TableCell>
                   <TableCell>{formatDate(article.scheduled_publish)}</TableCell>
                   <TableCell>{getArticleStatus(article)}</TableCell>
                   <TableCell>
