@@ -90,8 +90,13 @@ const Articles = () => {
             
         if (!publicationDateStr) return false;
         
-        const israelDate = parseISO(publicationDateStr);
-        return israelDate >= monthAgo && israelDate <= now;
+        try {
+          const date = parseISO(publicationDateStr);
+          return date >= monthAgo && date <= now;
+        } catch (error) {
+          console.error('Error parsing date for filter:', error);
+          return false;
+        }
       });
     } else if (dateFilter === 'week') {
       const weekAgo = new Date();
@@ -105,8 +110,13 @@ const Articles = () => {
             
         if (!publicationDateStr) return false;
         
-        const israelDate = parseISO(publicationDateStr);
-        return israelDate >= weekAgo && israelDate <= now;
+        try {
+          const date = parseISO(publicationDateStr);
+          return date >= weekAgo && date <= now;
+        } catch (error) {
+          console.error('Error parsing date for filter:', error);
+          return false;
+        }
       });
     }
 

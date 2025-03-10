@@ -61,8 +61,15 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
     
-    // Use formatInTimeZone directly on the string to avoid double conversion
-    return formatInTimeZone(dateString, 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he });
+    try {
+      // Parse the ISO string to a Date object first
+      const parsedDate = parseISO(dateString);
+      // Then format it in the Israel timezone
+      return formatInTimeZone(parsedDate, 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he });
+    } catch (error) {
+      console.error('Error formatting date:', error, dateString);
+      return '';
+    }
   };
   
   const publicationDate = article.article_publications && 

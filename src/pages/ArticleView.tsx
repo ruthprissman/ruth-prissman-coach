@@ -130,7 +130,13 @@ const ArticleView = () => {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
     
-    return formatInTimeZone(dateString, 'Asia/Jerusalem', 'dd MMMM yyyy', { locale: he });
+    try {
+      const parsedDate = parseISO(dateString);
+      return formatInTimeZone(parsedDate, 'Asia/Jerusalem', 'dd MMMM yyyy', { locale: he });
+    } catch (error) {
+      console.error('Error formatting date:', error, dateString);
+      return '';
+    }
   };
   
   const createMarkup = (content: string | null) => {
