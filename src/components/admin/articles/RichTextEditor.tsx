@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -114,7 +113,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
   const [showUnsavedIndicator, setShowUnsavedIndicator] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Stored in ref to avoid re-renders
   const contentRef = useRef(defaultValue || '');
 
   const convertToMarkdown = (data: any): string => {
@@ -181,14 +179,11 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     }
   };
 
-  // Use a separate function triggered by button click to mark dirty state
   const markAsDirty = () => {
-    // Only update unsaved indicator if not already shown (prevents unnecessary renders)
     if (!showUnsavedIndicator) {
       setShowUnsavedIndicator(true);
     }
     
-    // Always update the ref (no re-render)
     hasUnsavedChangesRef.current = true;
   };
 
@@ -241,23 +236,18 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
         data: markdownToEditorJS(defaultValue),
         placeholder: placeholder,
         logLevel: 'ERROR',
-        autofocus: true, // Fixed: using lowercase 'a' instead of uppercase 'A'
-        // Crucial: turn off autosave
+        autofocus: true,
         autosave: false,
         onReady: () => {
           console.log('Editor is ready');
           isLoading.current = false;
           isEditorReady.current = true;
           
-          // When editor is ready, add a direct event listener for input that doesn't
-          // trigger React state updates during typing
           if (containerRef.current) {
             containerRef.current.addEventListener('input', () => {
               hasUnsavedChangesRef.current = true;
               
-              // Debounce UI updates to avoid re-renders during typing
               if (!showUnsavedIndicator) {
-                // Use setTimeout to push to end of event queue
                 setTimeout(() => {
                   setShowUnsavedIndicator(true);
                 }, 100);
@@ -265,7 +255,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
             }, false);
           }
         }
-        // IMPORTANT: No onChange handler here - prevents constant re-rendering
       });
     } catch (error) {
       console.error('EditorJS initialization error:', error);
