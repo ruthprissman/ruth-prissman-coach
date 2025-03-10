@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Article } from '@/types/article';
 import { Check } from 'lucide-react';
@@ -28,15 +29,31 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
         ? article.article_publications[0].scheduled_date
         : article.published_at;
     
+    // Add debug logs for date processing
+    console.log(`🛠️ [ArticleCard] Article ID: ${article.id}, Title: ${article.title}`);
+    console.log("🛠️ [ArticleCard] Raw publication date from Supabase:", publicationDate);
+    
     if (publicationDate) {
       const date = new Date(publicationDate);
-      const formattedDate = convertToHebrewDateSync(date);
+      console.log("🛠️ [ArticleCard] Parsed as Date object:", date);
+      console.log("🛠️ [ArticleCard] Date toString():", date.toString());
+      console.log("🛠️ [ArticleCard] Date toISOString():", date.toISOString());
+      console.log("🛠️ [ArticleCard] Date timezone offset (minutes):", date.getTimezoneOffset());
+      
+      // Convert to Israel Time (UTC+2)
+      const israelDate = new Date(date.getTime() + (2 * 60 * 60 * 1000));
+      console.log("🛠️ [ArticleCard] Adjusted to Israel Time (UTC+2):", israelDate);
+      console.log("🛠️ [ArticleCard] Israel Date toString():", israelDate.toString());
+      
+      const formattedDate = convertToHebrewDateSync(israelDate);
+      console.log("🛠️ [ArticleCard] Hebrew date (sync):", formattedDate);
       setHebrewDate(formattedDate);
       
       const fetchHebrewDate = async () => {
         try {
           const { convertToHebrewDate } = await import('@/utils/dateUtils');
-          const asyncDate = await convertToHebrewDate(date);
+          const asyncDate = await convertToHebrewDate(israelDate);
+          console.log("🛠️ [ArticleCard] Hebrew date (async):", asyncDate);
           setHebrewDate(asyncDate);
         } catch (error) {
           console.error('Error fetching async Hebrew date:', error);
@@ -58,7 +75,22 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
-    return format(new Date(dateString), 'dd/MM/yyyy', { locale: he });
+    
+    console.log("🛠️ [ArticleCard] formatDate input:", dateString);
+    
+    // Parse the UTC date
+    const utcDate = new Date(dateString);
+    console.log("🛠️ [ArticleCard] UTC Date object:", utcDate);
+    
+    // Adjust to Israel Time (UTC+2)
+    const israelDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
+    console.log("🛠️ [ArticleCard] Adjusted to Israel Time:", israelDate);
+    
+    // Format the date
+    const formattedDate = format(israelDate, 'dd/MM/yyyy', { locale: he });
+    console.log("🛠️ [ArticleCard] Final formatted date:", formattedDate);
+    
+    return formattedDate;
   };
   
   const publicationDate = article.article_publications && 

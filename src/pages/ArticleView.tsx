@@ -120,16 +120,32 @@ const ArticleView = () => {
   const getPublicationDate = (article: Article | null) => {
     if (!article) return null;
     
-    if (article.article_publications && article.article_publications.length > 0) {
-      return article.article_publications.find(pub => pub.scheduled_date)?.scheduled_date || article.published_at;
-    }
-    
-    return article.published_at;
+    const publishDate = article.article_publications && article.article_publications.length > 0
+      ? article.article_publications.find(pub => pub.scheduled_date)?.scheduled_date || article.published_at
+      : article.published_at;
+      
+    console.log("🛠️ [ArticleView] Raw publication date:", publishDate);
+    return publishDate;
   };
   
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
-    return format(new Date(dateString), 'dd MMMM yyyy', { locale: he });
+    
+    console.log("🛠️ [ArticleView] formatDate input:", dateString);
+    
+    // Parse the UTC date
+    const utcDate = new Date(dateString);
+    console.log("🛠️ [ArticleView] UTC Date object:", utcDate);
+    
+    // Adjust to Israel Time (UTC+2)
+    const israelDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
+    console.log("🛠️ [ArticleView] Adjusted to Israel Time:", israelDate);
+    
+    // Format the date
+    const formattedDate = format(israelDate, 'dd MMMM yyyy', { locale: he });
+    console.log("🛠️ [ArticleView] Final formatted date:", formattedDate);
+    
+    return formattedDate;
   };
   
   const createMarkup = (content: string | null) => {
@@ -200,7 +216,7 @@ const ArticleView = () => {
                 <div className="mt-8 p-4 bg-purple-light/5 rounded-lg border border-purple-light/20">
                   <a href={`mailto:${article.contact_email}`} className="write-to-me flex items-center">
                     <MessageSquare size={18} className="ml-2" />
-                    כתבי לי: {article.contact_email}
+                    כתבי ��י: {article.contact_email}
                   </a>
                 </div>
               )}

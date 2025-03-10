@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
 const Articles = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
@@ -74,10 +75,13 @@ const Articles = () => {
     }
 
     const now = new Date();
+    console.log("🛠️ [Articles] Current date for filtering:", now);
     
     if (dateFilter === 'month') {
       const monthAgo = new Date();
       monthAgo.setMonth(monthAgo.getMonth() - 1);
+      console.log("🛠️ [Articles] Month ago date for filtering:", monthAgo);
+      
       filtered = filtered.filter(article => {
         const publicationDateStr = article.article_publications && 
           article.article_publications.length > 0 && 
@@ -86,12 +90,22 @@ const Articles = () => {
             : article.published_at;
             
         if (!publicationDateStr) return false;
-        const date = new Date(publicationDateStr);
-        return date >= monthAgo && date <= now;
+        console.log(`🛠️ [Articles] Filtering article ${article.id} with date:`, publicationDateStr);
+        
+        const utcDate = new Date(publicationDateStr);
+        console.log("🛠️ [Articles] UTC Date object:", utcDate);
+        
+        // For filtering purposes, compare in UTC
+        const result = utcDate >= monthAgo && utcDate <= now;
+        console.log(`🛠️ [Articles] Article ${article.id} month filter result:`, result);
+        
+        return result;
       });
     } else if (dateFilter === 'week') {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
+      console.log("🛠️ [Articles] Week ago date for filtering:", weekAgo);
+      
       filtered = filtered.filter(article => {
         const publicationDateStr = article.article_publications && 
           article.article_publications.length > 0 && 
@@ -100,8 +114,16 @@ const Articles = () => {
             : article.published_at;
             
         if (!publicationDateStr) return false;
-        const date = new Date(publicationDateStr);
-        return date >= weekAgo && date <= now;
+        console.log(`🛠️ [Articles] Filtering article ${article.id} with date:`, publicationDateStr);
+        
+        const utcDate = new Date(publicationDateStr);
+        console.log("🛠️ [Articles] UTC Date object:", utcDate);
+        
+        // For filtering purposes, compare in UTC
+        const result = utcDate >= weekAgo && utcDate <= now;
+        console.log(`🛠️ [Articles] Article ${article.id} week filter result:`, result);
+        
+        return result;
       });
     }
 
