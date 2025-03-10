@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
@@ -127,12 +126,12 @@ const ArticleView = () => {
     return url;
   };
   
-  // Get the most recent publication date - prioritize article_publications
+  // Get the most recent publication date - prioritize article_publications scheduled_date
   const getPublicationDate = (article: Article | null) => {
     if (!article) return null;
     
     if (article.article_publications && article.article_publications.length > 0) {
-      return article.article_publications.find(pub => pub.published_date)?.published_date || article.published_at;
+      return article.article_publications.find(pub => pub.scheduled_date)?.scheduled_date || article.published_at;
     }
     
     return article.published_at;

@@ -86,11 +86,11 @@ const Articles = () => {
       const monthAgo = new Date();
       monthAgo.setMonth(monthAgo.getMonth() - 1);
       filtered = filtered.filter(article => {
-        // Get the most recent publication date - prioritize article_publications
+        // Get the most recent publication date - prioritize article_publications scheduled_date
         const publicationDate = article.article_publications && 
           article.article_publications.length > 0 && 
-          article.article_publications[0].published_date
-            ? new Date(article.article_publications[0].published_date)
+          article.article_publications[0].scheduled_date
+            ? new Date(article.article_publications[0].scheduled_date)
             : article.published_at ? new Date(article.published_at) : null;
             
         return publicationDate && publicationDate >= monthAgo && publicationDate <= now;
@@ -99,11 +99,11 @@ const Articles = () => {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       filtered = filtered.filter(article => {
-        // Get the most recent publication date - prioritize article_publications
+        // Get the most recent publication date - prioritize article_publications scheduled_date
         const publicationDate = article.article_publications && 
           article.article_publications.length > 0 && 
-          article.article_publications[0].published_date
-            ? new Date(article.article_publications[0].published_date)
+          article.article_publications[0].scheduled_date
+            ? new Date(article.article_publications[0].scheduled_date)
             : article.published_at ? new Date(article.published_at) : null;
             
         return publicationDate && publicationDate >= weekAgo && publicationDate <= now;

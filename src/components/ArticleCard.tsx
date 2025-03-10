@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Article } from '@/types/article';
 import { Check } from 'lucide-react';
@@ -23,11 +22,11 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   
   // Format Hebrew date
   useEffect(() => {
-    // Get publication date - prioritize article_publications published_date if available
+    // Get publication date - prioritize article_publications scheduled_date if available
     const publicationDate = article.article_publications && 
       article.article_publications.length > 0 && 
-      article.article_publications[0].published_date
-        ? article.article_publications[0].published_date
+      article.article_publications[0].scheduled_date
+        ? article.article_publications[0].scheduled_date
         : article.published_at;
     
     if (publicationDate) {
@@ -72,11 +71,11 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
     }).format(date);
   };
   
-  // Get publication date - prioritize article_publications published_date if available
+  // Get publication date - prioritize article_publications scheduled_date if available
   const publicationDate = article.article_publications && 
     article.article_publications.length > 0 && 
-    article.article_publications[0].published_date
-      ? article.article_publications[0].published_date
+    article.article_publications[0].scheduled_date
+      ? article.article_publications[0].scheduled_date
       : article.published_at;
   
   return (
