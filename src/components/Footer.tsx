@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
@@ -43,25 +42,20 @@ export function Footer() {
     fetchStaticLinks();
   }, []);
   
-  // Format URL to ensure it's valid
   const formatUrl = (url: string | null): string | null => {
     if (!url) return null;
     
     url = url.trim();
     
-    // Check if it's an email address
     if (url.includes('@') && !url.startsWith('mailto:')) {
       return `mailto:${url}`;
     }
     
-    // Check if it's a WhatsApp number
     if (url.includes('whatsapp') || url.startsWith('+') || 
         url.startsWith('972') || url.match(/^\d{10,15}$/)) {
       
-      // Extract only numbers
       const phoneNumber = url.replace(/\D/g, '');
       
-      // Make sure it starts with country code
       const formattedNumber = phoneNumber.startsWith('972') 
         ? phoneNumber 
         : `972${phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber}`;
@@ -69,7 +63,6 @@ export function Footer() {
       return `https://wa.me/${formattedNumber}`;
     }
     
-    // Add https:// if missing for regular URLs
     if (!url.startsWith('http://') && !url.startsWith('https://') && 
         !url.startsWith('mailto:') && !url.startsWith('#')) {
       return `https://${url}`;
@@ -78,11 +71,9 @@ export function Footer() {
     return url;
   };
   
-  // Render a static link based on its properties
   const renderStaticLink = (link: StaticLink) => {
     const formattedUrl = formatUrl(link.url);
     
-    // WhatsApp link with icon
     if (link.name === 'whatsapp' && formattedUrl) {
       return (
         <li key={link.id}>
@@ -99,7 +90,6 @@ export function Footer() {
       );
     }
     
-    // Regular link with URL
     if (formattedUrl && link.fixed_text) {
       return (
         <li key={link.id}>
@@ -115,7 +105,6 @@ export function Footer() {
       );
     } 
     
-    // Plain text without URL
     if (link.fixed_text) {
       return (
         <li key={link.id}>
@@ -127,9 +116,7 @@ export function Footer() {
     return null;
   };
   
-  // Group links by their position or some other criteria for different footer sections
   const getLinksForSection = (sectionName: string) => {
-    // This is a simple example - you might want to implement more sophisticated grouping
     const sectionLinks = staticLinks.filter(link => {
       if (sectionName === "additional" && link.name !== 'whatsapp') {
         return true;
@@ -161,7 +148,7 @@ export function Footer() {
             <h4 className="font-alef text-xl text-purple-dark mb-4 gold-text-shadow">קישורים</h4>
             <ul className="space-y-2">
               <li><Link to="/about" className="text-purple-dark hover:text-gold transition-colors">אודות</Link></li>
-              <li><Link to="/articles" className="text-purple-dark hover:text-gold transition-colors">מאמרים ותרגילים</Link></li>
+              <li><Link to="/articles" className="text-purple-dark hover:text-gold transition-colors">מאמרים</Link></li>
               <li><Link to="/stories" className="text-purple-dark hover:text-gold transition-colors">סיפורים קצרים</Link></li>
               <li><Link to="/faq" className="text-purple-dark hover:text-gold transition-colors">שאלות ותשובות</Link></li>
               <li><Link to="/unsubscribe" className="text-purple-dark hover:text-gold transition-colors">הסרה מרשימת תפוצה</Link></li>
