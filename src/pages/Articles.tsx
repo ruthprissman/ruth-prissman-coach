@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -113,9 +114,10 @@ const Articles = () => {
                 <Input
                   type="text"
                   placeholder="חיפוש מאמרים..."
-                  className="pr-10 text-right"
+                  className="pr-10 text-right h-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  dir="rtl"
                 />
               </div>
               

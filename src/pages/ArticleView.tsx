@@ -67,6 +67,20 @@ const ArticleView = () => {
     ? convertToHebrewDate(new Date(article.published_at))
     : '';
   
+  // Convert markdown to HTML
+  const createMarkup = (content: string | null) => {
+    if (!content) return { __html: '' };
+    
+    // Basic markdown conversion (this is a simple implementation)
+    const htmlContent = content
+      .replace(/\n\n/g, '</p><p>') // Convert paragraphs
+      .replace(/\n/g, '<br />') // Convert line breaks
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+      .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic
+    
+    return { __html: `<p>${htmlContent}</p>` };
+  };
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -113,18 +127,10 @@ const ArticleView = () => {
               </div>
               
               <div className="prose prose-lg max-w-none">
-                {/* Render the markdown content safely */}
+                {/* Render the markdown content as HTML */}
                 <div 
-                  dangerouslySetInnerHTML={{ 
-                    __html: article.content_markdown ? article.content_markdown
-                      .replace(/&/g, '&amp;')
-                      .replace(/</g, '&lt;')
-                      .replace(/>/g, '&gt;')
-                      .replace(/"/g, '&quot;')
-                      .replace(/'/g, '&#039;')
-                      .replace(/\n/g, '<br />') 
-                    : '' 
-                  }} 
+                  dangerouslySetInnerHTML={createMarkup(article.content_markdown)} 
+                  className="text-gray-800 leading-relaxed"
                 />
               </div>
             </div>
