@@ -110,17 +110,12 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
   const isEditorReady = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const isLoading = useRef(false);
-  const defaultValueRef = useRef(defaultValue);
-  const contentRef = useRef(defaultValue);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const hasUnsavedChangesRef = useRef(false);
+  const [showUnsavedIndicator, setShowUnsavedIndicator] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
-  useEffect(() => {
-    if (defaultValue) {
-      defaultValueRef.current = defaultValue;
-      contentRef.current = defaultValue;
-    }
-  }, []);
+  // Stored in ref to avoid re-renders
+  const contentRef = useRef(defaultValue || '');
 
   const convertToMarkdown = (data: any): string => {
     if (!data || !data.blocks || data.blocks.length === 0) return '';
@@ -172,7 +167,8 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
         const newMarkdown = convertToMarkdown(data);
         contentRef.current = newMarkdown.trim();
         onChange(newMarkdown.trim());
-        setHasUnsavedChanges(false);
+        hasUnsavedChangesRef.current = false;
+        setShowUnsavedIndicator(false);
         setIsSaving(false);
         return true;
       }
@@ -185,10 +181,15 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     }
   };
 
-  // This only marks content as changed without saving
-  const handleContentChange = () => {
-    if (!isEditorReady.current) return;
-    setHasUnsavedChanges(true);
+  // Use a separate function triggered by button click to mark dirty state
+  const markAsDirty = () => {
+    // Only update unsaved indicator if not already shown (prevents unnecessary renders)
+    if (!showUnsavedIndicator) {
+      setShowUnsavedIndicator(true);
+    }
+    
+    // Always update the ref (no re-render)
+    hasUnsavedChangesRef.current = true;
   };
 
   const initializeEditor = () => {
@@ -237,17 +238,34 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
             shortcut: 'CMD+SHIFT+M',
           }
         },
-        data: markdownToEditorJS(defaultValueRef.current),
+        data: markdownToEditorJS(defaultValue),
         placeholder: placeholder,
         logLevel: 'ERROR',
+        autofocus: true,
+        // Crucial: turn off autosave
+        autosave: false,
         onReady: () => {
           console.log('Editor is ready');
           isLoading.current = false;
           isEditorReady.current = true;
-        },
-        onChange: () => {
-          handleContentChange();
+          
+          // When editor is ready, add a direct event listener for input that doesn't
+          // trigger React state updates during typing
+          if (containerRef.current) {
+            containerRef.current.addEventListener('input', () => {
+              hasUnsavedChangesRef.current = true;
+              
+              // Debounce UI updates to avoid re-renders during typing
+              if (!showUnsavedIndicator) {
+                // Use setTimeout to push to end of event queue
+                setTimeout(() => {
+                  setShowUnsavedIndicator(true);
+                }, 100);
+              }
+            }, false);
+          }
         }
+        // IMPORTANT: No onChange handler here - prevents constant re-rendering
       });
     } catch (error) {
       console.error('EditorJS initialization error:', error);
@@ -261,6 +279,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     return () => {
       if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
         try {
+          console.log('Destroying editor...');
           editorInstance.current.destroy();
         } catch (error) {
           console.error('Error destroying editor:', error);
@@ -273,10 +292,9 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
 
   React.useImperativeHandle(ref, () => ({
     saveContent,
-    hasUnsavedChanges: () => hasUnsavedChanges
+    hasUnsavedChanges: () => hasUnsavedChangesRef.current
   }));
 
-  // Manual save button
   const handleManualSave = async () => {
     await saveContent();
   };
@@ -295,7 +313,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
       />
       <div className="border-t p-2 flex justify-between items-center bg-gray-50">
         <div className="text-sm text-muted-foreground flex items-center gap-2">
-          {hasUnsavedChanges && (
+          {showUnsavedIndicator && (
             <>
               <AlertCircle className="h-4 w-4 text-amber-500" />
               <span className="text-amber-800">יש שינויים שלא נשמרו</span>
@@ -304,9 +322,9 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
         </div>
         <button
           onClick={handleManualSave}
-          disabled={!hasUnsavedChanges || isSaving}
+          disabled={!hasUnsavedChangesRef.current || isSaving}
           className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm ${
-            hasUnsavedChanges 
+            hasUnsavedChangesRef.current 
               ? 'bg-primary text-primary-foreground hover:bg-primary/90'
               : 'bg-gray-200 text-gray-500 cursor-not-allowed'
           }`}
