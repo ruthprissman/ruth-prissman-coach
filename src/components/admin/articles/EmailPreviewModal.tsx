@@ -25,13 +25,13 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
     
     // Create a simple HTML email preview
     return `
-      <div style="direction: rtl; text-align: right; font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+      <div style="direction: rtl; text-align: center; font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <div style="border-bottom: 2px solid #4a5568; padding-bottom: 15px; margin-bottom: 20px;">
           <h1 style="color: #2d3748; font-size: 24px; margin-bottom: 8px;">${title}</h1>
           <p style="color: #718096; font-size: 14px;">נשלח מאת: רות פריסמן</p>
         </div>
         
-        <div style="line-height: 1.6; color: #4a5568;">
+        <div style="line-height: 1.6; color: #4a5568; text-align: center;">
           ${formatContent(content)}
         </div>
         
