@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
@@ -90,6 +89,7 @@ const ArticleEditor: React.FC = () => {
   const [publications, setPublications] = useState<PublicationFormData[]>([]);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const editorRef = useRef<{ saveContent: () => Promise<boolean>, hasUnsavedChanges: () => boolean } | null>(null);
+  const contentRef = useRef<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -187,7 +187,6 @@ const ArticleEditor: React.FC = () => {
     Promise.all([fetchArticleData(), fetchCategories()]);
   }, [fetchArticleData, fetchCategories]);
 
-  // Monitor form changes to track unsaved changes
   useEffect(() => {
     const subscription = form.watch(() => {
       setHasUnsavedChanges(true);
@@ -196,11 +195,9 @@ const ArticleEditor: React.FC = () => {
     return () => subscription.unsubscribe();
   }, [form]);
 
-  // Add beforeunload event to warn when leaving with unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges || (editorRef.current && editorRef.current.hasUnsavedChanges())) {
-        // Standard way to show a confirmation dialog before leaving
         e.preventDefault();
         e.returnValue = 'יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?';
         return e.returnValue;
@@ -218,15 +215,31 @@ const ArticleEditor: React.FC = () => {
     setIsSaving(true);
     
     try {
-      // First save the editor content if there are changes
       if (editorRef.current) {
         const saved = await editorRef.current.saveContent();
         if (saved) {
           console.log('Editor content saved');
+          data = form.getValues();
+          console.log('Form values after editor save:', {
+            title: data.title,
+            content_length: data.content_markdown ? data.content_markdown.length : 0,
+            category: data.category_id
+          });
         }
       }
       
       const supabaseClient = getSupabaseClient();
+      
+      if (!data.content_markdown && contentRef.current) {
+        console.log('Using contentRef as fallback for missing content_markdown');
+        data.content_markdown = contentRef.current;
+      }
+      
+      console.log('Sending to Supabase:', {
+        title: data.title,
+        content_length: data.content_markdown ? data.content_markdown.length : 0,
+        category: data.category_id
+      });
       
       const formattedData = {
         title: data.title,
@@ -353,6 +366,13 @@ const ArticleEditor: React.FC = () => {
   };
 
   const onSubmit = async (data: FormValues) => {
+    console.log("Submitting article with content length:", data.content_markdown ? data.content_markdown.length : 0);
+    
+    if (editorRef.current && editorRef.current.hasUnsavedChanges()) {
+      await editorRef.current.saveContent();
+      data = form.getValues();
+    }
+    
     await saveArticle(data);
   };
 
@@ -407,13 +427,17 @@ const ArticleEditor: React.FC = () => {
   };
 
   const handleEditorChange = (content: string) => {
-    console.log('Editor content updated in parent');
+    console.log('Editor content updated in parent, length:', content.length);
+    
+    contentRef.current = content;
     
     form.setValue('content_markdown', content, { 
       shouldDirty: true,
       shouldValidate: false,
       shouldTouch: false
     });
+    
+    setHasUnsavedChanges(true);
   };
   
   const handleAddPublication = (publication: PublicationFormData) => {
@@ -439,7 +463,6 @@ const ArticleEditor: React.FC = () => {
     fetchArticleData();
   }, [fetchArticleData]);
 
-  // Warn user before navigating away with unsaved changes
   useEffect(() => {
     const warningText = 'יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?';
     
@@ -449,7 +472,6 @@ const ArticleEditor: React.FC = () => {
           return;
         }
         
-        // Stay on the page
         e.preventDefault();
         window.history.pushState(null, '', window.location.href);
       }

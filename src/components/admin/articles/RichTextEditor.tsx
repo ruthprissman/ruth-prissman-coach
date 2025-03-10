@@ -164,7 +164,11 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
       if (data) {
         const newMarkdown = convertToMarkdown(data);
         contentRef.current = newMarkdown.trim();
+        
         onChange(newMarkdown.trim());
+        
+        console.log('Content saved and passed to parent form:', newMarkdown.trim().substring(0, 100) + '...');
+        
         hasUnsavedChangesRef.current = false;
         setShowUnsavedIndicator(false);
         setIsSaving(false);
@@ -285,7 +289,12 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
   }));
 
   const handleManualSave = async () => {
-    await saveContent();
+    const saved = await saveContent();
+    if (saved) {
+      console.log('Manual save completed successfully');
+    } else {
+      console.warn('Manual save failed');
+    }
   };
 
   return (
