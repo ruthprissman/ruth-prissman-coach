@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
@@ -193,6 +192,7 @@ const ArticleView = () => {
                   </>
                 )}
               </div>
+              
               
               <div className="prose prose-lg max-w-none">
                 {/* Render the markdown content as HTML */}

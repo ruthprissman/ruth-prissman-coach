@@ -25,11 +25,30 @@ export const convertToHebrewDate = (date: Date): string => {
       const month = parts[1];
       const year = parts[2];
       
-      // Format the day with the Hebrew quote mark
-      const formattedDay = day.replace(/׳/g, '"');
+      // Format the day with the Hebrew quote mark (geresh for single digit, gershayim for double)
+      let formattedDay;
+      if (day.length === 2 && day.includes('׳')) {
+        // Single digit (like י׳) - replace with geresh
+        formattedDay = day.replace('׳', "'");
+      } else if (day.length > 2) {
+        // Double digit (like י״א) - place gershayim before the last character
+        const lastChar = day.slice(-1);
+        const beforeLast = day.slice(0, -1).replace('״', '');
+        formattedDay = beforeLast + '"' + lastChar;
+      } else {
+        formattedDay = day;
+      }
+      
+      // Format the year to ensure it uses gershayim before the last character
+      let formattedYear = year;
+      if (year.length > 2) {
+        const yearLastChar = year.slice(-1);
+        const yearBeforeLast = year.slice(0, -1).replace('״', '');
+        formattedYear = yearBeforeLast + '"' + yearLastChar;
+      }
       
       // Return the formatted date
-      return `${formattedDay} ${month} ${year}`;
+      return `${formattedDay} ${month} ${formattedYear}`;
     }
     
     return hebrewDate;
