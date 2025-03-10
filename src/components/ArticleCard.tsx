@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Article } from '@/types/article';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { convertToHebrewDateSync, formatDateInIsraelTimeZone } from '@/utils/dateUtils';
-import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
-import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
+import { format, parseISO } from 'date-fns';
 import { he } from 'date-fns/locale';
 
 interface ArticleCardProps {
@@ -60,19 +61,8 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
     
-    console.log('Original dateString:', dateString);
-    const initialDate = new Date(dateString);
-    console.log('After new Date():', initialDate);
-    
-    // First convert the UTC date to Israel time zone
-    const israelDate = toZonedTime(initialDate, 'Asia/Jerusalem');
-    console.log('After toZonedTime:', israelDate);
-    
-    // Then format it to display only the date part
-    const formattedDate = format(israelDate, 'dd/MM/yyyy', { locale: he });
-    console.log('Final formatted date:', formattedDate);
-    
-    return formattedDate;
+    // Use formatInTimeZone directly on the string to avoid double conversion
+    return formatInTimeZone(dateString, 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he });
   };
   
   const publicationDate = article.article_publications && 
