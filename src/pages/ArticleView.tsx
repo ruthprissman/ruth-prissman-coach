@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
@@ -129,7 +128,13 @@ const ArticleView = () => {
   
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
-    return formatInTimeZone(new Date(dateString), 'Asia/Jerusalem', 'dd MMMM yyyy', { locale: he });
+    
+    return formatInTimeZone(
+      new Date(dateString), 
+      'Asia/Jerusalem', 
+      'dd MMMM yyyy', 
+      { locale: he }
+    );
   };
   
   const createMarkup = (content: string | null) => {

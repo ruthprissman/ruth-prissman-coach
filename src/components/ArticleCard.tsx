@@ -59,7 +59,15 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
-    return formatInTimeZone(new Date(dateString), 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he });
+    
+    // First convert the UTC date to Israel time (UTC+2)
+    // Then format it to display only the date part
+    return formatInTimeZone(
+      new Date(dateString), 
+      'Asia/Jerusalem', 
+      'dd/MM/yyyy', 
+      { locale: he }
+    );
   };
   
   const publicationDate = article.article_publications && 

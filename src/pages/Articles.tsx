@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatInTimeZone } from 'date-fns-tz';
 
 const Articles = () => {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -79,29 +80,31 @@ const Articles = () => {
       const monthAgo = new Date();
       monthAgo.setMonth(monthAgo.getMonth() - 1);
       filtered = filtered.filter(article => {
-        const publicationDate = article.article_publications && 
+        const publicationDateStr = article.article_publications && 
           article.article_publications.length > 0 && 
           article.article_publications[0].scheduled_date
-            ? new Date(article.article_publications[0].scheduled_date)
-            : article.published_at ? new Date(article.published_at) : null;
+            ? article.article_publications[0].scheduled_date
+            : article.published_at;
             
-        if (!publicationDate) return false;
+        if (!publicationDateStr) return false;
         
-        return publicationDate >= monthAgo && publicationDate <= now;
+        const utcDate = new Date(publicationDateStr);
+        return utcDate >= monthAgo && utcDate <= now;
       });
     } else if (dateFilter === 'week') {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       filtered = filtered.filter(article => {
-        const publicationDate = article.article_publications && 
+        const publicationDateStr = article.article_publications && 
           article.article_publications.length > 0 && 
           article.article_publications[0].scheduled_date
-            ? new Date(article.article_publications[0].scheduled_date)
-            : article.published_at ? new Date(article.published_at) : null;
+            ? article.article_publications[0].scheduled_date
+            : article.published_at;
             
-        if (!publicationDate) return false;
+        if (!publicationDateStr) return false;
         
-        return publicationDate >= weekAgo && publicationDate <= now;
+        const utcDate = new Date(publicationDateStr);
+        return utcDate >= weekAgo && utcDate <= now;
       });
     }
 
