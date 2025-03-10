@@ -8,7 +8,8 @@ import { ChevronRight, Calendar, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { convertToHebrewDateSync, formatDateInIsraelTimeZone } from '@/utils/dateUtils';
-import { formatInTimeZone } from 'date-fns-tz';
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
+import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 
 interface SiteLink {
@@ -129,12 +130,11 @@ const ArticleView = () => {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
     
-    return formatInTimeZone(
-      new Date(dateString), 
-      'Asia/Jerusalem', 
-      'dd MMMM yyyy', 
-      { locale: he }
-    );
+    // First convert the UTC date to Israel time zone
+    const israelDate = toZonedTime(new Date(dateString), 'Asia/Jerusalem');
+    
+    // Then format it to display only the date part
+    return format(israelDate, 'dd MMMM yyyy', { locale: he });
   };
   
   const createMarkup = (content: string | null) => {

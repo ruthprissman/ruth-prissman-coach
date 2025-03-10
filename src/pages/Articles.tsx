@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatInTimeZone } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 const Articles = () => {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -76,6 +76,7 @@ const Articles = () => {
     }
 
     const now = new Date();
+    
     if (dateFilter === 'month') {
       const monthAgo = new Date();
       monthAgo.setMonth(monthAgo.getMonth() - 1);
@@ -88,8 +89,9 @@ const Articles = () => {
             
         if (!publicationDateStr) return false;
         
-        const utcDate = new Date(publicationDateStr);
-        return utcDate >= monthAgo && utcDate <= now;
+        // Convert UTC date to Israel time before comparison
+        const israelDate = toZonedTime(new Date(publicationDateStr), 'Asia/Jerusalem');
+        return israelDate >= monthAgo && israelDate <= now;
       });
     } else if (dateFilter === 'week') {
       const weekAgo = new Date();
@@ -103,8 +105,9 @@ const Articles = () => {
             
         if (!publicationDateStr) return false;
         
-        const utcDate = new Date(publicationDateStr);
-        return utcDate >= weekAgo && utcDate <= now;
+        // Convert UTC date to Israel time before comparison
+        const israelDate = toZonedTime(new Date(publicationDateStr), 'Asia/Jerusalem');
+        return israelDate >= weekAgo && israelDate <= now;
       });
     }
 
