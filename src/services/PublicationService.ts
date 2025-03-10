@@ -825,6 +825,7 @@ class PublicationService {
                   p {
                     margin-bottom: 16px;
                     text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                    text-align: center !important;
                   }
                   
                   a {
@@ -838,6 +839,7 @@ class PublicationService {
                   .content-wrapper {
                     padding: 30px 20px;
                     background-color: transparent;
+                    text-align: center;
                   }
                   
                   .title {
@@ -856,6 +858,7 @@ class PublicationService {
                     margin-bottom: 20px;
                     line-height: 1.8;
                     font-family: 'Heebo', sans-serif;
+                    text-align: center !important;
                   }
                   
                   .cta-button {
@@ -873,12 +876,14 @@ class PublicationService {
                   
                   .link-section {
                     margin: 30px 0;
+                    text-align: center;
                   }
                   
                   .footer {
                     margin-top: 40px;
                     padding-top: 20px;
                     border-top: 1px solid rgba(74, 20, 140, 0.2);
+                    text-align: center;
                   }
                   
                   .footer-link {
@@ -897,6 +902,7 @@ class PublicationService {
                     margin-top: 20px;
                     text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
                     font-family: 'Heebo', sans-serif;
+                    text-align: center;
                   }
                   
                   @media only screen and (max-width: 620px) {
@@ -915,19 +921,19 @@ class PublicationService {
                   }
                 </style>
               </head>
-              <body style="margin: 0; padding: 0; direction: rtl; background-color: transparent;">
+              <body style="margin: 0; padding: 0; direction: rtl; background-color: transparent; text-align: center;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: transparent;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: transparent; text-align: center;">
                         <tr>
-                          <td style="background-color: transparent;">
+                          <td style="background-color: transparent; text-align: center;">
                             <h1 class="title" style="text-align: center;">${article.title}</h1>
                           </td>
                         </tr>
                         <tr>
-                          <td class="content-wrapper">
-                            <div class="content">
+                          <td class="content-wrapper" style="text-align: center;">
+                            <div class="content" style="text-align: center !important; margin: 0 auto; width: 100%;">
                               ${formattedMarkdown}
                             </div>
                             
@@ -936,7 +942,7 @@ class PublicationService {
                                 <a href="${readMoreUrl}" class="cta-button" style="font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
                               </div>` : ''}
                             
-                            <div class="link-section">
+                            <div class="link-section" style="text-align: center;">
                               ${emailBodyLinks.join('')}
                             </div>
                             
@@ -1114,6 +1120,7 @@ class PublicationService {
                   p {
                     margin-bottom: 16px;
                     text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
+                    text-align: center !important;
                   }
                   
                   a {
@@ -1127,6 +1134,7 @@ class PublicationService {
                   .content-wrapper {
                     padding: 30px 20px;
                     background-color: transparent;
+                    text-align: center;
                   }
                   
                   .title {
@@ -1145,6 +1153,7 @@ class PublicationService {
                     margin-bottom: 20px;
                     line-height: 1.8;
                     font-family: 'Heebo', sans-serif;
+                    text-align: center !important;
                   }
                   
                   .cta-button {
@@ -1162,12 +1171,14 @@ class PublicationService {
                   
                   .link-section {
                     margin: 30px 0;
+                    text-align: center;
                   }
                   
                   .footer {
                     margin-top: 40px;
                     padding-top: 20px;
                     border-top: 1px solid rgba(74, 20, 140, 0.2);
+                    text-align: center;
                   }
                   
                   .footer-link {
@@ -1186,6 +1197,7 @@ class PublicationService {
                     margin-top: 20px;
                     text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);
                     font-family: 'Heebo', sans-serif;
+                    text-align: center;
                   }
                   
                   @media only screen and (max-width: 620px) {
@@ -1204,19 +1216,19 @@ class PublicationService {
                   }
                 </style>
               </head>
-              <body style="margin: 0; padding: 0; direction: rtl; background-color: transparent;">
+              <body style="margin: 0; padding: 0; direction: rtl; background-color: transparent; text-align: center;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td align="center" style="background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg'); background-size: cover; background-position: center; padding: 20px;">
-                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: transparent;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-container" style="max-width: 600px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background-color: transparent; text-align: center;">
                         <tr>
-                          <td style="background-color: transparent;">
+                          <td style="background-color: transparent; text-align: center;">
                             <h1 class="title" style="text-align: center;">${article.title}</h1>
                           </td>
                         </tr>
                         <tr>
-                          <td class="content-wrapper">
-                            <div class="content">
+                          <td class="content-wrapper" style="text-align: center;">
+                            <div class="content" style="text-align: center !important; margin: 0 auto; width: 100%;">
                               ${formattedMarkdown}
                             </div>
                             
@@ -1225,7 +1237,7 @@ class PublicationService {
                                 <a href="${readMoreUrl}" class="cta-button" style="font-family: 'Alef', sans-serif;">קרא עוד באתר</a>
                               </div>` : ''}
                             
-                            <div class="link-section">
+                            <div class="link-section" style="text-align: center;">
                               ${emailBodyLinks.join('')}
                             </div>
                             
@@ -1449,4 +1461,3 @@ class PublicationService {
 }
 
 export default PublicationService;
-
