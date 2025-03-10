@@ -1,11 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Article } from '@/types/article';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { convertToHebrewDateSync, formatDateInIsraelTimeZone } from '@/utils/dateUtils';
-import { formatInTimeZone } from 'date-fns-tz';
-import { format, parseISO } from 'date-fns';
+import { convertToHebrewDateSync } from '@/utils/dateUtils';
+import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 
 interface ArticleCardProps {
@@ -60,16 +58,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
-    
-    try {
-      // Parse the ISO string to a Date object first
-      const parsedDate = parseISO(dateString);
-      // Then format it in the Israel timezone
-      return formatInTimeZone(parsedDate, 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he });
-    } catch (error) {
-      console.error('Error formatting date:', error, dateString);
-      return '';
-    }
+    return format(new Date(dateString), 'dd/MM/yyyy', { locale: he });
   };
   
   const publicationDate = article.article_publications && 

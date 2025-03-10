@@ -9,9 +9,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { parseISO } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
-
 const Articles = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
@@ -89,14 +86,8 @@ const Articles = () => {
             : article.published_at;
             
         if (!publicationDateStr) return false;
-        
-        try {
-          const date = parseISO(publicationDateStr);
-          return date >= monthAgo && date <= now;
-        } catch (error) {
-          console.error('Error parsing date for filter:', error);
-          return false;
-        }
+        const date = new Date(publicationDateStr);
+        return date >= monthAgo && date <= now;
       });
     } else if (dateFilter === 'week') {
       const weekAgo = new Date();
@@ -109,14 +100,8 @@ const Articles = () => {
             : article.published_at;
             
         if (!publicationDateStr) return false;
-        
-        try {
-          const date = parseISO(publicationDateStr);
-          return date >= weekAgo && date <= now;
-        } catch (error) {
-          console.error('Error parsing date for filter:', error);
-          return false;
-        }
+        const date = new Date(publicationDateStr);
+        return date >= weekAgo && date <= now;
       });
     }
 
