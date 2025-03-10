@@ -20,8 +20,8 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
 }) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4 w-full">
-      <div className="w-full sm:w-1/2">
-        <Label htmlFor="category-filter" className="mb-2 block">סינון לפי קטגוריה</Label>
+      <div className="w-full sm:w-1/2 flex flex-col">
+        <Label htmlFor="category-filter" className="mb-2">סינון לפי קטגוריה</Label>
         <Select
           value={selectedCategory?.toString() || 'all'}
           onValueChange={(value) => onCategoryChange(value === 'all' ? null : Number(value))}
@@ -41,8 +41,8 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
         </Select>
       </div>
       
-      <div className="w-full sm:w-1/2">
-        <Label htmlFor="date-filter" className="mb-2 block">סינון לפי תאריך</Label>
+      <div className="w-full sm:w-1/2 flex flex-col">
+        <Label htmlFor="date-filter" className="mb-2">סינון לפי תאריך</Label>
         <Select
           value={dateFilter}
           onValueChange={(value) => onDateFilterChange(value)}

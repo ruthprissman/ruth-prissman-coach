@@ -9,6 +9,7 @@ import { ChevronRight, Calendar, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { convertToHebrewDate } from '@/utils/dateUtils';
+import { Label } from '@/components/ui/label';
 
 interface SiteLink {
   id: number;
@@ -106,7 +107,7 @@ const ArticleView = () => {
     return url;
   };
   
-  // Get the most recent publication date
+  // Get the most recent publication date - prioritize article_publications
   const getPublicationDate = () => {
     if (!article) return null;
     
@@ -259,6 +260,17 @@ const ArticleView = () => {
         .write-to-me {
           color: #4A235A !important;
           font-weight: bold !important;
+          transition: color 0.3s ease;
+        }
+        
+        .write-to-me:hover {
+          color: #7E69AB !important;
+        }
+        
+        .golden-bullet::before {
+          content: "•";
+          color: var(--gold);
+          margin-right: 0.5rem;
         }
         `}
       </style>

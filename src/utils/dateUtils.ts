@@ -25,8 +25,8 @@ export const convertToHebrewDate = (date: Date): string => {
       const month = parts[1];
       const year = parts[2];
       
-      // Add the quotation mark to the day
-      const formattedDay = day + '"';
+      // Format the day with the Hebrew quote mark
+      const formattedDay = day.replace(/׳/g, '"');
       
       // Return the formatted date
       return `${formattedDay} ${month} ${year}`;

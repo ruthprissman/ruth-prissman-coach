@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -9,6 +8,7 @@ import ArticleFilters from '@/components/ArticleFilters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const Articles = () => {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -86,7 +86,7 @@ const Articles = () => {
       const monthAgo = new Date();
       monthAgo.setMonth(monthAgo.getMonth() - 1);
       filtered = filtered.filter(article => {
-        // Get the most recent publication date
+        // Get the most recent publication date - prioritize article_publications
         const publicationDate = article.article_publications && 
           article.article_publications.length > 0 && 
           article.article_publications[0].published_date
@@ -99,7 +99,7 @@ const Articles = () => {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       filtered = filtered.filter(article => {
-        // Get the most recent publication date
+        // Get the most recent publication date - prioritize article_publications
         const publicationDate = article.article_publications && 
           article.article_publications.length > 0 && 
           article.article_publications[0].published_date
@@ -123,17 +123,21 @@ const Articles = () => {
           
           {/* Search and filters */}
           <div className="mb-8">
-            <div className="flex flex-col md:flex-row gap-4 items-center mb-6">
-              <div className="relative w-full md:w-1/3">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                <Input
-                  type="text"
-                  placeholder="חיפוש מאמרים..."
-                  className="pr-10 text-right h-10 filter-input"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  dir="rtl"
-                />
+            <div className="flex flex-col md:flex-row gap-4 items-end mb-6">
+              <div className="relative w-full md:w-1/3 flex flex-col">
+                <Label htmlFor="search" className="mb-2">חיפוש</Label>
+                <div className="relative">
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <Input
+                    id="search"
+                    type="text"
+                    placeholder="חיפוש מאמרים..."
+                    className="pr-10 text-right h-10 filter-input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    dir="rtl"
+                  />
+                </div>
               </div>
               
               <ArticleFilters 
@@ -184,6 +188,11 @@ const Articles = () => {
         .write-to-me {
           color: #4A235A !important;
           font-weight: bold !important;
+          transition: color 0.3s ease;
+        }
+        
+        .write-to-me:hover {
+          color: #7E69AB !important;
         }
         `}
       </style>
