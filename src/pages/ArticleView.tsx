@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
-import Footer from '@/components/Footer';
+import { Footer } from '@/components/Footer';
 import { Article } from '@/types/article';
 import { supabase } from '@/lib/supabase';
 import { ChevronRight, Calendar } from 'lucide-react';

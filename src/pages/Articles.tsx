@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
-import Footer from '@/components/Footer';
+import { Footer } from '@/components/Footer';
 import { supabase } from '@/lib/supabase';
 import { Article } from '@/types/article';
 import ArticleCard from '@/components/ArticleCard';
@@ -42,12 +41,12 @@ const Articles = () => {
         setArticles(articlesData);
         setFilteredArticles(articlesData);
 
-        // Extract unique categories from articles
+        // Extract unique categories from articles - fixed map creation
         const uniqueCategories = Array.from(
           new Map(
             articlesData
-              .filter(article => article.category_id !== null)
-              .map(article => article.categories ? [article.categories.id, article.categories] : [])
+              .filter(article => article.category_id !== null && article.categories !== null)
+              .map(article => [article.categories!.id, article.categories!])
           ).values()
         );
 
