@@ -254,12 +254,14 @@ const ArticleView = () => {
       <Footer />
       
       {/* Add custom styles */}
-      <style jsx>{`
+      <style>
+        {`
         .write-to-me {
           color: #4A235A !important;
           font-weight: bold !important;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };

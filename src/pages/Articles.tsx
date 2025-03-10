@@ -174,7 +174,8 @@ const Articles = () => {
       <Footer />
       
       {/* Add filter input styles */}
-      <style jsx>{`
+      <style>
+        {`
         .filter-input {
           height: 40px !important;
           text-align: right !important;
@@ -184,7 +185,8 @@ const Articles = () => {
           color: #4A235A !important;
           font-weight: bold !important;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
