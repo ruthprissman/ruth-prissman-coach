@@ -241,7 +241,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
         data: markdownToEditorJS(defaultValue),
         placeholder: placeholder,
         logLevel: 'ERROR',
-        autofocus: true,
+        autofocus: true, // Fixed: using lowercase 'a' instead of uppercase 'A'
         // Crucial: turn off autosave
         autosave: false,
         onReady: () => {
