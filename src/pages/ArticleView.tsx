@@ -50,13 +50,14 @@ const ArticleView = () => {
         const publicationDate = getPublicationDate(data as Article);
         if (publicationDate) {
           const date = new Date(publicationDate);
+          const israelDate = new Date(date.getTime() + (2 * 60 * 60 * 1000));
           
-          const syncHebrewDate = convertToHebrewDateSync(date);
+          const syncHebrewDate = convertToHebrewDateSync(israelDate);
           setHebrewDate(syncHebrewDate);
           
           try {
             const { convertToHebrewDate } = await import('@/utils/dateUtils');
-            const asyncHebrewDate = await convertToHebrewDate(date);
+            const asyncHebrewDate = await convertToHebrewDate(israelDate);
             setHebrewDate(asyncHebrewDate);
           } catch (error) {
             console.error('Error fetching async Hebrew date:', error);
@@ -133,15 +134,12 @@ const ArticleView = () => {
     
     console.log("🛠️ [ArticleView] formatDate input:", dateString);
     
-    // Parse the UTC date
     const utcDate = new Date(dateString);
     console.log("🛠️ [ArticleView] UTC Date object:", utcDate);
     
-    // Adjust to Israel Time (UTC+2)
     const israelDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
     console.log("🛠️ [ArticleView] Adjusted to Israel Time:", israelDate);
     
-    // Format the date
     const formattedDate = format(israelDate, 'dd MMMM yyyy', { locale: he });
     console.log("🛠️ [ArticleView] Final formatted date:", formattedDate);
     
