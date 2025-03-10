@@ -181,11 +181,11 @@ const ArticleView = () => {
             </div>
           ) : article ? (
             <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6 md:p-8 animate-fade-in">
-              <h1 className="text-3xl md:text-4xl font-alef font-bold text-purple-darkest mb-4">
+              <h1 className="text-3xl md:text-4xl font-alef font-bold text-purple-darkest mb-4 text-center">
                 {article.title}
               </h1>
               
-              <div className="flex flex-col sm:flex-row sm:items-center text-sm text-gray-600 mb-8 space-y-2 sm:space-y-0 sm:space-x-4 sm:space-x-reverse">
+              <div className="flex flex-col sm:flex-row sm:items-center text-sm text-gray-600 mb-8 space-y-2 sm:space-y-0 sm:space-x-4 sm:space-x-reverse justify-center">
                 <div className="flex items-center">
                   <Calendar size={16} className="ml-2 text-gold" />
                   <span className="text-gold-dark">{hebrewDate}</span>
@@ -203,26 +203,26 @@ const ArticleView = () => {
                 )}
               </div>
               
-              <div className="prose prose-lg max-w-none">
+              <div className="prose prose-lg max-w-none text-center">
                 <div 
                   dangerouslySetInnerHTML={createMarkup(article.content_markdown)} 
-                  className="text-gray-800 leading-relaxed"
+                  className="text-gray-800 leading-relaxed text-center [&>*]:text-center [&>p]:text-center [&>a]:block [&>a]:text-center"
                 />
               </div>
               
               {article.contact_email && (
-                <div className="mt-8 p-4 bg-purple-light/5 rounded-lg border border-purple-light/20">
-                  <a href={`mailto:${article.contact_email}`} className="write-to-me flex items-center">
+                <div className="mt-8 p-4 bg-purple-light/5 rounded-lg border border-purple-light/20 text-center">
+                  <a href={`mailto:${article.contact_email}`} className="write-to-me flex items-center justify-center">
                     <MessageSquare size={18} className="ml-2" />
-                    כתבי ��י: {article.contact_email}
+                    כתבי לי: {article.contact_email}
                   </a>
                 </div>
               )}
               
               {siteLinks.length > 0 && (
-                <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="mt-8 pt-6 border-t border-gray-200 text-center">
                   <h3 className="text-lg font-alef font-bold text-purple-dark mb-3">קישורים נוספים</h3>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 flex flex-col items-center">
                     {siteLinks.map(link => {
                       const url = formatUrl(link.url);
                       if (url && link.fixed_text) {
