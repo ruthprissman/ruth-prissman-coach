@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -20,6 +21,7 @@ interface RichTextEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  articleTitle?: string; // Added article title prop
 }
 
 const DEFAULT_INITIAL_DATA = {
@@ -104,6 +106,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
   onChange,
   placeholder = 'התחל לכתוב כאן...',
   className = '',
+  articleTitle = '', // Default to empty string if not provided
 }, ref) => {
   const editorInstance = useRef<EditorJS | null>(null);
   const isEditorReady = useRef(false);
@@ -114,6 +117,16 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
   const [isSaving, setIsSaving] = useState(false);
   
   const contentRef = useRef(defaultValue || '');
+
+  // Process email links to convert "כתבי לי" into clickable mailto links
+  const processEmailLinks = (content: string, title: string): string => {
+    const encodedTitle = encodeURIComponent(`שאלה על ${title}`);
+    const emailAddress = "RuthPrissman@gmail.com";
+    const emailLink = `<a href="mailto:${emailAddress}?subject=${encodedTitle}">כתבי לי</a>`;
+
+    // Replace all occurrences of "כתבי לי" with the email link
+    return content.replace(/כתבי לי/g, emailLink);
+  };
 
   const convertToMarkdown = (data: any): string => {
     if (!data || !data.blocks || data.blocks.length === 0) return '';
@@ -150,7 +163,9 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
       }
     }
     
-    return markdown.trim();
+    // Process email links before returning the markdown
+    const processedMarkdown = articleTitle ? processEmailLinks(markdown.trim(), articleTitle) : markdown.trim();
+    return processedMarkdown;
   };
 
   const saveContent = async () => {
@@ -163,11 +178,11 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
       
       if (data) {
         const newMarkdown = convertToMarkdown(data);
-        contentRef.current = newMarkdown.trim();
+        contentRef.current = newMarkdown;
         
-        onChange(newMarkdown.trim());
+        onChange(newMarkdown);
         
-        console.log('Content saved and passed to parent form:', newMarkdown.trim().substring(0, 100) + '...');
+        console.log('Content saved and passed to parent form:', newMarkdown.substring(0, 100) + '...');
         
         hasUnsavedChangesRef.current = false;
         setShowUnsavedIndicator(false);

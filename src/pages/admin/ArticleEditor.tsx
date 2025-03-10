@@ -714,6 +714,7 @@ const ArticleEditor: React.FC = () => {
                         onChange={handleEditorChange}
                         placeholder="התחל לכתוב את תוכן המאמר כאן..."
                         className="min-h-[400px] w-full"
+                        articleTitle={form.getValues().title}
                       />
                     </FormControl>
                     <FormMessage />
