@@ -4,6 +4,8 @@ import Index from './pages/Index';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Stories from './pages/Stories';
+import Articles from './pages/Articles';
+import ArticleView from './pages/ArticleView';
 import Unsubscribe from './pages/Unsubscribe';
 import NotFound from './pages/NotFound';
 import Login from './pages/admin/Login';
@@ -38,6 +40,8 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/stories" element={<Stories />} />
+              <Route path="/articles" element={<Articles />} />
+              <Route path="/articles/:id" element={<ArticleView />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
 
               {/* Admin auth routes - Make sure these are outside ProtectedRoute */}
