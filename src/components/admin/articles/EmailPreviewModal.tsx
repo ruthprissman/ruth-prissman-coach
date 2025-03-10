@@ -65,6 +65,10 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
     // Replace italic text
     formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
     
+    // Add WhatsApp icon to all WhatsApp links (simulating the actual email template behavior)
+    formatted = formatted.replace(/<a href="(https:\/\/wa\.me\/.*?)"(.*?)>(.*?)<\/a>/g, 
+      '<a href="$1"$2 style="display: inline-flex; align-items: center;"><span style="margin-left: 5px;">📱</span>$3</a>');
+    
     return formatted;
   };
 
