@@ -8,7 +8,8 @@ import { ChevronRight, Calendar, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { convertToHebrewDateSync } from '@/utils/dateUtils';
-import { Label } from '@/components/ui/label';
+import { formatInTimeZone } from 'date-fns-tz';
+import { he } from 'date-fns/locale';
 
 interface SiteLink {
   id: number;
@@ -45,16 +46,13 @@ const ArticleView = () => {
         
         setArticle(data as Article);
         
-        // Get publication date and format Hebrew date
         const publicationDate = getPublicationDate(data as Article);
         if (publicationDate) {
           const date = new Date(publicationDate);
           
-          // Use synchronous version first
           const syncHebrewDate = convertToHebrewDateSync(date);
           setHebrewDate(syncHebrewDate);
           
-          // Try to get the async version which might be more accurate
           try {
             const { convertToHebrewDate } = await import('@/utils/dateUtils');
             const asyncHebrewDate = await convertToHebrewDate(date);
@@ -64,7 +62,6 @@ const ArticleView = () => {
           }
         }
         
-        // Fetch site links
         const { data: linksData, error: linksError } = await supabase
           .from('static_links')
           .select('*')
@@ -74,7 +71,6 @@ const ArticleView = () => {
           setSiteLinks(linksData);
         }
         
-        // Mark as read in localStorage
         const readArticles = JSON.parse(localStorage.getItem('readArticles') || '[]');
         if (!readArticles.includes(Number(id))) {
           localStorage.setItem('readArticles', JSON.stringify([...readArticles, Number(id)]));
@@ -91,25 +87,20 @@ const ArticleView = () => {
     }
   }, [id]);
   
-  // Format URL for links
   const formatUrl = (url: string | null): string | null => {
     if (!url) return null;
     
     url = url.trim();
     
-    // Check if it's an email address
     if (url.includes('@') && !url.startsWith('mailto:')) {
       return `mailto:${url}`;
     }
     
-    // Check if it's a WhatsApp number
     if (url.includes('whatsapp') || url.startsWith('+') || 
         url.startsWith('972') || url.match(/^\d{10,15}$/)) {
       
-      // Extract only numbers
       const phoneNumber = url.replace(/\D/g, '');
       
-      // Make sure it starts with country code
       const formattedNumber = phoneNumber.startsWith('972') 
         ? phoneNumber 
         : `972${phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber}`;
@@ -117,7 +108,6 @@ const ArticleView = () => {
       return `https://wa.me/${formattedNumber}`;
     }
     
-    // Add https:// if missing for regular URLs
     if (!url.startsWith('http://') && !url.startsWith('https://') && 
         !url.startsWith('mailto:') && !url.startsWith('#')) {
       return `https://${url}`;
@@ -126,7 +116,6 @@ const ArticleView = () => {
     return url;
   };
   
-  // Get the most recent publication date - prioritize article_publications scheduled_date
   const getPublicationDate = (article: Article | null) => {
     if (!article) return null;
     
@@ -137,27 +126,19 @@ const ArticleView = () => {
     return article.published_at;
   };
   
-  // Format the publication date
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('he-IL', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }).format(date);
+    return formatInTimeZone(new Date(dateString), 'Asia/Jerusalem', 'dd MMMM yyyy', { locale: he });
   };
   
-  // Convert markdown to HTML
   const createMarkup = (content: string | null) => {
     if (!content) return { __html: '' };
     
-    // Basic markdown conversion
     const htmlContent = content
-      .replace(/\n\n/g, '</p><p>') // Convert paragraphs
-      .replace(/\n/g, '<br />') // Convert line breaks
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-      .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Italic
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br />')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>');
     
     return { __html: `<p>${htmlContent}</p>` };
   };
@@ -207,16 +188,13 @@ const ArticleView = () => {
                 )}
               </div>
               
-              
               <div className="prose prose-lg max-w-none">
-                {/* Render the markdown content as HTML */}
                 <div 
                   dangerouslySetInnerHTML={createMarkup(article.content_markdown)} 
                   className="text-gray-800 leading-relaxed"
                 />
               </div>
               
-              {/* Contact info */}
               {article.contact_email && (
                 <div className="mt-8 p-4 bg-purple-light/5 rounded-lg border border-purple-light/20">
                   <a href={`mailto:${article.contact_email}`} className="write-to-me flex items-center">
@@ -226,7 +204,6 @@ const ArticleView = () => {
                 </div>
               )}
               
-              {/* Site links */}
               {siteLinks.length > 0 && (
                 <div className="mt-8 pt-6 border-t border-gray-200">
                   <h3 className="text-lg font-alef font-bold text-purple-dark mb-3">קישורים נוספים</h3>
@@ -268,7 +245,6 @@ const ArticleView = () => {
       
       <Footer />
       
-      {/* Add custom styles */}
       <style>
         {`
         .write-to-me {

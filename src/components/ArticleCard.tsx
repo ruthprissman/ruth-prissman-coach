@@ -3,6 +3,8 @@ import { Article } from '@/types/article';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { convertToHebrewDateSync } from '@/utils/dateUtils';
+import { formatInTimeZone } from 'date-fns-tz';
+import { he } from 'date-fns/locale';
 
 interface ArticleCardProps {
   article: Article;
@@ -14,15 +16,12 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   const [isRead, setIsRead] = useState(false);
   const [hebrewDate, setHebrewDate] = useState('');
   
-  // Check if the article has been read (from localStorage)
   useEffect(() => {
     const readArticles = JSON.parse(localStorage.getItem('readArticles') || '[]');
     setIsRead(readArticles.includes(article.id));
   }, [article.id]);
   
-  // Format Hebrew date
   useEffect(() => {
-    // Get publication date - prioritize article_publications scheduled_date if available
     const publicationDate = article.article_publications && 
       article.article_publications.length > 0 && 
       article.article_publications[0].scheduled_date
@@ -31,11 +30,9 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
     
     if (publicationDate) {
       const date = new Date(publicationDate);
-      // Use synchronous version for component rendering
       const formattedDate = convertToHebrewDateSync(date);
       setHebrewDate(formattedDate);
       
-      // Also try to get the async version which might be more accurate
       const fetchHebrewDate = async () => {
         try {
           const { convertToHebrewDate } = await import('@/utils/dateUtils');
@@ -50,7 +47,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
     }
   }, [article]);
   
-  // Mark article as read when clicked
   const markAsRead = () => {
     const readArticles = JSON.parse(localStorage.getItem('readArticles') || '[]');
     if (!readArticles.includes(article.id)) {
@@ -60,18 +56,11 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
     }
   };
   
-  // Format the publication date (Gregorian)
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('he-IL', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }).format(date);
+    return formatInTimeZone(new Date(dateString), 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he });
   };
   
-  // Get publication date - prioritize article_publications scheduled_date if available
   const publicationDate = article.article_publications && 
     article.article_publications.length > 0 && 
     article.article_publications[0].scheduled_date

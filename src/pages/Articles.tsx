@@ -19,12 +19,10 @@ const Articles = () => {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [dateFilter, setDateFilter] = useState<string>('all');
 
-  // Fetch articles and categories on component mount
   useEffect(() => {
     const fetchArticles = async () => {
       setIsLoading(true);
       try {
-        // Fetch only published articles with article_publications
         const { data, error } = await supabase
           .from('professional_content')
           .select(`
@@ -43,7 +41,6 @@ const Articles = () => {
         setArticles(articlesData);
         setFilteredArticles(articlesData);
 
-        // Extract unique categories from articles - fixed map creation
         const uniqueCategories = Array.from(
           new Map(
             articlesData
@@ -63,11 +60,9 @@ const Articles = () => {
     fetchArticles();
   }, []);
 
-  // Apply filters when dependencies change
   useEffect(() => {
     let filtered = [...articles];
 
-    // Apply search filter
     if (searchQuery) {
       const lowercaseQuery = searchQuery.toLowerCase();
       filtered = filtered.filter(article => 
@@ -75,38 +70,40 @@ const Articles = () => {
       );
     }
 
-    // Apply category filter
     if (selectedCategory !== null) {
       filtered = filtered.filter(article => article.category_id === selectedCategory);
     }
 
-    // Apply date filter
     const now = new Date();
     if (dateFilter === 'month') {
       const monthAgo = new Date();
       monthAgo.setMonth(monthAgo.getMonth() - 1);
       filtered = filtered.filter(article => {
-        // Get the most recent publication date - prioritize article_publications scheduled_date
         const publicationDate = article.article_publications && 
           article.article_publications.length > 0 && 
           article.article_publications[0].scheduled_date
             ? new Date(article.article_publications[0].scheduled_date)
             : article.published_at ? new Date(article.published_at) : null;
             
-        return publicationDate && publicationDate >= monthAgo && publicationDate <= now;
+        if (!publicationDate) return false;
+        
+        const israelPublicationDate = new Date(publicationDate.getTime() + (2 * 60 * 60 * 1000));
+        return israelPublicationDate >= monthAgo && israelPublicationDate <= now;
       });
     } else if (dateFilter === 'week') {
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       filtered = filtered.filter(article => {
-        // Get the most recent publication date - prioritize article_publications scheduled_date
         const publicationDate = article.article_publications && 
           article.article_publications.length > 0 && 
           article.article_publications[0].scheduled_date
             ? new Date(article.article_publications[0].scheduled_date)
             : article.published_at ? new Date(article.published_at) : null;
             
-        return publicationDate && publicationDate >= weekAgo && publicationDate <= now;
+        if (!publicationDate) return false;
+        
+        const israelPublicationDate = new Date(publicationDate.getTime() + (2 * 60 * 60 * 1000));
+        return israelPublicationDate >= weekAgo && israelPublicationDate <= now;
       });
     }
 
@@ -121,7 +118,6 @@ const Articles = () => {
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold text-purple-darkest mb-8 text-center">מאמרים</h1>
           
-          {/* Search and filters */}
           <div className="mb-8">
             <div className="flex flex-col md:flex-row gap-4 items-end mb-6">
               <div className="relative w-full md:w-1/3 flex flex-col">
@@ -150,7 +146,6 @@ const Articles = () => {
             </div>
           </div>
           
-          {/* Articles grid */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, index) => (
@@ -177,7 +172,6 @@ const Articles = () => {
       
       <Footer />
       
-      {/* Add filter input styles */}
       <style>
         {`
         .filter-input {
