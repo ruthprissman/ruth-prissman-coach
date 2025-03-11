@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -75,19 +76,25 @@ const Index = () => {
             </div>
           </section>
           
-          {/* Hero Section */}
+          {/* Hero Section with updated text */}
           <section className="pb-20 px-4 relative">
             <div className="container mx-auto relative z-10">
-              <div className="mx-auto text-right max-w-3xl">
-                <div className="backdrop-blur-sm p-6 rounded-lg mb-8 mr-0 ml-auto">
-                  <p className="text-[#4A235A] mb-4 text-lg">
-                    ברוכים הבאים לאתר שלי! אני רות פריסמן, מטפלת בשיטת "קוד הנפש" - גישה ייחודית המאפשרת מבט חדש על אתגרי החיים והתמודדויות יומיומיות.
+              <div className="mx-auto text-center max-w-3xl">
+                <div className="backdrop-blur-sm p-6 rounded-lg mb-8 mx-auto">
+                  <p className="text-[#4A235A] mb-4 text-lg font-heebo">
+                    חיים שלנו הם סיפור מתמשך.
                   </p>
-                  <p className="text-[#4A235A] text-lg">
-                    אני מאמינה שלכל אחד יש את הכוח לשנות את חייו, ותפקידי הוא לעזור לך למצוא את המפתחות לשינוי אמיתי ומתמשך בחייך.
+                  <p className="text-[#4A235A] mb-4 text-lg font-heebo">
+                    סיפור שמורכב מרגשות, רצונות, היגיון ובחירות. סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.
+                  </p>
+                  <p className="text-[#4A235A] mb-4 text-lg font-heebo">
+                    בשיטת קוד הנפש, שפותחה על ידי שמחה אביטן, אנחנו לומדים לקרוא מחדש את הסיפור הפנימי שלנו – עם פחות תלות בסיפור החיצוני.
+                  </p>
+                  <p className="text-[#4A235A] text-lg font-heebo">
+                    ללמוד להבין את עצמנו, למצוא שלווה, בהירות ושמחה, ופשוט לבחור לחיות טוב.
                   </p>
                 </div>
-                <div className="flex justify-end space-x-4 space-x-reverse">
+                <div className="flex justify-center space-x-4 space-x-reverse">
                   <a 
                     href="/appointment" 
                     className="bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300"
