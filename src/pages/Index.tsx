@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -76,11 +75,11 @@ const Index = () => {
             </div>
           </section>
           
-          {/* Hero Section with updated text */}
+          {/* Hero Section with updated text width */}
           <section className="pb-20 px-4 relative">
             <div className="container mx-auto relative z-10">
               <div className="mx-auto text-center max-w-3xl">
-                <div className="backdrop-blur-sm p-6 rounded-lg mb-8 mx-auto">
+                <div className="backdrop-blur-sm p-6 rounded-lg mb-8 mx-auto w-full md:w-3/5 lg:w-3/5 mx-auto">
                   <p className="text-[#4A235A] mb-4 text-lg font-heebo">
                     חיים שלנו הם סיפור מתמשך.
                   </p>
@@ -93,20 +92,6 @@ const Index = () => {
                   <p className="text-[#4A235A] text-lg font-heebo">
                     ללמוד להבין את עצמנו, למצוא שלווה, בהירות ושמחה, ופשוט לבחור לחיות טוב.
                   </p>
-                </div>
-                <div className="flex justify-center space-x-4 space-x-reverse">
-                  <a 
-                    href="/appointment" 
-                    className="bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300"
-                  >
-                    קביעת פגישה
-                  </a>
-                  <a 
-                    href="/about" 
-                    className="bg-white/40 hover:bg-white/60 text-[#4A235A] font-bold py-3 px-6 rounded-lg transition-colors duration-300 shadow-gold-sm border border-gold/20"
-                  >
-                    למידע נוסף
-                  </a>
                 </div>
               </div>
             </div>
