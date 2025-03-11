@@ -75,6 +75,90 @@ const Index = () => {
             </div>
           </section>
           
+          {/* Three Blocks Section */}
+          <section className="py-16 px-4 relative">
+            <div className="container mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                {/* Block 1: Download Guide */}
+                <div className="backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/20 flex flex-col items-center">
+                  <div className="h-20 w-20 mb-4 rounded-full bg-gold/10 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-gold" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M12 8V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M8 12L12 16L16 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold font-alef text-[#4A235A] mb-4 text-center">
+                    אז מה אני עושה?
+                  </h3>
+                  <p className="text-[#4A235A] text-center mb-6">
+                    הכירי שיטה עמוקה המבוססת על היהדות, שתוביל אותך לאיזון פנימי של המידות. נגלה יחד איך למצוא בתוכך תשובות אמיתיות, להתחבר ולהנות מכוחות הנפש שלך, וליצור חיים של בהירות, אמונה ושלווה.
+                  </p>
+                  <a 
+                    href="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_file//Code_Of_The_Soul_Guide_Ruth_Prissman.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 mb-4 text-center w-full md:w-auto"
+                  >
+                    לחצי כאן להורדת חוברת הסבר
+                  </a>
+                  <a 
+                    href="/articles"
+                    className="text-[#4A235A] hover:text-gold transition-colors duration-300 font-bold"
+                  >
+                    למאמרי עומק לחצי כאן
+                  </a>
+                </div>
+
+                {/* Block 2: Stories */}
+                <div className="backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/20 flex flex-col items-center">
+                  <div className="h-20 w-20 mb-4 rounded-full bg-gold/10 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-gold" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 6V18C7 16 9 16 12 18C15 16 17 16 21 18V6C17 4 15 4 12 6C9 4 7 4 3 6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M12 6V18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold font-alef text-[#4A235A] mb-4 text-center">
+                    במילים קצת אחרות
+                  </h3>
+                  <p className="text-[#4A235A] text-center mb-6">
+                    את הסיפורים הבאים כתבתי מתוך תהליכים עמוקים שעברתי, עם עצמי ועם אחרים. תמצאי בהם דמויות שנוגעות בלב, מעוררות מחשבה, ומאפשרות לך להתחבר לעצמך ולקבל השראה לחיים מאוזנים ומדויקים יותר.
+                  </p>
+                  <a 
+                    href="/stories"
+                    className="bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 text-center w-full md:w-auto"
+                  >
+                    לקריאה ולהורדה
+                  </a>
+                </div>
+
+                {/* Block 3: Book Appointment */}
+                <div className="backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/20 flex flex-col items-center">
+                  <div className="h-20 w-20 mb-4 rounded-full bg-gold/10 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-gold" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="3" y="4" width="18" height="16" rx="3" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M7 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M17 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M3 10H21" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold font-alef text-[#4A235A] mb-4 text-center">
+                    בואי נדבר
+                  </h3>
+                  <p className="text-[#4A235A] text-center mb-6">
+                    אם את מרגישה מוכנה להביט פנימה, להבין את עצמך טוב יותר ולהבהיר את המציאות שסביבך ואת מקומך בתוכה, את מוזמנת לקבוע פגישה. נעבור יחד את הדרך ברגישות ובבהירות, בדרך לחיים יציבים, מאוזנים ומדויקים.
+                  </p>
+                  <a 
+                    href="/appointment"
+                    className="bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 text-center w-full md:w-auto"
+                  >
+                    לקביעת פגישה
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+          
           {/* Hero Section with updated text width */}
           <section className="pb-20 px-4 relative">
             <div className="container mx-auto relative z-10">
