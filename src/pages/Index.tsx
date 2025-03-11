@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -53,9 +52,9 @@ const Index = () => {
         
         <main className="flex-grow">
           {/* Header with Logo Section */}
-          <section className="pt-24 pb-10 px-4 relative">
+          <section className="pt-24 pb-6 px-4 relative">
             <div className="container mx-auto relative z-10">
-              <div className="flex flex-col items-center justify-center mb-8">
+              <div className="flex flex-col items-center justify-center mb-4">
                 <div className="flex flex-row items-center justify-center gap-4">
                   <img 
                     ref={logoRef}
@@ -76,30 +75,31 @@ const Index = () => {
             </div>
           </section>
           
-          {/* Hero Section with updated text width */}
-          <section className="py-16 px-4 relative">
+          {/* Updated Hero Section with specified HTML text and reduced spacing */}
+          <section className="py-8 px-4 relative">
             <div className="container mx-auto relative z-10">
-              <div className="mx-auto text-center max-w-3xl">
-                <div className="backdrop-blur-sm p-6 rounded-lg mb-8 mx-auto w-full md:w-3/5 lg:w-3/5 mx-auto">
-                  <p className="text-[#4A235A] mb-4 text-lg font-heebo">
-                    חיים שלנו הם סיפור מתמשך.
-                  </p>
-                  <p className="text-[#4A235A] mb-4 text-lg font-heebo">
-                    סיפור שמורכב מרגשות, רצונות, היגיון ובחירות. סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.
-                  </p>
-                  <p className="text-[#4A235A] mb-4 text-lg font-heebo">
-                    בשיטת קוד הנפש, שפותחה על ידי שמחה אביטן, אנחנו לומדים לקרוא מחדש את הסיפור הפנימי שלנו – עם פחות תלות בסיפור החיצוני.
-                  </p>
+              <div className="mx-auto text-center">
+                <div className="backdrop-blur-sm p-6 rounded-lg mb-6 mx-auto w-full md:w-4/5 lg:w-4/5">
+                  <h3 className="text-[#4A235A] text-lg font-heebo mb-4">החיים שלנו הם סיפור מתמשך.</h3>
+                  
                   <p className="text-[#4A235A] text-lg font-heebo">
-                    ללמוד להבין את עצמנו, למצוא שלווה, בהירות ושמחה, ופשוט לבחור לחיות טוב.
+                    סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.<br />
+                    סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.<br /><br />
+                    
+                    בשיטת קוד הנפש, שפותחה על ידי שמחה אביטן,<br />
+                    אנחנו לומדים לקרוא מחדש את הסיפור הפנימי שלנו,<br />
+                    עם פחות תלות בסיפור החיצוני.<br /><br />
+                    
+                    ללמוד להבין את עצמנו, למצוא שלווה, בהירות ושמחה,<br />
+                    ופשוט לבחור לחיות טוב.
                   </p>
                 </div>
               </div>
             </div>
           </section>
           
-          {/* Three Blocks Section - Updated positioning and styling */}
-          <section className="py-16 px-4 relative">
+          {/* Three Blocks Section - With reduced top spacing */}
+          <section className="py-10 px-4 relative">
             <div className="container mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 {/* Block 1: Download Guide */}
