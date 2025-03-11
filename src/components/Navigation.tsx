@@ -49,8 +49,8 @@ export function Navigation() {
       scrolled ? "bg-white/90 backdrop-blur-sm shadow-md" : "bg-transparent"
     )}>
       <div className="container mx-auto px-4 py-3">
-        <div className="flex justify-between items-center">
-          <div className="md:hidden">
+        <div className="flex flex-wrap justify-between items-center">
+          <div className="md:hidden order-1">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-[#4A235A] p-2 focus:outline-none"
@@ -59,7 +59,7 @@ export function Navigation() {
             </button>
           </div>
           
-          <div className="hidden md:flex items-center space-x-6 space-x-reverse">
+          <div className="hidden md:flex items-center space-x-6 space-x-reverse order-2">
             {navItems.map((item) => (
               <Link
                 key={item.name}
@@ -73,6 +73,11 @@ export function Navigation() {
                 {item.icon ? item.icon : item.name}
               </Link>
             ))}
+          </div>
+
+          {/* Copyright notice */}
+          <div className="text-[#4A235A] text-xs md:text-sm order-3 w-full md:w-auto md:order-3 mt-2 md:mt-0 text-center md:text-left">
+            © כל הזכויות שמורות לשמחה אביטן - מפתחת השיטה קוד הנפש
           </div>
         </div>
 
