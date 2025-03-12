@@ -5,6 +5,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import markdownit from 'markdown-it';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 // Type for FAQ items
 interface FAQItem {
@@ -13,6 +15,7 @@ interface FAQItem {
   answer_markdown: string;
 }
 
+// Initialize markdown parser
 const md = markdownit({
   html: true,
   linkify: true,
@@ -23,29 +26,60 @@ export default function FAQ() {
   const [faqItems, setFaqItems] = useState<FAQItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchFAQs = async () => {
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
+        setError(null);
+        
+        const { data, error: supabaseError } = await supabase
           .from('faq_questions')
           .select('*')
           .order('id');
 
-        if (error) throw error;
+        if (supabaseError) {
+          console.error('Supabase error:', supabaseError);
+          throw supabaseError;
+        }
 
-        setFaqItems(data || []);
+        // Validate data before setting it
+        if (data && Array.isArray(data)) {
+          setFaqItems(data);
+        } else {
+          console.warn('No FAQ data received or data is not an array', data);
+          setFaqItems([]);
+        }
       } catch (err) {
         console.error('Error fetching FAQs:', err);
         setError('אירעה שגיאה בטעינת השאלות. אנא נסו שוב מאוחר יותר.');
+        toast({
+          variant: "destructive",
+          title: "שגיאה בטעינת נתונים",
+          description: "לא ניתן לטעון את השאלות ותשובות כרגע. אנא נסו שוב מאוחר יותר.",
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchFAQs();
-  }, []);
+  }, [toast]);
+
+  // Safe markdown render function with validation
+  const renderMarkdown = (markdownText: string | null | undefined) => {
+    if (!markdownText || typeof markdownText !== 'string') {
+      return '';
+    }
+    
+    try {
+      return md.render(markdownText);
+    } catch (err) {
+      console.error('Error rendering markdown:', err);
+      return '<p>שגיאה בהצגת התוכן</p>';
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -71,7 +105,10 @@ export default function FAQ() {
           ) : error ? (
             <div className="text-center text-red-500 py-8">{error}</div>
           ) : faqItems.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">לא נמצאו שאלות ותשובות.</div>
+            <div className="text-center text-gray-500 py-8">
+              <p className="text-lg font-medium">כרגע אין תוכן זמין בעמוד שאלות ותשובות.</p>
+              <p className="mt-2">אנא בקרו שוב בקרוב או צרו קשר איתנו לקבלת מידע נוסף.</p>
+            </div>
           ) : (
             <div className="max-w-4xl mx-auto">
               <Accordion type="single" collapsible className="w-full space-y-4">
@@ -86,7 +123,7 @@ export default function FAQ() {
                     </AccordionTrigger>
                     <AccordionContent className="font-heebo text-right leading-relaxed">
                       <div 
-                        dangerouslySetInnerHTML={{ __html: md.render(item.answer_markdown) }} 
+                        dangerouslySetInnerHTML={{ __html: renderMarkdown(item.answer_markdown) }} 
                         className="py-2 px-2 prose prose-sm max-w-none rtl:text-right"
                       />
                     </AccordionContent>
