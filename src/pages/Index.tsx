@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -186,123 +185,21 @@ const Index = () => {
             </div>
           </section>
           
-          {/* Replace the static testimonials section with our dynamic carousel */}
           <TestimonialsCarousel />
           
-          <section className="py-16 px-4 bg-transparent backdrop-blur-sm">
-            <div className="container mx-auto">
-              <div className="text-right mb-12 max-w-4xl mx-auto">
-                <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">
-                  מה מיוחד בשיטה שלי?
-                </h2>
-                <p className="text-purple-light max-w-2xl mr-0 ml-auto">
-                  שיטת "קוד הנפש" מאפשרת מבט חדש על חוויות וקשיים שמלווים אותנו שנים, 
-                  ומציעה דרכים פשוטות ויעילות לשינוי ולצמיחה אישית.
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <div className="backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/20">
-                  <div className="h-20 w-20 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"></path>
-                      <path d="M12 7v5l3 3"></path>
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold text-[#4A235A] mb-2 text-center gold-text-shadow">
-                    פגישות אישיות
-                  </h3>
-                  <p className="text-[#4A235A] text-center">
-                    פגישות אישיות המותאמות לצרכיך ומטרותיך, בדרך לשינוי משמעותי ומתמשך.
-                  </p>
-                </div>
-                
-                <div className="backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/20">
-                  <div className="h-20 w-20 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"></path>
-                      <path d="M12 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path>
-                      <path d="M12 11.5V17"></path>
-                      <path d="M9 17h6"></path>
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold text-[#4A235A] mb-2 text-center gold-text-shadow">
-                    סדנאות קבוצתיות
-                  </h3>
-                  <p className="text-[#4A235A] text-center">
-                    סדנאות מעצימות בקבוצה קטנה ותומכת, המאפשרות למידה הדדית וגילויים חדשים.
-                  </p>
-                </div>
-                
-                <div className="backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/20">
-                  <div className="h-20 w-20 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-gold" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
-                      <path d="M7 7h10"></path>
-                      <path d="M7 12h10"></path>
-                      <path d="M7 17h10"></path>
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold text-[#4A235A] mb-2 text-center gold-text-shadow">
-                    מאמרים ותרגילים
-                  </h3>
-                  <p className="text-[#4A235A] text-center">
-                    מגוון רחב של מאמרים ותרגילים מעשיים, המאפשרים צמיחה והתפתחות גם בבית.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-          
+          {/* New Mailing List Section */}
           <section className="py-16 px-4 relative">
-            <div className="container mx-auto">
-              <div className="flex flex-col md:flex-row-reverse justify-between items-center gap-10 max-w-5xl mx-auto">
-                <div className="w-full md:w-1/2 text-right">
-                  <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">
-                    בואי להיות חלק מהקהילה
-                  </h2>
-                  <p className="text-[#4A235A] mb-6">
-                    הצטרפי לרשימת התפוצה שלי וקבלי טיפים ומאמרים שיעזרו לך לחיות חיים מודעים יותר, 
-                    עם כלים פרקטיים להתמודדות עם אתגרי היומיום.
-                  </p>
-                  <ul className="mb-6">
-                    <li className="golden-bullet mb-2 text-[#4A235A]">עדכונים על מאמרים חדשים</li>
-                    <li className="golden-bullet mb-2 text-[#4A235A]">טיפים מעשיים לחיי היומיום</li>
-                    <li className="golden-bullet mb-2 text-[#4A235A]">הזמנות לסדנאות והרצאות</li>
-                    <li className="golden-bullet text-[#4A235A]">גישה לתכנים בלעדיים</li>
-                  </ul>
-                </div>
-                
-                <div className="w-full md:w-1/2">
-                  <SubscriptionForm />
-                </div>
-              </div>
-            </div>
-          </section>
-          
-          <section className="py-16 px-4 bg-transparent backdrop-blur-sm">
-            <div className="container mx-auto">
-              <div className="text-right max-w-4xl mx-auto">
-                <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">
-                  מוכנה להתחיל?
+            <div className="container mx-auto max-w-2xl">
+              <div className="text-center">
+                <h2 className="text-3xl font-bold text-[#4A235A] mb-6 gold-text-shadow">
+                  בואי להיות חלק מהקהילה
                 </h2>
-                <p className="text-[#4A235A] max-w-2xl mr-0 ml-auto mb-8">
-                  פנייה ראשונה היא הצעד החשוב ביותר. אני כאן כדי להקשיב ולהציע את הדרך הנכונה עבורך.
+                <p className="text-[#4A235A] mb-8 font-heebo leading-relaxed">
+                  הצטרפי לרשימת התפוצה שלי, וקבלי מאמרים שבועיים בנושאי 'קוד הנפש' - מחשבות, כלים ותובנות שידייקו אותך למצוא בעצמך את הדרך שלך לחיים מודעים יותר.
+                  <br />
+                  לפני חגים ייתכן שיופצו מאמרים מותאמים למהות החג.
                 </p>
-                <div className="flex justify-end space-x-4 space-x-reverse">
-                  <a 
-                    href="/contact" 
-                    className="bg-gold hover:bg-gold-dark text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300"
-                  >
-                    צרי קשר עכשיו
-                  </a>
-                  <a 
-                    href="tel:0556620273" 
-                    className="bg-white text-[#4A235A] font-bold py-3 px-6 rounded-lg transition-colors duration-300 border border-gold/20"
-                  >
-                    055-6620273
-                  </a>
-                </div>
+                <SubscriptionForm />
               </div>
             </div>
           </section>
