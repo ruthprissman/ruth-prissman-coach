@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -129,8 +128,31 @@ export default {
 			boxShadow: {
 				'gold': '0 0 10px rgba(212, 175, 55, 0.5)',
 				'gold-sm': '0 0 5px rgba(212, 175, 55, 0.3)'
-			}
+			},
+			typography: {
+				DEFAULT: {
+					css: {
+						maxWidth: '100%',
+						p: {
+							direction: 'rtl',
+							textAlign: 'right',
+						},
+						ul: {
+							direction: 'rtl',
+							textAlign: 'right',
+						},
+						ol: {
+							direction: 'rtl',
+							textAlign: 'right',
+						},
+						li: {
+							direction: 'rtl',
+							textAlign: 'right',
+						},
+					},
+				},
+			},
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [require("tailwindcss-animate"), require('@tailwindcss/typography')],
 } satisfies Config;
