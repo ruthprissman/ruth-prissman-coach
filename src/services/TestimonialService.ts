@@ -14,9 +14,9 @@ export const fetchTestimonials = async (): Promise<Testimonial[]> => {
       return [];
     }
 
-    // Filter out testimonials that don't have either an image_url or text_full
+    // Filter out testimonials that don't have summary text
     return (data as Testimonial[]).filter(
-      (testimonial) => testimonial.image_url || testimonial.text_full
+      (testimonial) => testimonial.summary
     );
   } catch (error) {
     console.error('Exception fetching testimonials:', error);
