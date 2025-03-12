@@ -22,6 +22,7 @@ const PatientSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email({ message: 'אימייל לא תקין' }).optional().or(z.literal('')),
   notes: z.string().optional(),
+  session_price: z.string().transform(val => val === '' ? null : Number(val)).optional(),
 });
 
 type PatientFormValues = z.infer<typeof PatientSchema>;
@@ -34,6 +35,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({ isOpen, onClose, on
       phone: '',
       email: '',
       notes: '',
+      session_price: '',
     },
   });
 
@@ -43,6 +45,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({ isOpen, onClose, on
       phone: data.phone || null,
       email: data.email || null,
       notes: data.notes || null,
+      session_price: data.session_price === '' ? null : data.session_price,
     });
     
     if (success) {
@@ -96,6 +99,20 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({ isOpen, onClose, on
                   <FormLabel>אימייל</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="example@example.com" type="email" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="session_price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>מחיר לפגישה (₪)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="300" type="number" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
