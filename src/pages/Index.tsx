@@ -1,7 +1,9 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { SubscriptionForm } from '@/components/SubscriptionForm';
+import { TestimonialsCarousel } from '@/components/TestimonialsCarousel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 
@@ -184,6 +186,9 @@ const Index = () => {
             </div>
           </section>
           
+          {/* Replace the static testimonials section with our dynamic carousel */}
+          <TestimonialsCarousel />
+          
           <section className="py-16 px-4 bg-transparent backdrop-blur-sm">
             <div className="container mx-auto">
               <div className="text-right mb-12 max-w-4xl mx-auto">
@@ -245,71 +250,6 @@ const Index = () => {
                     מגוון רחב של מאמרים ותרגילים מעשיים, המאפשרים צמיחה והתפתחות גם בבית.
                   </p>
                 </div>
-              </div>
-            </div>
-          </section>
-          
-          <section className="py-16 px-4 relative">
-            <div className="absolute inset-0 bg-gold/5"></div>
-            <div className="container mx-auto relative z-10">
-              <div className="text-right mb-12 max-w-4xl mx-auto">
-                <h2 className="text-3xl font-bold text-[#4A235A] mb-4 gold-text-shadow">
-                  מה אומרים עליי
-                </h2>
-                <p className="text-purple-light max-w-2xl mr-0 ml-auto">
-                  התגובות של אנשים שעברו תהליך משמעותי בעזרת שיטת "קוד הנפש"
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                {[
-                  {
-                    quote: "הטיפול עם רות נתן לי כלים חדשים להתמודדות עם אתגרים יומיומיים. הגישה שלה שינתה את חיי לחלוטין.",
-                    author: "מיכל, תל אביב"
-                  },
-                  {
-                    quote: "אחרי שנים של ניסיונות שונים, סוף סוף מצאתי את הדרך הנכונה בעזרת רות. היא רואה דברים שאחרים מפספסים.",
-                    author: "דניאל, חיפה"
-                  },
-                  {
-                    quote: "התהליך עם רות היה עמוק ומשמעותי. קיבלתי תובנות חשובות על עצמי ועל הדרך שבה אני מתמודדת עם אתגרים.",
-                    author: "אורית, ירושלים"
-                  }
-                ].map((testimonial, index) => (
-                  <div 
-                    key={index} 
-                    className="backdrop-blur-sm p-6 rounded-lg shadow-gold-sm transition-colors duration-300 hover:bg-white/20"
-                  >
-                    <div className="flex justify-center mb-4">
-                      {[...Array(5)].map((_, i) => (
-                        <svg 
-                          key={i} 
-                          className="w-5 h-5 text-gold" 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          viewBox="0 0 24 24" 
-                          fill="currentColor"
-                        >
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <p className="text-[#4A235A] mb-4 text-center">
-                      "{testimonial.quote}"
-                    </p>
-                    <p className="text-[#4A235A] font-semibold text-center">
-                      {testimonial.author}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="text-center mt-12">
-                <a 
-                  href="/recommendations" 
-                  className="inline-block text-gold hover:text-gold-dark golden-nav-item font-semibold"
-                >
-                  לעוד המלצות
-                </a>
               </div>
             </div>
           </section>
