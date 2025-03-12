@@ -8,11 +8,11 @@ import { Footer } from '@/components/Footer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 
-// Type for FAQ items
+// Update interface to match database schema
 interface FAQItem {
   id: string;
   question: string;
-  answer_markdown: string;
+  answer: string;
 }
 
 // Initialize markdown parser
@@ -44,7 +44,6 @@ export default function FAQ() {
           throw supabaseError;
         }
 
-        // Validate data before setting it
         if (data && Array.isArray(data)) {
           setFaqItems(data);
         } else {
@@ -67,7 +66,7 @@ export default function FAQ() {
     fetchFAQs();
   }, [toast]);
 
-  // Safe markdown render function with validation
+  // Safe markdown render function with validation - updated to use 'answer' field
   const renderMarkdown = (markdownText: string | null | undefined) => {
     if (!markdownText || typeof markdownText !== 'string' || markdownText.trim() === '') {
       return '<p class="text-gray-500 italic">לא קיימת תשובה זמינה כרגע.</p>';
@@ -123,7 +122,7 @@ export default function FAQ() {
                     </AccordionTrigger>
                     <AccordionContent className="font-heebo text-right leading-relaxed">
                       <div 
-                        dangerouslySetInnerHTML={{ __html: renderMarkdown(item.answer_markdown) }} 
+                        dangerouslySetInnerHTML={{ __html: renderMarkdown(item.answer) }} 
                         className="py-2 px-2 prose prose-sm max-w-none rtl:text-right"
                       />
                     </AccordionContent>
