@@ -69,15 +69,15 @@ export default function FAQ() {
 
   // Safe markdown render function with validation
   const renderMarkdown = (markdownText: string | null | undefined) => {
-    if (!markdownText || typeof markdownText !== 'string') {
-      return '';
+    if (!markdownText || typeof markdownText !== 'string' || markdownText.trim() === '') {
+      return '<p class="text-gray-500 italic">לא קיימת תשובה זמינה כרגע.</p>';
     }
     
     try {
       return md.render(markdownText);
     } catch (err) {
       console.error('Error rendering markdown:', err);
-      return '<p>שגיאה בהצגת התוכן</p>';
+      return '<p class="text-red-500">שגיאה בהצגת התוכן</p>';
     }
   };
 
@@ -111,7 +111,7 @@ export default function FAQ() {
             </div>
           ) : (
             <div className="max-w-4xl mx-auto">
-              <Accordion type="single" collapsible className="w-full space-y-4">
+              <Accordion type="single" collapsible className="w-full space-y-4" defaultValue={faqItems[0]?.id}>
                 {faqItems.map((item) => (
                   <AccordionItem 
                     key={item.id} 
@@ -119,7 +119,7 @@ export default function FAQ() {
                     className="border rounded-md px-4 py-1 border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200"
                   >
                     <AccordionTrigger className="font-alef text-[#4A148C] text-right hover:text-purple-light py-4 text-lg">
-                      {item.question}
+                      {item.question || 'שאלה ללא כותרת'}
                     </AccordionTrigger>
                     <AccordionContent className="font-heebo text-right leading-relaxed">
                       <div 
