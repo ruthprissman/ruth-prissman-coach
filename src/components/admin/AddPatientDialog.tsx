@@ -22,13 +22,7 @@ const PatientSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email({ message: 'אימייל לא תקין' }).optional().or(z.literal('')),
   notes: z.string().optional(),
-  session_price: z.string()
-    .transform((val) => {
-      if (val === '') return null;
-      const num = Number(val);
-      return isNaN(num) ? null : num;
-    })
-    .nullable(),
+  session_price: z.coerce.number().nullable(),
 });
 
 type PatientFormValues = z.infer<typeof PatientSchema>;
@@ -41,7 +35,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({ isOpen, onClose, on
       phone: '',
       email: '',
       notes: '',
-      session_price: 0,
+      session_price: null,
     },
   });
 
@@ -122,8 +116,9 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({ isOpen, onClose, on
                       {...field} 
                       placeholder="300" 
                       type="number"
+                      value={field.value === null ? '' : field.value}
                       onChange={(e) => {
-                        const value = e.target.value;
+                        const value = e.target.value === '' ? null : Number(e.target.value);
                         field.onChange(value);
                       }}
                     />
