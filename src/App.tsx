@@ -23,6 +23,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { PublicationProvider } from './contexts/PublicationContext';
 import { Toaster } from './components/ui/toaster';
+import FAQ from './pages/FAQ';
 
 // Import only index.css, not App.css
 import './index.css';
@@ -45,6 +46,7 @@ function App() {
               <Route path="/articles/:id" element={<ArticleView />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/faq" element={<FAQ />} />
 
               {/* Admin auth routes - Make sure these are outside ProtectedRoute */}
               <Route path="/admin/login" element={<Login />} />
