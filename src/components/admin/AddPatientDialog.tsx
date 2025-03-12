@@ -45,7 +45,9 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({ isOpen, onClose, on
       phone: data.phone || null,
       email: data.email || null,
       notes: data.notes || null,
-      session_price: data.session_price === '' ? null : data.session_price,
+      session_price: data.session_price === undefined || data.session_price === '' 
+        ? null 
+        : Number(data.session_price),
     });
     
     if (success) {
