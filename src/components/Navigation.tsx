@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -19,7 +18,6 @@ const navItems = [
   { name: 'מאמרים', path: '/articles' },
   { name: 'סיפורים קצרים', path: '/stories' },
   { name: 'שאלות ותשובות', path: '/faq' },
-  { name: 'המלצות', path: '/recommendations' },
   { name: 'קביעת פגישה', path: '/appointment' },
   { name: 'צור קשר', path: '/contact' },
 ];
