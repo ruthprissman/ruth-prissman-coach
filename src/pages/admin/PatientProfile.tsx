@@ -38,11 +38,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import PatientSessionFilters from '@/components/admin/sessions/PatientSessionFilters';
 
 const PatientProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [filteredSessions, setFilteredSessions] = useState<Session[]>([]);
   const [expandedSessionId, setExpandedSessionId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSessionDialogOpen, setIsSessionDialogOpen] = useState(false);
@@ -51,10 +53,20 @@ const PatientProfile: React.FC = () => {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<Patient | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteSessionDialogOpen, setIsDeleteSessionDialogOpen] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
+  const [meetingTypeFilter, setMeetingTypeFilter] = useState<string>('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
+    from: undefined,
+    to: undefined,
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -83,6 +95,7 @@ const PatientProfile: React.FC = () => {
       if (sessionsError) throw sessionsError;
       
       setSessions(sessionsData || []);
+      setFilteredSessions(sessionsData || []);
     } catch (error: any) {
       console.error('Error fetching patient data:', error);
       toast({
@@ -98,6 +111,57 @@ const PatientProfile: React.FC = () => {
   useEffect(() => {
     fetchPatientData();
   }, [id]);
+
+  // Apply filters effect
+  useEffect(() => {
+    if (sessions.length === 0) return;
+    
+    try {
+      let filtered = [...sessions];
+      
+      // Apply meeting type filter
+      if (meetingTypeFilter !== 'all') {
+        filtered = filtered.filter(session => 
+          session.meeting_type === meetingTypeFilter
+        );
+      }
+      
+      // Apply payment status filter
+      if (paymentStatusFilter !== 'all') {
+        filtered = filtered.filter(session => 
+          getPaymentStatus(session) === paymentStatusFilter
+        );
+      }
+      
+      // Apply date range filter
+      if (dateRangeFilter.from) {
+        filtered = filtered.filter(session => 
+          new Date(session.session_date) >= dateRangeFilter.from!
+        );
+      }
+      
+      if (dateRangeFilter.to) {
+        filtered = filtered.filter(session => 
+          new Date(session.session_date) <= dateRangeFilter.to!
+        );
+      }
+      
+      setFilteredSessions(filtered);
+    } catch (error) {
+      console.error('Error applying filters:', error);
+      toast({
+        title: "שגיאה בהחלת המסננים",
+        description: "אירעה שגיאה בעת סינון הפגישות",
+        variant: "destructive",
+      });
+    }
+  }, [meetingTypeFilter, paymentStatusFilter, dateRangeFilter, sessions]);
+
+  const resetFilters = () => {
+    setMeetingTypeFilter('all');
+    setPaymentStatusFilter('all');
+    setDateRangeFilter({ from: undefined, to: undefined });
+  };
 
   const handleAddSession = async (newSession: Omit<Session, 'id'>) => {
     try {
@@ -129,6 +193,11 @@ const PatientProfile: React.FC = () => {
   const handleEditSession = (session: Session) => {
     setSelectedSession(session);
     setIsEditSessionDialogOpen(true);
+  };
+
+  const handleUpdatePayment = (session: Session) => {
+    setSelectedSession(session);
+    setIsPaymentDialogOpen(true);
   };
 
   const handleDeleteSessionConfirm = (session: Session) => {
@@ -172,6 +241,7 @@ const PatientProfile: React.FC = () => {
     fetchPatientData();
     setIsEditSessionDialogOpen(false);
     setSelectedSession(null);
+    setIsPaymentDialogOpen(false);
   };
 
   const handleUpdatePatient = async () => {
@@ -473,7 +543,7 @@ const PatientProfile: React.FC = () => {
                 >
                   ניהול מאגר תרגילים
                 </Button>
-                <Button onClick={() => setIsSessionDialogOpen(true)}>
+                <Button onClick={() => setIsSessionDialogOpen(true)} className="bg-primary">
                   <CalendarPlus className="h-4 w-4 ml-2" />
                   הוספת פגישה חדשה
                 </Button>
@@ -481,10 +551,21 @@ const PatientProfile: React.FC = () => {
               <h3 className="text-xl font-bold">היסטוריית פגישות</h3>
             </div>
             
-            {sessions.length === 0 ? (
+            {/* Session Filters */}
+            <PatientSessionFilters
+              meetingTypeFilter={meetingTypeFilter}
+              setMeetingTypeFilter={setMeetingTypeFilter}
+              paymentStatusFilter={paymentStatusFilter}
+              setPaymentStatusFilter={setPaymentStatusFilter}
+              dateRangeFilter={dateRangeFilter}
+              setDateRangeFilter={setDateRangeFilter}
+              resetFilters={resetFilters}
+            />
+
+            {filteredSessions.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
-                  <p className="text-gray-500">אין פגישות קודמות עם מטופל זה.</p>
+                  <p className="text-gray-500">אין פגישות התואמות את הסינון הנוכחי.</p>
                 </CardContent>
               </Card>
             ) : (
@@ -500,7 +581,7 @@ const PatientProfile: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sessions.map((session) => (
+                    {filteredSessions.map((session) => (
                       <React.Fragment key={session.id}>
                         <TableRow 
                           className="cursor-pointer hover:bg-gray-50"
@@ -537,14 +618,13 @@ const PatientProfile: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-destructive"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleDeleteSessionConfirm(session);
+                                  handleUpdatePayment(session);
                                 }}
                               >
-                                <Trash2 className="h-4 w-4 ml-1" />
-                                מחק
+                                <BadgeDollarSign className="h-4 w-4 ml-1" />
+                                עדכן תשלום
                               </Button>
                             </div>
                           </TableCell>
@@ -611,7 +691,7 @@ const PatientProfile: React.FC = () => {
                                   </div>
                                 </div>
                                 
-                                {/* Payment History Section - This would be populated with actual payment data */}
+                                {/* Payment History Section */}
                                 <div className="mt-4">
                                   <h4 className="font-medium mb-2 flex items-center">
                                     <BadgeDollarSign className="h-4 w-4 ml-2" />
@@ -638,6 +718,19 @@ const PatientProfile: React.FC = () => {
                                       </div>
                                     )}
                                   </div>
+                                </div>
+
+                                {/* Delete button in expanded view */}
+                                <div className="mt-4 flex justify-end">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-500 hover:bg-red-50 hover:text-red-700"
+                                    onClick={() => handleDeleteSessionConfirm(session)}
+                                  >
+                                    <Trash2 className="h-4 w-4 ml-2" />
+                                    מחק פגישה
+                                  </Button>
                                 </div>
                               </div>
                             </TableCell>
@@ -812,6 +905,74 @@ const PatientProfile: React.FC = () => {
                 <Button 
                   variant="outline" 
                   onClick={() => setIsEditDialogOpen(false)}
+                >
+                  ביטול
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Payment Update Dialog */}
+          <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-center">עדכון פרטי תשלום</DialogTitle>
+              </DialogHeader>
+              
+              {selectedSession && (
+                <div className="space-y-4 py-2">
+                  <div>
+                    <p className="text-center font-medium">
+                      עדכון תשלום לפגישה מתאריך {formatDate(selectedSession.session_date)}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="payment_status">סטטוס תשלום</Label>
+                    <Select defaultValue={getPaymentStatus(selectedSession)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="בחר סטטוס תשלום" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="paid">שולם במלואו</SelectItem>
+                        <SelectItem value="partially_paid">שולם חלקית</SelectItem>
+                        <SelectItem value="unpaid">לא שולם</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="payment_amount">סכום ששולם (₪)</Label>
+                    <Input 
+                      id="payment_amount" 
+                      type="number"
+                      defaultValue={getPaymentStatus(selectedSession) === 'paid' ? 
+                        patient?.session_price || 0 : 
+                        getPaymentStatus(selectedSession) === 'partially_paid' ? 
+                        Math.floor((patient?.session_price || 0) * 0.5) : 0}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="payment_notes">הערות לתשלום</Label>
+                    <Textarea 
+                      id="payment_notes" 
+                      placeholder="הוסף הערות לגבי התשלום כאן..."
+                    />
+                  </div>
+                </div>
+              )}
+              
+              <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
+                <Button 
+                  onClick={handleSessionUpdated}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'מעדכן...' : 'עדכן תשלום'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsPaymentDialogOpen(false)}
                 >
                   ביטול
                 </Button>
