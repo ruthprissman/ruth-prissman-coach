@@ -99,7 +99,7 @@ export function StorySubscriptionForm() {
       
       <div className="mt-3 text-xs text-center text-gray-500">
         <p>
-          בלחיצה על כפתור ההרשמה אני מאשר/ת קבלת תוכן שיווקי
+          בלחיצה על כפתור ההרשמה אני מאשר/ת קבלת תוכן שבועי כמפורט <Link to="/privacy-policy" className="text-purple-600 hover:text-purple-800 underline">במדיניות הפרטיות</Link>
           <br />
           <Link to="/unsubscribe?list=stories" className="text-purple-600 hover:text-purple-800 underline">
             להסרה מרשימת התפוצה

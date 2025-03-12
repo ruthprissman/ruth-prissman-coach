@@ -7,6 +7,7 @@ import Stories from './pages/Stories';
 import Articles from './pages/Articles';
 import ArticleView from './pages/ArticleView';
 import Unsubscribe from './pages/Unsubscribe';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import NotFound from './pages/NotFound';
 import Login from './pages/admin/Login';
 import ResetPassword from './pages/admin/ResetPassword';
@@ -43,6 +44,7 @@ function App() {
               <Route path="/articles" element={<Articles />} />
               <Route path="/articles/:id" element={<ArticleView />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
               {/* Admin auth routes - Make sure these are outside ProtectedRoute */}
               <Route path="/admin/login" element={<Login />} />

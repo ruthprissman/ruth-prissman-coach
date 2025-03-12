@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
@@ -161,7 +162,7 @@ export function Footer() {
               {getLinksForSection("additional")}
               <li><Link to="/contact" className="text-purple-dark hover:text-gold transition-colors">צור קשר</Link></li>
               <li><Link to="/appointment" className="text-purple-dark hover:text-gold transition-colors">קביעת פגישה</Link></li>
-              <li><Link to="/privacy" className="text-purple-dark hover:text-gold transition-colors">מדיניות פרטיות</Link></li>
+              <li><Link to="/privacy-policy" className="text-purple-dark hover:text-gold transition-colors">מדיניות פרטיות</Link></li>
               <li><Link to="/terms" className="text-purple-dark hover:text-gold transition-colors">תנאי שימוש</Link></li>
             </ul>
           </div>
