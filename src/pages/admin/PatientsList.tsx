@@ -3,12 +3,23 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UserPlus, RefreshCw, Search } from 'lucide-react';
+import { UserPlus, RefreshCw, Search, Wrench } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Patient } from '@/types/patient';
 import { supabase } from '@/lib/supabase';
 import AddPatientDialog from '@/components/admin/AddPatientDialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
 
 const PatientsList: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -21,15 +32,51 @@ const PatientsList: React.FC = () => {
   const fetchPatients = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // First, fetch basic patient data
+      const { data: patientsData, error: patientsError } = await supabase
         .from('patients')
         .select('*')
         .order('name', { ascending: true });
-      
-      if (error) throw error;
-      
-      setPatients(data || []);
-      setFilteredPatients(data || []);
+
+      if (patientsError) throw patientsError;
+
+      // For each patient, fetch their latest session date and status
+      const patientsWithDetails = await Promise.all((patientsData || []).map(async (patient) => {
+        // Get latest session
+        const { data: latestSession } = await supabase
+          .from('sessions')
+          .select('session_date')
+          .eq('patient_id', patient.id)
+          .order('session_date', { ascending: false })
+          .limit(1)
+          .single();
+
+        // Check for unpaid sessions (assuming there's a paid field in sessions table)
+        const { data: unpaidSessions } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('patient_id', patient.id)
+          .eq('paid', false)
+          .limit(1);
+
+        // Check for upcoming sessions
+        const { data: upcomingSessions } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('patient_id', patient.id)
+          .gt('session_date', new Date().toISOString())
+          .limit(1);
+
+        return {
+          ...patient,
+          last_session_date: latestSession?.session_date || null,
+          has_unpaid_sessions: (unpaidSessions?.length || 0) > 0,
+          has_upcoming_sessions: (upcomingSessions?.length || 0) > 0,
+        };
+      }));
+
+      setPatients(patientsWithDetails);
+      setFilteredPatients(patientsWithDetails);
     } catch (error: any) {
       console.error('Error fetching patients:', error);
       toast({
@@ -58,6 +105,29 @@ const PatientsList: React.FC = () => {
       setFilteredPatients(patients);
     }
   }, [searchTerm, patients]);
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '-';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy', { locale: he });
+    } catch (e) {
+      return '-';
+    }
+  };
+
+  const getPatientStatusClasses = (patient: Patient) => {
+    if (patient.has_unpaid_sessions) {
+      return 'border-2 border-[#ea384c] bg-white';
+    }
+    if (patient.last_session_date && 
+        new Date(patient.last_session_date).getTime() < new Date().getTime() - (180 * 24 * 60 * 60 * 1000)) {
+      return 'border-2 border-[#FEF7CD] bg-white';
+    }
+    if (patient.has_upcoming_sessions) {
+      return 'border-2 border-[#F2FCE2] bg-white';
+    }
+    return 'bg-white';
+  };
 
   const handleAddPatient = async (newPatient: Omit<Patient, 'id'>) => {
     try {
@@ -136,51 +206,54 @@ const PatientsList: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      שם מלא
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      טלפון
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      אימייל
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      הערות
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredPatients.map((patient) => (
-                    <tr key={patient.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Link 
-                          to={`/admin/patients/${patient.id}`}
-                          className="text-[#4A235A] hover:text-gold hover:underline font-medium transition-colors"
-                        >
-                          {patient.name}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                        {patient.phone || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                        {patient.email || '-'}
-                      </td>
-                      <td className="px-6 py-4 text-gray-700">
-                        <div className="max-w-xs overflow-hidden text-ellipsis">
-                          {patient.notes || '-'}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>שם מלא</TableHead>
+                  <TableHead>טלפון</TableHead>
+                  <TableHead>אימייל</TableHead>
+                  <TableHead>מחיר לפגישה</TableHead>
+                  <TableHead>פגישה אחרונה</TableHead>
+                  <TableHead>סטטוס</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPatients.map((patient) => (
+                  <TableRow key={patient.id} className={getPatientStatusClasses(patient)}>
+                    <TableCell>
+                      <Link 
+                        to={`/admin/patients/${patient.id}`}
+                        className="text-[#4A235A] hover:text-gold hover:underline font-medium"
+                      >
+                        {patient.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{patient.phone || '-'}</TableCell>
+                    <TableCell>{patient.email || '-'}</TableCell>
+                    <TableCell>₪{patient.session_price || '-'}</TableCell>
+                    <TableCell>{formatDate(patient.last_session_date)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        {patient.has_unpaid_sessions && (
+                          <Badge variant="destructive">תשלום חסר</Badge>
+                        )}
+                        {patient.has_upcoming_sessions && (
+                          <Badge variant="default" className="bg-green-500">פגישה קרובה</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Link to={`/admin/patients/${patient.id}`}>
+                        <Button variant="ghost" size="sm">
+                          <Wrench className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </div>
       </div>
