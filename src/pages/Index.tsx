@@ -51,10 +51,9 @@ const Index = () => {
         <Navigation />
         
         <main className="flex-grow">
-          {/* Header with Logo Section */}
-          <section className="pt-24 pb-6 px-4 relative">
+          <section className="pt-20 pb-4 px-4 relative">
             <div className="container mx-auto relative z-10">
-              <div className="flex flex-col items-center justify-center mb-4">
+              <div className="flex flex-col items-center justify-center mb-2">
                 <div className="flex flex-row items-center justify-center gap-4">
                   <img 
                     ref={logoRef}
@@ -75,14 +74,13 @@ const Index = () => {
             </div>
           </section>
           
-          {/* Updated Hero Section with specified HTML text and reduced spacing */}
-          <section className="py-8 px-4 relative">
+          <section className="py-4 px-4 relative">
             <div className="container mx-auto relative z-10">
               <div className="mx-auto text-center">
-                <div className="backdrop-blur-sm p-6 rounded-lg mb-6 mx-auto w-full md:w-4/5 lg:w-4/5">
-                  <h3 className="text-[#4A235A] text-lg font-heebo mb-4">החיים שלנו הם סיפור מתמשך.</h3>
+                <div className="backdrop-blur-sm p-5 rounded-lg mb-4 mx-auto w-full md:w-4/5 lg:w-4/5">
+                  <h3 className="text-[#4A235A] text-lg font-heebo mb-3">החיים שלנו הם סיפור מתמשך.</h3>
                   
-                  <p className="text-[#4A235A] text-lg font-heebo">
+                  <p className="text-[#4A235A] text-lg font-heebo leading-snug">
                     סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.<br />
                     סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.<br /><br />
                     
@@ -98,11 +96,9 @@ const Index = () => {
             </div>
           </section>
           
-          {/* Three Blocks Section - With reduced top spacing */}
-          <section className="py-10 px-4 relative">
+          <section className="py-6 px-4 relative">
             <div className="container mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                {/* Block 1: Download Guide */}
                 <div className="p-6 flex flex-col items-center">
                   <div className="flex items-center gap-4 mb-4">
                     <h3 className="text-xl font-bold font-alef text-[#4A235A] text-center">
@@ -137,7 +133,6 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* Block 2: Stories */}
                 <div className="p-6 flex flex-col items-center">
                   <div className="flex items-center gap-4 mb-4">
                     <h3 className="text-xl font-bold font-alef text-[#4A235A] text-center">
@@ -161,7 +156,6 @@ const Index = () => {
                   </a>
                 </div>
 
-                {/* Block 3: Book Appointment */}
                 <div className="p-6 flex flex-col items-center">
                   <div className="flex items-center gap-4 mb-4">
                     <h3 className="text-xl font-bold font-alef text-[#4A235A] text-center">
@@ -190,7 +184,6 @@ const Index = () => {
             </div>
           </section>
           
-          {/* Services Section */}
           <section className="py-16 px-4 bg-transparent backdrop-blur-sm">
             <div className="container mx-auto">
               <div className="text-right mb-12 max-w-4xl mx-auto">
@@ -256,7 +249,6 @@ const Index = () => {
             </div>
           </section>
           
-          {/* Testimonials Section */}
           <section className="py-16 px-4 relative">
             <div className="absolute inset-0 bg-gold/5"></div>
             <div className="container mx-auto relative z-10">
@@ -322,7 +314,6 @@ const Index = () => {
             </div>
           </section>
           
-          {/* Subscribe Section */}
           <section className="py-16 px-4 relative">
             <div className="container mx-auto">
               <div className="flex flex-col md:flex-row-reverse justify-between items-center gap-10 max-w-5xl mx-auto">
@@ -349,7 +340,6 @@ const Index = () => {
             </div>
           </section>
           
-          {/* Contact CTA */}
           <section className="py-16 px-4 bg-transparent backdrop-blur-sm">
             <div className="container mx-auto">
               <div className="text-right max-w-4xl mx-auto">
