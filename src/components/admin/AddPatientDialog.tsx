@@ -41,7 +41,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({ isOpen, onClose, on
       phone: '',
       email: '',
       notes: '',
-      session_price: '',
+      session_price: 0,
     },
   });
 
