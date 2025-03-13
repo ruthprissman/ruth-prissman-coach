@@ -363,7 +363,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                         <SelectContent>
                           <SelectItem value="Zoom">זום</SelectItem>
                           <SelectItem value="Phone">טלפון</SelectItem>
-                          <SelectItem value="In-Person">פגישה פרונטלית</SelectItem>
+                          <SelectItem value="In-Person">פגישה פרונטית</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -390,9 +390,9 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Paid">שולם</SelectItem>
-                            <SelectItem value="Partially Paid">שולם חלקית</SelectItem>
-                            <SelectItem value="Unpaid">לא שולם</SelectItem>
+                            <SelectItem value="paid">שולם</SelectItem>
+                            <SelectItem value="partially_paid">שולם חלקית</SelectItem>
+                            <SelectItem value="unpaid">לא שולם</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -419,7 +419,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                     )}
                   />
                   
-                  {form.watch('payment_status') !== 'Unpaid' && (
+                  {form.watch('payment_status') !== 'unpaid' && (
                     <FormField
                       control={form.control}
                       name="payment_method"
@@ -447,7 +447,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                     />
                   )}
                   
-                  {form.watch('payment_status') !== 'Unpaid' && (
+                  {form.watch('payment_status') !== 'unpaid' && (
                     <FormField
                       control={form.control}
                       name="payment_date"

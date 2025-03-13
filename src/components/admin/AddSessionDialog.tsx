@@ -344,9 +344,9 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Paid">שולם</SelectItem>
-                            <SelectItem value="Partially Paid">שולם חלקית</SelectItem>
-                            <SelectItem value="Unpaid">לא שולם</SelectItem>
+                            <SelectItem value="paid">שולם</SelectItem>
+                            <SelectItem value="partially_paid">שולם חלקית</SelectItem>
+                            <SelectItem value="unpaid">לא שולם</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -375,7 +375,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                   />
                   
                   {/* Payment Method */}
-                  {form.watch('payment_status') !== 'Unpaid' && (
+                  {form.watch('payment_status') !== 'unpaid' && (
                     <FormField
                       control={form.control}
                       name="payment_method"
@@ -404,7 +404,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                   )}
                   
                   {/* Payment Date */}
-                  {form.watch('payment_status') !== 'Unpaid' && (
+                  {form.watch('payment_status') !== 'unpaid' && (
                     <FormField
                       control={form.control}
                       name="payment_date"

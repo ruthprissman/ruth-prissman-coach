@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -170,7 +171,7 @@ const PatientProfile: React.FC = () => {
   const updatePatientFinancialStatus = async (patientId: number, sessionsList: Session[] = sessions) => {
     try {
       const hasUnpaidSessions = sessionsList.some(
-        session => session.payment_status === 'Unpaid' || session.payment_status === 'Partially Paid'
+        session => session.payment_status === 'unpaid' || session.payment_status === 'partially_paid'
       );
       
       const financialStatus = hasUnpaidSessions ? 'Has Outstanding Payments' : 'No Debts';
@@ -414,11 +415,11 @@ const PatientProfile: React.FC = () => {
   const getPaymentStatusText = (status: string | null) => {
     if (!status) return 'לא שולם';
     switch (status) {
-      case 'Paid':
+      case 'paid':
         return 'שולם';
-      case 'Partially Paid':
+      case 'partially_paid':
         return 'שולם חלקית';
-      case 'Unpaid':
+      case 'unpaid':
         return 'לא שולם';
       default:
         return status;
@@ -426,24 +427,24 @@ const PatientProfile: React.FC = () => {
   };
 
   const getPaymentStatusBadge = (status: string | null) => {
-    if (!status) status = 'Unpaid';
+    if (!status) status = 'unpaid';
     
     switch (status) {
-      case 'Paid':
+      case 'paid':
         return (
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
             <Check className="h-3 w-3 mr-1" />
             {getPaymentStatusText(status)}
           </Badge>
         );
-      case 'Partially Paid':
+      case 'partially_paid':
         return (
           <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
             <BadgeDollarSign className="h-3 w-3 mr-1" />
             {getPaymentStatusText(status)}
           </Badge>
         );
-      case 'Unpaid':
+      case 'unpaid':
         return (
           <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
             <CreditCard className="h-3 w-3 mr-1" />
