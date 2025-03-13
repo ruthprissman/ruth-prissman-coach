@@ -62,7 +62,9 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
 }) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
+  const [originalValues, setOriginalValues] = useState<SessionFormValues | null>(null);
 
   const form = useForm<SessionFormValues>({
     resolver: zodResolver(SessionSchema),
@@ -80,45 +82,82 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
     },
   });
 
-  // Watch values for reactive updates
+  // Save original values when form is initialized
+  useEffect(() => {
+    if (isOpen) {
+      const initialValues = {
+        session_date: new Date(session.session_date),
+        meeting_type: session.meeting_type,
+        sent_exercises: session.sent_exercises,
+        exercise_list: session.exercise_list,
+        summary: session.summary,
+        amount_paid: session.amount_paid || 0,
+        payment_method: session.payment_method || null,
+        payment_status: session.payment_status || 'Unpaid',
+        payment_date: session.payment_date ? new Date(session.payment_date) : null,
+        payment_notes: session.payment_notes || null,
+      };
+      setOriginalValues(initialValues);
+      form.reset(initialValues);
+      setHasChanges(false);
+    }
+  }, [isOpen, session, form]);
+
+  // Watch for form changes
+  useEffect(() => {
+    if (originalValues) {
+      const subscription = form.watch((value) => {
+        // Check if current values differ from original values
+        const currentValues = form.getValues();
+        const hasFormChanges = JSON.stringify(currentValues) !== JSON.stringify(originalValues);
+        setHasChanges(hasFormChanges);
+      });
+      
+      return () => subscription.unsubscribe();
+    }
+  }, [form, originalValues]);
+
+  // Watch values for reactive updates, but with dependencies to prevent infinite loops
   const exerciseList = form.watch('exercise_list');
   const paymentStatus = form.watch('payment_status');
   const paymentAmount = form.watch('amount_paid');
   
   useEffect(() => {
     // If payment status changes, update related fields
-    if (paymentStatus === 'Paid' && sessionPrice) {
-      form.setValue('amount_paid', sessionPrice);
+    if (paymentStatus === 'Paid' && sessionPrice && form.getValues('amount_paid') === 0) {
+      form.setValue('amount_paid', sessionPrice, { shouldDirty: true });
       if (!form.getValues('payment_date')) {
-        form.setValue('payment_date', new Date());
+        form.setValue('payment_date', new Date(), { shouldDirty: true });
       }
-    } else if (paymentStatus === 'Unpaid') {
-      form.setValue('amount_paid', 0);
-      form.setValue('payment_method', null);
-      form.setValue('payment_date', null);
+    } else if (paymentStatus === 'Unpaid' && form.getValues('amount_paid') !== 0) {
+      form.setValue('amount_paid', 0, { shouldDirty: true });
+      form.setValue('payment_method', null, { shouldDirty: true });
+      form.setValue('payment_date', null, { shouldDirty: true });
     }
-  }, [paymentStatus, form, sessionPrice]);
+  }, [paymentStatus, sessionPrice, form]);
 
   useEffect(() => {
-    // Auto-determine payment status based on amount paid
-    if (paymentAmount === null || paymentAmount === 0) {
-      if (form.getValues('payment_status') !== 'Unpaid') {
-        form.setValue('payment_status', 'Unpaid');
-      }
-    } else if (sessionPrice && paymentAmount < sessionPrice) {
-      if (form.getValues('payment_status') !== 'Partially Paid') {
-        form.setValue('payment_status', 'Partially Paid');
-      }
-    } else if (sessionPrice && paymentAmount >= sessionPrice) {
-      if (form.getValues('payment_status') !== 'Paid') {
-        form.setValue('payment_status', 'Paid');
+    // Auto-determine payment status based on amount paid, but only if user has changed amount_paid
+    if (form.formState.dirtyFields.amount_paid) {
+      if (paymentAmount === null || paymentAmount === 0) {
+        if (form.getValues('payment_status') !== 'Unpaid') {
+          form.setValue('payment_status', 'Unpaid', { shouldDirty: true });
+        }
+      } else if (sessionPrice && paymentAmount < sessionPrice) {
+        if (form.getValues('payment_status') !== 'Partially Paid') {
+          form.setValue('payment_status', 'Partially Paid', { shouldDirty: true });
+        }
+      } else if (sessionPrice && paymentAmount >= sessionPrice) {
+        if (form.getValues('payment_status') !== 'Paid') {
+          form.setValue('payment_status', 'Paid', { shouldDirty: true });
+        }
       }
     }
   }, [paymentAmount, form, sessionPrice]);
 
   useEffect(() => {
     if (exerciseList && exerciseList.length > 0 && !form.getValues('sent_exercises')) {
-      form.setValue('sent_exercises', true);
+      form.setValue('sent_exercises', true, { shouldDirty: true });
     }
   }, [exerciseList, form]);
 
@@ -144,8 +183,18 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   const onSubmit = async (data: SessionFormValues) => {
     setIsLoading(true);
     try {
+      // Validate data before submission
       if (data.exercise_list && data.exercise_list.length > 0) {
         data.sent_exercises = true;
+      }
+      
+      // Ensure payment data is consistent
+      if (data.payment_status === 'Unpaid') {
+        data.amount_paid = 0;
+        data.payment_method = null;
+        data.payment_date = null;
+      } else if (data.payment_status === 'Paid' && !data.payment_method) {
+        throw new Error('אמצעי תשלום נדרש כאשר הסטטוס הוא "שולם"');
       }
       
       const { error } = await supabase
@@ -170,10 +219,12 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       await updatePatientFinancialStatus(session.patient_id);
       
       toast({
-        title: "פגישה עודכנה בהצלחה",
+        title: "השינויים נשמרו בהצלחה!",
         description: "פרטי הפגישה עודכנו במערכת",
       });
       
+      // Reset form state
+      setHasChanges(false);
       onSessionUpdated();
     } catch (error: any) {
       console.error('Error updating session:', error);
@@ -221,6 +272,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Session Date */}
             <FormField
               control={form.control}
               name="session_date"
@@ -303,6 +355,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
               )}
             />
             
+            {/* Meeting Type */}
             <FormField
               control={form.control}
               name="meeting_type"
@@ -472,6 +525,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
               />
             </div>
             
+            {/* Sent Exercises Switch */}
             <FormField
               control={form.control}
               name="sent_exercises"
@@ -490,6 +544,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
               )}
             />
             
+            {/* Exercise List */}
             <FormField
               control={form.control}
               name="exercise_list"
@@ -506,7 +561,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                             const currentList = field.value || [];
                             if (!currentList.includes(value)) {
                               field.onChange([...currentList, value]);
-                              form.setValue('sent_exercises', true);
+                              form.setValue('sent_exercises', true, { shouldDirty: true });
                             }
                           }}
                         >
@@ -543,9 +598,9 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                               onClick={() => {
                                 const updatedList = [...form.watch('exercise_list')!];
                                 updatedList.splice(index, 1);
-                                form.setValue('exercise_list', updatedList);
+                                form.setValue('exercise_list', updatedList, { shouldDirty: true });
                                 if (updatedList.length === 0) {
-                                  form.setValue('sent_exercises', false);
+                                  form.setValue('sent_exercises', false, { shouldDirty: true });
                                 }
                               }}
                             >
@@ -561,6 +616,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
               )}
             />
             
+            {/* Session Summary */}
             <FormField
               control={form.control}
               name="summary"
@@ -581,8 +637,13 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
             />
             
             <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'מעדכן...' : 'עדכון פגישה'}
+              <Button 
+                type="submit" 
+                disabled={isLoading || !hasChanges}
+                className="flex items-center"
+              >
+                {isLoading ? 'מעדכן...' : 'שמור שינויים'}
+                {!isLoading && hasChanges && <Check className="ml-2 h-4 w-4" />}
               </Button>
               <Button variant="outline" onClick={onClose} type="button">ביטול</Button>
             </DialogFooter>

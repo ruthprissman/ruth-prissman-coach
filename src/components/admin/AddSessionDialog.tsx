@@ -60,29 +60,47 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
   sessionPrice = 0
 }) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
+
+  const defaultValues = {
+    session_date: new Date(),
+    meeting_type: 'In-Person' as const,
+    sent_exercises: false,
+    exercise_list: [],
+    summary: '',
+    amount_paid: sessionPrice,
+    payment_method: null,
+    payment_status: 'Unpaid' as const,
+    payment_date: null,
+    payment_notes: '',
+  };
 
   const form = useForm<SessionFormValues>({
     resolver: zodResolver(SessionSchema),
-    defaultValues: {
-      session_date: new Date(),
-      meeting_type: 'In-Person',
-      sent_exercises: false,
-      exercise_list: [],
-      summary: '',
-      amount_paid: sessionPrice,
-      payment_method: null,
-      payment_status: 'Unpaid',
-      payment_date: null,
-      payment_notes: '',
-    },
+    defaultValues,
   });
+
+  // Reset form when dialog opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      // Reset form with correct initial values when dialog opens
+      form.reset({
+        ...defaultValues,
+        amount_paid: sessionPrice || 0,
+      });
+      setIsFormInitialized(true);
+    }
+  }, [isOpen, sessionPrice, form]);
 
   // Watch fields for dependencies
   const exerciseList = form.watch('exercise_list');
   const paymentStatus = form.watch('payment_status');
   const paymentAmount = form.watch('amount_paid');
   
+  // Only run these effects when the form is fully initialized
   useEffect(() => {
+    if (!isFormInitialized) return;
+
     // If payment status changes, update related fields
     if (paymentStatus === 'Paid' && sessionPrice) {
       form.setValue('amount_paid', sessionPrice);
@@ -90,39 +108,41 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     } else if (paymentStatus === 'Unpaid') {
       form.setValue('amount_paid', 0);
       form.setValue('payment_method', null);
+      form.setValue('payment_date', null);
     }
-  }, [paymentStatus, form, sessionPrice]);
+  }, [paymentStatus, sessionPrice, form, isFormInitialized]);
 
+  // Effect for payment amount changes
   useEffect(() => {
-    // If session price changes, update the form
-    if (sessionPrice && !form.getValues('amount_paid')) {
-      form.setValue('amount_paid', paymentStatus === 'Paid' ? sessionPrice : 0);
+    if (!isFormInitialized) return;
+
+    // Auto-determine payment status based on amount paid, but avoid circular updates
+    if (form.formState.dirtyFields.amount_paid) {
+      if (paymentAmount === null || paymentAmount === 0) {
+        if (form.getValues('payment_status') !== 'Unpaid') {
+          form.setValue('payment_status', 'Unpaid');
+        }
+      } else if (sessionPrice && paymentAmount < sessionPrice) {
+        if (form.getValues('payment_status') !== 'Partially Paid') {
+          form.setValue('payment_status', 'Partially Paid');
+        }
+      } else if (sessionPrice && paymentAmount >= sessionPrice) {
+        if (form.getValues('payment_status') !== 'Paid') {
+          form.setValue('payment_status', 'Paid');
+        }
+      }
     }
-  }, [sessionPrice, form, paymentStatus]);
+  }, [paymentAmount, form, sessionPrice, isFormInitialized]);
 
+  // Effect for exercise list changes
   useEffect(() => {
+    if (!isFormInitialized) return;
+
     // If exercises were added and sent_exercises is false, update it
     if (exerciseList && exerciseList.length > 0 && !form.getValues('sent_exercises')) {
       form.setValue('sent_exercises', true);
     }
-  }, [exerciseList, form]);
-
-  useEffect(() => {
-    // Auto-determine payment status based on amount paid
-    if (paymentAmount === null || paymentAmount === 0) {
-      if (form.getValues('payment_status') !== 'Unpaid') {
-        form.setValue('payment_status', 'Unpaid');
-      }
-    } else if (sessionPrice && paymentAmount < sessionPrice) {
-      if (form.getValues('payment_status') !== 'Partially Paid') {
-        form.setValue('payment_status', 'Partially Paid');
-      }
-    } else if (sessionPrice && paymentAmount >= sessionPrice) {
-      if (form.getValues('payment_status') !== 'Paid') {
-        form.setValue('payment_status', 'Paid');
-      }
-    }
-  }, [paymentAmount, form, sessionPrice]);
+  }, [exerciseList, form, isFormInitialized]);
 
   useEffect(() => {
     // Fetch exercises for dropdown
@@ -150,6 +170,13 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
       data.sent_exercises = true;
     }
     
+    // Ensure payment data is consistent
+    if (data.payment_status === 'Unpaid') {
+      data.amount_paid = 0;
+      data.payment_method = null;
+      data.payment_date = null;
+    }
+    
     const success = await onAddSession({
       patient_id: patientId,
       session_date: data.session_date.toISOString(),
@@ -165,7 +192,8 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     });
     
     if (success) {
-      form.reset();
+      form.reset(defaultValues);
+      setIsFormInitialized(false);
       onClose();
     }
   };
@@ -470,8 +498,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                             const currentList = field.value || [];
                             if (!currentList.includes(value)) {
                               field.onChange([...currentList, value]);
-                              // Auto-set sent_exercises to true when adding an exercise
-                              form.setValue('sent_exercises', true);
                             }
                           }}
                         >
@@ -509,10 +535,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                                 const updatedList = [...form.watch('exercise_list')!];
                                 updatedList.splice(index, 1);
                                 form.setValue('exercise_list', updatedList);
-                                // If removing the last exercise, optionally set sent_exercises to false
-                                if (updatedList.length === 0) {
-                                  form.setValue('sent_exercises', false);
-                                }
                               }}
                             >
                               הסר
