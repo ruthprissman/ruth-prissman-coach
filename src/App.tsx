@@ -13,7 +13,7 @@ import Login from './pages/admin/Login';
 import ResetPassword from './pages/admin/ResetPassword';
 import Dashboard from './pages/admin/Dashboard';
 import PatientsList from './pages/admin/PatientsList';
-import PatientProfile from './pages/admin/PatientProfile';
+import ClientDetails from './pages/admin/ClientDetails';
 import AllSessions from './pages/admin/AllSessions';
 import ExerciseManagement from './pages/admin/ExerciseManagement';
 import ArticlesManagement from './pages/admin/ArticlesManagement';
@@ -56,7 +56,7 @@ function App() {
               <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/admin/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/admin/patients" element={<ProtectedRoute><PatientsList /></ProtectedRoute>} />
-              <Route path="/admin/patients/:id" element={<ProtectedRoute><PatientProfile /></ProtectedRoute>} />
+              <Route path="/admin/patients/:id" element={<ProtectedRoute><ClientDetails /></ProtectedRoute>} />
               <Route path="/admin/sessions" element={<ProtectedRoute><AllSessions /></ProtectedRoute>} />
               <Route path="/admin/exercises" element={<ProtectedRoute><ExerciseManagement /></ProtectedRoute>} />
               <Route path="/admin/articles" element={<ProtectedRoute><ArticlesManagement /></ProtectedRoute>} />
