@@ -761,16 +761,16 @@ const PatientProfile: React.FC = () => {
                                         <div className="flex justify-between border-b py-2">
                                           <span className="font-medium text-gray-600">סכום ששולם:</span>
                                           <span className={session.payment_status === 'Paid' ? 'text-green-600 font-medium' : ''}>
-                                            ₪{session.amount_paid || 0}
+                                            ₪{session.paid_amount || 0}
                                           </span>
                                         </div>
                                         <div className="flex justify-between border-b py-2">
                                           <span className="font-medium text-gray-600">סכום לתשלום:</span>
                                           <span className={session.payment_status === 'Unpaid' ? 'text-red-600 font-medium' : ''}>
-                                            {patient.session_price && session.amount_paid
+                                            {patient.session_price && session.paid_amount
                                               ? session.payment_status === 'Paid'
                                                 ? '₪0'
-                                                : `₪${patient.session_price - (session.amount_paid || 0)}`
+                                                : `₪${patient.session_price - (session.paid_amount || 0)}`
                                               : `₪${patient.session_price || 0}`}
                                           </span>
                                         </div>

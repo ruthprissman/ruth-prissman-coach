@@ -20,7 +20,7 @@ export interface Session {
   sent_exercises: boolean;
   exercise_list: string[] | null;
   summary: string | null;
-  amount_paid: number | null;
+  paid_amount: number | null;
   payment_method: 'Cash' | 'Bit' | 'Bank Transfer' | null;
   payment_status: 'Paid' | 'Partially Paid' | 'Unpaid';
   payment_date: string | null;
