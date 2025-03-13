@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -24,6 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { FutureSession } from '@/types/session';
+import { Check, X, BadgeDollarSign } from 'lucide-react';
 
 interface ConvertSessionDialogProps {
   isOpen: boolean;
