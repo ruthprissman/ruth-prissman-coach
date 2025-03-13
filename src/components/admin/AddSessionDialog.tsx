@@ -175,7 +175,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
       data.paid_amount = 0;
       data.payment_method = null;
       data.payment_date = null;
-    } else if (data.payment_method === null && data.payment_status !== 'Unpaid') {
+    } else if (data.payment_method === null && (data.payment_status === 'Paid' || data.payment_status === 'Partially Paid')) {
       // Default to 'cash' if payment method is null but status indicates payment
       data.payment_method = 'cash';
     }
