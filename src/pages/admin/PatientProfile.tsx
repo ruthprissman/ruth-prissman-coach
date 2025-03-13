@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -514,6 +515,7 @@ const PatientProfile: React.FC = () => {
             חזרה לרשימת המטופלים
           </Button>
           
+          {/* Patient info card */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
@@ -576,6 +578,7 @@ const PatientProfile: React.FC = () => {
             </CardContent>
           </Card>
           
+          {/* Sessions section */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <div className="flex gap-2">
@@ -801,6 +804,7 @@ const PatientProfile: React.FC = () => {
             )}
           </div>
           
+          {/* Dialogs */}
           <AddSessionDialog 
             isOpen={isSessionDialogOpen} 
             onClose={() => setIsSessionDialogOpen(false)} 
@@ -825,6 +829,7 @@ const PatientProfile: React.FC = () => {
             onExerciseAdded={handleExerciseAdded}
           />
           
+          {/* Delete patient dialog */}
           <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
@@ -858,6 +863,7 @@ const PatientProfile: React.FC = () => {
             </DialogContent>
           </Dialog>
           
+          {/* Delete session dialog */}
           <Dialog open={isDeleteSessionDialogOpen} onOpenChange={setIsDeleteSessionDialogOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
@@ -893,6 +899,7 @@ const PatientProfile: React.FC = () => {
             </DialogContent>
           </Dialog>
           
+          {/* Edit patient dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
@@ -915,4 +922,64 @@ const PatientProfile: React.FC = () => {
                     <Input 
                       id="phone" 
                       value={editFormData.phone || ''} 
-                      onChange={(e) => setEditFormData({...editFormData, phone: e.target.value ||
+                      onChange={(e) => setEditFormData({...editFormData, phone: e.target.value || null})}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email">אימייל</Label>
+                    <Input 
+                      id="email" 
+                      type="email"
+                      value={editFormData.email || ''} 
+                      onChange={(e) => setEditFormData({...editFormData, email: e.target.value || null})}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="session_price">מחיר לפגישה (₪)</Label>
+                    <Input 
+                      id="session_price" 
+                      type="number"
+                      value={editFormData.session_price === null ? '' : editFormData.session_price} 
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? null : Number(e.target.value);
+                        setEditFormData({...editFormData, session_price: value});
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">הערות</Label>
+                    <Textarea 
+                      id="notes" 
+                      value={editFormData.notes || ''} 
+                      onChange={(e) => setEditFormData({...editFormData, notes: e.target.value || null})}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
+                <Button 
+                  onClick={handleUpdatePatient}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'מעדכן...' : 'עדכן פרטים'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditDialogOpen(false)}
+                >
+                  ביטול
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      )}
+    </AdminLayout>
+  );
+};
+
+export default PatientProfile;
