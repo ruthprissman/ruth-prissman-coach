@@ -27,12 +27,14 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 interface AddSessionDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onAddSession: (session: Omit<Session, 'id'>) => Promise<boolean>;
   patientId: number;
+  sessionPrice?: number | null;
 }
 
 const SessionSchema = z.object({
@@ -41,6 +43,11 @@ const SessionSchema = z.object({
   sent_exercises: z.boolean(),
   exercise_list: z.array(z.string()).nullable(),
   summary: z.string().nullable().optional(),
+  amount_paid: z.number().nullable(),
+  payment_method: z.enum(['Cash', 'Bit', 'Bank Transfer']).nullable(),
+  payment_status: z.enum(['Paid', 'Partially Paid', 'Unpaid']),
+  payment_date: z.date().nullable(),
+  payment_notes: z.string().nullable().optional(),
 });
 
 type SessionFormValues = z.infer<typeof SessionSchema>;
@@ -49,7 +56,8 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
   isOpen, 
   onClose, 
   onAddSession, 
-  patientId 
+  patientId,
+  sessionPrice = 0
 }) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
 
@@ -61,18 +69,60 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
       sent_exercises: false,
       exercise_list: [],
       summary: '',
+      amount_paid: sessionPrice,
+      payment_method: null,
+      payment_status: 'Unpaid',
+      payment_date: null,
+      payment_notes: '',
     },
   });
 
-  // Watch the exercise_list field to sync sent_exercises status
+  // Watch fields for dependencies
   const exerciseList = form.watch('exercise_list');
+  const paymentStatus = form.watch('payment_status');
+  const paymentAmount = form.watch('amount_paid');
   
+  useEffect(() => {
+    // If payment status changes, update related fields
+    if (paymentStatus === 'Paid' && sessionPrice) {
+      form.setValue('amount_paid', sessionPrice);
+      form.setValue('payment_date', new Date());
+    } else if (paymentStatus === 'Unpaid') {
+      form.setValue('amount_paid', 0);
+      form.setValue('payment_method', null);
+    }
+  }, [paymentStatus, form, sessionPrice]);
+
+  useEffect(() => {
+    // If session price changes, update the form
+    if (sessionPrice && !form.getValues('amount_paid')) {
+      form.setValue('amount_paid', paymentStatus === 'Paid' ? sessionPrice : 0);
+    }
+  }, [sessionPrice, form, paymentStatus]);
+
   useEffect(() => {
     // If exercises were added and sent_exercises is false, update it
     if (exerciseList && exerciseList.length > 0 && !form.getValues('sent_exercises')) {
       form.setValue('sent_exercises', true);
     }
   }, [exerciseList, form]);
+
+  useEffect(() => {
+    // Auto-determine payment status based on amount paid
+    if (paymentAmount === null || paymentAmount === 0) {
+      if (form.getValues('payment_status') !== 'Unpaid') {
+        form.setValue('payment_status', 'Unpaid');
+      }
+    } else if (sessionPrice && paymentAmount < sessionPrice) {
+      if (form.getValues('payment_status') !== 'Partially Paid') {
+        form.setValue('payment_status', 'Partially Paid');
+      }
+    } else if (sessionPrice && paymentAmount >= sessionPrice) {
+      if (form.getValues('payment_status') !== 'Paid') {
+        form.setValue('payment_status', 'Paid');
+      }
+    }
+  }, [paymentAmount, form, sessionPrice]);
 
   useEffect(() => {
     // Fetch exercises for dropdown
@@ -107,6 +157,11 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
       sent_exercises: data.sent_exercises,
       exercise_list: data.exercise_list,
       summary: data.summary,
+      amount_paid: data.amount_paid,
+      payment_method: data.payment_method,
+      payment_status: data.payment_status,
+      payment_date: data.payment_date ? data.payment_date.toISOString() : null,
+      payment_notes: data.payment_notes
     });
     
     if (success) {
@@ -235,6 +290,149 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
               )}
             />
             
+            {/* Payment Section */}
+            <div className="space-y-4 border p-4 rounded-lg">
+              <h3 className="font-medium text-center">פרטי תשלום</h3>
+              
+              {/* Payment Status */}
+              <FormField
+                control={form.control}
+                name="payment_status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>סטטוס תשלום</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="בחר סטטוס תשלום" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Paid">שולם</SelectItem>
+                        <SelectItem value="Partially Paid">שולם חלקית</SelectItem>
+                        <SelectItem value="Unpaid">לא שולם</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Amount Paid */}
+              <FormField
+                control={form.control}
+                name="amount_paid"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>סכום ששולם (₪)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value === null ? '' : field.value}
+                        onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Payment Method */}
+              {form.watch('payment_status') !== 'Unpaid' && (
+                <FormField
+                  control={form.control}
+                  name="payment_method"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>אמצעי תשלום</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || ''}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="בחר אמצעי תשלום" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Cash">מזומן</SelectItem>
+                          <SelectItem value="Bit">ביט</SelectItem>
+                          <SelectItem value="Bank Transfer">העברה בנקאית</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              
+              {/* Payment Date */}
+              {form.watch('payment_status') !== 'Unpaid' && (
+                <FormField
+                  control={form.control}
+                  name="payment_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>תאריך תשלום</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-right font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "dd/MM/yyyy", { locale: he })
+                              ) : (
+                                <span>בחר תאריך תשלום</span>
+                              )}
+                              <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value || undefined}
+                            onSelect={field.onChange}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              
+              {/* Payment Notes */}
+              <FormField
+                control={form.control}
+                name="payment_notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>הערות לתשלום</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        value={field.value || ''}
+                        placeholder="הערות נוספות לגבי התשלום"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
             {/* Sent Exercises Switch */}
             <FormField
               control={form.control}
@@ -313,9 +511,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                                 form.setValue('exercise_list', updatedList);
                                 // If removing the last exercise, optionally set sent_exercises to false
                                 if (updatedList.length === 0) {
-                                  // Uncomment the line below if you want to automatically set sent_exercises to false
-                                  // when removing all exercises
-                                  // form.setValue('sent_exercises', false);
+                                  form.setValue('sent_exercises', false);
                                 }
                               }}
                             >

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -27,12 +28,14 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 interface SessionEditDialogProps {
   isOpen: boolean;
   onClose: () => void;
   session: Session;
   onSessionUpdated: () => void;
+  sessionPrice?: number | null;
 }
 
 const SessionSchema = z.object({
@@ -41,6 +44,11 @@ const SessionSchema = z.object({
   sent_exercises: z.boolean(),
   exercise_list: z.array(z.string()).nullable(),
   summary: z.string().nullable().optional(),
+  amount_paid: z.number().nullable(),
+  payment_method: z.enum(['Cash', 'Bit', 'Bank Transfer']).nullable(),
+  payment_status: z.enum(['Paid', 'Partially Paid', 'Unpaid']),
+  payment_date: z.date().nullable(),
+  payment_notes: z.string().nullable().optional(),
 });
 
 type SessionFormValues = z.infer<typeof SessionSchema>;
@@ -49,7 +57,8 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   isOpen, 
   onClose, 
   session, 
-  onSessionUpdated 
+  onSessionUpdated,
+  sessionPrice = 0
 }) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,11 +72,50 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       sent_exercises: session.sent_exercises,
       exercise_list: session.exercise_list,
       summary: session.summary,
+      amount_paid: session.amount_paid || 0,
+      payment_method: session.payment_method || null,
+      payment_status: session.payment_status || 'Unpaid',
+      payment_date: session.payment_date ? new Date(session.payment_date) : null,
+      payment_notes: session.payment_notes || null,
     },
   });
 
+  // Watch values for reactive updates
   const exerciseList = form.watch('exercise_list');
+  const paymentStatus = form.watch('payment_status');
+  const paymentAmount = form.watch('amount_paid');
   
+  useEffect(() => {
+    // If payment status changes, update related fields
+    if (paymentStatus === 'Paid' && sessionPrice) {
+      form.setValue('amount_paid', sessionPrice);
+      if (!form.getValues('payment_date')) {
+        form.setValue('payment_date', new Date());
+      }
+    } else if (paymentStatus === 'Unpaid') {
+      form.setValue('amount_paid', 0);
+      form.setValue('payment_method', null);
+      form.setValue('payment_date', null);
+    }
+  }, [paymentStatus, form, sessionPrice]);
+
+  useEffect(() => {
+    // Auto-determine payment status based on amount paid
+    if (paymentAmount === null || paymentAmount === 0) {
+      if (form.getValues('payment_status') !== 'Unpaid') {
+        form.setValue('payment_status', 'Unpaid');
+      }
+    } else if (sessionPrice && paymentAmount < sessionPrice) {
+      if (form.getValues('payment_status') !== 'Partially Paid') {
+        form.setValue('payment_status', 'Partially Paid');
+      }
+    } else if (sessionPrice && paymentAmount >= sessionPrice) {
+      if (form.getValues('payment_status') !== 'Paid') {
+        form.setValue('payment_status', 'Paid');
+      }
+    }
+  }, [paymentAmount, form, sessionPrice]);
+
   useEffect(() => {
     if (exerciseList && exerciseList.length > 0 && !form.getValues('sent_exercises')) {
       form.setValue('sent_exercises', true);
@@ -108,10 +156,18 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
           sent_exercises: data.sent_exercises,
           exercise_list: data.exercise_list,
           summary: data.summary,
+          amount_paid: data.amount_paid,
+          payment_method: data.payment_method,
+          payment_status: data.payment_status,
+          payment_date: data.payment_date ? data.payment_date.toISOString() : null,
+          payment_notes: data.payment_notes
         })
         .eq('id', session.id);
       
       if (error) throw error;
+      
+      // Update patient's financial status
+      await updatePatientFinancialStatus(session.patient_id);
       
       toast({
         title: "פגישה עודכנה בהצלחה",
@@ -128,6 +184,31 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const updatePatientFinancialStatus = async (patientId: number) => {
+    try {
+      // Count unpaid or partially paid sessions
+      const { count, error } = await supabase
+        .from('sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('patient_id', patientId)
+        .neq('payment_status', 'Paid');
+      
+      if (error) throw error;
+      
+      // Update patient's financial status
+      const financialStatus = count && count > 0 ? 'Has Outstanding Payments' : 'No Debts';
+      
+      const { error: updateError } = await supabase
+        .from('patients')
+        .update({ financial_status: financialStatus })
+        .eq('id', patientId);
+      
+      if (updateError) throw updateError;
+    } catch (error) {
+      console.error('Error updating patient financial status:', error);
     }
   };
 
@@ -247,6 +328,149 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                 </FormItem>
               )}
             />
+            
+            {/* Payment Section */}
+            <div className="space-y-4 border p-4 rounded-lg">
+              <h3 className="font-medium text-center">פרטי תשלום</h3>
+              
+              {/* Payment Status */}
+              <FormField
+                control={form.control}
+                name="payment_status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>סטטוס תשלום</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="בחר סטטוס תשלום" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Paid">שולם</SelectItem>
+                        <SelectItem value="Partially Paid">שולם חלקית</SelectItem>
+                        <SelectItem value="Unpaid">לא שולם</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Amount Paid */}
+              <FormField
+                control={form.control}
+                name="amount_paid"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>סכום ששולם (₪)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        value={field.value === null ? '' : field.value}
+                        onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Payment Method */}
+              {form.watch('payment_status') !== 'Unpaid' && (
+                <FormField
+                  control={form.control}
+                  name="payment_method"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>אמצעי תשלום</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || ''}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="בחר אמצעי תשלום" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Cash">מזומן</SelectItem>
+                          <SelectItem value="Bit">ביט</SelectItem>
+                          <SelectItem value="Bank Transfer">העברה בנקאית</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              
+              {/* Payment Date */}
+              {form.watch('payment_status') !== 'Unpaid' && (
+                <FormField
+                  control={form.control}
+                  name="payment_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>תאריך תשלום</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full pl-3 text-right font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "dd/MM/yyyy", { locale: he })
+                              ) : (
+                                <span>בחר תאריך תשלום</span>
+                              )}
+                              <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value || undefined}
+                            onSelect={field.onChange}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              
+              {/* Payment Notes */}
+              <FormField
+                control={form.control}
+                name="payment_notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>הערות לתשלום</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        value={field.value || ''}
+                        placeholder="הערות נוספות לגבי התשלום"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <FormField
               control={form.control}

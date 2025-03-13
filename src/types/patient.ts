@@ -1,3 +1,4 @@
+
 export interface Patient {
   id: number;
   name: string;
@@ -8,6 +9,7 @@ export interface Patient {
   last_session_date?: string | null;
   has_unpaid_sessions?: boolean;
   has_upcoming_sessions?: boolean;
+  financial_status?: 'No Debts' | 'Has Outstanding Payments' | null;
 }
 
 export interface Session {
@@ -18,6 +20,11 @@ export interface Session {
   sent_exercises: boolean;
   exercise_list: string[] | null;
   summary: string | null;
+  amount_paid: number | null;
+  payment_method: 'Cash' | 'Bit' | 'Bank Transfer' | null;
+  payment_status: 'Paid' | 'Partially Paid' | 'Unpaid';
+  payment_date: string | null;
+  payment_notes: string | null;
 }
 
 export interface Exercise {

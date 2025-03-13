@@ -103,6 +103,9 @@ const PatientProfile: React.FC = () => {
       
       setSessions(sessionsData || []);
       setFilteredSessions(sessionsData || []);
+      
+      // Update patient's financial status based on sessions
+      updatePatientFinancialStatus(Number(id), sessionsData || []);
     } catch (error: any) {
       console.error('Error fetching patient data:', error);
       toast({
@@ -136,7 +139,7 @@ const PatientProfile: React.FC = () => {
       // Apply payment status filter
       if (paymentStatusFilter !== 'all') {
         filtered = filtered.filter(session => 
-          getPaymentStatus(session) === paymentStatusFilter
+          session.payment_status === paymentStatusFilter
         );
       }
       
@@ -168,6 +171,33 @@ const PatientProfile: React.FC = () => {
     setMeetingTypeFilter('all');
     setPaymentStatusFilter('all');
     setDateRangeFilter({ from: undefined, to: undefined });
+  };
+
+  // Function to update the patient's financial status based on sessions
+  const updatePatientFinancialStatus = async (patientId: number, sessionsList: Session[] = sessions) => {
+    try {
+      // Check if there are any unpaid or partially paid sessions
+      const hasUnpaidSessions = sessionsList.some(
+        session => session.payment_status === 'Unpaid' || session.payment_status === 'Partially Paid'
+      );
+      
+      const financialStatus = hasUnpaidSessions ? 'Has Outstanding Payments' : 'No Debts';
+      
+      // Update the patient in the database
+      const { error } = await supabase
+        .from('patients')
+        .update({ financial_status: financialStatus })
+        .eq('id', patientId);
+      
+      if (error) throw error;
+      
+      // Update local state if patient exists
+      if (patient) {
+        setPatient(prev => prev ? {...prev, financial_status: financialStatus} : null);
+      }
+    } catch (error) {
+      console.error('Error updating patient financial status:', error);
+    }
   };
 
   const handleAddSession = async (newSession: Omit<Session, 'id'>) => {
@@ -204,7 +234,7 @@ const PatientProfile: React.FC = () => {
 
   const handleUpdatePayment = (session: Session) => {
     setSelectedSession(session);
-    setIsPaymentDialogOpen(true);
+    setIsEditSessionDialogOpen(true);
   };
 
   const handleDeleteSessionConfirm = (session: Session) => {
@@ -263,6 +293,7 @@ const PatientProfile: React.FC = () => {
           phone: editFormData.phone,
           email: editFormData.email,
           notes: editFormData.notes,
+          session_price: editFormData.session_price
         })
         .eq('id', id);
       
@@ -341,6 +372,15 @@ const PatientProfile: React.FC = () => {
     }
   };
 
+  const formatDateOnly = (dateString: string | null) => {
+    if (!dateString) return '-';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy', { locale: he });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
   const getMeetingTypeIcon = (type: string) => {
     switch (type) {
       case 'Zoom':
@@ -367,45 +407,53 @@ const PatientProfile: React.FC = () => {
     }
   };
 
-  // Payment status - this is a placeholder implementation
-  // In a real implementation, this would be calculated based on actual payment data
-  const getPaymentStatus = (session: Session) => {
-    // This is just a placeholder, in reality you would determine this from your payment data
-    const statuses = ['paid', 'partially_paid', 'unpaid'];
-    const randomIndex = session.id % 3;
-    return statuses[randomIndex];
+  const getPaymentMethodText = (method: string | null) => {
+    if (!method) return '-';
+    switch (method) {
+      case 'Cash':
+        return 'מזומן';
+      case 'Bit':
+        return 'ביט';
+      case 'Bank Transfer':
+        return 'העברה בנקאית';
+      default:
+        return method;
+    }
   };
 
-  const getPaymentStatusText = (status: string) => {
+  const getPaymentStatusText = (status: string | null) => {
+    if (!status) return 'לא שולם';
     switch (status) {
-      case 'paid':
+      case 'Paid':
         return 'שולם';
-      case 'partially_paid':
+      case 'Partially Paid':
         return 'שולם חלקית';
-      case 'unpaid':
+      case 'Unpaid':
         return 'לא שולם';
       default:
         return status;
     }
   };
 
-  const getPaymentStatusBadge = (status: string) => {
+  const getPaymentStatusBadge = (status: string | null) => {
+    if (!status) status = 'Unpaid';
+    
     switch (status) {
-      case 'paid':
+      case 'Paid':
         return (
           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
             <Check className="h-3 w-3 mr-1" />
             {getPaymentStatusText(status)}
           </Badge>
         );
-      case 'partially_paid':
+      case 'Partially Paid':
         return (
           <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
             <BadgeDollarSign className="h-3 w-3 mr-1" />
             {getPaymentStatusText(status)}
           </Badge>
         );
-      case 'unpaid':
+      case 'Unpaid':
         return (
           <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
             <CreditCard className="h-3 w-3 mr-1" />
@@ -421,13 +469,12 @@ const PatientProfile: React.FC = () => {
     }
   };
 
-  // In a real application, this would be calculated from actual data
-  const getFinancialStatus = () => {
+  const getFinancialStatusBadge = () => {
     if (!patient) return null;
     
-    const hasUnpaidSessions = sessions.some(session => getPaymentStatus(session) === 'unpaid');
+    const status = patient.financial_status;
     
-    if (hasUnpaidSessions) {
+    if (status === 'Has Outstanding Payments') {
       return (
         <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
           <BadgeDollarSign className="h-3 w-3 mr-1" />
@@ -503,7 +550,7 @@ const PatientProfile: React.FC = () => {
                 <div className="text-right">
                   <CardTitle className="text-2xl">{patient.name}</CardTitle>
                   <CardDescription className="mt-1">
-                    {getFinancialStatus()}
+                    {getFinancialStatusBadge()}
                   </CardDescription>
                 </div>
               </div>
@@ -607,7 +654,7 @@ const PatientProfile: React.FC = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {getPaymentStatusBadge(getPaymentStatus(session))}
+                            {getPaymentStatusBadge(session.payment_status)}
                           </TableCell>
                           <TableCell>
                             <div className="flex space-x-2 space-x-reverse">
@@ -702,28 +749,47 @@ const PatientProfile: React.FC = () => {
                                 <div className="mt-4">
                                   <h4 className="font-medium mb-2 flex items-center">
                                     <BadgeDollarSign className="h-4 w-4 ml-2" />
-                                    היסטוריית תשלומים
+                                    פרטי תשלום
                                   </h4>
                                   <div className="bg-white p-3 rounded border">
-                                    {getPaymentStatus(session) === 'paid' ? (
-                                      <div className="flex items-center text-green-600">
-                                        <Check className="h-4 w-4 ml-2" />
-                                        שולם במלואו: ₪{patient.session_price || 0}
-                                      </div>
-                                    ) : getPaymentStatus(session) === 'partially_paid' ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                       <div>
-                                        <div className="text-amber-600 mb-1">שולם חלקית</div>
-                                        <div className="pl-5 border-r-2 border-amber-300 pr-2">
-                                          <div className="text-sm">שולם: ₪{Math.floor((patient.session_price || 0) * 0.5)}</div>
-                                          <div className="text-sm">יתרה לתשלום: ₪{Math.ceil((patient.session_price || 0) * 0.5)}</div>
+                                        <div className="flex justify-between border-b pb-2">
+                                          <span className="font-medium text-gray-600">סטטוס תשלום:</span>
+                                          <span>{getPaymentStatusBadge(session.payment_status)}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b py-2">
+                                          <span className="font-medium text-gray-600">סכום ששולם:</span>
+                                          <span className={session.payment_status === 'Paid' ? 'text-green-600 font-medium' : ''}>
+                                            ₪{session.amount_paid || 0}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between border-b py-2">
+                                          <span className="font-medium text-gray-600">סכום לתשלום:</span>
+                                          <span className={session.payment_status === 'Unpaid' ? 'text-red-600 font-medium' : ''}>
+                                            {patient.session_price && session.amount_paid
+                                              ? session.payment_status === 'Paid'
+                                                ? '₪0'
+                                                : `₪${patient.session_price - (session.amount_paid || 0)}`
+                                              : `₪${patient.session_price || 0}`}
+                                          </span>
                                         </div>
                                       </div>
-                                    ) : (
-                                      <div className="flex items-center text-red-600">
-                                        <X className="h-4 w-4 ml-2" />
-                                        לא שולם: ₪{patient.session_price || 0}
+                                      <div>
+                                        <div className="flex justify-between border-b pb-2">
+                                          <span className="font-medium text-gray-600">אמצעי תשלום:</span>
+                                          <span>{getPaymentMethodText(session.payment_method)}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b py-2">
+                                          <span className="font-medium text-gray-600">תאריך תשלום:</span>
+                                          <span>{formatDateOnly(session.payment_date)}</span>
+                                        </div>
+                                        <div className="flex justify-between py-2">
+                                          <span className="font-medium text-gray-600">הערות תשלום:</span>
+                                          <span>{session.payment_notes || '-'}</span>
+                                        </div>
                                       </div>
-                                    )}
+                                    </div>
                                   </div>
                                 </div>
 
@@ -757,6 +823,7 @@ const PatientProfile: React.FC = () => {
             onClose={() => setIsSessionDialogOpen(false)} 
             onAddSession={handleAddSession}
             patientId={Number(id)}
+            sessionPrice={patient.session_price}
           />
           
           {selectedSession && (
@@ -765,6 +832,7 @@ const PatientProfile: React.FC = () => {
               onClose={() => setIsEditSessionDialogOpen(false)}
               session={selectedSession}
               onSessionUpdated={handleSessionUpdated}
+              sessionPrice={patient.session_price}
             />
           )}
           
@@ -912,74 +980,6 @@ const PatientProfile: React.FC = () => {
                 <Button 
                   variant="outline" 
                   onClick={() => setIsEditDialogOpen(false)}
-                >
-                  ביטול
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {/* Payment Update Dialog */}
-          <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-center">עדכון פרטי תשלום</DialogTitle>
-              </DialogHeader>
-              
-              {selectedSession && (
-                <div className="space-y-4 py-2">
-                  <div>
-                    <p className="text-center font-medium">
-                      עדכון תשלום לפגישה מתאריך {formatDate(selectedSession.session_date)}
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="payment_status">סטטוס תשלום</Label>
-                    <Select defaultValue={getPaymentStatus(selectedSession)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="בחר סטטוס תשלום" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="paid">שולם במלואו</SelectItem>
-                        <SelectItem value="partially_paid">שולם חלקית</SelectItem>
-                        <SelectItem value="unpaid">לא שולם</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="payment_amount">סכום ששולם (₪)</Label>
-                    <Input 
-                      id="payment_amount" 
-                      type="number"
-                      defaultValue={getPaymentStatus(selectedSession) === 'paid' ? 
-                        patient?.session_price || 0 : 
-                        getPaymentStatus(selectedSession) === 'partially_paid' ? 
-                        Math.floor((patient?.session_price || 0) * 0.5) : 0}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="payment_notes">הערות לתשלום</Label>
-                    <Textarea 
-                      id="payment_notes" 
-                      placeholder="הוסף הערות לגבי התשלום כאן..."
-                    />
-                  </div>
-                </div>
-              )}
-              
-              <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
-                <Button 
-                  onClick={handleSessionUpdated}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'מעדכן...' : 'עדכן תשלום'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsPaymentDialogOpen(false)}
                 >
                   ביטול
                 </Button>
