@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -746,15 +745,15 @@ const PatientProfile: React.FC = () => {
                                         </div>
                                         <div className="flex justify-between border-b py-2">
                                           <span className="font-medium text-gray-600">סכום ששולם:</span>
-                                          <span className={session.payment_status === 'Paid' ? 'text-green-600 font-medium' : ''}>
+                                          <span className={session.payment_status === 'paid' ? 'text-green-600 font-medium' : ''}>
                                             ₪{session.paid_amount || 0}
                                           </span>
                                         </div>
                                         <div className="flex justify-between border-b py-2">
                                           <span className="font-medium text-gray-600">סכום לתשלום:</span>
-                                          <span className={session.payment_status === 'Unpaid' ? 'text-red-600 font-medium' : ''}>
+                                          <span className={session.payment_status === 'unpaid' ? 'text-red-600 font-medium' : ''}>
                                             {patient.session_price && session.paid_amount
-                                              ? session.payment_status === 'Paid'
+                                              ? session.payment_status === 'paid'
                                                 ? '₪0'
                                                 : `₪${patient.session_price - (session.paid_amount || 0)}`
                                               : `₪${patient.session_price || 0}`}
@@ -916,64 +915,4 @@ const PatientProfile: React.FC = () => {
                     <Input 
                       id="phone" 
                       value={editFormData.phone || ''} 
-                      onChange={(e) => setEditFormData({...editFormData, phone: e.target.value || null})}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email">אימייל</Label>
-                    <Input 
-                      id="email" 
-                      type="email"
-                      value={editFormData.email || ''} 
-                      onChange={(e) => setEditFormData({...editFormData, email: e.target.value || null})}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="session_price">מחיר לפגישה (₪)</Label>
-                    <Input 
-                      id="session_price" 
-                      type="number"
-                      value={editFormData.session_price === null ? '' : editFormData.session_price} 
-                      onChange={(e) => {
-                        const value = e.target.value === '' ? null : Number(e.target.value);
-                        setEditFormData({...editFormData, session_price: value});
-                      }}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">הערות</Label>
-                    <Textarea 
-                      id="notes" 
-                      value={editFormData.notes || ''} 
-                      onChange={(e) => setEditFormData({...editFormData, notes: e.target.value || null})}
-                    />
-                  </div>
-                </div>
-              )}
-              
-              <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
-                <Button 
-                  onClick={handleUpdatePatient}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'מעדכן...' : 'עדכן פרטים'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsEditDialogOpen(false)}
-                >
-                  ביטול
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
-    </AdminLayout>
-  );
-};
-
-export default PatientProfile;
+                      onChange={(e) => setEditFormData({...editFormData, phone: e.target.value ||
