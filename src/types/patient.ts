@@ -9,6 +9,7 @@ export interface Patient {
   last_session_date?: string | null;
   has_unpaid_sessions?: boolean;
   has_upcoming_sessions?: boolean;
+  is_active?: boolean;
   financial_status?: 'No Debts' | 'Has Outstanding Payments' | null;
 }
 
