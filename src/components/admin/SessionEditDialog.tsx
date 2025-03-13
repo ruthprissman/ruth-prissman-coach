@@ -43,7 +43,7 @@ const SessionSchema = z.object({
   sent_exercises: z.boolean(),
   exercise_list: z.array(z.string()).nullable(),
   summary: z.string().nullable().optional(),
-  amount_paid: z.number().nullable(),
+  paid_amount: z.number().nullable(),
   payment_method: z.enum(['Cash', 'Bit', 'Bank Transfer']).nullable(),
   payment_status: z.enum(['Paid', 'Partially Paid', 'Unpaid']),
   payment_date: z.date().nullable(),
@@ -73,7 +73,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       sent_exercises: session.sent_exercises,
       exercise_list: session.exercise_list,
       summary: session.summary,
-      amount_paid: session.amount_paid || 0,
+      paid_amount: session.paid_amount || 0,
       payment_method: session.payment_method || null,
       payment_status: session.payment_status || 'Unpaid',
       payment_date: session.payment_date ? new Date(session.payment_date) : null,
@@ -89,7 +89,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
         sent_exercises: session.sent_exercises,
         exercise_list: session.exercise_list,
         summary: session.summary,
-        amount_paid: session.amount_paid || 0,
+        paid_amount: session.paid_amount || 0,
         payment_method: session.payment_method || null,
         payment_status: session.payment_status || 'Unpaid',
         payment_date: session.payment_date ? new Date(session.payment_date) : null,
@@ -115,23 +115,23 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
 
   const exerciseList = form.watch('exercise_list');
   const paymentStatus = form.watch('payment_status');
-  const paymentAmount = form.watch('amount_paid');
+  const paymentAmount = form.watch('paid_amount');
   
   useEffect(() => {
-    if (paymentStatus === 'Paid' && sessionPrice && form.getValues('amount_paid') === 0) {
-      form.setValue('amount_paid', sessionPrice, { shouldDirty: true });
+    if (paymentStatus === 'Paid' && sessionPrice && form.getValues('paid_amount') === 0) {
+      form.setValue('paid_amount', sessionPrice, { shouldDirty: true });
       if (!form.getValues('payment_date')) {
         form.setValue('payment_date', new Date(), { shouldDirty: true });
       }
-    } else if (paymentStatus === 'Unpaid' && form.getValues('amount_paid') !== 0) {
-      form.setValue('amount_paid', 0, { shouldDirty: true });
+    } else if (paymentStatus === 'Unpaid' && form.getValues('paid_amount') !== 0) {
+      form.setValue('paid_amount', 0, { shouldDirty: true });
       form.setValue('payment_method', null, { shouldDirty: true });
       form.setValue('payment_date', null, { shouldDirty: true });
     }
   }, [paymentStatus, sessionPrice, form]);
 
   useEffect(() => {
-    if (form.formState.dirtyFields.amount_paid) {
+    if (form.formState.dirtyFields.paid_amount) {
       if (paymentAmount === null || paymentAmount === 0) {
         if (form.getValues('payment_status') !== 'Unpaid') {
           form.setValue('payment_status', 'Unpaid', { shouldDirty: true });
@@ -181,7 +181,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       }
       
       if (data.payment_status === 'Unpaid') {
-        data.amount_paid = 0;
+        data.paid_amount = 0;
         data.payment_method = null;
         data.payment_date = null;
       } else if (data.payment_status === 'Paid' && !data.payment_method) {
@@ -196,7 +196,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
           sent_exercises: data.sent_exercises,
           exercise_list: data.exercise_list,
           summary: data.summary,
-          amount_paid: data.amount_paid,
+          paid_amount: data.paid_amount,
           payment_method: data.payment_method,
           payment_status: data.payment_status,
           payment_date: data.payment_date ? data.payment_date.toISOString() : null,
@@ -400,7 +400,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                   
                   <FormField
                     control={form.control}
-                    name="amount_paid"
+                    name="paid_amount"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>סכום ששולם (₪)</FormLabel>
