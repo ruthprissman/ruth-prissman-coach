@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -104,7 +103,6 @@ const PatientProfile: React.FC = () => {
       setSessions(sessionsData || []);
       setFilteredSessions(sessionsData || []);
       
-      // Update patient's financial status based on sessions
       updatePatientFinancialStatus(Number(id), sessionsData || []);
     } catch (error: any) {
       console.error('Error fetching patient data:', error);
@@ -122,28 +120,24 @@ const PatientProfile: React.FC = () => {
     fetchPatientData();
   }, [id]);
 
-  // Apply filters effect
   useEffect(() => {
     if (sessions.length === 0) return;
     
     try {
       let filtered = [...sessions];
       
-      // Apply meeting type filter
       if (meetingTypeFilter !== 'all') {
         filtered = filtered.filter(session => 
           session.meeting_type === meetingTypeFilter
         );
       }
       
-      // Apply payment status filter
       if (paymentStatusFilter !== 'all') {
         filtered = filtered.filter(session => 
           session.payment_status === paymentStatusFilter
         );
       }
       
-      // Apply date range filter
       if (dateRangeFilter.from) {
         filtered = filtered.filter(session => 
           new Date(session.session_date) >= dateRangeFilter.from!
@@ -173,17 +167,14 @@ const PatientProfile: React.FC = () => {
     setDateRangeFilter({ from: undefined, to: undefined });
   };
 
-  // Function to update the patient's financial status based on sessions
   const updatePatientFinancialStatus = async (patientId: number, sessionsList: Session[] = sessions) => {
     try {
-      // Check if there are any unpaid or partially paid sessions
       const hasUnpaidSessions = sessionsList.some(
         session => session.payment_status === 'Unpaid' || session.payment_status === 'Partially Paid'
       );
       
       const financialStatus = hasUnpaidSessions ? 'Has Outstanding Payments' : 'No Debts';
       
-      // Update the patient in the database
       const { error } = await supabase
         .from('patients')
         .update({ financial_status: financialStatus })
@@ -191,7 +182,6 @@ const PatientProfile: React.FC = () => {
       
       if (error) throw error;
       
-      // Update local state if patient exists
       if (patient) {
         setPatient(prev => prev ? {...prev, financial_status: financialStatus} : null);
       }
@@ -410,11 +400,11 @@ const PatientProfile: React.FC = () => {
   const getPaymentMethodText = (method: string | null) => {
     if (!method) return '-';
     switch (method) {
-      case 'Cash':
+      case 'cash':
         return 'מזומן';
-      case 'Bit':
+      case 'bit':
         return 'ביט';
-      case 'Bank Transfer':
+      case 'transfer':
         return 'העברה בנקאית';
       default:
         return method;
@@ -524,7 +514,6 @@ const PatientProfile: React.FC = () => {
             חזרה לרשימת המטופלים
           </Button>
           
-          {/* Customer Card */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
@@ -587,7 +576,6 @@ const PatientProfile: React.FC = () => {
             </CardContent>
           </Card>
           
-          {/* Sessions List */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <div className="flex gap-2">
@@ -605,7 +593,6 @@ const PatientProfile: React.FC = () => {
               <h3 className="text-xl font-bold">היסטוריית פגישות</h3>
             </div>
             
-            {/* Session Filters */}
             <PatientSessionFilters
               meetingTypeFilter={meetingTypeFilter}
               setMeetingTypeFilter={setMeetingTypeFilter}
@@ -690,7 +677,6 @@ const PatientProfile: React.FC = () => {
                           </TableCell>
                         </TableRow>
                         
-                        {/* Expanded Session Details */}
                         {expandedSessionId === session.id && (
                           <TableRow className="bg-gray-50">
                             <TableCell colSpan={5} className="p-0">
@@ -745,7 +731,6 @@ const PatientProfile: React.FC = () => {
                                   </div>
                                 </div>
                                 
-                                {/* Payment History Section */}
                                 <div className="mt-4">
                                   <h4 className="font-medium mb-2 flex items-center">
                                     <BadgeDollarSign className="h-4 w-4 ml-2" />
@@ -793,7 +778,6 @@ const PatientProfile: React.FC = () => {
                                   </div>
                                 </div>
 
-                                {/* Delete button in expanded view */}
                                 <div className="mt-4 flex justify-end">
                                   <Button
                                     variant="outline"
@@ -817,7 +801,6 @@ const PatientProfile: React.FC = () => {
             )}
           </div>
           
-          {/* Dialogs */}
           <AddSessionDialog 
             isOpen={isSessionDialogOpen} 
             onClose={() => setIsSessionDialogOpen(false)} 

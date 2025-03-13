@@ -44,7 +44,7 @@ const SessionSchema = z.object({
   exercise_list: z.array(z.string()).nullable(),
   summary: z.string().nullable().optional(),
   paid_amount: z.number().nullable(),
-  payment_method: z.enum(['Cash', 'Bit', 'Bank Transfer']).nullable(),
+  payment_method: z.enum(['cash', 'bit', 'transfer']).nullable(),
   payment_status: z.enum(['Paid', 'Partially Paid', 'Unpaid']),
   payment_date: z.date().nullable(),
   payment_notes: z.string().nullable().optional(),
@@ -175,6 +175,9 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
       data.paid_amount = 0;
       data.payment_method = null;
       data.payment_date = null;
+    } else if (data.payment_method === null && data.payment_status !== 'Unpaid') {
+      // Default to 'cash' if payment method is null but status indicates payment
+      data.payment_method = 'cash';
     }
     
     const success = await onAddSession({
@@ -389,9 +392,9 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Cash">מזומן</SelectItem>
-                              <SelectItem value="Bit">ביט</SelectItem>
-                              <SelectItem value="Bank Transfer">העברה בנקאית</SelectItem>
+                              <SelectItem value="cash">מזומן</SelectItem>
+                              <SelectItem value="bit">ביט</SelectItem>
+                              <SelectItem value="transfer">העברה בנקאית</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
