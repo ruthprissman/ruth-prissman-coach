@@ -46,7 +46,7 @@ const SessionSchema = z.object({
   summary: z.string().nullable().optional(),
   paid_amount: z.number().nullable(),
   payment_method: z.enum(['cash', 'bit', 'transfer']).nullable(),
-  payment_status: z.enum(['Paid', 'Partially Paid', 'Unpaid']),
+  payment_status: z.enum(['paid', 'partially_paid', 'unpaid']),
   payment_date: z.date().nullable(),
   payment_notes: z.string().nullable().optional(),
 });
@@ -76,7 +76,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       summary: session.summary,
       paid_amount: session.paid_amount || 0,
       payment_method: session.payment_method || null,
-      payment_status: session.payment_status || 'Unpaid',
+      payment_status: session.payment_status || 'unpaid',
       payment_date: session.payment_date ? new Date(session.payment_date) : null,
       payment_notes: session.payment_notes || null,
     },
@@ -92,7 +92,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
         summary: session.summary,
         paid_amount: session.paid_amount || 0,
         payment_method: session.payment_method || null,
-        payment_status: session.payment_status || 'Unpaid',
+        payment_status: session.payment_status || 'unpaid',
         payment_date: session.payment_date ? new Date(session.payment_date) : null,
         payment_notes: session.payment_notes || null,
       };
@@ -119,12 +119,12 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   const paymentAmount = form.watch('paid_amount');
   
   useEffect(() => {
-    if (paymentStatus === 'Paid' && sessionPrice && form.getValues('paid_amount') === 0) {
+    if (paymentStatus === 'paid' && sessionPrice && form.getValues('paid_amount') === 0) {
       form.setValue('paid_amount', sessionPrice, { shouldDirty: true });
       if (!form.getValues('payment_date')) {
         form.setValue('payment_date', new Date(), { shouldDirty: true });
       }
-    } else if (paymentStatus === 'Unpaid' && form.getValues('paid_amount') !== 0) {
+    } else if (paymentStatus === 'unpaid' && form.getValues('paid_amount') !== 0) {
       form.setValue('paid_amount', 0, { shouldDirty: true });
       form.setValue('payment_method', null, { shouldDirty: true });
       form.setValue('payment_date', null, { shouldDirty: true });
@@ -134,16 +134,16 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   useEffect(() => {
     if (form.formState.dirtyFields.paid_amount) {
       if (paymentAmount === null || paymentAmount === 0) {
-        if (form.getValues('payment_status') !== 'Unpaid') {
-          form.setValue('payment_status', 'Unpaid', { shouldDirty: true });
+        if (form.getValues('payment_status') !== 'unpaid') {
+          form.setValue('payment_status', 'unpaid', { shouldDirty: true });
         }
       } else if (sessionPrice && paymentAmount < sessionPrice) {
-        if (form.getValues('payment_status') !== 'Partially Paid') {
-          form.setValue('payment_status', 'Partially Paid', { shouldDirty: true });
+        if (form.getValues('payment_status') !== 'partially_paid') {
+          form.setValue('payment_status', 'partially_paid', { shouldDirty: true });
         }
       } else if (sessionPrice && paymentAmount >= sessionPrice) {
-        if (form.getValues('payment_status') !== 'Paid') {
-          form.setValue('payment_status', 'Paid', { shouldDirty: true });
+        if (form.getValues('payment_status') !== 'paid') {
+          form.setValue('payment_status', 'paid', { shouldDirty: true });
         }
       }
     }
@@ -181,11 +181,11 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
         data.sent_exercises = true;
       }
       
-      if (data.payment_status === 'Unpaid') {
+      if (data.payment_status === 'unpaid') {
         data.paid_amount = 0;
         data.payment_method = null;
         data.payment_date = null;
-      } else if (!data.payment_method) {
+      } else if (!data.payment_method && (data.payment_status === 'paid' || data.payment_status === 'partially_paid')) {
         // Default to 'cash' if payment status is not Unpaid but method is null
         data.payment_method = 'cash';
       }
@@ -235,7 +235,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
         .from('sessions')
         .select('*', { count: 'exact', head: true })
         .eq('patient_id', patientId)
-        .neq('payment_status', 'Paid');
+        .neq('payment_status', 'paid');
       
       if (error) throw error;
       

@@ -45,7 +45,7 @@ const SessionSchema = z.object({
   summary: z.string().nullable().optional(),
   paid_amount: z.number().nullable(),
   payment_method: z.enum(['cash', 'bit', 'transfer']).nullable(),
-  payment_status: z.enum(['Paid', 'Partially Paid', 'Unpaid']),
+  payment_status: z.enum(['paid', 'partially_paid', 'unpaid']),
   payment_date: z.date().nullable(),
   payment_notes: z.string().nullable().optional(),
 });
@@ -70,7 +70,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     summary: '',
     paid_amount: sessionPrice,
     payment_method: null,
-    payment_status: 'Unpaid' as const,
+    payment_status: 'unpaid' as const,
     payment_date: null,
     payment_notes: '',
   };
@@ -102,10 +102,10 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     if (!isFormInitialized) return;
 
     // If payment status changes, update related fields
-    if (paymentStatus === 'Paid' && sessionPrice) {
+    if (paymentStatus === 'paid' && sessionPrice) {
       form.setValue('paid_amount', sessionPrice);
       form.setValue('payment_date', new Date());
-    } else if (paymentStatus === 'Unpaid') {
+    } else if (paymentStatus === 'unpaid') {
       form.setValue('paid_amount', 0);
       form.setValue('payment_method', null);
       form.setValue('payment_date', null);
@@ -119,16 +119,16 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     // Auto-determine payment status based on amount paid, but avoid circular updates
     if (form.formState.dirtyFields.paid_amount) {
       if (paymentAmount === null || paymentAmount === 0) {
-        if (form.getValues('payment_status') !== 'Unpaid') {
-          form.setValue('payment_status', 'Unpaid');
+        if (form.getValues('payment_status') !== 'unpaid') {
+          form.setValue('payment_status', 'unpaid');
         }
       } else if (sessionPrice && paymentAmount < sessionPrice) {
-        if (form.getValues('payment_status') !== 'Partially Paid') {
-          form.setValue('payment_status', 'Partially Paid');
+        if (form.getValues('payment_status') !== 'partially_paid') {
+          form.setValue('payment_status', 'partially_paid');
         }
       } else if (sessionPrice && paymentAmount >= sessionPrice) {
-        if (form.getValues('payment_status') !== 'Paid') {
-          form.setValue('payment_status', 'Paid');
+        if (form.getValues('payment_status') !== 'paid') {
+          form.setValue('payment_status', 'paid');
         }
       }
     }
@@ -171,11 +171,11 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     }
     
     // Ensure payment data is consistent
-    if (data.payment_status === 'Unpaid') {
+    if (data.payment_status === 'unpaid') {
       data.paid_amount = 0;
       data.payment_method = null;
       data.payment_date = null;
-    } else if (data.payment_method === null && (data.payment_status === 'Paid' || data.payment_status === 'Partially Paid')) {
+    } else if (data.payment_method === null && (data.payment_status === 'paid' || data.payment_status === 'partially_paid')) {
       // Default to 'cash' if payment method is null but status indicates payment
       data.payment_method = 'cash';
     }

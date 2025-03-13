@@ -22,7 +22,7 @@ export interface Session {
   summary: string | null;
   paid_amount: number | null;
   payment_method: 'cash' | 'bit' | 'transfer' | null;
-  payment_status: 'Paid' | 'Partially Paid' | 'Unpaid';
+  payment_status: 'paid' | 'partially_paid' | 'unpaid';
   payment_date: string | null;
   payment_notes: string | null;
 }
