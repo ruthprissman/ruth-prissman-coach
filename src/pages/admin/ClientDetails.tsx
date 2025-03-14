@@ -43,30 +43,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-} from "@/components/ui/chart";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
-} from "recharts";
 import SessionEditDialog from '@/components/admin/SessionEditDialog';
 import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog';
 import ConvertSessionDialog from '@/components/admin/sessions/ConvertSessionDialog';
+import SessionDetailCollapsible from '@/components/admin/sessions/SessionDetailCollapsible';
+import ClientStatisticsCard from '@/components/admin/ClientStatisticsCard';
+
+console.log("🚀 ClientDetails.tsx is loaded!");
 
 const ClientDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  console.log("🚀 ClientDetails component rendering with ID:", id);
 
   // State variables
   const [client, setClient] = useState<Patient | null>(null);
@@ -96,6 +87,7 @@ const ClientDetails: React.FC = () => {
   const fetchClientData = async () => {
     if (!id) return;
     
+    console.log("📌 Fetching client data for ID:", id);
     setIsLoading(true);
     try {
       // Fetch client information
@@ -107,6 +99,7 @@ const ClientDetails: React.FC = () => {
       
       if (clientError) throw clientError;
       
+      console.log("📌 Client Data:", clientData);
       setClient(clientData);
       setEditFormData(clientData);
       
@@ -120,6 +113,7 @@ const ClientDetails: React.FC = () => {
       
       if (upcomingError) throw upcomingError;
       
+      console.log("📌 Upcoming Sessions:", upcomingData);
       setUpcomingSessions(upcomingData || []);
       
       // Fetch past sessions
@@ -131,6 +125,7 @@ const ClientDetails: React.FC = () => {
       
       if (sessionsError) throw sessionsError;
       
+      console.log("📌 Sessions Data:", sessionsData);
       setPastSessions(sessionsData || []);
       setFilteredSessions(sessionsData || []);
       
@@ -152,18 +147,21 @@ const ClientDetails: React.FC = () => {
         ? upcomingData[0].scheduled_date 
         : null;
       
-      setStatistics({
+      const stats = {
         total_sessions: totalSessions,
         total_debt: totalDebt,
         last_session: lastSession,
         next_session: nextSession
-      });
+      };
+      
+      console.log("📌 Statistics:", stats);
+      setStatistics(stats);
       
       // Prepare chart data
       prepareChartData(totalSessions, totalDebt);
       
     } catch (error: any) {
-      console.error('Error fetching client data:', error);
+      console.error('❌ Error fetching client data:', error);
       toast({
         title: "שגיאה בטעינת נתוני לקוח",
         description: error.message || "אנא נסה שוב מאוחר יותר",
@@ -192,6 +190,7 @@ const ClientDetails: React.FC = () => {
 
   // Fetch data on component mount and when id changes
   useEffect(() => {
+    console.log("🔄 useEffect triggered for ID:", id);
     fetchClientData();
   }, [id]);
 
@@ -452,585 +451,429 @@ const ClientDetails: React.FC = () => {
 
   return (
     <AdminLayout title="פרטי לקוח">
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      ) : !client ? (
-        <div className="text-center space-y-4 p-10">
-          <p className="text-lg font-medium">לקוח לא נמצא</p>
-          <Button onClick={() => navigate('/admin/patients')}>
-            <ArrowRight className="ml-2 h-4 w-4" />
-            חזרה לרשימת הלקוחות
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/admin/patients')}
-            className="mb-4"
-          >
-            <ArrowRight className="ml-2 h-4 w-4" />
-            חזרה לרשימת הלקוחות
-          </Button>
-          
-          {/* Alert for unpaid sessions */}
-          {statistics && statistics.total_debt > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-              <div className="flex items-center">
-                <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
-                <p className="text-red-700">
-                  <span className="font-bold">שים לב:</span> ללקוח זה יש חוב פתוח של ₪{statistics.total_debt}
-                </p>
-              </div>
-            </div>
-          )}
-          
-          {/* Client info card */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsEditClientDialogOpen(true)}
-                  className="border-purple-300 hover:bg-purple-50 text-purple-700"
-                >
-                  <Edit className="h-4 w-4 ml-2 text-purple-600" />
-                  עריכת פרטים
-                </Button>
-                <div className="text-right">
-                  <CardTitle className="text-2xl text-purple-800">{client.name}</CardTitle>
+      <div dir="rtl">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : !client ? (
+          <div className="text-center space-y-4 p-10">
+            <p className="text-lg font-medium">לקוח לא נמצא</p>
+            <Button onClick={() => navigate('/admin/patients')}>
+              <ArrowRight className="ml-2 h-4 w-4" />
+              חזרה לרשימת הלקוחות
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/admin/patients')}
+              className="mb-4 flex items-center"
+            >
+              <ArrowRight className="ml-2 h-4 w-4" />
+              חזרה לרשימת הלקוחות
+            </Button>
+            
+            {/* Alert for unpaid sessions */}
+            {statistics && statistics.total_debt > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+                <div className="flex items-center">
+                  <AlertTriangle className="h-5 w-5 text-red-500 ml-2" />
+                  <p className="text-red-700">
+                    <span className="font-bold">שים לב:</span> ללקוח זה יש חוב פתוח של ₪{statistics.total_debt}
+                  </p>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-medium mb-2 text-purple-700">פרטי קשר</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between border-b pb-2">
-                        <span className="font-medium text-purple-600">טלפון:</span>
-                        <span dir="ltr">{client.phone || '-'}</span>
-                      </div>
-                      <div className="flex justify-between border-b pb-2">
-                        <span className="font-medium text-purple-600">אימייל:</span>
-                        <span>{client.email || '-'}</span>
-                      </div>
-                      <div className="flex justify-between border-b pb-2">
-                        <span className="font-medium text-purple-600">מחיר לפגישה:</span>
-                        <span>{client.session_price ? `₪${client.session_price}` : '-'}</span>
+            )}
+            
+            {/* Client info card */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex flex-row-reverse justify-between items-start">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsEditClientDialogOpen(true)}
+                    className="border-purple-300 hover:bg-purple-50 text-purple-700"
+                  >
+                    <Edit className="h-4 w-4 ml-2 text-purple-600" />
+                    עריכת פרטים
+                  </Button>
+                  <div className="text-right">
+                    <CardTitle className="text-2xl text-purple-800">{client.name}</CardTitle>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-medium mb-2 text-purple-700">פרטי קשר</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between border-b pb-2">
+                          <span className="font-medium text-purple-600">טלפון:</span>
+                          <span dir="ltr">{client.phone || '-'}</span>
+                        </div>
+                        <div className="flex justify-between border-b pb-2">
+                          <span className="font-medium text-purple-600">אימייל:</span>
+                          <span>{client.email || '-'}</span>
+                        </div>
+                        <div className="flex justify-between border-b pb-2">
+                          <span className="font-medium text-purple-600">מחיר לפגישה:</span>
+                          <span>{client.session_price ? `₪${client.session_price}` : '-'}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-2 text-purple-700">הערות</h3>
-                  <div className="bg-purple-50 p-3 rounded border border-purple-100 min-h-[100px]">
-                    {client.notes || 'אין הערות'}
+                  
+                  <div>
+                    <h3 className="text-lg font-medium mb-2 text-purple-700">הערות</h3>
+                    <div className="bg-purple-50 p-3 rounded border border-purple-100 min-h-[100px]">
+                      {client.notes || 'אין הערות'}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Stats and upcoming sessions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Upcoming sessions */}
-            <Card className="border-purple-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xl text-purple-700">פגישות קרובות</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {upcomingSessions.length === 0 ? (
-                  <p className="text-center text-gray-500 py-4">אין פגישות קרובות מתוכננות</p>
-                ) : (
-                  <div className="space-y-4">
-                    {upcomingSessions.map((session) => {
-                      const isOverdue = isSessionOverdue(session.scheduled_date);
-                      
-                      return (
-                        <div 
-                          key={session.id} 
-                          className={`p-3 rounded-md border ${isOverdue 
-                            ? 'bg-red-50 border-red-200' 
-                            : 'bg-purple-50 border-purple-200'}`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="flex flex-col">
-                              <div className="flex items-center">
-                                {isOverdue && (
-                                  <AlertTriangle className="h-4 w-4 text-red-500 ml-1" />
+              </CardContent>
+            </Card>
+            
+            {/* Stats and upcoming sessions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Upcoming sessions */}
+              <Card className="border-purple-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-xl text-purple-700">פגישות קרובות</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {upcomingSessions.length === 0 ? (
+                    <p className="text-center text-gray-500 py-4">אין פגישות קרובות מתוכננות</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {upcomingSessions.map((session) => {
+                        const isOverdue = isSessionOverdue(session.scheduled_date);
+                        
+                        return (
+                          <div 
+                            key={session.id} 
+                            className={`p-3 rounded-md border ${isOverdue 
+                              ? 'bg-red-50 border-red-200' 
+                              : 'bg-purple-50 border-purple-200'}`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex flex-col">
+                                <div className="flex items-center">
+                                  {isOverdue && (
+                                    <AlertTriangle className="h-4 w-4 text-red-500 ml-1" />
+                                  )}
+                                  <div className="font-medium">
+                                    {formatDate(session.scheduled_date)}
+                                  </div>
+                                </div>
+                                <div className="flex items-center mt-1 text-sm text-gray-600">
+                                  {getMeetingTypeIcon(session.meeting_type)}
+                                  <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
+                                </div>
+                                {session.notes && (
+                                  <div className="text-sm mt-2 text-gray-600">
+                                    {session.notes}
+                                  </div>
                                 )}
-                                <div className="font-medium">
-                                  {formatDate(session.scheduled_date)}
-                                </div>
                               </div>
-                              <div className="flex items-center mt-1 text-sm text-gray-600">
-                                {getMeetingTypeIcon(session.meeting_type)}
-                                <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
-                              </div>
-                              {session.notes && (
-                                <div className="text-sm mt-2 text-gray-600">
-                                  {session.notes}
-                                </div>
+                              
+                              {isOverdue && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-amber-300 hover:bg-amber-50 text-amber-700"
+                                  onClick={() => handleConvertSession(session)}
+                                >
+                                  <RefreshCw className="h-3 w-3 ml-1 text-amber-600" />
+                                  המר לפגישה שהושלמה
+                                </Button>
                               )}
                             </div>
-                            
-                            {isOverdue && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-amber-300 hover:bg-amber-50 text-amber-700"
-                                onClick={() => handleConvertSession(session)}
-                              >
-                                <RefreshCw className="h-3 w-3 ml-1 text-amber-600" />
-                                המר לפגישה שהושלמה
-                              </Button>
-                            )}
                           </div>
+                        );
+                      })}
+                      
+                      {upcomingSessions.length > 0 && (
+                        <div className="flex justify-center pt-2">
+                          <Button 
+                            variant="ghost" 
+                            className="text-purple-600 hover:text-purple-800 hover:bg-purple-50"
+                            onClick={() => toast({
+                              title: "בקרוב",
+                              description: "תצוגת כל הפגישות העתידיות תהיה זמינה בקרוב",
+                            })}
+                          >
+                            הצג את כל הפגישות העתידיות
+                          </Button>
                         </div>
-                      );
-                    })}
-                    
-                    {upcomingSessions.length > 0 && (
-                      <div className="flex justify-center pt-2">
-                        <Button 
-                          variant="ghost" 
-                          className="text-purple-600 hover:text-purple-800 hover:bg-purple-50"
-                          onClick={() => toast({
-                            title: "בקרוב",
-                            description: "תצוגת כל הפגישות העתידיות תהיה זמינה בקרוב",
-                          })}
-                        >
-                          הצג את כל הפגישות העתידיות
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            {/* Client statistics */}
-            <Card className="border-purple-200">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xl text-purple-700">סטטיסטיקות</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {statistics ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
-                        <div className="text-sm text-purple-600">סה״כ פגישות</div>
-                        <div className="text-2xl font-bold text-purple-800">{statistics.total_sessions}</div>
-                      </div>
-                      <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
-                        <div className="text-sm text-purple-600">סה״כ חוב</div>
-                        <div className="text-2xl font-bold text-purple-800">₪{statistics.total_debt}</div>
-                      </div>
+                      )}
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
-                        <div className="text-sm text-purple-600">פגישה אחרונה</div>
-                        <div className="font-medium">
-                          {statistics.last_session 
-                            ? formatDateOnly(statistics.last_session) 
-                            : 'אין פגישות'}
-                        </div>
-                      </div>
-                      <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
-                        <div className="text-sm text-purple-600">פגישה הבאה</div>
-                        <div className="font-medium">
-                          {statistics.next_session 
-                            ? formatDateOnly(statistics.next_session) 
-                            : 'לא נקבע'}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Chart */}
-                    <div className="h-[200px] mt-6">
-                      <ChartContainer
-                        config={{
-                          פגישות: {
-                            color: "#9F7AEA",
-                          },
-                          חוב: {
-                            color: "#F6AD55",
-                          },
-                        }}
-                      >
-                        <BarChart
-                          data={chartData}
-                          margin={{
-                            top: 5,
-                            right: 30,
-                            left: 20,
-                            bottom: 5,
-                          }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Bar dataKey="פגישות" fill="#9F7AEA" />
-                          <Bar dataKey="חוב" fill="#F6AD55" />
-                        </BarChart>
-                      </ChartContainer>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-500 py-4">אין נתונים סטטיסטיים זמינים</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Past sessions section */}
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-purple-800">היסטוריית פגישות</h3>
-            </div>
-            
-            {/* Search bar */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="חיפוש בפגישות..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 border-purple-200 focus-visible:ring-purple-500"
+                  )}
+                </CardContent>
+              </Card>
+              
+              {/* Client statistics */}
+              <ClientStatisticsCard 
+                statistics={statistics}
+                formatDateOnly={formatDateOnly}
+                chartData={chartData}
               />
             </div>
             
-            {/* No sessions message */}
-            {filteredSessions.length === 0 && (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-gray-500">
-                    {pastSessions.length === 0 
-                      ? 'אין פגישות קודמות עבור לקוח זה' 
-                      : 'לא נמצאו פגישות התואמות את החיפוש שלך'}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-            
-            {/* Sessions table */}
-            {filteredSessions.length > 0 && (
-              <Card className="border-purple-200">
-                <Table>
-                  <TableHeader className="bg-purple-100">
-                    <TableRow>
-                      <TableHead className="text-purple-800 font-bold">תאריך</TableHead>
-                      <TableHead className="text-purple-800 font-bold">סוג פגישה</TableHead>
-                      <TableHead className="text-purple-800 font-bold">סטטוס תשלום</TableHead>
-                      <TableHead className="text-purple-800 font-bold">סכום ששולם</TableHead>
-                      <TableHead className="text-purple-800 font-bold">פעולות</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSessions.map((session, index) => (
-                      <React.Fragment key={session.id}>
-                        <TableRow 
-                          className={`cursor-pointer hover:bg-purple-50 ${index % 2 === 0 ? 'bg-white' : 'bg-purple-50'}`}
-                          onClick={() => toggleExpandSession(session.id)}
-                        >
-                          <TableCell className="font-medium">
-                            <div className="flex items-center">
-                              <Calendar className="h-4 w-4 ml-2 text-purple-600" />
-                              {formatDate(session.session_date)}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center">
-                              {getMeetingTypeIcon(session.meeting_type)}
-                              <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {getPaymentStatusBadge(session.payment_status)}
-                          </TableCell>
-                          <TableCell>
-                            <span className={session.payment_status === 'paid' ? 'text-green-600 font-medium' : ''}>
-                              ₪{session.paid_amount || 0}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2 space-x-reverse">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-purple-600 hover:text-purple-800 hover:bg-purple-50"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditSession(session);
-                                }}
-                              >
-                                <Edit className="h-4 w-4 ml-1 text-purple-600" />
-                                ערוך
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteSessionConfirm(session);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4 ml-1 text-red-600" />
-                                מחק
-                              </Button>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {expandedSessionId === session.id ? 
-                              <ChevronUp className="h-4 w-4 text-purple-600" /> : 
-                              <ChevronDown className="h-4 w-4 text-purple-600" />
-                            }
-                          </TableCell>
-                        </TableRow>
-                        
-                        {/* Expanded session details */}
-                        {expandedSessionId === session.id && (
-                          <TableRow className="bg-purple-50">
-                            <TableCell colSpan={6} className="p-0">
-                              <div className="p-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  <div className="space-y-4">
-                                    <div>
-                                      <h4 className="font-medium mb-2 flex items-center text-purple-700">
-                                        <Info className="h-4 w-4 ml-2 text-purple-600" />
-                                        סיכום פגישה
-                                      </h4>
-                                      <div className="bg-white p-3 rounded border border-purple-100 min-h-[100px]">
-                                        {session.summary || 'אין סיכום'}
-                                      </div>
-                                    </div>
-                                    
-                                    <div>
-                                      <div className="flex items-center mb-2">
-                                        <h4 className="font-medium text-purple-700">נשלחו תרגילים?</h4>
-                                        <div className="flex items-center mr-4">
-                                          {session.sent_exercises ? (
-                                            <>
-                                              <Check className="h-4 w-4 text-green-500 ml-1" />
-                                              <span className="text-green-600">כן</span>
-                                            </>
-                                          ) : (
-                                            <>
-                                              <X className="h-4 w-4 text-red-500 ml-1" />
-                                              <span className="text-red-600">לא</span>
-                                            </>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  
-                                  <div>
-                                    <h4 className="font-medium mb-2 text-purple-700">תרגילים שניתנו</h4>
-                                    {session.exercise_list && session.exercise_list.length > 0 ? (
-                                      <div className="bg-white p-3 rounded border border-purple-100">
-                                        <ul className="list-disc list-inside space-y-1">
-                                          {session.exercise_list.map((exercise, index) => (
-                                            <li key={index} className="text-purple-800">{exercise}</li>
-                                          ))}
-                                        </ul>
-                                      </div>
-                                    ) : (
-                                      <div className="bg-white p-3 rounded border border-purple-100 min-h-[100px]">
-                                        לא ניתנו תרגילים
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                <div className="mt-4">
-                                  <h4 className="font-medium mb-2 flex items-center text-purple-700">
-                                    <BadgeDollarSign className="h-4 w-4 ml-2 text-purple-600" />
-                                    פרטי תשלום
-                                  </h4>
-                                  <div className="bg-white p-3 rounded border border-purple-100">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                      <div>
-                                        <div className="flex justify-between border-b pb-2">
-                                          <span className="font-medium text-purple-600">סטטוס תשלום:</span>
-                                          <span>{getPaymentStatusBadge(session.payment_status)}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b py-2">
-                                          <span className="font-medium text-purple-600">סכום ששולם:</span>
-                                          <span className={session.payment_status === 'paid' ? 'text-green-600 font-medium' : ''}>
-                                            ₪{session.paid_amount || 0}
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between border-b py-2">
-                                          <span className="font-medium text-purple-600">סכום לתשלום:</span>
-                                          <span className={session.payment_status === 'unpaid' ? 'text-red-600 font-medium' : ''}>
-                                            {client.session_price && session.paid_amount
-                                              ? session.payment_status === 'paid'
-                                                ? '₪0'
-                                                : `₪${client.session_price - (session.paid_amount || 0)}`
-                                              : `₪${client.session_price || 0}`}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <div className="flex justify-between border-b pb-2">
-                                          <span className="font-medium text-purple-600">אמצעי תשלום:</span>
-                                          <span>{getPaymentMethodText(session.payment_method)}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b py-2">
-                                          <span className="font-medium text-purple-600">תאריך תשלום:</span>
-                                          <span>{formatDateOnly(session.payment_date)}</span>
-                                        </div>
-                                        <div className="flex justify-between py-2">
-                                          <span className="font-medium text-purple-600">הערות תשלום:</span>
-                                          <span>{session.payment_notes || '-'}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Card>
-            )}
-          </div>
-          
-          {/* Edit client dialog */}
-          <Dialog open={isEditClientDialogOpen} onOpenChange={setIsEditClientDialogOpen}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-center text-purple-800">עריכת פרטי לקוח</DialogTitle>
-              </DialogHeader>
+            {/* Past sessions section */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-purple-800">היסטוריית פגישות</h3>
+              </div>
               
-              {editFormData && (
-                <div className="space-y-4 py-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-purple-700">שם מלא</Label>
-                    <Input 
-                      id="name" 
-                      value={editFormData.name} 
-                      onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
-                      className="border-purple-200 focus-visible:ring-purple-500"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-purple-700">טלפון</Label>
-                    <Input 
-                      id="phone" 
-                      value={editFormData.phone || ''} 
-                      onChange={(e) => setEditFormData({...editFormData, phone: e.target.value || null})}
-                      className="border-purple-200 focus-visible:ring-purple-500"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-purple-700">אימייל</Label>
-                    <Input 
-                      id="email" 
-                      type="email"
-                      value={editFormData.email || ''} 
-                      onChange={(e) => setEditFormData({...editFormData, email: e.target.value || null})}
-                      className="border-purple-200 focus-visible:ring-purple-500"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="session_price" className="text-purple-700">מחיר לפגישה (₪)</Label>
-                    <Input 
-                      id="session_price" 
-                      type="number"
-                      value={editFormData.session_price === null ? '' : editFormData.session_price} 
-                      onChange={(e) => {
-                        const value = e.target.value === '' ? null : Number(e.target.value);
-                        setEditFormData({...editFormData, session_price: value});
-                      }}
-                      className="border-purple-200 focus-visible:ring-purple-500"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="notes" className="text-purple-700">הערות</Label>
-                    <Textarea 
-                      id="notes" 
-                      value={editFormData.notes || ''} 
-                      onChange={(e) => setEditFormData({...editFormData, notes: e.target.value || null})}
-                      className="border-purple-200 focus-visible:ring-purple-500 min-h-[100px]"
-                    />
-                  </div>
-                </div>
+              {/* Search bar */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="חיפוש בפגישות..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 border-purple-200 focus-visible:ring-purple-500"
+                />
+              </div>
+              
+              {/* No sessions message */}
+              {filteredSessions.length === 0 && (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <p className="text-gray-500">
+                      {pastSessions.length === 0 
+                        ? 'אין פגישות קודמות עבור לקוח זה' 
+                        : 'לא נמצאו פגישות התואמות את החיפוש שלך'}
+                    </p>
+                  </CardContent>
+                </Card>
               )}
               
-              <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
-                <Button 
-                  onClick={handleUpdateClient}
-                  disabled={isSubmitting}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  {isSubmitting ? 'מעדכן...' : 'עדכן פרטים'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsEditClientDialogOpen(false)}
-                  className="border-purple-200 text-purple-700 hover:bg-purple-50"
-                >
-                  ביטול
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          
-          {/* Delete session dialog */}
-          <DeleteSessionDialog 
-            isOpen={isDeleteSessionDialogOpen}
-            onClose={() => setIsDeleteSessionDialogOpen(false)}
-            session={sessionToDelete}
-            onConfirm={handleDeleteSession}
-            formatDate={formatDate}
-          />
-          
-          {/* Edit session dialog */}
-          {sessionToEdit && (
-            <SessionEditDialog
-              isOpen={isEditSessionDialogOpen}
-              onClose={() => setIsEditSessionDialogOpen(false)}
-              session={sessionToEdit}
-              onSessionUpdated={handleSessionUpdated}
-              sessionPrice={client.session_price}
+              {/* Sessions table */}
+              {filteredSessions.length > 0 && (
+                <Card className="border-purple-200">
+                  <Table>
+                    <TableHeader className="bg-purple-100">
+                      <TableRow>
+                        <TableHead className="text-purple-800 font-bold">תאריך</TableHead>
+                        <TableHead className="text-purple-800 font-bold">סוג פגישה</TableHead>
+                        <TableHead className="text-purple-800 font-bold">סטטוס תשלום</TableHead>
+                        <TableHead className="text-purple-800 font-bold">סכום ששולם</TableHead>
+                        <TableHead className="text-purple-800 font-bold">פעולות</TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredSessions.map((session, index) => (
+                        <React.Fragment key={session.id}>
+                          <TableRow 
+                            className={`cursor-pointer hover:bg-purple-50 ${index % 2 === 0 ? 'bg-white' : 'bg-purple-50'}`}
+                            onClick={() => toggleExpandSession(session.id)}
+                          >
+                            <TableCell className="font-medium">
+                              <div className="flex items-center">
+                                <Calendar className="h-4 w-4 ml-2 text-purple-600" />
+                                {formatDate(session.session_date)}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                {getMeetingTypeIcon(session.meeting_type)}
+                                <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {getPaymentStatusBadge(session.payment_status)}
+                            </TableCell>
+                            <TableCell>
+                              <span className={session.payment_status === 'paid' ? 'text-green-600 font-medium' : ''}>
+                                ₪{session.paid_amount || 0}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2 space-x-reverse">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-purple-600 hover:text-purple-800 hover:bg-purple-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditSession(session);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4 ml-1 text-purple-600" />
+                                  ערוך
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteSessionConfirm(session);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 ml-1 text-red-600" />
+                                  מחק
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {expandedSessionId === session.id ? 
+                                <ChevronUp className="h-4 w-4 text-purple-600" /> : 
+                                <ChevronDown className="h-4 w-4 text-purple-600" />
+                              }
+                            </TableCell>
+                          </TableRow>
+                          
+                          {/* Expanded session details */}
+                          {expandedSessionId === session.id && (
+                            <TableRow className="bg-purple-50">
+                              <TableCell colSpan={6} className="p-0">
+                                <SessionDetailCollapsible
+                                  session={session}
+                                  isExpanded={expandedSessionId === session.id}
+                                  onToggle={() => toggleExpandSession(session.id)}
+                                  formatDateOnly={formatDateOnly}
+                                  getPaymentMethodText={getPaymentMethodText}
+                                  client={client}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              )}
+            </div>
+            
+            {/* Edit client dialog */}
+            <Dialog open={isEditClientDialogOpen} onOpenChange={setIsEditClientDialogOpen}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-center text-purple-800">עריכת פרטי לקוח</DialogTitle>
+                </DialogHeader>
+                
+                {editFormData && (
+                  <div className="space-y-4 py-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-purple-700">שם מלא</Label>
+                      <Input 
+                        id="name" 
+                        value={editFormData.name} 
+                        onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                        className="border-purple-200 focus-visible:ring-purple-500"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-purple-700">טלפון</Label>
+                      <Input 
+                        id="phone" 
+                        value={editFormData.phone || ''} 
+                        onChange={(e) => setEditFormData({...editFormData, phone: e.target.value || null})}
+                        className="border-purple-200 focus-visible:ring-purple-500"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-purple-700">אימייל</Label>
+                      <Input 
+                        id="email" 
+                        type="email"
+                        value={editFormData.email || ''} 
+                        onChange={(e) => setEditFormData({...editFormData, email: e.target.value || null})}
+                        className="border-purple-200 focus-visible:ring-purple-500"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="session_price" className="text-purple-700">מחיר לפגישה (₪)</Label>
+                      <Input 
+                        id="session_price" 
+                        type="number"
+                        value={editFormData.session_price === null ? '' : editFormData.session_price} 
+                        onChange={(e) => {
+                          const value = e.target.value === '' ? null : Number(e.target.value);
+                          setEditFormData({...editFormData, session_price: value});
+                        }}
+                        className="border-purple-200 focus-visible:ring-purple-500"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="notes" className="text-purple-700">הערות</Label>
+                      <Textarea 
+                        id="notes" 
+                        value={editFormData.notes || ''} 
+                        onChange={(e) => setEditFormData({...editFormData, notes: e.target.value || null})}
+                        className="border-purple-200 focus-visible:ring-purple-500 min-h-[100px]"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
+                  <Button 
+                    onClick={handleUpdateClient}
+                    disabled={isSubmitting}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    {isSubmitting ? 'מעדכן...' : 'עדכן פרטים'}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsEditClientDialogOpen(false)}
+                    className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                  >
+                    ביטול
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
+            {/* Delete session dialog */}
+            <DeleteSessionDialog 
+              isOpen={isDeleteSessionDialogOpen}
+              onClose={() => setIsDeleteSessionDialogOpen(false)}
+              session={sessionToDelete}
+              onConfirm={handleDeleteSession}
+              formatDate={formatDate}
             />
-          )}
-          
-          {/* Convert session dialog */}
-          {sessionToConvert && (
-            <ConvertSessionDialog
-              isOpen={isConvertSessionDialogOpen}
-              onClose={() => setIsConvertSessionDialogOpen(false)}
-              futureSession={sessionToConvert}
-              onSessionConverted={handleSessionConverted}
-              patientId={Number(id)}
-              sessionPrice={client.session_price}
-            />
-          )}
-        </div>
-      )}
+            
+            {/* Edit session dialog */}
+            {sessionToEdit && (
+              <SessionEditDialog
+                isOpen={isEditSessionDialogOpen}
+                onClose={() => setIsEditSessionDialogOpen(false)}
+                session={sessionToEdit}
+                onSessionUpdated={handleSessionUpdated}
+                sessionPrice={client.session_price}
+              />
+            )}
+            
+            {/* Convert session dialog */}
+            {sessionToConvert && (
+              <ConvertSessionDialog
+                isOpen={isConvertSessionDialogOpen}
+                onClose={() => setIsConvertSessionDialogOpen(false)}
+                futureSession={sessionToConvert}
+                onSessionConverted={handleSessionConverted}
+                patientId={Number(id)}
+                sessionPrice={client.session_price}
+              />
+            )}
+          </div>
+        )}
+      </div>
     </AdminLayout>
   );
 };
 
 export default ClientDetails;
+
