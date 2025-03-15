@@ -72,24 +72,22 @@ const occurrences = Array.from({ length: 10 }, (_, i) => ({
   label: (i + 1).toString(),
 }));
 
-// Define the form schema - Fixed the refine method to match Zod's expected signature
-const formSchema = z.object({
-  day: z.string(),
-  startTime: z.string(),
-  endTime: z.string().superRefine((endTime, ctx) => {
-    const startTime = ctx.parent.startTime;
-    if (endTime <= startTime) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'שעת הסיום חייבת להיות מאוחרת משעת ההתחלה'
-      });
-      return false;
+// Define the form schema - Fixed the Zod validation method
+const formSchema = z
+  .object({
+    day: z.string(),
+    startTime: z.string(),
+    endTime: z.string(),
+    count: z.string().min(1),
+    startDate: z.date(),
+  })
+  .refine(
+    (data) => data.endTime > data.startTime,
+    {
+      message: 'שעת הסיום חייבת להיות מאוחרת משעת ההתחלה',
+      path: ['endTime'], // This specifies which field the error is associated with
     }
-    return true;
-  }),
-  count: z.string().min(1),
-  startDate: z.date(),
-});
+  );
 
 export function RecurringAvailabilityDialog({
   open,
