@@ -1,20 +1,16 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer } from '@/components/ui/chart';
-import { Bar, BarChart, CartesianGrid, Legend, Tooltip, XAxis, YAxis } from 'recharts';
 import { ClientStatistics } from '@/types/session';
 
 interface ClientStatisticsCardProps {
   statistics: ClientStatistics | null;
   formatDateOnly: (date: string | null) => string;
-  chartData: any[];
 }
 
 const ClientStatisticsCard: React.FC<ClientStatisticsCardProps> = ({ 
   statistics, 
-  formatDateOnly, 
-  chartData 
+  formatDateOnly
 }) => {
   return (
     <Card className="border-purple-200">
@@ -52,38 +48,6 @@ const ClientStatisticsCard: React.FC<ClientStatisticsCardProps> = ({
                     : 'לא נקבע'}
                 </div>
               </div>
-            </div>
-            
-            {/* Chart */}
-            <div className="h-[200px] mt-6">
-              <ChartContainer
-                config={{
-                  פגישות: {
-                    color: "#9F7AEA",
-                  },
-                  חוב: {
-                    color: "#F6AD55",
-                  },
-                }}
-              >
-                <BarChart
-                  data={chartData}
-                  margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="פגישות" fill="#9F7AEA" />
-                  <Bar dataKey="חוב" fill="#F6AD55" />
-                </BarChart>
-              </ChartContainer>
             </div>
           </div>
         ) : (

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, formatDistance, isAfter, subHours } from 'date-fns';
@@ -80,9 +79,6 @@ const ClientDetails: React.FC = () => {
   const [isConvertSessionDialogOpen, setIsConvertSessionDialogOpen] = useState(false);
   const [sessionToConvert, setSessionToConvert] = useState<FutureSession | null>(null);
 
-  // Chart data
-  const [chartData, setChartData] = useState<any[]>([]);
-
   // Fetch client data
   const fetchClientData = async () => {
     if (!id) return;
@@ -157,9 +153,6 @@ const ClientDetails: React.FC = () => {
       console.log("📌 Statistics:", stats);
       setStatistics(stats);
       
-      // Prepare chart data
-      prepareChartData(totalSessions, totalDebt);
-      
     } catch (error: any) {
       console.error('❌ Error fetching client data:', error);
       toast({
@@ -170,22 +163,6 @@ const ClientDetails: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Prepare chart data
-  const prepareChartData = (totalSessions: number, totalDebt: number) => {
-    const chartData = [
-      {
-        name: 'פגישות',
-        פגישות: totalSessions,
-      },
-      {
-        name: 'חוב (₪)',
-        חוב: totalDebt,
-      },
-    ];
-    
-    setChartData(chartData);
   };
 
   // Fetch data on component mount and when id changes
@@ -618,7 +595,6 @@ const ClientDetails: React.FC = () => {
               <ClientStatisticsCard 
                 statistics={statistics}
                 formatDateOnly={formatDateOnly}
-                chartData={chartData}
               />
             </div>
             
@@ -876,4 +852,3 @@ const ClientDetails: React.FC = () => {
 };
 
 export default ClientDetails;
-
