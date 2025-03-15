@@ -23,7 +23,7 @@ interface GoogleCalendarSyncProps {
 }
 
 export function GoogleCalendarSync({ onSyncComplete }: GoogleCalendarSyncProps) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [open, setOpen] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -89,7 +89,7 @@ export function GoogleCalendarSync({ onSyncComplete }: GoogleCalendarSyncProps) 
   // Save Google Calendar events to the database
   const saveEventsToDatabase = async (events: GoogleCalendarEvent[]) => {
     try {
-      const supabase = getSupabaseWithAuth(user?.token);
+      const supabase = getSupabaseWithAuth(session?.access_token);
       
       // First, remove all existing Google Calendar events
       const { error: deleteError } = await supabase

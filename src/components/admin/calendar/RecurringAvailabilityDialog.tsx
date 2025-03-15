@@ -72,17 +72,21 @@ const occurrences = Array.from({ length: 10 }, (_, i) => ({
   label: (i + 1).toString(),
 }));
 
-// Define the form schema
+// Define the form schema - Fixed the refine method to match Zod's expected signature
 const formSchema = z.object({
   day: z.string(),
   startTime: z.string(),
-  endTime: z.string().refine(
-    (endTime, ctx) => {
-      const { startTime } = ctx.parent;
-      return endTime > startTime;
-    },
-    { message: 'שעת הסיום חייבת להיות מאוחרת משעת ההתחלה' }
-  ),
+  endTime: z.string().superRefine((endTime, ctx) => {
+    const startTime = ctx.parent.startTime;
+    if (endTime <= startTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'שעת הסיום חייבת להיות מאוחרת משעת ההתחלה'
+      });
+      return false;
+    }
+    return true;
+  }),
   count: z.string().min(1),
   startDate: z.date(),
 });

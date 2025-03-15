@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -16,7 +15,7 @@ import { RecurringAvailabilityDialog } from '@/components/admin/calendar/Recurri
 import { GoogleCalendarSync } from '@/components/admin/calendar/GoogleCalendarSync';
 
 const CalendarManagement: React.FC = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [selectedView, setSelectedView] = useState<'calendar' | 'list'>('calendar');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [calendarData, setCalendarData] = useState<Map<string, Map<string, CalendarSlot>>>(new Map());
@@ -49,7 +48,7 @@ const CalendarManagement: React.FC = () => {
   const fetchAvailabilityData = async () => {
     try {
       setIsLoading(true);
-      const supabase = getSupabaseWithAuth(user?.token);
+      const supabase = getSupabaseWithAuth(session?.access_token);
       
       // Calculate date range (30 days from today)
       const today = startOfDay(new Date());
@@ -186,7 +185,7 @@ const CalendarManagement: React.FC = () => {
     }
     
     try {
-      const supabase = getSupabaseWithAuth(user?.token);
+      const supabase = getSupabaseWithAuth(session?.access_token);
       
       // Batch insert default availability slots
       const { error } = await supabase
@@ -222,7 +221,7 @@ const CalendarManagement: React.FC = () => {
   // Update time slot status
   const updateTimeSlot = async (date: string, hour: string, newStatus: 'available' | 'private' | 'unspecified') => {
     try {
-      const supabase = getSupabaseWithAuth(user?.token);
+      const supabase = getSupabaseWithAuth(session?.access_token);
       const dayMap = calendarData.get(date);
       
       if (!dayMap) return;
@@ -230,7 +229,7 @@ const CalendarManagement: React.FC = () => {
       const currentSlot = dayMap.get(hour);
       if (!currentSlot) return;
       
-      if (currentSlot.status === 'booked' && newStatus !== 'booked') {
+      if (currentSlot.status === 'booked') {
         toast({
           title: 'לא ניתן לשנות סטטוס',
           description: 'לא ניתן לשנות משבצת זמן שכבר הוזמנה. יש לבטל את הפגישה תחילה.',
@@ -313,7 +312,7 @@ const CalendarManagement: React.FC = () => {
   // Handle adding recurring availability
   const handleAddRecurringAvailability = async (rule: any) => {
     try {
-      const supabase = getSupabaseWithAuth(user?.token);
+      const supabase = getSupabaseWithAuth(session?.access_token);
       const slots: any[] = [];
       
       // Generate slots based on recurring rule
@@ -375,7 +374,7 @@ const CalendarManagement: React.FC = () => {
   }, [currentDate]);
 
   return (
-    <AdminLayout>
+    <AdminLayout title="ניהול זמינות יומן">
       <div className="container mx-auto py-6" dir="rtl">
         <div className="flex flex-col space-y-4">
           <div className="flex justify-between items-center">
