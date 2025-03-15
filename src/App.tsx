@@ -18,6 +18,7 @@ import AllSessions from './pages/admin/AllSessions';
 import ExerciseManagement from './pages/admin/ExerciseManagement';
 import ArticlesManagement from './pages/admin/ArticlesManagement';
 import ArticleEditor from './pages/admin/ArticleEditor';
+import CalendarManagement from './pages/admin/CalendarManagement';
 import { ThemeProvider } from './components/ui/theme-provider';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -62,6 +63,7 @@ function App() {
               <Route path="/admin/articles" element={<ProtectedRoute><ArticlesManagement /></ProtectedRoute>} />
               <Route path="/admin/articles/new" element={<ProtectedRoute><ArticleEditor /></ProtectedRoute>} />
               <Route path="/admin/articles/edit/:id" element={<ProtectedRoute><ArticleEditor /></ProtectedRoute>} />
+              <Route path="/admin/calendar" element={<ProtectedRoute><CalendarManagement /></ProtectedRoute>} />
 
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />
