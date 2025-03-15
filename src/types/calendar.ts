@@ -1,26 +1,19 @@
 
-export type TimeSlotStatus = 'available' | 'booked' | 'private' | 'unspecified';
-
 export interface TimeSlot {
-  id?: number;
-  day: number; // 0-6 (Sunday-Saturday)
-  date: string; // ISO string format
-  startTime: string; // Format: "HH:MM"
-  endTime: string; // Format: "HH:MM"
-  status: TimeSlotStatus;
-  isRecurring: boolean;
-  recurringPattern?: string; // e.g., "weekly"
-  recurringCount?: number; // How many times it repeats (max 10)
-  sourceId?: string; // Google Calendar event ID if applicable
+  day: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: 'available' | 'private' | 'unspecified' | 'booked';
   notes?: string;
+  isRecurring: boolean;
 }
 
 export interface CalendarSlot {
   date: string;
   day: number;
   hour: string;
-  status: TimeSlotStatus;
-  eventId?: string;
+  status: 'available' | 'private' | 'unspecified' | 'booked';
   notes?: string;
 }
 
@@ -30,25 +23,14 @@ export interface ContextMenuOptions {
   date: string;
   day: number;
   hour: string;
-  status: TimeSlotStatus;
-}
-
-export interface GoogleCalendarEvent {
-  id: string;
-  start: {
-    dateTime: string;
-  };
-  end: {
-    dateTime: string;
-  };
-  summary: string;
+  status: string;
 }
 
 export interface RecurringRule {
   day: number;
   startTime: string;
   endTime: string;
-  pattern: 'weekly';
+  pattern: 'weekly' | 'monthly';
   count: number;
   startDate: string;
 }

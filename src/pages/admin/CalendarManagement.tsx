@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -13,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { RecurringAvailabilityDialog } from '@/components/admin/calendar/RecurringAvailabilityDialog';
 import { GoogleCalendarSync } from '@/components/admin/calendar/GoogleCalendarSync';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Calendar as CalendarIcon, AlertCircle } from 'lucide-react';
 
 const CalendarManagement: React.FC = () => {
   const { user, session } = useAuth();
@@ -22,6 +25,7 @@ const CalendarManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isGoogleSynced, setIsGoogleSynced] = useState<boolean>(false);
   const [recurringDialogOpen, setRecurringDialogOpen] = useState<boolean>(false);
+  const [tableExists, setTableExists] = useState<boolean>(true);
 
   // Generate hours for the day (8:00 - 23:00)
   const hours = Array.from({ length: 16 }, (_, i) => {
@@ -44,10 +48,45 @@ const CalendarManagement: React.FC = () => {
 
   const days = generateDaysOfWeek(currentDate);
 
+  // Check if table exists
+  const checkTableExists = async () => {
+    try {
+      const supabase = getSupabaseWithAuth(session?.access_token);
+      
+      // Try to get table information
+      const { error } = await supabase
+        .from('calendar_slots')
+        .select('id')
+        .limit(1);
+      
+      // If we get a "relation does not exist" error, set tableExists to false
+      if (error && error.message.includes('relation') && error.message.includes('does not exist')) {
+        console.error('Calendar slots table does not exist:', error.message);
+        setTableExists(false);
+        return false;
+      }
+      
+      setTableExists(true);
+      return true;
+    } catch (error: any) {
+      console.error('Error checking if table exists:', error);
+      return false;
+    }
+  };
+
   // Fetch availability data
   const fetchAvailabilityData = async () => {
     try {
       setIsLoading(true);
+      
+      // First check if the table exists
+      const exists = await checkTableExists();
+      if (!exists) {
+        // Initialize empty calendar data
+        initializeEmptyCalendarData();
+        return;
+      }
+      
       const supabase = getSupabaseWithAuth(session?.access_token);
       
       // Calculate date range (30 days from today)
@@ -62,6 +101,13 @@ const CalendarManagement: React.FC = () => {
         .lte('date', format(thirtyDaysLater, 'yyyy-MM-dd'));
       
       if (availableSlotsError) {
+        if (availableSlotsError.message.includes('relation') && 
+            availableSlotsError.message.includes('does not exist')) {
+          // Handle missing table gracefully
+          setTableExists(false);
+          initializeEmptyCalendarData();
+          return;
+        }
         throw new Error(availableSlotsError.message);
       }
       
@@ -80,11 +126,6 @@ const CalendarManagement: React.FC = () => {
       const newCalendarData = processCalendarData(availableSlots || [], bookedSlots || []);
       setCalendarData(newCalendarData);
       
-      // Apply default availability if no data
-      if ((availableSlots || []).length === 0) {
-        applyDefaultAvailability();
-      }
-      
     } catch (error: any) {
       console.error('Error fetching calendar data:', error);
       toast({
@@ -92,9 +133,32 @@ const CalendarManagement: React.FC = () => {
         description: error.message,
         variant: 'destructive',
       });
+      
+      // Initialize empty calendar data as fallback
+      initializeEmptyCalendarData();
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Initialize empty calendar data
+  const initializeEmptyCalendarData = () => {
+    const emptyCalendarData = new Map<string, Map<string, CalendarSlot>>();
+    
+    days.forEach(day => {
+      const daySlots = new Map<string, CalendarSlot>();
+      hours.forEach(hour => {
+        daySlots.set(hour, {
+          date: day.date,
+          day: day.dayNumber,
+          hour,
+          status: 'unspecified'
+        });
+      });
+      emptyCalendarData.set(day.date, daySlots);
+    });
+    
+    setCalendarData(emptyCalendarData);
   };
 
   // Process calendar data from various sources
@@ -147,6 +211,15 @@ const CalendarManagement: React.FC = () => {
 
   // Apply default availability patterns
   const applyDefaultAvailability = async () => {
+    if (!tableExists) {
+      toast({
+        title: 'טבלת היומן חסרה',
+        description: 'לא ניתן להגדיר זמינות ברירת מחדל ללא טבלת היומן. אנא צור את הטבלה תחילה.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     // Default availability patterns
     const defaultPatterns = [
       // Sunday, Monday, Tuesday, Thursday: 08:00 - 16:00
@@ -220,6 +293,15 @@ const CalendarManagement: React.FC = () => {
 
   // Update time slot status
   const updateTimeSlot = async (date: string, hour: string, newStatus: 'available' | 'private' | 'unspecified') => {
+    if (!tableExists) {
+      toast({
+        title: 'טבלת היומן חסרה',
+        description: 'לא ניתן לעדכן זמינות ללא טבלת היומן. אנא צור את הטבלה תחילה.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
       const supabase = getSupabaseWithAuth(session?.access_token);
       const dayMap = calendarData.get(date);
@@ -311,6 +393,15 @@ const CalendarManagement: React.FC = () => {
 
   // Handle adding recurring availability
   const handleAddRecurringAvailability = async (rule: any) => {
+    if (!tableExists) {
+      toast({
+        title: 'טבלת היומן חסרה',
+        description: 'לא ניתן להגדיר זמינות חוזרת ללא טבלת היומן. אנא צור את הטבלה תחילה.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
       const supabase = getSupabaseWithAuth(session?.access_token);
       const slots: any[] = [];
@@ -373,6 +464,37 @@ const CalendarManagement: React.FC = () => {
     fetchAvailabilityData();
   }, [currentDate]);
 
+  // Create Calendar Slots Table if it doesn't exist
+  const createCalendarSlotsTable = async () => {
+    try {
+      const supabase = getSupabaseWithAuth(session?.access_token);
+      
+      // Execute SQL to create the table
+      const { error } = await supabase.rpc('create_calendar_slots_table');
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      // Set table exists to true and fetch data
+      setTableExists(true);
+      toast({
+        title: 'טבלת היומן נוצרה',
+        description: 'טבלת היומן נוצרה בהצלחה וכעת ניתן להגדיר זמינות',
+      });
+      
+      // Apply default availability
+      await applyDefaultAvailability();
+    } catch (error: any) {
+      console.error('Error creating calendar slots table:', error);
+      toast({
+        title: 'שגיאה ביצירת טבלת היומן',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <AdminLayout title="ניהול זמינות יומן">
       <div className="container mx-auto py-6" dir="rtl">
@@ -383,6 +505,23 @@ const CalendarManagement: React.FC = () => {
           </div>
           
           <Separator className="my-4" />
+          
+          {!tableExists ? (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>טבלת היומן חסרה</AlertTitle>
+              <AlertDescription>
+                לא קיימים נתוני זמינות ביומן. הטבלה המתאימה לא קיימת במערכת.
+                <Button 
+                  onClick={createCalendarSlotsTable} 
+                  variant="outline" 
+                  className="mt-2 ml-auto"
+                >
+                  יצירת טבלת יומן
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : null}
           
           <Card>
             <CardHeader>

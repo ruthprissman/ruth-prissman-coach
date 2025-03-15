@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home, Users, Calendar, ChevronRight, ChevronLeft, Menu, FileText, BookOpenText } from 'lucide-react';
+import { LogOut, Home, Users, Calendar, ChevronRight, ChevronLeft, Menu, FileText, BookOpenText, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -35,6 +35,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
     { label: 'דף הבית', icon: <Home className="ml-2 h-5 w-5" />, path: '/admin/dashboard' },
     { label: 'מטופלים', icon: <Users className="ml-2 h-5 w-5" />, path: '/admin/patients' },
     { label: 'כל הפגישות', icon: <Calendar className="ml-2 h-5 w-5" />, path: '/admin/sessions' },
+    { label: 'ניהול זמינות', icon: <CalendarDays className="ml-2 h-5 w-5" />, path: '/admin/calendar' },
     { label: 'ניהול תרגילים', icon: <FileText className="ml-2 h-5 w-5" />, path: '/admin/exercises' },
     { label: 'ניהול מאמרים', icon: <BookOpenText className="ml-2 h-5 w-5" />, path: '/admin/articles' },
   ];
