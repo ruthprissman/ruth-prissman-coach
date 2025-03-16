@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -104,7 +105,7 @@ const CalendarManagement: React.FC = () => {
         .from('future_sessions')
         .select('*')
         .gte('start_time', format(today, 'yyyy-MM-dd'))
-        .lte('start_time', format(thirtyDaysDaysLater, 'yyyy-MM-dd'));
+        .lte('start_time', format(thirtyDaysLater, 'yyyy-MM-dd'));
       
       if (bookedSlotsError) {
         throw new Error(bookedSlotsError.message);

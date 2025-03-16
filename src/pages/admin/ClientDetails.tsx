@@ -409,10 +409,10 @@ const ClientDetails: React.FC = () => {
   };
 
   // Check if session is overdue
-  const isSessionOverdue = (scheduledDate: string) => {
+  const isSessionOverdue = (startTime: string) => {
     const now = new Date();
     const fortyEightHoursAgo = subHours(now, 48);
-    const sessionDate = new Date(scheduledDate);
+    const sessionDate = new Date(startTime);
     
     return isAfter(fortyEightHoursAgo, sessionDate);
   };
@@ -526,7 +526,7 @@ const ClientDetails: React.FC = () => {
                   ) : (
                     <div className="space-y-4">
                       {upcomingSessions.map((session) => {
-                        const isOverdue = isSessionOverdue(session.scheduled_date);
+                        const isOverdue = isSessionOverdue(session.start_time);
                         
                         return (
                           <div 
@@ -542,7 +542,7 @@ const ClientDetails: React.FC = () => {
                                     <AlertTriangle className="h-4 w-4 text-red-500 ml-1" />
                                   )}
                                   <div className="font-medium">
-                                    {formatDate(session.scheduled_date)}
+                                    {formatDate(session.start_time)}
                                   </div>
                                 </div>
                                 <div className="flex items-center mt-1 text-sm text-gray-600">

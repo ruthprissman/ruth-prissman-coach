@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -142,7 +143,7 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
           <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
             <p className="text-center text-purple-800">
               המרת הפגישה מתאריך<br />
-              <span className="font-bold">{formatDate(futureSession.scheduled_date)}</span>
+              <span className="font-bold">{formatDate(futureSession.start_time)}</span>
             </p>
           </div>
 

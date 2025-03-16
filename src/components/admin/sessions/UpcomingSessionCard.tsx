@@ -67,7 +67,7 @@ const UpcomingSessionCard: React.FC<UpcomingSessionCardProps> = ({
               <AlertTriangle className="h-4 w-4 text-red-500 ml-1" />
             )}
             <div className="font-medium">
-              {formatDate(session.scheduled_date)}
+              {formatDate(session.start_time)}
             </div>
           </div>
           <div className="flex items-center mt-1 text-sm text-gray-600">
