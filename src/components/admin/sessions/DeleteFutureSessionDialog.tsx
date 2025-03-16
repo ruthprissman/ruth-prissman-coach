@@ -10,13 +10,13 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FutureSession } from '@/types/session';
+import { formatDateInIsraelTimeZone } from '@/utils/dateUtils';
 
 interface DeleteFutureSessionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   session: FutureSession | null;
   onConfirm: () => void;
-  formatDate: (dateString: string) => string;
 }
 
 const DeleteFutureSessionDialog: React.FC<DeleteFutureSessionDialogProps> = ({
@@ -24,8 +24,11 @@ const DeleteFutureSessionDialog: React.FC<DeleteFutureSessionDialogProps> = ({
   onOpenChange,
   session,
   onConfirm,
-  formatDate,
 }) => {
+  const formatDate = (dateString: string) => {
+    return formatDateInIsraelTimeZone(dateString, 'dd/MM/yyyy HH:mm');
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">

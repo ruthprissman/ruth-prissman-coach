@@ -202,8 +202,20 @@ export const convertToIsraelTime = (dateString: string | null | Date): string | 
   
   try {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    const { formatInTimeZone } = require('date-fns-tz');
-    return formatInTimeZone(date, 'Asia/Jerusalem', 'yyyy-MM-dd HH:mm:ss');
+    
+    // Create a formatter that outputs in the Israel time zone
+    const formatter = new Intl.DateTimeFormat('en-IL', {
+      timeZone: 'Asia/Jerusalem',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    return formatter.format(date).replace(/\//g, '-');
   } catch (error) {
     console.error('Error converting to Israel time:', error);
     return null;
@@ -213,7 +225,7 @@ export const convertToIsraelTime = (dateString: string | null | Date): string | 
 /**
  * Formats a date for display in Israel time zone
  * @param date Date to format (string or Date object)
- * @param format Format string (default: dd/MM/yyyy HH:mm)
+ * @param formatStr Format string (default: dd/MM/yyyy HH:mm)
  * @returns Formatted date string
  */
 export const formatDateInIsraelTimeZone = (
@@ -224,8 +236,37 @@ export const formatDateInIsraelTimeZone = (
   
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    const { formatInTimeZone } = require('date-fns-tz');
-    return formatInTimeZone(dateObj, 'Asia/Jerusalem', formatStr, { locale: require('date-fns/locale/he') });
+    
+    // Create a formatter based on the provided format string
+    const options: Intl.DateTimeFormatOptions = {
+      timeZone: 'Asia/Jerusalem',
+    };
+    
+    // Map the format string to Intl.DateTimeFormat options
+    if (formatStr.includes('yyyy')) options.year = 'numeric';
+    if (formatStr.includes('MM')) options.month = '2-digit';
+    if (formatStr.includes('dd')) options.day = '2-digit';
+    if (formatStr.includes('HH')) {
+      options.hour = '2-digit';
+      options.hour12 = false;
+    }
+    if (formatStr.includes('mm')) options.minute = '2-digit';
+    if (formatStr.includes('ss')) options.second = '2-digit';
+    
+    const formatter = new Intl.DateTimeFormat('he-IL', options);
+    
+    // Format the date using the Israel timezone
+    let formattedDate = formatter.format(dateObj);
+    
+    // For time-only formats
+    if (formatStr === 'HH:mm') {
+      const parts = formatter.formatToParts(dateObj);
+      const hour = parts.find(part => part.type === 'hour')?.value || '00';
+      const minute = parts.find(part => part.type === 'minute')?.value || '00';
+      formattedDate = `${hour}:${minute}`;
+    }
+    
+    return formattedDate;
   } catch (error) {
     console.error('Error formatting date in Israel time zone:', error);
     // Fallback to simple format
@@ -243,8 +284,15 @@ export const calculateSessionEndTime = (startTime: string | Date): string => {
     const startDate = typeof startTime === 'string' ? new Date(startTime) : startTime;
     const endTime = new Date(startDate.getTime() + 90 * 60000); // Add 90 minutes in milliseconds
     
-    const { formatInTimeZone } = require('date-fns-tz');
-    return formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
+    // Format using browser's native Intl API with Israel timezone
+    const formatter = new Intl.DateTimeFormat('he-IL', {
+      timeZone: 'Asia/Jerusalem',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    
+    return formatter.format(endTime);
   } catch (error) {
     console.error('Error calculating session end time:', error);
     return '';

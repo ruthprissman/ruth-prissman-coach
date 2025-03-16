@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { FutureSession } from '@/types/session';
@@ -15,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { format } from 'date-fns';
 import { formatDateInIsraelTimeZone, calculateSessionEndTime } from '@/utils/dateUtils';
 
 interface ConvertSessionDialogProps {
@@ -29,7 +27,7 @@ interface ConvertSessionDialogProps {
 // Validation schema for the form
 const sessionSchema = z.object({
   summaryNotes: z.string().optional(),
-  paid: z.enum(['paid', 'unpaid', 'partial']),
+  paid: z.enum(['paid', 'partial', 'pending']),
   paidAmount: z.string().optional(),
   paymentMethod: z.enum(['cash', 'bit', 'transfer']).optional(),
 });
@@ -57,7 +55,7 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
     resolver: zodResolver(sessionSchema),
     defaultValues: {
       summaryNotes: '',
-      paid: 'unpaid',
+      paid: 'pending',
       paidAmount: patient.session_price ? patient.session_price.toString() : '',
       paymentMethod: 'cash',
     },
@@ -76,14 +74,14 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
       const isPaid = values.paid === 'paid';
       const isPartiallyPaid = values.paid === 'partial';
       const paidAmount = (isPaid || isPartiallyPaid) && values.paidAmount ? parseInt(values.paidAmount) : 0;
-      const paymentStatus = isPaid ? 'paid' : isPartiallyPaid ? 'partially_paid' : 'unpaid';
+      const paymentStatus = values.paid; // Use the exact value from the form
       
       // Create new session record
       const { data: newSession, error: sessionError } = await supabase
         .from('sessions')
         .insert({
           patient_id: patient.id,
-          session_date: session.session_date, // Using the original session_date
+          session_date: session.session_date, // Use the original session_date without timezone conversion
           meeting_type: session.meeting_type,
           summary: values.summaryNotes,
           sent_exercises: false,
@@ -225,8 +223,8 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
                           <Label htmlFor="partial">שולם חלקית</Label>
                         </div>
                         <div className="flex items-center space-x-2 space-x-reverse">
-                          <RadioGroupItem value="unpaid" id="unpaid" />
-                          <Label htmlFor="unpaid">לא שולם</Label>
+                          <RadioGroupItem value="pending" id="pending" />
+                          <Label htmlFor="pending">ממתין לתשלום</Label>
                         </div>
                       </RadioGroup>
                     </FormControl>
