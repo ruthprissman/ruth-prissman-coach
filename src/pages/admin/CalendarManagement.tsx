@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { RecurringAvailabilityDialog } from '@/components/admin/calendar/RecurringAvailabilityDialog';
 import { GoogleCalendarSync } from '@/components/admin/calendar/GoogleCalendarSync';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Calendar as CalendarIcon, AlertCircle, RefreshCw } from 'lucide-react';
+import { Calendar as CalendarIcon, AlertCircle, RefreshCw, Settings } from 'lucide-react';
 import DebugLogPanel from '@/components/admin/calendar/DebugLogPanel';
 import { useCalendarSettings } from '@/hooks/useCalendarSettings';
 import { fetchGoogleCalendarEvents, compareCalendarData } from '@/services/GoogleCalendarService';
@@ -34,7 +34,7 @@ const CalendarManagement: React.FC = () => {
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [showDebugLogs, setShowDebugLogs] = useState<boolean>(false);
   const [syncComparison, setSyncComparison] = useState<CalendarSyncComparison | null>(null);
-  const { settings, isLoading: isLoadingSettings } = useCalendarSettings();
+  const { settings, isLoading: isLoadingSettings, error: settingsError, isInitialLoadComplete } = useCalendarSettings();
 
   const hours = Array.from({ length: 16 }, (_, i) => {
     const hour = i + 8;
@@ -694,14 +694,15 @@ const CalendarManagement: React.FC = () => {
   }, [currentDate]);
 
   useEffect(() => {
-    if (settings?.apiKey && settings?.calendarId && !isGoogleSynced && !isLoadingSettings) {
+    if (settings?.apiKey && settings?.calendarId && !isGoogleSynced && isInitialLoadComplete) {
+      console.log('Auto-syncing with Google Calendar on initial load');
       syncWithGoogleCalendar([], true);
     }
-  }, [settings, isLoadingSettings]);
+  }, [settings, isInitialLoadComplete, isGoogleSynced]);
 
   useEffect(() => {
-    setIsLoading(isSyncing);
-  }, [isSyncing]);
+    setIsLoading(isSyncing || isLoadingSettings);
+  }, [isSyncing, isLoadingSettings]);
 
   return (
     <AdminLayout title="ניהול זמינות יומן">
@@ -711,7 +712,8 @@ const CalendarManagement: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">ניהול זמינות יומן</h1>
             <GoogleCalendarSync 
               onSyncClick={handleGoogleSync} 
-              isLoading={isSyncing} 
+              isLoading={isSyncing || isLoadingSettings} 
+              settingsError={settingsError}
             />
           </div>
           
@@ -723,6 +725,16 @@ const CalendarManagement: React.FC = () => {
               onClose={() => setShowDebugLogs(false)}
               title="יומן סנכרון Google Calendar" 
             />
+          )}
+          
+          {settingsError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>שגיאה בהגדרות Google Calendar</AlertTitle>
+              <AlertDescription>
+                לא ניתן לטעון את הגדרות יומן Google: {settingsError}
+              </AlertDescription>
+            </Alert>
           )}
           
           {syncComparison && (
@@ -770,7 +782,7 @@ const CalendarManagement: React.FC = () => {
           {isLoadingSettings && !isLoading && (
             <Alert className="mb-4">
               <div className="flex items-center">
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                <Settings className="h-4 w-4 mr-2 animate-spin" />
                 <AlertTitle>טוען הגדרות יומן</AlertTitle>
               </div>
               <AlertDescription>

@@ -13,14 +13,17 @@ export function useCalendarSettings() {
   const [settings, setSettings] = useState<CalendarSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
-      if (!session?.access_token) return;
+      if (!session?.access_token || isInitialLoadComplete) return;
       
       try {
         setIsLoading(true);
         setError(null);
+        
+        console.log('Fetching calendar settings from Edge Function...');
         
         const response = await fetch(
           'https://uwqwlltrfvokjlaufguz.supabase.co/functions/v1/get_calendar_settings',
@@ -36,6 +39,10 @@ export function useCalendarSettings() {
         }
         
         const data = await response.json();
+        console.log('Calendar settings received:', { 
+          apiKeyReceived: !!data.apiKey, 
+          calendarIdReceived: !!data.calendarId 
+        });
         
         if (!data.apiKey || !data.calendarId) {
           throw new Error('הגדרות יומן חסרות או שגויות');
@@ -45,6 +52,14 @@ export function useCalendarSettings() {
           apiKey: data.apiKey,
           calendarId: data.calendarId
         });
+        
+        toast({
+          title: 'הגדרות נטענו בהצלחה',
+          description: 'הגדרות יומן גוגל נטענו בהצלחה',
+          variant: 'default',
+        });
+        
+        console.log('Calendar settings loaded successfully');
       } catch (err: any) {
         console.error('Error fetching calendar settings:', err);
         setError(err.message);
@@ -55,11 +70,12 @@ export function useCalendarSettings() {
         });
       } finally {
         setIsLoading(false);
+        setIsInitialLoadComplete(true);
       }
     };
     
     fetchSettings();
-  }, [session?.access_token]);
+  }, [session?.access_token, isInitialLoadComplete]);
   
-  return { settings, isLoading, error };
+  return { settings, isLoading, error, isInitialLoadComplete };
 }
