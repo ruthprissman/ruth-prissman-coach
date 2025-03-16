@@ -54,7 +54,7 @@ const PatientsListFilters: React.FC<PatientsListFiltersProps> = ({
             <Filter className="h-4 w-4" />
             איפוס מסננים
           </Button>
-          <h3 className="text-lg font-medium text-[#4A235A]">סינון מטופלים</h3>
+          <h3 className="text-lg font-medium text-[#4A235A]">סינון לקוחות</h3>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -66,12 +66,12 @@ const PatientsListFilters: React.FC<PatientsListFiltersProps> = ({
               onValueChange={(value: 'all' | 'active' | 'inactive') => setStatusFilter(value)}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="כל המטופלים" />
+                <SelectValue placeholder="כל הלקוחות" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">כל המטופלים</SelectItem>
-                <SelectItem value="active">מטופלים פעילים</SelectItem>
-                <SelectItem value="inactive">מטופלים לא פעילים</SelectItem>
+                <SelectItem value="all">כל הלקוחות</SelectItem>
+                <SelectItem value="active">לקוחות פעילים</SelectItem>
+                <SelectItem value="inactive">לקוחות לא פעילים</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -84,12 +84,12 @@ const PatientsListFilters: React.FC<PatientsListFiltersProps> = ({
               onValueChange={(value: 'all' | 'has_debt' | 'no_debt') => setDebtFilter(value)}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="כל המטופלים" />
+                <SelectValue placeholder="כל הלקוחות" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">כל המטופלים</SelectItem>
-                <SelectItem value="has_debt">מטופלים עם חובות</SelectItem>
-                <SelectItem value="no_debt">מטופלים ללא חובות</SelectItem>
+                <SelectItem value="all">כל הלקוחות</SelectItem>
+                <SelectItem value="has_debt">לקוחות עם חובות</SelectItem>
+                <SelectItem value="no_debt">לקוחות ללא חובות</SelectItem>
               </SelectContent>
             </Select>
           </div>

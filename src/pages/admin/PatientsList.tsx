@@ -127,7 +127,7 @@ const PatientsList: React.FC = () => {
     } catch (error: any) {
       console.error('Error fetching patients:', error);
       toast({
-        title: "שגיאה בטעינת נתוני מטופלים",
+        title: "שגיאה בטעינת נתוני לקוחות",
         description: error.message || "אנא נסה שוב מאוחר יותר",
         variant: "destructive",
       });
@@ -253,8 +253,8 @@ const PatientsList: React.FC = () => {
       if (error) throw error;
       
       toast({
-        title: "מטופל נוסף בהצלחה",
-        description: `${newPatient.name} נוסף/ה לרשימת המטופלים`,
+        title: "לקוחה נוספה בהצלחה",
+        description: `${newPatient.name} נוספה לרשימת הלקוחות`,
       });
       
       await fetchPatients();
@@ -262,7 +262,7 @@ const PatientsList: React.FC = () => {
     } catch (error: any) {
       console.error('Error adding patient:', error);
       toast({
-        title: "שגיאה בהוספת מטופל",
+        title: "שגיאה בהוספת לקוחה",
         description: error.message || "אנא נסה שוב מאוחר יותר",
         variant: "destructive",
       });
@@ -328,7 +328,7 @@ const PatientsList: React.FC = () => {
         {/* Patients summary */}
         <div className="bg-white shadow rounded-lg p-4">
           <p className="text-[#4A235A] font-medium">
-            סה"כ {filteredPatients.length} מטופלים {searchTerm && 'התואמים את החיפוש'}
+            סה"כ {filteredPatients.length} לקוחות {searchTerm && 'התואמים את החיפוש'}
             {filteredPatients.length !== patients.length && ` (מתוך ${patients.length} סה"כ)`}
           </p>
         </div>
@@ -341,7 +341,7 @@ const PatientsList: React.FC = () => {
             </div>
           ) : filteredPatients.length === 0 ? (
             <div className="text-center p-10">
-              <p className="text-gray-500">לא נמצאו מטופלים{searchTerm ? " התואמים את החיפוש" : ""}.</p>
+              <p className="text-gray-500">לא נמצאו לקוחות{searchTerm ? " התואמים את החיפוש" : ""}.</p>
               {searchTerm && (
                 <Button variant="link" onClick={() => setSearchTerm('')}>
                   נקה חיפוש
