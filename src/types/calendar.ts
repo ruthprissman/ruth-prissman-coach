@@ -55,3 +55,9 @@ export interface CalendarSettings {
   googleCalendarApiKey?: string;
   defaultCalendarId?: string;
 }
+
+// Calendar view options
+export interface CalendarViewOptions {
+  view: 'week' | 'month';
+  startDate: Date;
+}

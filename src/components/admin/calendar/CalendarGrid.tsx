@@ -36,19 +36,19 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 }) => {
   const [contextMenu, setContextMenu] = useState<ContextMenuOptions | null>(null);
 
-  // Get status color and label
+  // Get status color and label (updated to match the requested design)
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'available':
-        return { bg: 'bg-green-100', border: 'border-green-300', text: 'זמין לפגישות' };
+        return { bg: 'bg-purple-100', border: 'border-purple-300', text: 'זמין לפגישות' };
       case 'booked':
-        return { bg: 'bg-purple-100', border: 'border-purple-300', text: 'תפוס - פגישה קיימת' };
+        return { bg: 'bg-gray-100', border: 'border-gray-300', text: 'תפוס - פגישה קיימת' };
       case 'completed':
-        return { bg: 'bg-gray-100', border: 'border-gray-300', text: 'הושלם' };
+        return { bg: 'bg-gray-200', border: 'border-gray-300', text: 'הושלם' };
       case 'canceled':
         return { bg: 'bg-red-100', border: 'border-red-300', text: 'בוטל' };
       case 'private':
-        return { bg: 'bg-blue-100', border: 'border-blue-300', text: 'זמן פרטי - לא זמין' };
+        return { bg: 'bg-amber-100', border: 'border-amber-300', text: 'זמן פרטי - לא זמין' };
       default:
         return { bg: 'bg-gray-50', border: 'border-gray-200', text: 'לא מוגדר' };
     }
@@ -120,17 +120,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         className={`${bg} ${border} border text-center transition-colors cursor-pointer hover:opacity-80`}
                         onContextMenu={(e) => handleContextMenu(e, day.date, hour, status)}
                       >
-                        {status === 'available' && <Check className="h-4 w-4 mx-auto text-green-600" />}
-                        {status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-purple-600" />}
+                        {status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
+                        {status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
                         {status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
                         {status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
-                        {status === 'private' && <Lock className="h-4 w-4 mx-auto text-blue-600" />}
+                        {status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
                         {slot?.notes && <span className="text-xs mt-1 block truncate">{slot.notes}</span>}
                       </TableCell>
                     </ContextMenuTrigger>
                     <ContextMenuContent className="min-w-[160px]">
                       <ContextMenuItem 
-                        className="flex items-center gap-2 text-green-600"
+                        className="flex items-center gap-2 text-purple-600"
                         onClick={() => handleSelectOption('available')}
                         disabled={status === 'booked'}
                       >
@@ -138,7 +138,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         <span>הגדר כזמין</span>
                       </ContextMenuItem>
                       <ContextMenuItem 
-                        className="flex items-center gap-2 text-blue-600"
+                        className="flex items-center gap-2 text-amber-600"
                         onClick={() => handleSelectOption('private')}
                         disabled={status === 'booked'}
                       >

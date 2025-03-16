@@ -77,15 +77,15 @@ const CalendarListView: React.FC<CalendarListViewProps> = ({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'available':
-        return { variant: 'outline' as const, color: 'text-green-600 border-green-400 bg-green-50', text: 'זמין' };
+        return { variant: 'outline' as const, color: 'text-purple-600 border-purple-400 bg-purple-50', text: 'זמין' };
       case 'booked':
-        return { variant: 'outline' as const, color: 'text-purple-600 border-purple-400 bg-purple-50', text: 'תפוס' };
+        return { variant: 'outline' as const, color: 'text-gray-600 border-gray-400 bg-gray-50', text: 'תפוס' };
       case 'completed':
         return { variant: 'outline' as const, color: 'text-gray-600 border-gray-400 bg-gray-50', text: 'הושלם' };
       case 'canceled':
         return { variant: 'outline' as const, color: 'text-red-600 border-red-400 bg-red-50', text: 'בוטל' };
       case 'private':
-        return { variant: 'outline' as const, color: 'text-blue-600 border-blue-400 bg-blue-50', text: 'פרטי' };
+        return { variant: 'outline' as const, color: 'text-amber-600 border-amber-400 bg-amber-50', text: 'פרטי' };
       default:
         return { variant: 'outline' as const, color: 'text-gray-600', text: 'לא מוגדר' };
     }
@@ -156,7 +156,7 @@ const CalendarListView: React.FC<CalendarListViewProps> = ({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              className="h-8 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
                               onClick={() => onUpdateSlot(slot.date, slot.hour, 'available')}
                             >
                               <Check className="h-4 w-4" />
@@ -166,7 +166,7 @@ const CalendarListView: React.FC<CalendarListViewProps> = ({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className="h-8 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                               onClick={() => onUpdateSlot(slot.date, slot.hour, 'private')}
                             >
                               <Lock className="h-4 w-4" />
