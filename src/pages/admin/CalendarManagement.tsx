@@ -178,21 +178,18 @@ const CalendarManagement: React.FC = () => {
       if (!session.session_date) return;
       
       try {
-        // Convert to Israel time zone (Asia/Jerusalem)
         const sessionDateTime = new Date(session.session_date);
         const israelTime = formatInTimeZone(sessionDateTime, 'Asia/Jerusalem', 'yyyy-MM-dd HH:mm:ss');
         
-        const sessionDate = israelTime.split(' ')[0]; // YYYY-MM-DD
-        const timeParts = israelTime.split(' ')[1].split(':'); // HH:MM:SS
-        const sessionTime = `${timeParts[0]}:00`; // Use only the hour, set minutes to 00
+        const sessionDate = israelTime.split(' ')[0];
+        const timeParts = israelTime.split(' ')[1].split(':');
+        const sessionTime = `${timeParts[0]}:00`;
         
         const dayMap = calendarData.get(sessionDate);
         if (dayMap && dayMap.has(sessionTime)) {
-          // Calculate session end time (session_date + 90 minutes)
           const endTime = addMinutes(sessionDateTime, 90);
           const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
           
-          // Get appropriate status color based on status
           let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
           if (session.status === 'completed') status = 'completed';
           if (session.status === 'canceled') status = 'canceled';
@@ -456,6 +453,41 @@ const CalendarManagement: React.FC = () => {
       }
     } catch (error) {
       console.error('Error checking/creating settings table:', error);
+    }
+  };
+
+  const createCalendarSlotsTable = async () => {
+    try {
+      const supabase = getSupabaseWithAuth(session?.access_token);
+      
+      const { error } = await supabase.rpc('create_calendar_slots_table');
+      
+      if (error) {
+        console.error('Error creating calendar_slots table:', error);
+        toast({
+          title: 'שגיאה ביצירת טבלת יומן',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return false;
+      }
+      
+      toast({
+        title: 'טבלת יומן נוצרה בהצלחה',
+        description: 'כעת ניתן להגדיר זמינות ביומן',
+      });
+      
+      setTableExists(true);
+      await fetchAvailabilityData();
+      return true;
+    } catch (error: any) {
+      console.error('Error creating calendar_slots table:', error);
+      toast({
+        title: 'שגיאה ביצירת טבלת יומן',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
     }
   };
 
