@@ -5,7 +5,6 @@ import { SubscriptionForm } from '@/components/SubscriptionForm';
 import { TestimonialsCarousel } from '@/components/TestimonialsCarousel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
-import { GoogleLoginButton } from '@/components/GoogleLoginButton';
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -71,9 +70,6 @@ const Index = () => {
                       מבט חדש על חיים מוכרים
                     </p>
                   </div>
-                </div>
-                <div className="mt-4">
-                  <GoogleLoginButton />
                 </div>
               </div>
             </div>
@@ -191,7 +187,6 @@ const Index = () => {
           
           <TestimonialsCarousel />
           
-          {/* New Mailing List Section */}
           <section className="py-16 px-4 relative">
             <div className="container mx-auto max-w-2xl">
               <div className="text-center">
@@ -199,7 +194,7 @@ const Index = () => {
                   בואי להיות חלק מהקהילה
                 </h2>
                 <p className="text-[#4A235A] mb-8 font-heebo leading-relaxed">
-                  הצטרפי לרשימת התפוצה שלי, וקבלי מאמרים שבועיים בנושאי 'קוד הנפש' - מחשבות, כלים ותובנות שידייקו אותך למצוא בעצמך את הדרך שלך לחיים מודעים יותר.
+                  הצטרפי לר��ימת התפוצה שלי, וקבלי מאמרים שבועיים בנושאי 'קוד הנפש' - מחשבות, כלים ותובנות שידייקו אותך למצוא בעצמך את הדרך שלך לחיים מודעים יותר.
                   <br />
                   לפני חגים ייתכן שיופצו מאמרים מותאמים למהות החג.
                 </p>
