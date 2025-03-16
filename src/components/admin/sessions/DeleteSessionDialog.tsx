@@ -10,11 +10,12 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Session } from '@/types/patient';
+import { FutureSession } from '@/types/session';
 
 interface DeleteSessionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  session: Session | null;
+  session: Session | FutureSession | null;
   onConfirm: () => void;
   formatDate: (dateString: string) => string;
 }
