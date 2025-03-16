@@ -37,11 +37,6 @@ export function useGoogleOAuth() {
           isAuthenticating: false,
           error: null
         });
-        
-        // Fetch events if already signed in
-        if (isSignedIn) {
-          fetchEvents();
-        }
       } catch (error: any) {
         console.error('Google OAuth initialization error:', error);
         setState({
@@ -101,10 +96,8 @@ export function useGoogleOAuth() {
       if (success) {
         toast({
           title: 'התחברת בהצלחה לחשבון גוגל',
-          description: 'מתחיל בטעינת אירועי יומן...',
+          description: 'החיבור ליומן Google הושלם בהצלחה',
         });
-        
-        await fetchEvents();
       } else {
         toast({
           title: 'התחברות ל-Google נכשלה',
