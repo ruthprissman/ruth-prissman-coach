@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -65,9 +66,17 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   const { toast } = useToast();
   const [originalValues, setOriginalValues] = useState<SessionFormValues | null>(null);
 
+  // Map database payment status to form payment status
   const mapPaymentStatus = (status: string): 'paid' | 'partial' | 'pending' => {
     if (status === 'paid') return 'paid';
-    if (status === 'partially_paid') return 'partial';
+    if (status === 'partially_paid' || status === 'partial') return 'partial';
+    return 'pending';
+  };
+
+  // Map form payment status to database payment status
+  const mapPaymentStatusToDatabase = (status: string): string => {
+    if (status === 'paid') return 'paid';
+    if (status === 'partial') return 'partial';
     return 'pending';
   };
 
