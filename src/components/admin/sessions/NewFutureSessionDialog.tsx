@@ -36,13 +36,17 @@ interface NewFutureSessionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   patientId: number;
-  onSessionCreated: () => void;
+  patientName?: string;
+  onCreated?: () => void;
+  onSessionCreated?: () => void;
 }
 
 const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
   open,
   onOpenChange,
   patientId,
+  patientName,
+  onCreated,
   onSessionCreated,
 }) => {
   const { toast } = useToast();
@@ -140,7 +144,8 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
         description: "הפגישה נוספה ללוח הפגישות",
       });
 
-      onSessionCreated();
+      if (onCreated) onCreated();
+      if (onSessionCreated) onSessionCreated();
       resetForm();
       onOpenChange(false);
     } catch (error: any) {
@@ -159,7 +164,11 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center text-purple-800">יצירת פגישה עתידית חדשה</DialogTitle>
+          <DialogTitle className="text-center text-purple-800">
+            {patientName 
+              ? `יצירת פגישה עתידית חדשה עבור ${patientName}` 
+              : "יצירת פגישה עתידית חדשה"}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2" dir="rtl">

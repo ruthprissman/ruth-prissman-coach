@@ -17,7 +17,7 @@ interface DeleteFutureSessionDialogProps {
   onOpenChange: (open: boolean) => void;
   session: FutureSession | null;
   onConfirm: () => void;
-  formatDate?: (dateString: string) => string; // Added optional formatDate prop
+  formatDate?: (dateString: string) => string;
 }
 
 const DeleteFutureSessionDialog: React.FC<DeleteFutureSessionDialogProps> = ({
@@ -25,7 +25,7 @@ const DeleteFutureSessionDialog: React.FC<DeleteFutureSessionDialogProps> = ({
   onOpenChange,
   session,
   onConfirm,
-  formatDate: customFormatDate, // Renamed to avoid conflict with local function
+  formatDate: customFormatDate,
 }) => {
   const formatDate = (dateString: string) => {
     if (customFormatDate) {

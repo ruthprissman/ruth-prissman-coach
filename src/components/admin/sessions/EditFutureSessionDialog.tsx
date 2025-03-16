@@ -36,14 +36,16 @@ interface EditFutureSessionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   session: FutureSession | null;
-  onSessionUpdated: () => void;
+  patientId?: string | number;
+  onUpdated: () => void;
 }
 
 const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
   open,
   onOpenChange,
   session,
-  onSessionUpdated,
+  patientId,
+  onUpdated,
 }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -154,7 +156,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
         description: "פרטי הפגישה עודכנו בהצלחה",
       });
 
-      onSessionUpdated();
+      onUpdated();
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error updating future session:', error);

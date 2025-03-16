@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { FutureSession } from '@/types/session';
@@ -19,9 +20,9 @@ import { formatDateInIsraelTimeZone, calculateSessionEndTime } from '@/utils/dat
 interface ConvertSessionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  session: FutureSession;
-  patient: Patient;
-  onSessionConverted: () => void;
+  session: FutureSession | null;
+  patientId: string | number;
+  onConverted: () => void;
 }
 
 // Validation schema for the form
@@ -38,12 +39,14 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
   open,
   onOpenChange,
   session,
-  patient,
-  onSessionConverted
+  patientId,
+  onConverted
 }) => {
   const { session: authSession } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  if (!session) return null;
   
   // Get formatted session date and time using Israel timezone
   const formattedDate = formatDateInIsraelTimeZone(session.session_date, 'PPP');
@@ -56,7 +59,7 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
     defaultValues: {
       summaryNotes: '',
       paid: 'pending',
-      paidAmount: patient.session_price ? patient.session_price.toString() : '',
+      paidAmount: '0',
       paymentMethod: 'cash',
     },
   });
@@ -70,6 +73,15 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
       setIsSubmitting(true);
       const supabase = getSupabaseWithAuth(authSession?.access_token);
       
+      // Get patient data
+      const { data: patientData, error: patientError } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('id', patientId)
+        .single();
+      
+      if (patientError) throw new Error(patientError.message);
+      
       // Calculate payment information
       const isPaid = values.paid === 'paid';
       const isPartiallyPaid = values.paid === 'partial';
@@ -80,7 +92,7 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
       const { data: newSession, error: sessionError } = await supabase
         .from('sessions')
         .insert({
-          patient_id: patient.id,
+          patient_id: patientId,
           session_date: session.session_date, // Use the original session_date without timezone conversion
           meeting_type: session.meeting_type,
           summary: values.summaryNotes,
@@ -105,15 +117,15 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
       
       // Update patient financial status if needed
       if (paymentStatus !== 'paid') {
-        await updatePatientFinancialStatus(patient.id, supabase);
+        await updatePatientFinancialStatus(Number(patientId), supabase);
       }
       
       toast({
         title: 'פגישה הומרה בהצלחה',
-        description: `פגישה חדשה נוצרה עבור ${patient.name}`,
+        description: `פגישה חדשה נוצרה עבור ${patientData.name}`,
       });
       
-      onSessionConverted();
+      onConverted();
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error converting session:', error);
@@ -160,10 +172,6 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
         
         <div className="py-4">
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="font-medium">מטופל/ת:</span>
-              <span>{patient.name}</span>
-            </div>
             <div className="flex justify-between">
               <span className="font-medium">תאריך:</span>
               <span>{formattedDate}</span>
