@@ -46,15 +46,17 @@ export function useCalendarSettings() {
         setIsLoading(true);
         setError(null);
         
-        // Debug log with session information
+        // Debug log with session information and token format
+        const authHeader = 'Bearer ' + session.access_token;
         console.log('Fetching calendar settings with authorization:', { 
           sessionId: session.user.id,
           hasAccessToken: !!session.access_token,
-          tokenLength: session.access_token.length
+          tokenLength: session.access_token.length,
+          authHeaderPrefix: authHeader.substring(0, 20) + '...'
         });
         
-        // Making request with Authorization header
-        console.log('Making request to get_calendar_settings with Authorization Bearer token');
+        // Making request with explicit Authorization header format
+        console.log('Making request to get_calendar_settings with formatted Authorization header');
         
         const response = await fetch(
           'https://uwqwlltrfvokjlaufguz.functions.supabase.co/get_calendar_settings',
@@ -62,10 +64,17 @@ export function useCalendarSettings() {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`
+              'Authorization': authHeader
             },
           }
         );
+        
+        // Detailed logging of response status
+        console.log('Calendar settings response received:', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
+        });
         
         if (!response.ok) {
           console.error('Error response from calendar settings endpoint:', { 
@@ -104,8 +113,11 @@ export function useCalendarSettings() {
         if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
           console.error('Network error when fetching calendar settings. Check network connection or CORS settings.');
           setError('שגיאת רשת בהבאת הגדרות יומן. בדוק את חיבור הרשת או הגדרות CORS.');
+        } else if (err.message && err.message.includes('401')) {
+          console.error('Authorization error (401) when fetching calendar settings. Token might be invalid.');
+          setError('שגיאת הרשאות בהבאת הגדרות יומן. יש להתחבר מחדש למערכת.');
         } else if (err.message && err.message.includes('Unauthorized')) {
-          console.error('Authorization error when fetching calendar settings. Check if token is valid.');
+          console.error('Authorization error (Unauthorized) when fetching calendar settings. Check if token is valid.');
           setError('שגיאת הרשאות בהבאת הגדרות יומן. יש להתחבר מחדש למערכת.');
         } else {
           setError(err.message);
