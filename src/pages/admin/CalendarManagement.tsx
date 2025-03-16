@@ -6,6 +6,7 @@ import CalendarGrid from '@/components/admin/calendar/CalendarGrid';
 import CalendarListView from '@/components/admin/calendar/CalendarListView';
 import CalendarToolbar from '@/components/admin/calendar/CalendarToolbar';
 import { TabsContent, Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { TimeSlot, CalendarSlot } from '@/types/calendar';
 import { getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';

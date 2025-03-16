@@ -34,3 +34,18 @@ export interface RecurringRule {
   count: number;
   startDate: string;
 }
+
+export interface GoogleCalendarEvent {
+  id: string;
+  summary: string;
+  start: {
+    dateTime: string;
+    timeZone?: string;
+  };
+  end: {
+    dateTime: string;
+    timeZone?: string;
+  };
+  description?: string;
+  status?: string;
+}
