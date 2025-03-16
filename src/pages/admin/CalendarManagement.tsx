@@ -629,27 +629,6 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  const createSettingsTable = async () => {
-    try {
-      const supabase = getSupabaseWithAuth(session?.access_token);
-      
-      const { error: checkError } = await supabase
-        .from('settings')
-        .select('key')
-        .limit(1);
-      
-      if (checkError && checkError.message.includes('relation') && checkError.message.includes('does not exist')) {
-        const { error } = await supabase.rpc('create_settings_table');
-        
-        if (error) {
-          console.error('Error creating settings table:', error);
-        }
-      }
-    } catch (error) {
-      console.error('Error checking/creating settings table:', error);
-    }
-  };
-
   const createCalendarSlotsTable = async () => {
     try {
       const supabase = getSupabaseWithAuth(session?.access_token);
@@ -684,10 +663,6 @@ const CalendarManagement: React.FC = () => {
       return false;
     }
   };
-
-  useEffect(() => {
-    createSettingsTable();
-  }, []);
 
   useEffect(() => {
     fetchAvailabilityData();
