@@ -25,7 +25,7 @@ export function useCalendarSettings() {
     
     setIsSessionChecked(true);
     
-    if (!session || !session.access_token) {
+    if (!session) {
       console.log('No valid session found for calendar settings fetch:', { sessionExists: !!session });
       setIsLoading(false);
       setError('התחברות לא הושלמה, יש להתחבר מחדש');
@@ -40,31 +40,24 @@ export function useCalendarSettings() {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      if (!isSessionChecked || !session?.access_token || isInitialLoadComplete) return;
+      if (!isSessionChecked || !session || isInitialLoadComplete) return;
       
       try {
         setIsLoading(true);
         setError(null);
         
-        // Debug log with session information and token format
-        const authHeader = 'Bearer ' + session.access_token;
-        console.log('Fetching calendar settings with authorization:', { 
-          sessionId: session.user.id,
-          hasAccessToken: !!session.access_token,
-          tokenLength: session.access_token.length,
-          authHeaderPrefix: authHeader.substring(0, 20) + '...'
-        });
+        // Debug log before making the request
+        console.log('Fetching calendar settings, session is valid');
         
-        // Making request with explicit Authorization header format
-        console.log('Making request to get_calendar_settings with formatted Authorization header');
+        // Making request without Authorization header
+        console.log('Making request to get_calendar_settings without Authorization header');
         
         const response = await fetch(
           'https://uwqwlltrfvokjlaufguz.functions.supabase.co/get_calendar_settings',
           {
             method: 'GET',
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': authHeader
+              'Content-Type': 'application/json'
             },
           }
         );
@@ -113,12 +106,6 @@ export function useCalendarSettings() {
         if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
           console.error('Network error when fetching calendar settings. Check network connection or CORS settings.');
           setError('שגיאת רשת בהבאת הגדרות יומן. בדוק את חיבור הרשת או הגדרות CORS.');
-        } else if (err.message && err.message.includes('401')) {
-          console.error('Authorization error (401) when fetching calendar settings. Token might be invalid.');
-          setError('שגיאת הרשאות בהבאת הגדרות יומן. יש להתחבר מחדש למערכת.');
-        } else if (err.message && err.message.includes('Unauthorized')) {
-          console.error('Authorization error (Unauthorized) when fetching calendar settings. Check if token is valid.');
-          setError('שגיאת הרשאות בהבאת הגדרות יומן. יש להתחבר מחדש למערכת.');
         } else {
           setError(err.message);
         }
@@ -135,7 +122,7 @@ export function useCalendarSettings() {
     };
     
     fetchSettings();
-  }, [session?.access_token, isInitialLoadComplete, isSessionChecked]);
+  }, [session, isInitialLoadComplete, isSessionChecked]);
   
   return { settings, isLoading, error, isInitialLoadComplete };
 }
