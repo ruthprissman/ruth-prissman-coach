@@ -409,12 +409,12 @@ const ClientDetails: React.FC = () => {
   };
 
   // Check if session is overdue
-  const isSessionOverdue = (startTime: string) => {
+  const isSessionOverdue = (sessionDate: string) => {
     const now = new Date();
     const fortyEightHoursAgo = subHours(now, 48);
-    const sessionDate = new Date(startTime);
+    const sessionDateTime = new Date(sessionDate);
     
-    return isAfter(fortyEightHoursAgo, sessionDate);
+    return isAfter(fortyEightHoursAgo, sessionDateTime);
   };
 
   // Toggle expand session
@@ -526,7 +526,7 @@ const ClientDetails: React.FC = () => {
                   ) : (
                     <div className="space-y-4">
                       {upcomingSessions.map((session) => {
-                        const isOverdue = isSessionOverdue(session.start_time);
+                        const isOverdue = isSessionOverdue(session.session_date);
                         
                         return (
                           <div 
@@ -542,7 +542,7 @@ const ClientDetails: React.FC = () => {
                                     <AlertTriangle className="h-4 w-4 text-red-500 ml-1" />
                                   )}
                                   <div className="font-medium">
-                                    {formatDate(session.start_time)}
+                                    {formatDate(session.session_date)}
                                   </div>
                                 </div>
                                 <div className="flex items-center mt-1 text-sm text-gray-600">
@@ -822,26 +822,14 @@ const ClientDetails: React.FC = () => {
               formatDate={formatDate}
             />
             
-            {/* Edit session dialog */}
-            {sessionToEdit && (
-              <SessionEditDialog
-                isOpen={isEditSessionDialogOpen}
-                onClose={() => setIsEditSessionDialogOpen(false)}
-                session={sessionToEdit}
-                onSessionUpdated={handleSessionUpdated}
-                sessionPrice={client.session_price}
-              />
-            )}
-            
             {/* Convert session dialog */}
             {sessionToConvert && (
               <ConvertSessionDialog
-                isOpen={isConvertSessionDialogOpen}
-                onClose={() => setIsConvertSessionDialogOpen(false)}
-                futureSession={sessionToConvert}
+                open={isConvertSessionDialogOpen}
+                onOpenChange={setIsConvertSessionDialogOpen}
+                session={sessionToConvert}
+                patient={client}
                 onSessionConverted={handleSessionConverted}
-                patientId={Number(id)}
-                sessionPrice={client.session_price}
               />
             )}
           </div>
@@ -852,3 +840,4 @@ const ClientDetails: React.FC = () => {
 };
 
 export default ClientDetails;
+

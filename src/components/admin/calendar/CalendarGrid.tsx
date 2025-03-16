@@ -115,7 +115,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 
                 return (
                   <ContextMenu key={`${day.date}-${hour}`}>
-                    <ContextMenuTrigger>
+                    <ContextMenuTrigger asChild>
                       <TableCell 
                         className={`${bg} ${border} border text-center transition-colors cursor-pointer hover:opacity-80`}
                         onContextMenu={(e) => handleContextMenu(e, day.date, hour, status)}

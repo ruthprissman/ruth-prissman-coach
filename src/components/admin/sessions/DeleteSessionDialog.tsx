@@ -12,22 +12,22 @@ import { Button } from '@/components/ui/button';
 import { Session } from '@/types/patient';
 
 interface DeleteSessionDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   session: Session | null;
   onConfirm: () => void;
   formatDate: (dateString: string) => string;
 }
 
 const DeleteSessionDialog: React.FC<DeleteSessionDialogProps> = ({
-  isOpen,
-  onClose,
+  open,
+  onOpenChange,
   session,
   onConfirm,
   formatDate,
 }) => {
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>מחיקת פגישה</DialogTitle>
@@ -46,7 +46,7 @@ const DeleteSessionDialog: React.FC<DeleteSessionDialogProps> = ({
         <DialogFooter className="flex justify-between sm:justify-between">
           <Button 
             variant="outline" 
-            onClick={onClose}
+            onClick={() => onOpenChange(false)}
           >
             ביטול
           </Button>

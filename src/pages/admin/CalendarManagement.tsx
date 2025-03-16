@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -169,8 +168,7 @@ const CalendarManagement: React.FC = () => {
       if (dayMap && dayMap.has(slot.start_time)) {
         dayMap.set(slot.start_time, {
           ...dayMap.get(slot.start_time)!,
-          status: slot.slot_type === 'available' ? 'available' : 
-                 slot.slot_type === 'private' ? 'private' : 'unspecified',
+          status: slot.slot_type as 'available' | 'private' | 'unspecified',
           notes: slot.notes
         });
       }
@@ -194,14 +192,14 @@ const CalendarManagement: React.FC = () => {
           const endTime = addMinutes(sessionDateTime, 90);
           const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
           
-          // Get appropriate status color
-          let status = 'booked';
+          // Get appropriate status color based on status
+          let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
           if (session.status === 'completed') status = 'completed';
           if (session.status === 'canceled') status = 'canceled';
           
           dayMap.set(sessionTime, {
             ...dayMap.get(sessionTime)!,
-            status: status,
+            status,
             notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`
           });
         }

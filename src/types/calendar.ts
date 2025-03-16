@@ -4,7 +4,7 @@ export interface TimeSlot {
   date: string;
   startTime: string;
   endTime: string;
-  status: 'available' | 'private' | 'unspecified' | 'booked';
+  status: 'available' | 'private' | 'unspecified' | 'booked' | 'completed' | 'canceled';
   notes?: string;
   isRecurring: boolean;
 }
@@ -13,7 +13,7 @@ export interface CalendarSlot {
   date: string;
   day: number;
   hour: string;
-  status: 'available' | 'private' | 'unspecified' | 'booked';
+  status: 'available' | 'private' | 'unspecified' | 'booked' | 'completed' | 'canceled';
   notes?: string;
 }
 
