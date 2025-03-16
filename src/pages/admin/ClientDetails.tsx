@@ -815,8 +815,8 @@ const ClientDetails: React.FC = () => {
             
             {/* Delete session dialog */}
             <DeleteSessionDialog 
-              isOpen={isDeleteSessionDialogOpen}
-              onClose={() => setIsDeleteSessionDialogOpen(false)}
+              open={isDeleteSessionDialogOpen}
+              onOpenChange={setIsDeleteSessionDialogOpen}
               session={sessionToDelete}
               onConfirm={handleDeleteSession}
               formatDate={formatDate}
@@ -840,4 +840,3 @@ const ClientDetails: React.FC = () => {
 };
 
 export default ClientDetails;
-

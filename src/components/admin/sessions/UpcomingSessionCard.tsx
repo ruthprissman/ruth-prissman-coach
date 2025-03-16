@@ -139,8 +139,9 @@ const UpcomingSessionCard: React.FC<UpcomingSessionCardProps> = ({
         <DeleteSessionDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
-          sessionId={session.id}
-          onDeleted={onDelete}
+          session={session}
+          onConfirm={onDelete}
+          formatDate={formatDateInIsraelTimeZone}
         />
       )}
     </Card>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -41,7 +40,6 @@ const AllSessions: React.FC = () => {
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
 
   const fetchSessions = useCallback(async () => {
-    // Prevent multiple fetch attempts
     if (isLoading && hasAttemptedFetch) return;
     
     setIsLoading(true);
@@ -51,12 +49,10 @@ const AllSessions: React.FC = () => {
     try {
       console.log("Fetching sessions, auth session:", !!authSession);
       
-      // Get supabase client with auth token if available
       const supabaseClient = authSession?.access_token 
         ? getSupabaseWithAuth(authSession.access_token)
         : supabase;
       
-      // Fetch all sessions with patient information
       const { data, error } = await supabaseClient
         .from('sessions')
         .select(`
@@ -74,7 +70,6 @@ const AllSessions: React.FC = () => {
       setSessions(data as SessionWithPatient[] || []);
       setFilteredSessions(data as SessionWithPatient[] || []);
       
-      // Fetch all patients for the filter
       const { data: patientsData, error: patientsError } = await supabaseClient
         .from('patients')
         .select('*')
@@ -82,7 +77,6 @@ const AllSessions: React.FC = () => {
       
       if (patientsError) throw patientsError;
       
-      // Ensure patients have valid data to prevent Select.Item error
       const validPatients = (patientsData || []).filter(patient => 
         patient && patient.id && patient.name
       );
@@ -102,42 +96,36 @@ const AllSessions: React.FC = () => {
     }
   }, [authSession, toast, hasAttemptedFetch, isLoading]);
 
-  // Only fetch data once when component mounts, not on every auth session change
   useEffect(() => {
     if (!hasAttemptedFetch) {
       fetchSessions();
     }
   }, [fetchSessions, hasAttemptedFetch]);
 
-  // Apply filters effect
   useEffect(() => {
     if (sessions.length === 0) return;
     
     try {
       let filtered = [...sessions];
       
-      // Apply search term filter (patient name)
       if (searchTerm) {
         filtered = filtered.filter(session => 
           session.patients?.name?.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
       
-      // Apply patient filter
       if (patientFilter && patientFilter !== 'all') {
         filtered = filtered.filter(session => 
           session.patient_id.toString() === patientFilter
         );
       }
       
-      // Apply meeting type filter
       if (meetingTypeFilter && meetingTypeFilter !== 'all') {
         filtered = filtered.filter(session => 
           session.meeting_type === meetingTypeFilter
         );
       }
       
-      // Apply date range filter
       if (dateRangeFilter.from) {
         filtered = filtered.filter(session => 
           new Date(session.session_date) >= dateRangeFilter.from!
@@ -194,8 +182,7 @@ const AllSessions: React.FC = () => {
         description: "הפגישה הוסרה מהמערכת",
       });
       
-      // Refresh sessions list
-      setHasAttemptedFetch(false); // Allow a new fetch attempt
+      setHasAttemptedFetch(false);
       fetchSessions();
     } catch (error: any) {
       console.error('Error deleting session:', error);
@@ -211,7 +198,7 @@ const AllSessions: React.FC = () => {
   };
 
   const handleSessionUpdated = () => {
-    setHasAttemptedFetch(false); // Allow a new fetch attempt
+    setHasAttemptedFetch(false);
     fetchSessions();
     setIsEditDialogOpen(false);
     setEditingSession(null);
@@ -247,7 +234,6 @@ const AllSessions: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Filters */}
           <SessionFilters
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
@@ -261,7 +247,6 @@ const AllSessions: React.FC = () => {
             resetFilters={resetFilters}
           />
           
-          {/* Sessions list */}
           <SessionsList
             sessions={filteredSessions}
             formatDate={formatDate}
@@ -269,7 +254,6 @@ const AllSessions: React.FC = () => {
             onDeleteSession={handleDeleteSession}
           />
           
-          {/* Session edit dialog */}
           {editingSession && (
             <SessionEditDialog
               isOpen={isEditDialogOpen}
@@ -279,10 +263,9 @@ const AllSessions: React.FC = () => {
             />
           )}
           
-          {/* Delete confirmation dialog */}
           <DeleteSessionDialog
-            isOpen={isDeleteDialogOpen}
-            onClose={() => setIsDeleteDialogOpen(false)}
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
             session={sessionToDelete}
             onConfirm={confirmDeleteSession}
             formatDate={formatDate}
