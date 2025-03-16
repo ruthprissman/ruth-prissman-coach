@@ -16,7 +16,7 @@ import {
   ContextMenuTrigger,
   ContextMenuSeparator,
 } from '@/components/ui/context-menu';
-import { Check, Calendar, X, Lock } from 'lucide-react';
+import { Check, Calendar, X, Lock, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface CalendarGridProps {
@@ -37,7 +37,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const [contextMenu, setContextMenu] = useState<ContextMenuOptions | null>(null);
 
   // Get status color and label (updated to match the requested design)
-  const getStatusStyle = (status: string) => {
+  const getStatusStyle = (status: string, syncStatus?: string) => {
+    // Handle sync status first (highest priority)
+    if (syncStatus === 'google-only') {
+      return { bg: 'bg-orange-100', border: 'border-orange-300', text: 'קיים רק ביומן Google' };
+    }
+    
+    if (syncStatus === 'supabase-only') {
+      return { bg: 'bg-blue-100', border: 'border-blue-300', text: 'קיים רק בבסיס הנתונים' };
+    }
+    
+    // Then handle regular status
     switch (status) {
       case 'available':
         return { bg: 'bg-purple-100', border: 'border-purple-300', text: 'זמין לפגישות' };
@@ -111,7 +121,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 const dayData = calendarData.get(day.date);
                 const slot = dayData?.get(hour);
                 const status = slot?.status || 'unspecified';
-                const { bg, border } = getStatusStyle(status);
+                const syncStatus = slot?.syncStatus;
+                const { bg, border } = getStatusStyle(status, syncStatus);
                 
                 return (
                   <ContextMenu key={`${day.date}-${hour}`}>
@@ -125,6 +136,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         {status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
                         {status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
                         {status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
+                        
+                        {/* Add warning icon for mismatched slots */}
+                        {(syncStatus === 'google-only' || syncStatus === 'supabase-only') && (
+                          <AlertTriangle className="h-4 w-4 mx-auto mt-1 text-orange-600" />
+                        )}
+                        
                         {slot?.notes && <span className="text-xs mt-1 block truncate">{slot.notes}</span>}
                       </TableCell>
                     </ContextMenuTrigger>

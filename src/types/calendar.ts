@@ -15,6 +15,7 @@ export interface CalendarSlot {
   hour: string;
   status: 'available' | 'private' | 'unspecified' | 'booked' | 'completed' | 'canceled';
   notes?: string;
+  syncStatus?: 'synced' | 'google-only' | 'supabase-only';
 }
 
 export interface ContextMenuOptions {
@@ -48,6 +49,7 @@ export interface GoogleCalendarEvent {
   };
   description?: string;
   status?: string;
+  syncStatus?: 'synced' | 'google-only';
 }
 
 // Settings interfaces
@@ -60,4 +62,11 @@ export interface CalendarSettings {
 export interface CalendarViewOptions {
   view: 'week' | 'month';
   startDate: Date;
+}
+
+// Sync comparison results
+export interface CalendarSyncComparison {
+  matchingEvents: any[];
+  onlyInGoogle: GoogleCalendarEvent[];
+  onlyInSupabase: any[];
 }
