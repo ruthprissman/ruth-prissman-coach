@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -45,7 +44,7 @@ const SessionSchema = z.object({
   summary: z.string().nullable().optional(),
   paid_amount: z.number().nullable(),
   payment_method: z.enum(['cash', 'bit', 'transfer']).nullable(),
-  payment_status: z.enum(['paid', 'partially_paid', 'unpaid']),
+  payment_status: z.enum(['paid', 'partial', 'pending']),
   payment_date: z.date().nullable(),
   payment_notes: z.string().nullable().optional(),
 });
@@ -70,7 +69,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     summary: '',
     paid_amount: sessionPrice,
     payment_method: null,
-    payment_status: 'unpaid' as const,
+    payment_status: 'pending' as const,
     payment_date: null,
     payment_notes: '',
   };
@@ -105,7 +104,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     if (paymentStatus === 'paid' && sessionPrice) {
       form.setValue('paid_amount', sessionPrice);
       form.setValue('payment_date', new Date());
-    } else if (paymentStatus === 'unpaid') {
+    } else if (paymentStatus === 'pending') {
       form.setValue('paid_amount', 0);
       form.setValue('payment_method', null);
       form.setValue('payment_date', null);
@@ -119,12 +118,12 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     // Auto-determine payment status based on amount paid, but avoid circular updates
     if (form.formState.dirtyFields.paid_amount) {
       if (paymentAmount === null || paymentAmount === 0) {
-        if (form.getValues('payment_status') !== 'unpaid') {
-          form.setValue('payment_status', 'unpaid');
+        if (form.getValues('payment_status') !== 'pending') {
+          form.setValue('payment_status', 'pending');
         }
       } else if (sessionPrice && paymentAmount < sessionPrice) {
-        if (form.getValues('payment_status') !== 'partially_paid') {
-          form.setValue('payment_status', 'partially_paid');
+        if (form.getValues('payment_status') !== 'partial') {
+          form.setValue('payment_status', 'partial');
         }
       } else if (sessionPrice && paymentAmount >= sessionPrice) {
         if (form.getValues('payment_status') !== 'paid') {
@@ -171,11 +170,11 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     }
     
     // Ensure payment data is consistent
-    if (data.payment_status === 'unpaid') {
+    if (data.payment_status === 'pending') {
       data.paid_amount = 0;
       data.payment_method = null;
       data.payment_date = null;
-    } else if (data.payment_method === null && (data.payment_status === 'paid' || data.payment_status === 'partially_paid')) {
+    } else if (data.payment_method === null && (data.payment_status === 'paid' || data.payment_status === 'partial')) {
       // Default to 'cash' if payment method is null but status indicates payment
       data.payment_method = 'cash';
     }
@@ -345,8 +344,8 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="paid">שולם</SelectItem>
-                            <SelectItem value="partially_paid">שולם חלקית</SelectItem>
-                            <SelectItem value="unpaid">לא שולם</SelectItem>
+                            <SelectItem value="partial">שולם חלקית</SelectItem>
+                            <SelectItem value="pending">ממתין לתשלום</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -375,7 +374,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                   />
                   
                   {/* Payment Method */}
-                  {form.watch('payment_status') !== 'unpaid' && (
+                  {form.watch('payment_status') !== 'pending' && (
                     <FormField
                       control={form.control}
                       name="payment_method"
@@ -404,7 +403,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                   )}
                   
                   {/* Payment Date */}
-                  {form.watch('payment_status') !== 'unpaid' && (
+                  {form.watch('payment_status') !== 'pending' && (
                     <FormField
                       control={form.control}
                       name="payment_date"
