@@ -19,6 +19,7 @@ import { Calendar as CalendarIcon, AlertCircle, RefreshCw } from 'lucide-react';
 import DebugLogPanel from '@/components/admin/calendar/DebugLogPanel';
 import { useCalendarSettings } from '@/hooks/useCalendarSettings';
 import { fetchGoogleCalendarEvents, compareCalendarData } from '@/services/GoogleCalendarService';
+import { Button } from '@/components/ui/button';
 
 const CalendarManagement: React.FC = () => {
   const { user, session } = useAuth();
