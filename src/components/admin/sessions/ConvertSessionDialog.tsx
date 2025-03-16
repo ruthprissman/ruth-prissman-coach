@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { 
   Dialog, 
@@ -56,12 +55,8 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
 
   const formatDate = (dateString: string) => {
     try {
-      // We now have separate date and time fields
+      // Handle timestamp format from the database
       const date = new Date(dateString);
-      if (futureSession.start_time) {
-        const [hours, minutes] = futureSession.start_time.split(':');
-        date.setHours(parseInt(hours, 10), parseInt(minutes, 10));
-      }
       return format(date, 'dd/MM/yyyy HH:mm', { locale: he });
     } catch (e) {
       return dateString;
@@ -84,14 +79,17 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
   const handleConvert = async () => {
     setIsSubmitting(true);
     try {
-      // Create new completed session with correct scheduled_date and start_time
+      // Extract session date and time from the timestamp
+      const sessionStartTime = futureSession.start_time;
+      
+      // Create new completed session with correct start_time
       const { data: sessionData, error: sessionError } = await supabase
         .from('sessions')
         .insert([
           {
             patient_id: patientId,
-            session_date: futureSession.scheduled_date,
-            session_time: futureSession.start_time,
+            session_date: sessionStartTime ? new Date(sessionStartTime).toISOString().split('T')[0] : null,
+            session_time: sessionStartTime ? new Date(sessionStartTime).toISOString().split('T')[1].substring(0, 5) : null,
             meeting_type: futureSession.meeting_type,
             sent_exercises: sentExercises,
             exercise_list: exerciseList.length > 0 ? exerciseList : null,

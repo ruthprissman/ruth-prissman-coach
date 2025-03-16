@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -28,20 +27,18 @@ const CalendarManagement: React.FC = () => {
   const [recurringDialogOpen, setRecurringDialogOpen] = useState<boolean>(false);
   const [tableExists, setTableExists] = useState<boolean>(true);
 
-  // Generate hours for the day (8:00 - 23:00)
   const hours = Array.from({ length: 16 }, (_, i) => {
     const hour = i + 8;
     return `${hour.toString().padStart(2, '0')}:00`;
   });
 
-  // Generate days of the week
   const generateDaysOfWeek = (startDate: Date) => {
-    const weekStart = startOfWeek(startDate, { weekStartsOn: 0 }); // 0 = Sunday
+    const weekStart = startOfWeek(startDate, { weekStartsOn: 0 });
     return Array.from({ length: 7 }, (_, i) => {
       const date = addDays(weekStart, i);
       return {
         date: format(date, 'yyyy-MM-dd'),
-        label: format(date, 'EEE dd/MM'), // e.g., "Sun 01/01"
+        label: format(date, 'EEE dd/MM'),
         dayNumber: i
       };
     });
@@ -49,18 +46,15 @@ const CalendarManagement: React.FC = () => {
 
   const days = generateDaysOfWeek(currentDate);
 
-  // Check if table exists
   const checkTableExists = async () => {
     try {
       const supabase = getSupabaseWithAuth(session?.access_token);
       
-      // Try to get table information
       const { error } = await supabase
         .from('calendar_slots')
         .select('id')
         .limit(1);
       
-      // If we get a "relation does not exist" error, set tableExists to false
       if (error && error.message.includes('relation') && error.message.includes('does not exist')) {
         console.error('Calendar slots table does not exist:', error.message);
         setTableExists(false);
@@ -75,26 +69,21 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  // Fetch availability data
   const fetchAvailabilityData = async () => {
     try {
       setIsLoading(true);
       
-      // First check if the table exists
       const exists = await checkTableExists();
       if (!exists) {
-        // Initialize empty calendar data
         initializeEmptyCalendarData();
         return;
       }
       
       const supabase = getSupabaseWithAuth(session?.access_token);
       
-      // Calculate date range (30 days from today)
       const today = startOfDay(new Date());
       const thirtyDaysLater = addDays(today, 30);
       
-      // 1. Fetch available slots from calendar_slots table
       const { data: availableSlots, error: availableSlotsError } = await supabase
         .from('calendar_slots')
         .select('*')
@@ -104,7 +93,6 @@ const CalendarManagement: React.FC = () => {
       if (availableSlotsError) {
         if (availableSlotsError.message.includes('relation') && 
             availableSlotsError.message.includes('does not exist')) {
-          // Handle missing table gracefully
           setTableExists(false);
           initializeEmptyCalendarData();
           return;
@@ -112,19 +100,16 @@ const CalendarManagement: React.FC = () => {
         throw new Error(availableSlotsError.message);
       }
       
-      // 2. Fetch booked appointments from future_sessions
-      // Updated to use scheduled_date and start_time instead of date
       const { data: bookedSlots, error: bookedSlotsError } = await supabase
         .from('future_sessions')
         .select('*')
-        .gte('scheduled_date', format(today, 'yyyy-MM-dd'))
-        .lte('scheduled_date', format(thirtyDaysLater, 'yyyy-MM-dd'));
+        .gte('start_time', format(today, 'yyyy-MM-dd'))
+        .lte('start_time', format(thirtyDaysDaysLater, 'yyyy-MM-dd'));
       
       if (bookedSlotsError) {
         throw new Error(bookedSlotsError.message);
       }
       
-      // Process and merge all data
       const newCalendarData = processCalendarData(availableSlots || [], bookedSlots || []);
       setCalendarData(newCalendarData);
       
@@ -136,14 +121,12 @@ const CalendarManagement: React.FC = () => {
         variant: 'destructive',
       });
       
-      // Initialize empty calendar data as fallback
       initializeEmptyCalendarData();
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Initialize empty calendar data
   const initializeEmptyCalendarData = () => {
     const emptyCalendarData = new Map<string, Map<string, CalendarSlot>>();
     
@@ -163,11 +146,9 @@ const CalendarManagement: React.FC = () => {
     setCalendarData(emptyCalendarData);
   };
 
-  // Process calendar data from various sources
   const processCalendarData = (availableSlots: any[], bookedSlots: any[]) => {
     const calendarData = new Map<string, Map<string, CalendarSlot>>();
     
-    // Initialize calendar grid with empty slots
     days.forEach(day => {
       const daySlots = new Map<string, CalendarSlot>();
       hours.forEach(hour => {
@@ -181,26 +162,24 @@ const CalendarManagement: React.FC = () => {
       calendarData.set(day.date, daySlots);
     });
     
-    // Add available slots
     availableSlots.forEach(slot => {
       const dayMap = calendarData.get(slot.date);
       if (dayMap && dayMap.has(slot.start_time)) {
         dayMap.set(slot.start_time, {
           ...dayMap.get(slot.start_time)!,
-          status: 'available',
+          status: slot.slot_type === 'available' ? 'available' : 
+                 slot.slot_type === 'private' ? 'private' : 'unspecified',
           notes: slot.notes
         });
       }
     });
     
-    // Add booked slots - UPDATED to use scheduled_date and start_time
     bookedSlots.forEach(session => {
-      // Extract the date part from scheduled_date
-      const sessionDate = format(new Date(session.scheduled_date), 'yyyy-MM-dd');
+      if (!session.start_time) return;
       
-      // Extract the time part from the timestamp or use a default
-      // Assuming start_time is a string like "09:00" or null
-      const sessionTime = session.start_time || '00:00';
+      const sessionDate = format(new Date(session.start_time), 'yyyy-MM-dd');
+      const hours = new Date(session.start_time).getHours();
+      const sessionTime = `${String(hours).padStart(2, '0')}:00`;
       
       const dayMap = calendarData.get(sessionDate);
       if (dayMap && dayMap.has(sessionTime)) {
@@ -215,7 +194,6 @@ const CalendarManagement: React.FC = () => {
     return calendarData;
   };
 
-  // Apply default availability patterns
   const applyDefaultAvailability = async () => {
     if (!tableExists) {
       toast({
@@ -226,19 +204,14 @@ const CalendarManagement: React.FC = () => {
       return;
     }
     
-    // Default availability patterns
     const defaultPatterns = [
-      // Sunday, Monday, Tuesday, Thursday: 08:00 - 16:00
       { days: [0, 1, 2, 4], startHour: 8, endHour: 16 },
-      // Sunday - Thursday: 21:00 - 23:00
       { days: [0, 1, 2, 3, 4], startHour: 21, endHour: 23 },
-      // Friday: 09:00 - 11:00
       { days: [5], startHour: 9, endHour: 11 }
     ];
     
     const availabilitySlots: TimeSlot[] = [];
     
-    // Generate 4 weeks of default availability
     for (let week = 0; week < 4; week++) {
       const weekStart = addWeeks(new Date(), week);
       
@@ -266,21 +239,18 @@ const CalendarManagement: React.FC = () => {
     try {
       const supabase = getSupabaseWithAuth(session?.access_token);
       
-      // Batch insert default availability slots
       const { error } = await supabase
         .from('calendar_slots')
         .insert(availabilitySlots.map(slot => ({
           date: slot.date,
-          day_of_week: slot.day,
           start_time: slot.startTime,
           end_time: slot.endTime,
-          status: slot.status,
+          slot_type: 'available',
           is_recurring: slot.isRecurring
         })));
       
       if (error) throw new Error(error.message);
       
-      // Refresh data after setting defaults
       await fetchAvailabilityData();
       
       toast({
@@ -297,7 +267,6 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  // Update time slot status
   const updateTimeSlot = async (date: string, hour: string, newStatus: 'available' | 'private' | 'unspecified') => {
     if (!tableExists) {
       toast({
@@ -326,9 +295,7 @@ const CalendarManagement: React.FC = () => {
         return;
       }
       
-      // Update in database
       if (newStatus === 'unspecified') {
-        // Delete slot if setting to unspecified
         const { error } = await supabase
           .from('calendar_slots')
           .delete()
@@ -337,22 +304,19 @@ const CalendarManagement: React.FC = () => {
         
         if (error) throw new Error(error.message);
       } else {
-        // Upsert slot with new status
         const { error } = await supabase
           .from('calendar_slots')
           .upsert({
             date,
-            day_of_week: new Date(date).getDay(),
             start_time: hour,
-            end_time: hour.split(':')[0] + ':59', // End of the hour
-            status: newStatus,
+            end_time: hour.split(':')[0] + ':59',
+            slot_type: newStatus,
             is_recurring: false
           });
         
         if (error) throw new Error(error.message);
       }
       
-      // Update local state
       const updatedDayMap = new Map(dayMap);
       updatedDayMap.set(hour, {
         ...currentSlot,
@@ -377,7 +341,6 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  // Handle date navigation
   const navigateWeek = (direction: 'next' | 'prev') => {
     const newDate = direction === 'next'
       ? addDays(currentDate, 7)
@@ -385,11 +348,10 @@ const CalendarManagement: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  // Handle Google Calendar sync
   const handleGoogleSync = async (success: boolean) => {
     if (success) {
       setIsGoogleSynced(true);
-      await fetchAvailabilityData(); // Refresh data after sync
+      await fetchAvailabilityData();
       toast({
         title: 'סנכרון Google Calendar',
         description: 'היומן סונכרן בהצלחה והאירועים הפרטיים נטענו',
@@ -397,7 +359,6 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  // Handle adding recurring availability
   const handleAddRecurringAvailability = async (rule: any) => {
     if (!tableExists) {
       toast({
@@ -412,19 +373,16 @@ const CalendarManagement: React.FC = () => {
       const supabase = getSupabaseWithAuth(session?.access_token);
       const slots: any[] = [];
       
-      // Generate slots based on recurring rule
       const startDate = new Date(rule.startDate);
       const dayOfWeek = rule.day;
       
-      // Find the first occurrence of the day of week from start date
       let currentDate = startOfWeek(startDate, { weekStartsOn: 0 });
       currentDate = addDays(currentDate, dayOfWeek);
       
       if (currentDate < startDate) {
-        currentDate = addDays(currentDate, 7); // Move to next week if before start date
+        currentDate = addDays(currentDate, 7);
       }
       
-      // Generate slots for the specified number of occurrences
       for (let i = 0; i < rule.count; i++) {
         const slot = {
           date: format(currentDate, 'yyyy-MM-dd'),
@@ -438,17 +396,15 @@ const CalendarManagement: React.FC = () => {
         };
         
         slots.push(slot);
-        currentDate = addDays(currentDate, 7); // Move to next week
+        currentDate = addDays(currentDate, 7);
       }
       
-      // Insert all slots in a batch
       const { error } = await supabase
         .from('calendar_slots')
         .insert(slots);
       
       if (error) throw new Error(error.message);
       
-      // Refresh data
       await fetchAvailabilityData();
       
       toast({
@@ -465,31 +421,26 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  // Initial data loading
   useEffect(() => {
     fetchAvailabilityData();
   }, [currentDate]);
 
-  // Create Calendar Slots Table if it doesn't exist
   const createCalendarSlotsTable = async () => {
     try {
       const supabase = getSupabaseWithAuth(session?.access_token);
       
-      // Execute SQL to create the table
       const { error } = await supabase.rpc('create_calendar_slots_table');
       
       if (error) {
         throw new Error(error.message);
       }
       
-      // Set table exists to true and fetch data
       setTableExists(true);
       toast({
         title: 'טבלת היומן נוצרה',
         description: 'טבלת היומן נוצרה בהצלחה וכעת ניתן להגדיר זמינות',
       });
       
-      // Apply default availability
       await applyDefaultAvailability();
     } catch (error: any) {
       console.error('Error creating calendar slots table:', error);
