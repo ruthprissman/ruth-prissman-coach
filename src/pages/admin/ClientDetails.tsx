@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, formatDistance, isAfter, subHours } from 'date-fns';
@@ -99,12 +100,12 @@ const ClientDetails: React.FC = () => {
       setClient(clientData);
       setEditFormData(clientData);
       
-      // Fetch upcoming sessions
+      // Fetch upcoming sessions - FIX: Change scheduled_date to session_date
       const { data: upcomingData, error: upcomingError } = await supabase
         .from('future_sessions')
         .select('*')
         .eq('patient_id', id)
-        .order('scheduled_date', { ascending: true })
+        .order('session_date', { ascending: true })
         .limit(3);
       
       if (upcomingError) throw upcomingError;
@@ -139,8 +140,9 @@ const ClientDetails: React.FC = () => {
         ? sessionsData[0].session_date 
         : null;
       
+      // FIX: Use session_date instead of scheduled_date
       const nextSession = upcomingData && upcomingData.length > 0 
-        ? upcomingData[0].scheduled_date 
+        ? upcomingData[0].session_date 
         : null;
       
       const stats = {
