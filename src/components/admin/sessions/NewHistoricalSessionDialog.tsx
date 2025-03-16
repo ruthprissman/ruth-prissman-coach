@@ -70,13 +70,12 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     sent_exercises: false,
     exercise_list: [],
     paid_amount: patient?.session_price || null,
-    payment_status: 'pending',
+    payment_status: 'unpaid',
     payment_method: null,
     payment_date: null,
     payment_notes: null,
   });
 
-  // Fetch available exercises from the database
   useEffect(() => {
     const fetchExercises = async () => {
       try {
@@ -98,7 +97,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     fetchExercises();
   }, []);
 
-  // Initialize form with future session data if provided
   useEffect(() => {
     if (fromFutureSession) {
       const fsDate = new Date(fromFutureSession.session_date);
@@ -118,16 +116,14 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     const { name, value } = e.target;
     
     if (name === 'paid_amount') {
-      // Handle numeric input
       const numValue = value === '' ? null : Number(value);
       setFormData(prev => ({ ...prev, [name]: numValue }));
       
-      // Update payment status based on paid amount
       if (patient?.session_price) {
         if (numValue === null || numValue === 0) {
-          setFormData(prev => ({ ...prev, payment_status: 'pending' }));
+          setFormData(prev => ({ ...prev, payment_status: 'unpaid' }));
         } else if (numValue < patient.session_price) {
-          setFormData(prev => ({ ...prev, payment_status: 'partial' }));
+          setFormData(prev => ({ ...prev, payment_status: 'partially_paid' }));
         } else {
           setFormData(prev => ({ ...prev, payment_status: 'paid' }));
         }
@@ -144,7 +140,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTime(e.target.value);
     
-    // Update session_date with new time
     if (date) {
       const [hours, minutes] = e.target.value.split(':').map(Number);
       const newDate = new Date(date);
@@ -157,7 +152,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     if (newDate) {
       setDate(newDate);
       
-      // Preserve the selected time
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
         newDate.setHours(hours, minutes);
@@ -209,7 +203,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
       sent_exercises: false,
       exercise_list: [],
       paid_amount: patient?.session_price || null,
-      payment_status: 'pending',
+      payment_status: 'unpaid',
       payment_method: null,
       payment_date: null,
       payment_notes: null,
@@ -234,7 +228,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Format the combined date and time for database
       const combinedDate = date;
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
@@ -268,7 +261,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
 
       onSessionCreated();
       
-      // If this was converted from a future session, ask if the user wants to delete it
       if (fromFutureSession && onDeleteFutureSession) {
         setShowDeletePrompt(true);
       } else {
@@ -313,7 +305,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     onOpenChange(false);
   };
 
-  // If showing delete prompt, render that instead of the form
   if (showDeletePrompt) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -521,8 +512,8 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="paid">שולם</SelectItem>
-                    <SelectItem value="partial">שולם חלקית</SelectItem>
-                    <SelectItem value="pending">ממתין לתשלום</SelectItem>
+                    <SelectItem value="partially_paid">שולם חלקית</SelectItem>
+                    <SelectItem value="unpaid">ממתין לתשלום</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -608,4 +599,3 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
 };
 
 export default NewHistoricalSessionDialog;
-

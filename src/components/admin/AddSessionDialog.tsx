@@ -44,7 +44,7 @@ const SessionSchema = z.object({
   summary: z.string().nullable().optional(),
   paid_amount: z.number().nullable(),
   payment_method: z.enum(['cash', 'bit', 'transfer']).nullable(),
-  payment_status: z.enum(['paid', 'partial', 'pending']),
+  payment_status: z.enum(['paid', 'partially_paid', 'unpaid']),
   payment_date: z.date().nullable(),
   payment_notes: z.string().nullable().optional(),
 });
@@ -69,7 +69,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     summary: '',
     paid_amount: sessionPrice,
     payment_method: null,
-    payment_status: 'pending' as const,
+    payment_status: 'unpaid' as const,
     payment_date: null,
     payment_notes: '',
   };
@@ -79,10 +79,8 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     defaultValues,
   });
 
-  // Reset form when dialog opens/closes
   useEffect(() => {
     if (isOpen) {
-      // Reset form with correct initial values when dialog opens
       form.reset({
         ...defaultValues,
         paid_amount: sessionPrice || 0,
@@ -91,39 +89,34 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     }
   }, [isOpen, sessionPrice, form]);
 
-  // Watch fields for dependencies
   const exerciseList = form.watch('exercise_list');
   const paymentStatus = form.watch('payment_status');
   const paymentAmount = form.watch('paid_amount');
-  
-  // Only run these effects when the form is fully initialized
+
   useEffect(() => {
     if (!isFormInitialized) return;
 
-    // If payment status changes, update related fields
     if (paymentStatus === 'paid' && sessionPrice) {
       form.setValue('paid_amount', sessionPrice);
       form.setValue('payment_date', new Date());
-    } else if (paymentStatus === 'pending') {
+    } else if (paymentStatus === 'unpaid') {
       form.setValue('paid_amount', 0);
       form.setValue('payment_method', null);
       form.setValue('payment_date', null);
     }
   }, [paymentStatus, sessionPrice, form, isFormInitialized]);
 
-  // Effect for payment amount changes
   useEffect(() => {
     if (!isFormInitialized) return;
 
-    // Auto-determine payment status based on amount paid, but avoid circular updates
     if (form.formState.dirtyFields.paid_amount) {
       if (paymentAmount === null || paymentAmount === 0) {
-        if (form.getValues('payment_status') !== 'pending') {
-          form.setValue('payment_status', 'pending');
+        if (form.getValues('payment_status') !== 'unpaid') {
+          form.setValue('payment_status', 'unpaid');
         }
       } else if (sessionPrice && paymentAmount < sessionPrice) {
-        if (form.getValues('payment_status') !== 'partial') {
-          form.setValue('payment_status', 'partial');
+        if (form.getValues('payment_status') !== 'partially_paid') {
+          form.setValue('payment_status', 'partially_paid');
         }
       } else if (sessionPrice && paymentAmount >= sessionPrice) {
         if (form.getValues('payment_status') !== 'paid') {
@@ -133,18 +126,15 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     }
   }, [paymentAmount, form, sessionPrice, isFormInitialized]);
 
-  // Effect for exercise list changes
   useEffect(() => {
     if (!isFormInitialized) return;
 
-    // If exercises were added and sent_exercises is false, update it
     if (exerciseList && exerciseList.length > 0 && !form.getValues('sent_exercises')) {
       form.setValue('sent_exercises', true);
     }
   }, [exerciseList, form, isFormInitialized]);
 
   useEffect(() => {
-    // Fetch exercises for dropdown
     const fetchExercises = async () => {
       try {
         const { data, error } = await supabase
@@ -164,18 +154,15 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
   }, []);
 
   const onSubmit = async (data: SessionFormValues) => {
-    // If there are exercises in the list but sent_exercises is false, update it
     if (data.exercise_list && data.exercise_list.length > 0) {
       data.sent_exercises = true;
     }
     
-    // Ensure payment data is consistent
-    if (data.payment_status === 'pending') {
+    if (data.payment_status === 'unpaid') {
       data.paid_amount = 0;
       data.payment_method = null;
       data.payment_date = null;
-    } else if (data.payment_method === null && (data.payment_status === 'paid' || data.payment_status === 'partial')) {
-      // Default to 'cash' if payment method is null but status indicates payment
+    } else if (data.payment_method === null && (data.payment_status === 'paid' || data.payment_status === 'partially_paid')) {
       data.payment_method = 'cash';
     }
     
@@ -211,7 +198,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
             <div className="overflow-auto max-h-[65vh] pr-2 -mr-2">
               <div className="space-y-4">
-                {/* Session Date */}
                 <FormField
                   control={form.control}
                   name="session_date"
@@ -243,7 +229,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                             selected={field.value}
                             onSelect={(date) => {
                               if (date) {
-                                // Preserve the time part from the existing date
                                 const newDate = new Date(date);
                                 newDate.setHours(field.value.getHours());
                                 newDate.setMinutes(field.value.getMinutes());
@@ -295,7 +280,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                   )}
                 />
                 
-                {/* Meeting Type */}
                 <FormField
                   control={form.control}
                   name="meeting_type"
@@ -322,11 +306,9 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                   )}
                 />
                 
-                {/* Payment Section */}
                 <div className="space-y-4 border p-4 rounded-lg">
                   <h3 className="font-medium text-center">פרטי תשלום</h3>
                   
-                  {/* Payment Status */}
                   <FormField
                     control={form.control}
                     name="payment_status"
@@ -344,8 +326,8 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="paid">שולם</SelectItem>
-                            <SelectItem value="partial">שולם חלקית</SelectItem>
-                            <SelectItem value="pending">ממתין לתשלום</SelectItem>
+                            <SelectItem value="partially_paid">שולם חלקית</SelectItem>
+                            <SelectItem value="unpaid">ממתין לתשלום</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -353,7 +335,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                     )}
                   />
                   
-                  {/* Amount Paid */}
                   <FormField
                     control={form.control}
                     name="paid_amount"
@@ -373,8 +354,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                     )}
                   />
                   
-                  {/* Payment Method */}
-                  {form.watch('payment_status') !== 'pending' && (
+                  {form.watch('payment_status') !== 'unpaid' && (
                     <FormField
                       control={form.control}
                       name="payment_method"
@@ -402,8 +382,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                     />
                   )}
                   
-                  {/* Payment Date */}
-                  {form.watch('payment_status') !== 'pending' && (
+                  {form.watch('payment_status') !== 'unpaid' && (
                     <FormField
                       control={form.control}
                       name="payment_date"
@@ -445,7 +424,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                     />
                   )}
                   
-                  {/* Payment Notes */}
                   <FormField
                     control={form.control}
                     name="payment_notes"
@@ -465,7 +443,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                   />
                 </div>
                 
-                {/* Sent Exercises Switch */}
                 <FormField
                   control={form.control}
                   name="sent_exercises"
@@ -484,7 +461,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                   )}
                 />
                 
-                {/* Exercise List */}
                 <FormField
                   control={form.control}
                   name="exercise_list"
@@ -498,7 +474,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                           render={({ field }) => (
                             <Select
                               onValueChange={(value) => {
-                                // Add the selected value to the array if it's not already there
                                 const currentList = field.value || [];
                                 if (!currentList.includes(value)) {
                                   field.onChange([...currentList, value]);
@@ -553,7 +528,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                   )}
                 />
                 
-                {/* Session Summary */}
                 <FormField
                   control={form.control}
                   name="summary"
