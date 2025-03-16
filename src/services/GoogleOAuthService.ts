@@ -132,17 +132,17 @@ export async function fetchGoogleCalendarEvents(): Promise<GoogleCalendarEvent[]
       throw new Error('אין הרשאות גישה ליומן Google');
     }
     
-    // Calculate time range (next 30 days)
+    // Calculate time range (next 7 days as requested)
     const now = new Date();
-    const thirtyDaysLater = new Date(now);
-    thirtyDaysLater.setDate(now.getDate() + 30);
+    const sevenDaysLater = new Date(now);
+    sevenDaysLater.setDate(now.getDate() + 7);
     
     const timeMin = now.toISOString();
-    const timeMax = thirtyDaysLater.toISOString();
+    const timeMax = sevenDaysLater.toISOString();
     
     // Make the API request
     const response = await window.gapi.client.calendar.events.list({
-      'calendarId': 'ruthprissman@gmail.com',
+      'calendarId': 'primary', // Use primary calendar as requested
       'timeMin': timeMin,
       'timeMax': timeMax,
       'singleEvents': true,

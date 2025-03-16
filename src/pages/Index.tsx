@@ -5,6 +5,7 @@ import { SubscriptionForm } from '@/components/SubscriptionForm';
 import { TestimonialsCarousel } from '@/components/TestimonialsCarousel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
+import { GoogleLoginButton } from '@/components/GoogleLoginButton';
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -70,6 +71,9 @@ const Index = () => {
                       מבט חדש על חיים מוכרים
                     </p>
                   </div>
+                </div>
+                <div className="mt-4">
+                  <GoogleLoginButton />
                 </div>
               </div>
             </div>
