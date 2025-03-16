@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Dialog, 
@@ -22,15 +21,93 @@ interface GoogleCalendarSyncProps {
   onSyncComplete: (success: boolean) => void;
 }
 
+const DEFAULT_CALENDAR_ID = 'ruthprissman@gmail.com';
+
 export function GoogleCalendarSync({ onSyncComplete }: GoogleCalendarSyncProps) {
   const { user, session } = useAuth();
   const [open, setOpen] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [storedApiKey, setStoredApiKey] = useState<string | null>(null);
+  const [isApiKeyLoading, setIsApiKeyLoading] = useState(true);
   
-  // Fetch Google Calendar events and process them
-  const syncGoogleCalendar = async () => {
-    if (!apiKey) {
+  useEffect(() => {
+    fetchStoredApiKey();
+  }, []);
+  
+  const fetchStoredApiKey = async () => {
+    try {
+      setIsApiKeyLoading(true);
+      
+      if (!session?.access_token) {
+        setIsApiKeyLoading(false);
+        return;
+      }
+      
+      const supabase = getSupabaseWithAuth(session.access_token);
+      
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'google_calendar_api_key')
+        .single();
+      
+      if (error) {
+        if (!error.message.includes('No rows found')) {
+          console.error('Error fetching API key:', error);
+        }
+      } else if (data?.value) {
+        setStoredApiKey(data.value);
+        setApiKey(data.value);
+      }
+    } catch (error) {
+      console.error('Error fetching stored API key:', error);
+    } finally {
+      setIsApiKeyLoading(false);
+    }
+  };
+  
+  const saveApiKey = async (key: string) => {
+    try {
+      if (!session?.access_token || !key) return;
+      
+      const supabase = getSupabaseWithAuth(session.access_token);
+      
+      const { error } = await supabase
+        .from('settings')
+        .upsert({ 
+          key: 'google_calendar_api_key',
+          value: key,
+          updated_at: new Date().toISOString()
+        });
+      
+      if (error) {
+        throw new Error(`שגיאה בשמירת מפתח API: ${error.message}`);
+      }
+      
+      setStoredApiKey(key);
+    } catch (error: any) {
+      console.error('Error saving API key:', error);
+      toast({
+        title: 'שגיאה בשמירת מפתח API',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const handleSyncClick = () => {
+    if (storedApiKey) {
+      syncGoogleCalendar(storedApiKey);
+    } else {
+      setOpen(true);
+    }
+  };
+  
+  const syncGoogleCalendar = async (keyToUse?: string) => {
+    const keyForSync = keyToUse || apiKey;
+    
+    if (!keyForSync) {
       toast({
         title: 'שגיאה',
         description: 'נא להזין מפתח API תקין',
@@ -42,17 +119,18 @@ export function GoogleCalendarSync({ onSyncComplete }: GoogleCalendarSyncProps) 
     try {
       setIsLoading(true);
       
-      // Define date range for fetching (30 days ahead)
+      if (!storedApiKey && apiKey) {
+        await saveApiKey(apiKey);
+      }
+      
       const now = new Date();
       const thirtyDaysLater = addDays(now, 30);
       
-      // Format dates for API call
       const timeMin = now.toISOString();
       const timeMax = thirtyDaysLater.toISOString();
       
-      // Fetch events from Google Calendar API
-      const calendarId = encodeURIComponent('ruthi1479@gmail.com');
-      const url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&key=${apiKey}`;
+      const calendarId = encodeURIComponent(DEFAULT_CALENDAR_ID);
+      const url = `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&key=${keyForSync}`;
       
       const response = await fetch(url);
       if (!response.ok) {
@@ -62,11 +140,10 @@ export function GoogleCalendarSync({ onSyncComplete }: GoogleCalendarSyncProps) 
       const data = await response.json();
       const events: GoogleCalendarEvent[] = data.items || [];
       
-      // Process events and save them to the database
       await saveEventsToDatabase(events);
       
       toast({
-        title: 'סנכרון הושלם בהצלחה',
+        title: 'סינכרון יומן גוגל הושלם בהצלחה!',
         description: `סונכרנו ${events.length} אירועים מיומן Google`,
       });
       
@@ -86,12 +163,10 @@ export function GoogleCalendarSync({ onSyncComplete }: GoogleCalendarSyncProps) 
     }
   };
   
-  // Save Google Calendar events to the database
   const saveEventsToDatabase = async (events: GoogleCalendarEvent[]) => {
     try {
       const supabase = getSupabaseWithAuth(session?.access_token);
       
-      // First, remove all existing Google Calendar events
       const { error: deleteError } = await supabase
         .from('calendar_slots')
         .delete()
@@ -99,7 +174,6 @@ export function GoogleCalendarSync({ onSyncComplete }: GoogleCalendarSyncProps) 
       
       if (deleteError) throw new Error(deleteError.message);
       
-      // Process events into calendar slots
       const calendarSlots = events.map(event => {
         const startDate = new Date(event.start.dateTime);
         const endDate = new Date(event.end.dateTime);
@@ -116,7 +190,6 @@ export function GoogleCalendarSync({ onSyncComplete }: GoogleCalendarSyncProps) 
         };
       });
       
-      // Insert new calendar slots from Google Calendar
       if (calendarSlots.length > 0) {
         const { error: insertError } = await supabase
           .from('calendar_slots')
@@ -133,8 +206,13 @@ export function GoogleCalendarSync({ onSyncComplete }: GoogleCalendarSyncProps) 
   
   return (
     <>
-      <Button variant="outline" className="flex items-center" onClick={() => setOpen(true)}>
-        <RefreshCw className="h-4 w-4 mr-2" />
+      <Button 
+        variant="outline" 
+        className="flex items-center" 
+        onClick={handleSyncClick}
+        disabled={isApiKeyLoading}
+      >
+        <RefreshCw className={`h-4 w-4 mr-2 ${isApiKeyLoading ? 'animate-spin' : ''}`} />
         <span>סנכרן עם Google Calendar</span>
       </Button>
       
@@ -143,30 +221,38 @@ export function GoogleCalendarSync({ onSyncComplete }: GoogleCalendarSyncProps) 
           <DialogHeader>
             <DialogTitle>סנכרון Google Calendar</DialogTitle>
             <DialogDescription>
-              הזן את מפתח ה-API של Google Calendar כדי לסנכרן אירועים פרטיים
+              {!storedApiKey ? 
+                'הזן את מפתח ה-API של Google Calendar כדי לסנכרן אירועים פרטיים' :
+                'לחץ על כפתור הסנכרון כדי להתחיל'
+              }
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="api-key">מפתח API</Label>
-              <Input
-                id="api-key"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="הזן את מפתח ה-API של Google..."
-              />
+          {!storedApiKey && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="api-key">מפתח API</Label>
+                <Input
+                  id="api-key"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="הזן את מפתח ה-API של Google..."
+                />
+              </div>
             </div>
-            
-            <div className="text-sm text-gray-500">
-              <p>היומן יסונכרן עם החשבון ruthi1479@gmail.com</p>
-              <p>הסנכרון יכלול את כל האירועים הפרטיים לטווח של 30 ימים קדימה</p>
-            </div>
+          )}
+          
+          <div className="text-sm text-gray-500">
+            <p>היומן יסונכרן עם החשבון {DEFAULT_CALENDAR_ID}</p>
+            <p>הסנכרון יכלול את כל האירועים הפרטיים לטווח של 30 ימים קדימה</p>
           </div>
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>ביטול</Button>
-            <Button onClick={syncGoogleCalendar} disabled={isLoading}>
+            <Button 
+              onClick={() => syncGoogleCalendar()} 
+              disabled={isLoading || (!storedApiKey && !apiKey)}
+            >
               {isLoading ? 'מסנכרן...' : 'סנכרן יומן'}
             </Button>
           </DialogFooter>

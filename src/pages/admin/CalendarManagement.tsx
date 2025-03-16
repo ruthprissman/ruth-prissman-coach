@@ -168,7 +168,7 @@ const CalendarManagement: React.FC = () => {
       if (dayMap && dayMap.has(slot.start_time)) {
         dayMap.set(slot.start_time, {
           ...dayMap.get(slot.start_time)!,
-          status: slot.slot_type as 'available' | 'private' | 'unspecified',
+          status: (slot.slot_type || slot.status) as 'available' | 'private' | 'unspecified',
           notes: slot.notes
         });
       }
@@ -370,7 +370,7 @@ const CalendarManagement: React.FC = () => {
       setIsGoogleSynced(true);
       await fetchAvailabilityData();
       toast({
-        title: 'סנכרון Google Calendar',
+        title: 'סינכרון יומן גוגל הושלם בהצלחה!',
         description: 'היומן סונכרן בהצלחה והאירועים הפרטיים נטענו',
       });
     }
@@ -438,36 +438,34 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAvailabilityData();
-  }, [currentDate]);
-
-  const createCalendarSlotsTable = async () => {
+  const createSettingsTable = async () => {
     try {
       const supabase = getSupabaseWithAuth(session?.access_token);
       
-      const { error } = await supabase.rpc('create_calendar_slots_table');
+      const { error: checkError } = await supabase
+        .from('settings')
+        .select('key')
+        .limit(1);
       
-      if (error) {
-        throw new Error(error.message);
+      if (checkError && checkError.message.includes('relation') && checkError.message.includes('does not exist')) {
+        const { error } = await supabase.rpc('create_settings_table');
+        
+        if (error) {
+          console.error('Error creating settings table:', error);
+        }
       }
-      
-      setTableExists(true);
-      toast({
-        title: 'טבלת היומן נוצרה',
-        description: 'טבלת היומן נוצרה בהצלחה וכעת ניתן להגדיר זמינות',
-      });
-      
-      await applyDefaultAvailability();
-    } catch (error: any) {
-      console.error('Error creating calendar slots table:', error);
-      toast({
-        title: 'שגיאה ביצירת טבלת היומן',
-        description: error.message,
-        variant: 'destructive',
-      });
+    } catch (error) {
+      console.error('Error checking/creating settings table:', error);
     }
   };
+
+  useEffect(() => {
+    createSettingsTable();
+  }, []);
+
+  useEffect(() => {
+    fetchAvailabilityData();
+  }, [currentDate]);
 
   return (
     <AdminLayout title="ניהול זמינות יומן">

@@ -49,3 +49,9 @@ export interface GoogleCalendarEvent {
   description?: string;
   status?: string;
 }
+
+// Settings interfaces
+export interface CalendarSettings {
+  googleCalendarApiKey?: string;
+  defaultCalendarId?: string;
+}
