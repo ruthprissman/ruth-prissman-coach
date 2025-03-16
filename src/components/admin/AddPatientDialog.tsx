@@ -58,7 +58,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({ isOpen, onClose, on
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center">הוספת מטופל חדש</DialogTitle>
+          <DialogTitle className="text-center">הוספת לקוחה חדשה</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
@@ -135,7 +135,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({ isOpen, onClose, on
                 <FormItem>
                   <FormLabel>הערות</FormLabel>
                   <FormControl>
-                    <Textarea {...field} placeholder="הערות נוספות אודות המטופל" />
+                    <Textarea {...field} placeholder="הערות נוספות אודות הלקוחה" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -144,7 +144,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({ isOpen, onClose, on
             
             <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
               <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'מוסיף...' : 'הוסף מטופל'}
+                {form.formState.isSubmitting ? 'מוסיף...' : 'הוסף לקוחה'}
               </Button>
               <Button variant="outline" onClick={onClose} type="button">ביטול</Button>
             </DialogFooter>
