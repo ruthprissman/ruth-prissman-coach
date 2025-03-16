@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
-import { Calendar, Check, X } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { NewHistoricalSessionFormData, FutureSession } from '@/types/session';
-import { supabase } from '@/lib/supabase';
 import { Patient } from '@/types/patient';
+import { supabase } from '@/lib/supabase';
+import { formatDateInIsraelTimeZone } from '@/utils/dateUtils';
 
 import {
   Dialog,
@@ -19,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -26,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import {
   Popover,
   PopoverContent,
@@ -41,7 +42,7 @@ interface NewHistoricalSessionDialogProps {
   patientId: number;
   patient: Patient | null;
   onSessionCreated: () => void;
-  fromFutureSession?: FutureSession | null;
+  fromFutureSession?: FutureSession;
   onDeleteFutureSession?: () => Promise<void>;
 }
 
@@ -51,19 +52,18 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   patientId,
   patient,
   onSessionCreated,
-  fromFutureSession = null,
+  fromFutureSession,
   onDeleteFutureSession,
 }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [exercises, setExercises] = useState<{ id: number; name: string }[]>([]);
+  const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
+  
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string>('12:00');
-  const [paymentDate, setPaymentDate] = useState<Date | undefined>(undefined);
-  const [exercises, setExercises] = useState<string[]>([]);
-  const [exerciseInput, setExerciseInput] = useState<string>('');
-  const [availableExercises, setAvailableExercises] = useState<string[]>([]);
-  const [showDeletePrompt, setShowDeletePrompt] = useState(false);
-
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(new Date());
+  
   const [formData, setFormData] = useState<NewHistoricalSessionFormData>({
     session_date: new Date(),
     meeting_type: 'Zoom',
@@ -77,48 +77,94 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     payment_notes: null,
   });
 
+  // Fetch available exercises
   useEffect(() => {
     const fetchExercises = async () => {
       try {
         const { data, error } = await supabase
           .from('exercises')
-          .select('exercise_name')
-          .order('exercise_name', { ascending: true });
-
+          .select('id, name')
+          .order('name');
+          
         if (error) throw error;
-
-        if (data) {
-          setAvailableExercises(data.map(ex => ex.exercise_name));
-        }
+        
+        setExercises(data || []);
       } catch (error) {
         console.error('Error fetching exercises:', error);
       }
     };
-
+    
     fetchExercises();
   }, []);
 
+  // Initialize form data when dialog opens or fromFutureSession changes
   useEffect(() => {
-    if (fromFutureSession) {
-      const fsDate = new Date(fromFutureSession.session_date);
-      setDate(fsDate);
-      setTime(format(fsDate, 'HH:mm'));
-
-      setFormData(prev => ({
-        ...prev,
-        session_date: fsDate,
-        meeting_type: fromFutureSession.meeting_type,
-        summary: null,
-      }));
+    if (open) {
+      if (fromFutureSession) {
+        // Pre-fill form with future session data
+        const sessionDate = new Date(fromFutureSession.session_date);
+        
+        setDate(sessionDate);
+        setTime(
+          sessionDate.getHours().toString().padStart(2, '0') + 
+          ':' + 
+          sessionDate.getMinutes().toString().padStart(2, '0')
+        );
+        
+        setFormData({
+          session_date: sessionDate,
+          meeting_type: fromFutureSession.meeting_type,
+          summary: null,
+          sent_exercises: false,
+          exercise_list: [],
+          paid_amount: patient?.session_price || null,
+          payment_status: 'pending',
+          payment_method: null,
+          payment_date: null,
+          payment_notes: null,
+        });
+      } else {
+        // Default values for new session
+        const now = new Date();
+        setDate(now);
+        setTime(
+          now.getHours().toString().padStart(2, '0') + 
+          ':' + 
+          now.getMinutes().toString().padStart(2, '0')
+        );
+        setPaymentDate(now);
+        
+        setFormData({
+          session_date: now,
+          meeting_type: 'Zoom',
+          summary: null,
+          sent_exercises: false,
+          exercise_list: [],
+          paid_amount: patient?.session_price || null,
+          payment_status: 'pending',
+          payment_method: null,
+          payment_date: null,
+          payment_notes: null,
+        });
+      }
+      
+      setSelectedExercises([]);
     }
-  }, [fromFutureSession]);
+  }, [open, fromFutureSession, patient]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value || null }));
+  };
+
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const numValue = value === '' ? null : Number(value);
     
+    setFormData((prev) => ({ ...prev, [name]: numValue }));
+    
+    // Update payment status based on paid amount
     if (name === 'paid_amount') {
-      const numValue = value === '' ? null : Number(value);
-      setFormData(prev => ({ ...prev, [name]: numValue }));
       
       if (patient?.session_price) {
         if (numValue === null || numValue === 0) {
@@ -129,23 +175,58 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
           setFormData(prev => ({ ...prev, payment_status: 'paid' }));
         }
       }
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Reset payment_date if payment_status is "pending"
+    if (name === 'payment_status' && value === 'pending') {
+      setFormData((prev) => ({ ...prev, payment_date: null }));
+      setPaymentDate(undefined);
+    }
+    
+    // Set payment_date to today if payment_status changed to "paid" or "partial" and there's no date
+    if (name === 'payment_status' && (value === 'paid' || value === 'partial') && !formData.payment_date) {
+      const today = new Date();
+      setFormData((prev) => ({ ...prev, payment_date: today }));
+      setPaymentDate(today);
+    }
+  };
+
+  const handleCheckboxChange = (checked: boolean) => {
+    setFormData((prev) => ({ ...prev, sent_exercises: checked }));
+    
+    // If unchecked, clear selected exercises
+    if (!checked) {
+      setSelectedExercises([]);
+      setFormData((prev) => ({ ...prev, exercise_list: [] }));
+    }
+  };
+
+  const handleExerciseSelect = (exerciseName: string) => {
+    let updatedExercises: string[];
+    
+    if (selectedExercises.includes(exerciseName)) {
+      updatedExercises = selectedExercises.filter(e => e !== exerciseName);
+    } else {
+      updatedExercises = [...selectedExercises, exerciseName];
+    }
+    
+    setSelectedExercises(updatedExercises);
+    setFormData((prev) => ({ ...prev, exercise_list: updatedExercises }));
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTime(e.target.value);
     
+    // Update session_date with new time
     if (date) {
       const [hours, minutes] = e.target.value.split(':').map(Number);
       const newDate = new Date(date);
       newDate.setHours(hours, minutes);
-      setFormData(prev => ({ ...prev, session_date: newDate }));
+      setFormData((prev) => ({ ...prev, session_date: newDate }));
     }
   };
 
@@ -153,52 +234,33 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     if (newDate) {
       setDate(newDate);
       
+      // Preserve the selected time
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
         newDate.setHours(hours, minutes);
       }
       
-      setFormData(prev => ({ ...prev, session_date: newDate }));
+      setFormData((prev) => ({ ...prev, session_date: newDate }));
     }
   };
 
   const handlePaymentDateChange = (newDate: Date | undefined) => {
     setPaymentDate(newDate);
-    setFormData(prev => ({ ...prev, payment_date: newDate }));
-  };
-
-  const toggleSentExercises = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, sent_exercises: checked }));
-  };
-
-  const addExercise = () => {
-    if (exerciseInput.trim()) {
-      setExercises(prev => [...prev, exerciseInput.trim()]);
-      setFormData(prev => ({ 
-        ...prev, 
-        exercise_list: [...(prev.exercise_list || []), exerciseInput.trim()]
-      }));
-      setExerciseInput('');
-    }
-  };
-
-  const removeExercise = (index: number) => {
-    const newExercises = [...exercises];
-    newExercises.splice(index, 1);
-    setExercises(newExercises);
-    setFormData(prev => ({
-      ...prev,
-      exercise_list: newExercises.length ? newExercises : null
-    }));
-  };
-
-  const handleExerciseSelect = (value: string) => {
-    setExerciseInput(value);
+    setFormData((prev) => ({ ...prev, payment_date: newDate || null }));
   };
 
   const resetForm = () => {
+    const now = new Date();
+    setDate(now);
+    setTime(
+      now.getHours().toString().padStart(2, '0') + 
+      ':' + 
+      now.getMinutes().toString().padStart(2, '0')
+    );
+    setPaymentDate(now);
+    
     setFormData({
-      session_date: new Date(),
+      session_date: now,
       meeting_type: 'Zoom',
       summary: null,
       sent_exercises: false,
@@ -209,11 +271,8 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
       payment_date: null,
       payment_notes: null,
     });
-    setDate(new Date());
-    setTime('12:00');
-    setPaymentDate(undefined);
-    setExercises([]);
-    setExerciseInput('');
+    
+    setSelectedExercises([]);
     setIsSubmitting(false);
   };
 
@@ -234,45 +293,59 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
 
     setIsSubmitting(true);
     try {
+      // Format the combined date and time for database
       const combinedDate = date;
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
         combinedDate.setHours(hours, minutes);
       }
 
+      const sessionData = {
+        patient_id: patientId,
+        session_date: combinedDate.toISOString(),
+        meeting_type: formData.meeting_type,
+        summary: formData.summary,
+        sent_exercises: formData.sent_exercises,
+        exercise_list: formData.sent_exercises ? formData.exercise_list : [],
+        paid_amount: formData.paid_amount,
+        payment_status: formData.payment_status,
+        payment_method: formData.payment_method,
+        payment_date: formData.payment_date ? formData.payment_date.toISOString() : null,
+        payment_notes: formData.payment_notes,
+      };
+
       const { error } = await supabase
         .from('sessions')
-        .insert({
-          patient_id: patientId,
-          session_date: combinedDate.toISOString(),
-          meeting_type: formData.meeting_type,
-          summary: formData.summary,
-          sent_exercises: formData.sent_exercises,
-          exercise_list: formData.exercise_list && formData.exercise_list.length > 0 
-            ? formData.exercise_list 
-            : null,
-          paid_amount: formData.paid_amount,
-          payment_status: formData.payment_status,
-          payment_method: formData.payment_method,
-          payment_date: formData.payment_date ? formData.payment_date.toISOString() : null,
-          payment_notes: formData.payment_notes,
-        });
+        .insert([sessionData]);
 
       if (error) throw error;
 
       toast({
         title: "פגישה היסטורית נוצרה בהצלחה",
-        description: "הפגישה נוספה לרשימת הפגישות ההיסטוריות",
+        description: "הפגישה נוספה להיסטוריית הפגישות",
       });
 
-      onSessionCreated();
-      
+      // If this was from a future session, delete the future session
       if (fromFutureSession && onDeleteFutureSession) {
-        setShowDeletePrompt(true);
-      } else {
-        resetForm();
-        onOpenChange(false);
+        try {
+          await onDeleteFutureSession();
+          toast({
+            title: "פגישה עתידית הועברה בהצלחה",
+            description: "הפגישה הועברה מהפגישות העתידיות להיסטוריה",
+          });
+        } catch (error) {
+          console.error('Error deleting future session:', error);
+          toast({
+            title: "שגיאה במחיקת פגישה עתידית",
+            description: "הפגישה ההיסטורית נוצרה אך הפגישה העתידית לא נמחקה",
+            variant: "destructive",
+          });
+        }
       }
+
+      onSessionCreated();
+      resetForm();
+      onOpenChange(false);
     } catch (error: any) {
       console.error('Error creating historical session:', error);
       toast({
@@ -280,84 +353,21 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
         description: error.message || "אנא נסה שוב מאוחר יותר",
         variant: "destructive",
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDeleteFutureSession = async () => {
-    if (onDeleteFutureSession) {
-      try {
-        await onDeleteFutureSession();
-        toast({
-          title: "הפגישה העתידית נמחקה",
-          description: "הפגישה העתידית נמחקה בהצלחה",
-        });
-      } catch (error: any) {
-        toast({
-          title: "שגיאה במחיקת הפגישה",
-          description: error.message || "אנא נסה שוב מאוחר יותר",
-          variant: "destructive",
-        });
-      }
-    }
-    resetForm();
-    setShowDeletePrompt(false);
-    onOpenChange(false);
-  };
-
-  const handleKeepFutureSession = () => {
-    resetForm();
-    setShowDeletePrompt(false);
-    onOpenChange(false);
-  };
-
-  if (showDeletePrompt) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center text-purple-800">מחיקת פגישה עתידית</DialogTitle>
-          </DialogHeader>
-
-          <div className="py-4 text-center" dir="rtl">
-            <p className="mb-4">האם למחוק את הפגישה העתידית המקורית?</p>
-            <p className="text-sm text-gray-500 mb-6">
-              הפגישה ההיסטורית נוצרה בהצלחה. האם ברצונך למחוק את הפגישה העתידית המקורית?
-            </p>
-
-            <div className="flex justify-center gap-4">
-              <Button
-                onClick={handleDeleteFutureSession}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                כן, מחק את הפגישה העתידית
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleKeepFutureSession}
-                className="border-purple-200 text-purple-700 hover:bg-purple-50"
-              >
-                לא, השאר אותה
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-purple-800">
-            {fromFutureSession 
-              ? "העברת פגישה עתידית להיסטוריה" 
-              : "יצירת פגישה היסטורית חדשה"}
+            {fromFutureSession ? 'העברת פגישה להיסטוריה' : 'יצירת פגישה היסטורית חדשה'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto" dir="rtl">
+        <div className="space-y-4 py-2" dir="rtl">
           <div className="space-y-2">
             <Label htmlFor="date" className="text-purple-700">תאריך ושעה</Label>
             <div className="flex gap-2">
@@ -417,113 +427,84 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
             <Textarea
               id="summary"
               name="summary"
+              placeholder="הזן סיכום פגישה..."
               value={formData.summary || ''}
-              onChange={handleInputChange}
-              className="border-purple-200 focus-visible:ring-purple-500 min-h-[100px]"
-              placeholder="הזן סיכום פגישה"
+              onChange={handleTextChange}
+              className="min-h-[100px] border-purple-200 focus-visible:ring-purple-500"
             />
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="sent_exercises" className="text-purple-700">נשלחו תרגילים?</Label>
-              <Switch
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
                 id="sent_exercises"
                 checked={formData.sent_exercises}
-                onCheckedChange={toggleSentExercises}
+                onCheckedChange={handleCheckboxChange}
               />
+              <Label htmlFor="sent_exercises" className="text-purple-700">
+                נשלחו תרגילים
+              </Label>
             </div>
-            
+
             {formData.sent_exercises && (
-              <div className="space-y-2 bg-purple-50 p-3 rounded-md">
-                <Label htmlFor="exercise_input" className="text-purple-700">רשימת תרגילים</Label>
-                <div className="flex gap-2">
-                  <Select onValueChange={handleExerciseSelect}>
-                    <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
-                      <SelectValue placeholder="בחר תרגיל" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableExercises.map((exercise, index) => (
-                        <SelectItem key={index} value={exercise}>
-                          {exercise}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    id="exercise_input"
-                    value={exerciseInput}
-                    onChange={(e) => setExerciseInput(e.target.value)}
-                    className="border-purple-200 focus-visible:ring-purple-500"
-                    placeholder="שם התרגיל"
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={addExercise}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    הוסף
-                  </Button>
+              <div className="pl-6 space-y-2">
+                <Label className="text-purple-700">בחר תרגילים</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-purple-200 rounded-md p-2">
+                  {exercises.map((exercise) => (
+                    <div key={exercise.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`exercise-${exercise.id}`}
+                        checked={selectedExercises.includes(exercise.name)}
+                        onCheckedChange={() => handleExerciseSelect(exercise.name)}
+                      />
+                      <Label
+                        htmlFor={`exercise-${exercise.id}`}
+                        className="font-normal"
+                      >
+                        {exercise.name}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
-                
-                {exercises.length > 0 && (
-                  <div className="mt-2">
-                    <Label className="text-purple-700 mb-2 block">תרגילים שנבחרו:</Label>
-                    <ul className="space-y-1">
-                      {exercises.map((exercise, index) => (
-                        <li key={index} className="flex justify-between items-center bg-white p-2 rounded border border-purple-100">
-                          <span>{exercise}</span>
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => removeExercise(index)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 h-7 w-7 p-0"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
             )}
           </div>
 
-          <div className="border-t border-gray-200 pt-4 mt-4">
-            <h3 className="font-medium text-lg text-purple-800 mb-3">פרטי תשלום</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="paid_amount" className="text-purple-700">סכום ששולם (₪)</Label>
-                <Input
-                  id="paid_amount"
-                  name="paid_amount"
-                  type="number"
-                  value={formData.paid_amount === null ? '' : formData.paid_amount}
-                  onChange={handleInputChange}
-                  className="border-purple-200 focus-visible:ring-purple-500"
-                />
-              </div>
+          <Separator className="my-4" />
 
-              <div className="space-y-2">
-                <Label htmlFor="payment_status" className="text-purple-700">סטטוס תשלום</Label>
-                <Select
-                  value={formData.payment_status}
-                  onValueChange={(value) => handleSelectChange('payment_status', value)}
-                >
-                  <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
-                    <SelectValue placeholder="בחר סטטוס תשלום" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="paid">שולם</SelectItem>
-                    <SelectItem value="partial">שולם חלקית</SelectItem>
-                    <SelectItem value="pending">ממתין לתשלום</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <h3 className="text-lg font-semibold text-purple-700">פרטי תשלום</h3>
 
+          <div className="space-y-2">
+            <Label htmlFor="paid_amount" className="text-purple-700">סכום ששולם (₪)</Label>
+            <Input
+              id="paid_amount"
+              name="paid_amount"
+              type="number"
+              value={formData.paid_amount === null ? '' : formData.paid_amount}
+              onChange={handleNumberChange}
+              className="border-purple-200 focus-visible:ring-purple-500"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="payment_status" className="text-purple-700">סטטוס תשלום</Label>
+            <Select
+              value={formData.payment_status}
+              onValueChange={(value) => handleSelectChange('payment_status', value)}
+            >
+              <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
+                <SelectValue placeholder="בחר סטטוס תשלום" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="paid">שולם</SelectItem>
+                <SelectItem value="partial">שולם חלקית</SelectItem>
+                <SelectItem value="pending">ממתין לתשלום</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {(formData.payment_status === 'paid' || formData.payment_status === 'partial') && (
+            <>
               <div className="space-y-2">
                 <Label htmlFor="payment_method" className="text-purple-700">אמצעי תשלום</Label>
                 <Select
@@ -548,7 +529,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
                     <Button
                       variant={"outline"}
                       className={cn(
-                        "w-full border-purple-200 justify-start text-right font-normal",
+                        "border-purple-200 justify-start text-right font-normal w-full",
                         !paymentDate && "text-muted-foreground"
                       )}
                     >
@@ -567,20 +548,20 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
                   </PopoverContent>
                 </Popover>
               </div>
-            </div>
 
-            <div className="space-y-2 mt-4">
-              <Label htmlFor="payment_notes" className="text-purple-700">הערות תשלום</Label>
-              <Textarea
-                id="payment_notes"
-                name="payment_notes"
-                value={formData.payment_notes || ''}
-                onChange={handleInputChange}
-                className="border-purple-200 focus-visible:ring-purple-500"
-                placeholder="הערות נוספות לגבי התשלום"
-              />
-            </div>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="payment_notes" className="text-purple-700">הערות לתשלום</Label>
+                <Textarea
+                  id="payment_notes"
+                  name="payment_notes"
+                  placeholder="הזן הערות לתשלום..."
+                  value={formData.payment_notes || ''}
+                  onChange={handleTextChange}
+                  className="border-purple-200 focus-visible:ring-purple-500"
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
@@ -589,7 +570,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
             disabled={isSubmitting}
             className="bg-purple-600 hover:bg-purple-700"
           >
-            {isSubmitting ? 'יוצר פגישה...' : 'צור פגישה'}
+            {isSubmitting ? 'מעבד...' : fromFutureSession ? 'העבר להיסטוריה' : 'צור פגישה'}
           </Button>
           <Button
             variant="outline"

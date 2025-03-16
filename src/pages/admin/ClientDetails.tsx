@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, formatDistance, isAfter, subHours } from 'date-fns';
@@ -7,7 +8,7 @@ import {
   RefreshCw, Phone, User, Monitor, 
   Check, X, CreditCard, BadgeDollarSign, Calendar, 
   Search, ChevronDown, ChevronUp, Info,
-  PlusCircle, ArrowDownToLine, History
+  PlusCircle, ArrowDownToLine, History, Pencil
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Patient, Session, Exercise } from '@/types/patient';
@@ -46,11 +47,14 @@ import {
 
 import SessionEditDialog from '@/components/admin/SessionEditDialog';
 import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog';
+import DeleteFutureSessionDialog from '@/components/admin/sessions/DeleteFutureSessionDialog';
 import ConvertSessionDialog from '@/components/admin/sessions/ConvertSessionDialog';
 import SessionDetailCollapsible from '@/components/admin/sessions/SessionDetailCollapsible';
 import ClientStatisticsCard from '@/components/admin/ClientStatisticsCard';
 import NewFutureSessionDialog from '@/components/admin/sessions/NewFutureSessionDialog';
 import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistoricalSessionDialog';
+import EditFutureSessionDialog from '@/components/admin/sessions/EditFutureSessionDialog';
+import { formatDateInIsraelTimeZone } from '@/utils/dateUtils';
 
 console.log("🚀 ClientDetails.tsx is loaded!");
 
@@ -87,6 +91,12 @@ const ClientDetails: React.FC = () => {
   const [isNewHistoricalSessionDialogOpen, setIsNewHistoricalSessionDialogOpen] = useState(false);
   const [isMoveToHistoricalDialogOpen, setIsMoveToHistoricalDialogOpen] = useState(false);
   const [futureSessionToMove, setFutureSessionToMove] = useState<FutureSession | null>(null);
+  
+  // New states for future session editing and deletion
+  const [isEditFutureSessionDialogOpen, setIsEditFutureSessionDialogOpen] = useState(false);
+  const [futureSessionToEdit, setFutureSessionToEdit] = useState<FutureSession | null>(null);
+  const [isDeleteFutureSessionDialogOpen, setIsDeleteFutureSessionDialogOpen] = useState(false);
+  const [futureSessionToDelete, setFutureSessionToDelete] = useState<FutureSession | null>(null);
 
   // Fetch client data
   const fetchClientData = async () => {
@@ -108,7 +118,7 @@ const ClientDetails: React.FC = () => {
       setClient(clientData);
       setEditFormData(clientData);
       
-      // Fetch upcoming sessions - FIX: Change scheduled_date to session_date
+      // Fetch upcoming sessions - using session_date
       const { data: upcomingData, error: upcomingError } = await supabase
         .from('future_sessions')
         .select('*')
@@ -148,7 +158,7 @@ const ClientDetails: React.FC = () => {
         ? sessionsData[0].session_date 
         : null;
       
-      // FIX: Use session_date instead of scheduled_date
+      // Use session_date for next session
       const nextSession = upcomingData && upcomingData.length > 0 
         ? upcomingData[0].session_date 
         : null;
@@ -342,12 +352,64 @@ const ClientDetails: React.FC = () => {
   const handleHistoricalSessionCreated = async () => {
     await fetchClientData();
     setIsNewHistoricalSessionDialogOpen(false);
+    
+    // After successful creation, also clear the future session being moved
+    setFutureSessionToMove(null);
+  };
+  
+  // New handlers for future session edit/delete
+  const handleEditFutureSession = (session: FutureSession) => {
+    setFutureSessionToEdit(session);
+    setIsEditFutureSessionDialogOpen(true);
+  };
+  
+  const handleFutureSessionUpdated = async () => {
+    await fetchClientData();
+    setIsEditFutureSessionDialogOpen(false);
+    setFutureSessionToEdit(null);
+  };
+  
+  const handleDeleteFutureSessionConfirm = (session: FutureSession) => {
+    setFutureSessionToDelete(session);
+    setIsDeleteFutureSessionDialogOpen(true);
+  };
+  
+  const handleDeleteFutureSessionExecute = async () => {
+    if (!futureSessionToDelete) return;
+    
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('future_sessions')
+        .delete()
+        .eq('id', futureSessionToDelete.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "פגישה עתידית נמחקה בהצלחה",
+        description: `הפגישה נמחקה בהצלחה`,
+      });
+      
+      await fetchClientData();
+    } catch (error: any) {
+      console.error('Error deleting future session:', error);
+      toast({
+        title: "שגיאה במחיקת פגישה",
+        description: error.message || "אנא נסה שוב מאוחר יותר",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+      setIsDeleteFutureSessionDialogOpen(false);
+      setFutureSessionToDelete(null);
+    }
   };
 
   // Format date for display
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: he });
+      return formatDateInIsraelTimeZone(new Date(dateString), 'dd/MM/yyyy HH:mm');
     } catch (e) {
       return dateString;
     }
@@ -357,7 +419,7 @@ const ClientDetails: React.FC = () => {
   const formatDateOnly = (dateString: string | null) => {
     if (!dateString) return '-';
     try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: he });
+      return formatDateInIsraelTimeZone(new Date(dateString), 'dd/MM/yyyy');
     } catch (e) {
       return dateString;
     }
@@ -412,9 +474,9 @@ const ClientDetails: React.FC = () => {
     switch (status) {
       case 'paid':
         return 'שולם';
-      case 'partially_paid':
+      case 'partial':
         return 'שולם חלקית';
-      case 'unpaid':
+      case 'pending':
         return 'לא שולם';
       default:
         return status;
@@ -423,7 +485,7 @@ const ClientDetails: React.FC = () => {
 
   // Get payment status badge
   const getPaymentStatusBadge = (status: string | null) => {
-    if (!status) status = 'unpaid';
+    if (!status) status = 'pending';
     
     switch (status) {
       case 'paid':
@@ -433,14 +495,14 @@ const ClientDetails: React.FC = () => {
             {getPaymentStatusText(status)}
           </Badge>
         );
-      case 'partially_paid':
+      case 'partial':
         return (
           <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
             <BadgeDollarSign className="h-3 w-3 mr-1" />
             {getPaymentStatusText(status)}
           </Badge>
         );
-      case 'unpaid':
+      case 'pending':
         return (
           <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
             <CreditCard className="h-3 w-3 mr-1" />
@@ -593,44 +655,70 @@ const ClientDetails: React.FC = () => {
                               ? 'bg-red-50 border-red-200' 
                               : 'bg-purple-50 border-purple-200'}`}
                           >
-                            <div className="flex justify-between items-start">
-                              <div className="flex flex-col">
-                                <div className="flex items-center">
-                                  {isOverdue && (
-                                    <AlertTriangle className="h-4 w-4 text-red-500 ml-1" />
-                                  )}
-                                  <div className="font-medium">
-                                    {formatDate(session.session_date)}
+                            <div className="flex flex-col gap-3">
+                              <div className="flex justify-between items-start">
+                                <div className="flex flex-col">
+                                  <div className="flex items-center">
+                                    {isOverdue && (
+                                      <AlertTriangle className="h-4 w-4 text-red-500 ml-1" />
+                                    )}
+                                    <div className="font-medium">
+                                      {formatDate(session.session_date)}
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="flex items-center mt-1 text-sm text-gray-600">
-                                  {getMeetingTypeIcon(session.meeting_type)}
-                                  <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
+                                  <div className="flex items-center mt-1 text-sm text-gray-600">
+                                    {getMeetingTypeIcon(session.meeting_type)}
+                                    <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
+                                  </div>
                                 </div>
                               </div>
                               
                               <div className="flex flex-col gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="border-purple-300 hover:bg-purple-50 text-purple-700"
-                                  onClick={() => handleMoveToHistorical(session)}
-                                >
-                                  <History className="h-3 w-3 ml-1 text-purple-600" />
-                                  העבר לפגישה היסטורית
-                                </Button>
-                                
-                                {isOverdue && (
+                                <div className="flex flex-wrap gap-2 md:justify-end">
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="border-amber-300 hover:bg-amber-50 text-amber-700"
-                                    onClick={() => handleConvertSession(session)}
+                                    className="border-purple-300 hover:bg-purple-50 text-purple-700 flex-1 md:flex-auto"
+                                    onClick={() => handleEditFutureSession(session)}
                                   >
-                                    <RefreshCw className="h-3 w-3 ml-1 text-amber-600" />
-                                    המר לפגישה שהושלמה
+                                    <Pencil className="h-3 w-3 ml-1 text-purple-600" />
+                                    עריכת פגישה
                                   </Button>
-                                )}
+                                  
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-red-300 hover:bg-red-50 text-red-700 flex-1 md:flex-auto"
+                                    onClick={() => handleDeleteFutureSessionConfirm(session)}
+                                  >
+                                    <Trash2 className="h-3 w-3 ml-1 text-red-600" />
+                                    מחיקת פגישה
+                                  </Button>
+                                </div>
+                                
+                                <div className="flex flex-wrap gap-2 md:justify-end">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="border-purple-300 hover:bg-purple-50 text-purple-700 flex-1 md:flex-auto"
+                                    onClick={() => handleMoveToHistorical(session)}
+                                  >
+                                    <History className="h-3 w-3 ml-1 text-purple-600" />
+                                    העבר לפגישה היסטורית
+                                  </Button>
+                                  
+                                  {isOverdue && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="border-amber-300 hover:bg-amber-50 text-amber-700 flex-1 md:flex-auto"
+                                      onClick={() => handleConvertSession(session)}
+                                    >
+                                      <RefreshCw className="h-3 w-3 ml-1 text-amber-600" />
+                                      המר לפגישה שהושלמה
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -895,6 +983,15 @@ const ClientDetails: React.FC = () => {
               formatDate={formatDate}
             />
             
+            {/* Delete future session dialog */}
+            <DeleteFutureSessionDialog 
+              open={isDeleteFutureSessionDialogOpen}
+              onOpenChange={setIsDeleteFutureSessionDialogOpen}
+              session={futureSessionToDelete}
+              onConfirm={handleDeleteFutureSessionExecute}
+              formatDate={formatDate}
+            />
+            
             {/* Convert session dialog */}
             {sessionToConvert && (
               <ConvertSessionDialog
@@ -914,6 +1011,16 @@ const ClientDetails: React.FC = () => {
               onSessionCreated={handleFutureSessionCreated}
             />
             
+            {/* Edit future session dialog */}
+            {futureSessionToEdit && (
+              <EditFutureSessionDialog
+                open={isEditFutureSessionDialogOpen}
+                onOpenChange={setIsEditFutureSessionDialogOpen}
+                session={futureSessionToEdit}
+                onSessionUpdated={handleFutureSessionUpdated}
+              />
+            )}
+            
             {/* New historical session dialog */}
             <NewHistoricalSessionDialog
               open={isNewHistoricalSessionDialogOpen}
@@ -927,7 +1034,10 @@ const ClientDetails: React.FC = () => {
             {futureSessionToMove && (
               <NewHistoricalSessionDialog
                 open={isMoveToHistoricalDialogOpen}
-                onOpenChange={setIsMoveToHistoricalDialogOpen}
+                onOpenChange={(open) => {
+                  setIsMoveToHistoricalDialogOpen(open);
+                  if (!open) setFutureSessionToMove(null);
+                }}
                 patientId={Number(id)}
                 patient={client}
                 onSessionCreated={handleHistoricalSessionCreated}
@@ -943,4 +1053,3 @@ const ClientDetails: React.FC = () => {
 };
 
 export default ClientDetails;
-
