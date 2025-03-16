@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, formatDistance, isAfter, subHours } from 'date-fns';
@@ -878,3 +879,206 @@ const ClientDetails: React.FC = () => {
                                   <Edit className="h-4 w-4 ml-1 text-purple-600" />
                                   ערוך
                                 </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteSessionConfirm(session);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 ml-1 text-red-500" />
+                                  מחק
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-center">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleExpandSession(session.id);
+                                  }}
+                                >
+                                  {expandedSessionId === session.id ? (
+                                    <ChevronUp className="h-5 w-5" />
+                                  ) : (
+                                    <ChevronDown className="h-5 w-5" />
+                                  )}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                          
+                          {/* Session details collapsible */}
+                          {expandedSessionId === session.id && (
+                            <TableRow>
+                              <TableCell colSpan={6} className="p-0">
+                                <SessionDetailCollapsible 
+                                  session={session}
+                                  formatDate={formatDate}
+                                  getPaymentMethodText={getPaymentMethodText}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Client edit dialog */}
+      <Dialog open={isEditClientDialogOpen} onOpenChange={setIsEditClientDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>עריכת פרטי לקוח</DialogTitle>
+            <DialogDescription>
+              ערוך את פרטי הלקוח.
+            </DialogDescription>
+          </DialogHeader>
+          {editFormData && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">שם</Label>
+                <Input 
+                  id="name" 
+                  value={editFormData.name || ''} 
+                  onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">טלפון</Label>
+                <Input 
+                  id="phone" 
+                  value={editFormData.phone || ''} 
+                  onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">אימייל</Label>
+                <Input 
+                  id="email" 
+                  value={editFormData.email || ''} 
+                  onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="price">מחיר לפגישה</Label>
+                <Input 
+                  id="price" 
+                  type="number" 
+                  value={editFormData.session_price || ''} 
+                  onChange={(e) => setEditFormData({...editFormData, session_price: Number(e.target.value)})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="notes">הערות</Label>
+                <Textarea 
+                  id="notes" 
+                  value={editFormData.notes || ''} 
+                  onChange={(e) => setEditFormData({...editFormData, notes: e.target.value})}
+                  rows={4}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditClientDialogOpen(false)}
+            >
+              ביטול
+            </Button>
+            <Button 
+              onClick={handleUpdateClient}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'מעדכן...' : 'עדכן פרטים'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Session edit dialog */}
+      {sessionToEdit && (
+        <SessionEditDialog
+          open={isEditSessionDialogOpen}
+          onOpenChange={setIsEditSessionDialogOpen}
+          session={sessionToEdit}
+          onUpdate={handleSessionUpdated}
+        />
+      )}
+      
+      {/* Delete session dialog */}
+      <DeleteSessionDialog
+        open={isDeleteSessionDialogOpen}
+        onOpenChange={setIsDeleteSessionDialogOpen}
+        session={sessionToDelete}
+        onConfirm={handleDeleteSession}
+      />
+      
+      {/* Convert session dialog */}
+      <ConvertSessionDialog
+        open={isConvertSessionDialogOpen}
+        onOpenChange={setIsConvertSessionDialogOpen}
+        session={sessionToConvert}
+        onConfirm={handleSessionConverted}
+        patientId={id}
+      />
+      
+      {/* New future session dialog */}
+      <NewFutureSessionDialog
+        open={isNewFutureSessionDialogOpen}
+        onOpenChange={setIsNewFutureSessionDialogOpen}
+        patientId={id}
+        onCreated={handleFutureSessionCreated}
+      />
+      
+      {/* New historical session dialog */}
+      <NewHistoricalSessionDialog
+        open={isNewHistoricalSessionDialogOpen || isMoveToHistoricalDialogOpen}
+        onOpenChange={(open) => {
+          if (isMoveToHistoricalDialogOpen) {
+            setIsMoveToHistoricalDialogOpen(open);
+          } else {
+            setIsNewHistoricalSessionDialogOpen(open);
+          }
+        }}
+        patientId={id}
+        onCreated={handleHistoricalSessionCreated}
+        onDeleted={isMoveToHistoricalDialogOpen ? handleDeleteFutureSession : undefined}
+        initialDate={futureSessionToMove?.session_date}
+        initialMeetingType={futureSessionToMove?.meeting_type}
+      />
+
+      {/* Edit future session dialog */}
+      <EditFutureSessionDialog
+        open={isEditFutureSessionDialogOpen}
+        onOpenChange={setIsEditFutureSessionDialogOpen}
+        futureSession={futureSessionToEdit}
+        patientId={id}
+        onUpdated={handleFutureSessionUpdated}
+      />
+      
+      {/* Delete future session dialog */}
+      <DeleteFutureSessionDialog
+        open={isDeleteFutureSessionDialogOpen}
+        onOpenChange={setIsDeleteFutureSessionDialogOpen}
+        session={futureSessionToDelete}
+        onConfirm={handleDeleteFutureSessionExecute}
+        formatDate={formatDate}
+      />
+    </AdminLayout>
+  );
+};
+
+export default ClientDetails;
