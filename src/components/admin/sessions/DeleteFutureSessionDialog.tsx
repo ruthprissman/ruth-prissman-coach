@@ -17,6 +17,7 @@ interface DeleteFutureSessionDialogProps {
   onOpenChange: (open: boolean) => void;
   session: FutureSession | null;
   onConfirm: () => void;
+  formatDate?: (dateString: string) => string; // Added optional formatDate prop
 }
 
 const DeleteFutureSessionDialog: React.FC<DeleteFutureSessionDialogProps> = ({
@@ -24,8 +25,12 @@ const DeleteFutureSessionDialog: React.FC<DeleteFutureSessionDialogProps> = ({
   onOpenChange,
   session,
   onConfirm,
+  formatDate: customFormatDate, // Renamed to avoid conflict with local function
 }) => {
   const formatDate = (dateString: string) => {
+    if (customFormatDate) {
+      return customFormatDate(dateString);
+    }
     return formatDateInIsraelTimeZone(dateString, 'dd/MM/yyyy HH:mm');
   };
 
