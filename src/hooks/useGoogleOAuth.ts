@@ -100,12 +100,12 @@ export function useGoogleOAuth() {
       
       if (success) {
         toast({
-          title: 'התחברת בהצלחה לחשבון גוגל',
+          title: 'התחברת בהצלחה ליומן גוגל',
           description: 'מתחיל בטעינת אירועי יומן...',
         });
       } else {
         toast({
-          title: 'התחברות ל-Google נכשלה',
+          title: 'ההתחברות ליומן גוגל נכשלה',
           description: 'לא הצלחנו לקבל הרשאות ליומן שלך',
           variant: 'destructive',
         });
@@ -131,7 +131,7 @@ export function useGoogleOAuth() {
         });
       } else {
         toast({
-          title: 'שגיאה בהתחברות ל-Google',
+          title: 'ההתחברות ליומן גוגל נכשלה',
           description: errorMessage,
           variant: 'destructive',
         });
@@ -152,13 +152,13 @@ export function useGoogleOAuth() {
       });
       
       toast({
-        title: 'התנתקת מ-Google',
+        title: 'התנתקת מיומן גוגל',
         description: 'המידע מיומן Google נמחק',
       });
     } catch (error: any) {
       console.error('Google sign-out error:', error);
       toast({
-        title: 'שגיאה בהתנתקות מ-Google',
+        title: 'שגיאה בהתנתקות מיומן גוגל',
         description: error.message,
         variant: 'destructive',
       });

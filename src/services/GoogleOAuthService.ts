@@ -31,7 +31,9 @@ export async function initGoogleAuth(): Promise<boolean> {
           window.gapi.auth2.init({
             client_id: CLIENT_ID,
             scope: SCOPES,
-            redirect_uri: REDIRECT_URI
+            redirect_uri: REDIRECT_URI,
+            access_type: 'offline', // Request offline access
+            response_type: 'code'   // Use authorization code flow
           }).then(() => {
             console.log('Google Auth initialized');
             resolve(true);
@@ -71,6 +73,8 @@ export async function signInWithGoogle(): Promise<boolean> {
       prompt: 'select_account', // Always show account selection, even if user is already signed in
       ux_mode: 'popup',
       locale: 'he', // Hebrew locale
+      access_type: 'offline', // Request offline access
+      response_type: 'code'   // Use authorization code flow
     };
     
     // Start the sign-in flow
