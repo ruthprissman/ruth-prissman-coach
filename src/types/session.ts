@@ -12,7 +12,6 @@ export interface FutureSession {
   meeting_type: 'Zoom' | 'Phone' | 'In-Person';
   status: 'available' | 'booked' | 'completed' | 'canceled';
   zoom_link?: string;
-  notes?: string | null;
   created_at?: string;
 }
 
@@ -28,7 +27,6 @@ export interface NewFutureSessionFormData {
   meeting_type: 'Zoom' | 'Phone' | 'In-Person';
   status: 'available' | 'booked' | 'completed' | 'canceled';
   zoom_link?: string;
-  notes?: string | null;
 }
 
 export interface NewHistoricalSessionFormData {

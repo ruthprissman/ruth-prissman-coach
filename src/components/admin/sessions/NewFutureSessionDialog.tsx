@@ -17,7 +17,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -56,10 +55,9 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
     meeting_type: 'Zoom',
     status: 'booked',
     zoom_link: '',
-    notes: null,
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -100,7 +98,6 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
       meeting_type: 'Zoom',
       status: 'booked',
       zoom_link: '',
-      notes: null,
     });
     setDate(new Date());
     setTime('12:00');
@@ -134,7 +131,6 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
           meeting_type: formData.meeting_type,
           status: formData.status,
           zoom_link: formData.zoom_link || null,
-          notes: formData.notes,
         });
 
       if (error) throw error;
@@ -252,18 +248,6 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
               />
             </div>
           )}
-
-          <div className="space-y-2">
-            <Label htmlFor="notes" className="text-purple-700">הערות</Label>
-            <Textarea
-              id="notes"
-              name="notes"
-              value={formData.notes || ''}
-              onChange={handleInputChange}
-              className="border-purple-200 focus-visible:ring-purple-500 min-h-[100px]"
-              placeholder="הזן הערות לפגישה"
-            />
-          </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
