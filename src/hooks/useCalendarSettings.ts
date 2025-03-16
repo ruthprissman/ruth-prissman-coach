@@ -14,16 +14,44 @@ export function useCalendarSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+  const [isSessionChecked, setIsSessionChecked] = useState(false);
+
+  useEffect(() => {
+    // First check if we have a valid session
+    if (session === undefined) {
+      // Session is still loading, wait
+      return;
+    }
+    
+    setIsSessionChecked(true);
+    
+    if (!session || !session.access_token) {
+      console.log('No valid session found for calendar settings fetch:', { sessionExists: !!session });
+      setIsLoading(false);
+      setError('התחברות לא הושלמה, יש להתחבר מחדש');
+      toast({
+        title: 'שגיאת התחברות',
+        description: 'התחברות לא הושלמה, טען את הדף מחדש ונסה שוב',
+        variant: 'destructive',
+      });
+      return;
+    }
+  }, [session]);
 
   useEffect(() => {
     const fetchSettings = async () => {
-      if (!session?.access_token || isInitialLoadComplete) return;
+      if (!isSessionChecked || !session?.access_token || isInitialLoadComplete) return;
       
       try {
         setIsLoading(true);
         setError(null);
         
-        console.log('Fetching calendar settings from Edge Function...');
+        // Debug log with session information
+        console.log('Fetching calendar settings from Edge Function with session:', { 
+          sessionId: session.user.id,
+          hasAccessToken: !!session.access_token,
+          tokenLength: session.access_token.length
+        });
         
         const response = await fetch(
           'https://uwqwlltrfvokjlaufguz.supabase.co/functions/v1/get_calendar_settings',
@@ -75,7 +103,7 @@ export function useCalendarSettings() {
     };
     
     fetchSettings();
-  }, [session?.access_token, isInitialLoadComplete]);
+  }, [session?.access_token, isInitialLoadComplete, isSessionChecked]);
   
   return { settings, isLoading, error, isInitialLoadComplete };
 }
