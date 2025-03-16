@@ -46,12 +46,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const getStatusStyle = (status: string, syncStatus?: string, isGoogleEvent?: boolean) => {
     // Handle Google Calendar events
     if (isGoogleEvent) {
-      return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]' };
+      return { bg: 'bg-[#FFDEE2]', border: 'border-red-300', text: 'text-red-800' }; // Light red for Google events
     }
     
     // Handle sync status first (highest priority)
     if (syncStatus === 'google-only') {
-      return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]' };
+      return { bg: 'bg-[#FFDEE2]', border: 'border-red-300', text: 'text-red-800' }; // Light red for Google-only events
     }
     
     if (syncStatus === 'supabase-only') {
@@ -134,7 +134,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const slot = dayData?.get(hour);
                   const status = slot?.status || 'unspecified';
                   const syncStatus = slot?.syncStatus;
-                  const isGoogleEvent = syncStatus === 'google-only' || status === 'booked' && slot?.fromGoogle;
+                  const isGoogleEvent = syncStatus === 'google-only' || slot?.fromGoogle;
                   const { bg, border, text } = getStatusStyle(status, syncStatus, isGoogleEvent);
                   
                   const slotContent = (
@@ -143,7 +143,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, status)}
                     >
                       {status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
-                      {status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />}
+                      {status === 'booked' && (
+                        isGoogleEvent ? 
+                          <span className="text-sm font-medium">תפוס</span> : 
+                          <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />
+                      )}
                       {status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
                       {status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
                       {status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
@@ -180,7 +184,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         <ContextMenuItem 
                           className="flex items-center gap-2 text-purple-600"
                           onClick={() => handleSelectOption('available')}
-                          disabled={status === 'booked'}
+                          disabled={status === 'booked' || isGoogleEvent}
                         >
                           <Check className="h-4 w-4" />
                           <span>הגדר כזמין</span>
@@ -188,7 +192,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         <ContextMenuItem 
                           className="flex items-center gap-2 text-amber-600"
                           onClick={() => handleSelectOption('private')}
-                          disabled={status === 'booked'}
+                          disabled={status === 'booked' || isGoogleEvent}
                         >
                           <Lock className="h-4 w-4" />
                           <span>הגדר כזמן פרטי</span>
@@ -197,7 +201,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         <ContextMenuItem 
                           className="flex items-center gap-2 text-gray-600"
                           onClick={() => handleSelectOption('unspecified')}
-                          disabled={status === 'booked'}
+                          disabled={status === 'booked' || isGoogleEvent}
                         >
                           <X className="h-4 w-4" />
                           <span>נקה סטטוס</span>

@@ -14,11 +14,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { RecurringAvailabilityDialog } from '@/components/admin/calendar/RecurringAvailabilityDialog';
 import { GoogleCalendarSync } from '@/components/admin/calendar/GoogleCalendarSync';
+import { GoogleOAuthButton } from '@/components/admin/calendar/GoogleOAuthButton';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Calendar as CalendarIcon, AlertCircle, RefreshCw, Settings } from 'lucide-react';
 import DebugLogPanel from '@/components/admin/calendar/DebugLogPanel';
 import { useCalendarSettings } from '@/hooks/useCalendarSettings';
 import { fetchGoogleCalendarEvents, compareCalendarData } from '@/services/GoogleCalendarService';
+import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { Button } from '@/components/ui/button';
 
 const CalendarManagement: React.FC = () => {
@@ -35,6 +37,16 @@ const CalendarManagement: React.FC = () => {
   const [showDebugLogs, setShowDebugLogs] = useState<boolean>(false);
   const [syncComparison, setSyncComparison] = useState<CalendarSyncComparison | null>(null);
   const { settings, isLoading: isLoadingSettings, error: settingsError, isInitialLoadComplete } = useCalendarSettings();
+  const { 
+    isAuthenticated: isGoogleAuthenticated,
+    isAuthenticating: isGoogleAuthenticating,
+    error: googleAuthError,
+    events: googleEvents,
+    isLoadingEvents: isLoadingGoogleEvents,
+    signIn: signInWithGoogle,
+    signOut: signOutFromGoogle,
+    fetchEvents: fetchGoogleEvents
+  } = useGoogleOAuth();
 
   const hours = Array.from({ length: 16 }, (_, i) => {
     const hour = i + 8;
@@ -118,9 +130,9 @@ const CalendarManagement: React.FC = () => {
       if (bookedSlotsError) {
         throw new Error(bookedSlotsError.message);
       }
-      
-      if (settings && isGoogleSynced) {
-        await syncWithGoogleCalendar(availableSlots || [], true);
+
+      if (isGoogleAuthenticated && googleEvents.length > 0) {
+        processCalendarDataWithGoogleEvents(availableSlots || [], bookedSlots || [], googleEvents);
       } else {
         const newCalendarData = processCalendarData(availableSlots || [], bookedSlots || []);
         setCalendarData(newCalendarData);
@@ -138,6 +150,98 @@ const CalendarManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const processCalendarDataWithGoogleEvents = (
+    availableSlots: any[], 
+    bookedSlots: any[],
+    googleCalendarEvents: GoogleCalendarEvent[]
+  ) => {
+    const calendarData = new Map<string, Map<string, CalendarSlot>>();
+    
+    days.forEach(day => {
+      const daySlots = new Map<string, CalendarSlot>();
+      hours.forEach(hour => {
+        daySlots.set(hour, {
+          date: day.date,
+          day: day.dayNumber,
+          hour,
+          status: 'unspecified'
+        });
+      });
+      calendarData.set(day.date, daySlots);
+    });
+    
+    availableSlots.forEach(slot => {
+      const dayMap = calendarData.get(slot.date);
+      if (dayMap && dayMap.has(slot.start_time)) {
+        dayMap.set(slot.start_time, {
+          ...dayMap.get(slot.start_time)!,
+          status: (slot.slot_type || slot.status) as 'available' | 'private' | 'unspecified',
+          notes: slot.notes
+        });
+      }
+    });
+    
+    bookedSlots.forEach(session => {
+      if (!session.session_date) return;
+      
+      try {
+        const sessionDateTime = new Date(session.session_date);
+        const israelTime = formatInTimeZone(sessionDateTime, 'Asia/Jerusalem', 'yyyy-MM-dd HH:mm:ss');
+        
+        const sessionDate = israelTime.split(' ')[0];
+        const timeParts = israelTime.split(' ')[1].split(':');
+        const sessionTime = `${timeParts[0]}:00`;
+        
+        const dayMap = calendarData.get(sessionDate);
+        if (dayMap && dayMap.has(sessionTime)) {
+          const endTime = addMinutes(sessionDateTime, 90);
+          const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
+          
+          let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
+          if (session.status === 'completed') status = 'completed';
+          if (session.status === 'canceled') status = 'canceled';
+          
+          dayMap.set(sessionTime, {
+            ...dayMap.get(sessionTime)!,
+            status,
+            notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`
+          });
+        }
+      } catch (error) {
+        console.error('Error processing session date:', error);
+      }
+    });
+    
+    googleCalendarEvents.forEach(event => {
+      if (event.start?.dateTime) {
+        const startDate = new Date(event.start.dateTime);
+        const googleDate = format(startDate, 'yyyy-MM-dd');
+        const googleTime = format(startDate, 'HH:00');
+        
+        const dayMap = calendarData.get(googleDate);
+        if (dayMap && dayMap.has(googleTime)) {
+          const existingSlot = dayMap.get(googleTime);
+          if (existingSlot?.status !== 'booked' && existingSlot?.status !== 'completed') {
+            const endTime = new Date(startDate);
+            endTime.setMinutes(endTime.getMinutes() + 90);
+            const formattedEndTime = format(endTime, 'HH:mm');
+            
+            dayMap.set(googleTime, {
+              ...existingSlot!,
+              status: 'booked',
+              notes: event.summary || 'אירוע Google',
+              description: event.description,
+              fromGoogle: true,
+              syncStatus: 'google-only'
+            });
+          }
+        }
+      }
+    });
+    
+    setCalendarData(calendarData);
   };
 
   const syncWithGoogleCalendar = async (supabaseSlots: any[] = [], quietMode = false) => {
@@ -571,7 +675,54 @@ const CalendarManagement: React.FC = () => {
   };
 
   const handleGoogleSync = async () => {
-    await syncWithGoogleCalendar();
+    if (isGoogleAuthenticated) {
+      try {
+        setIsSyncing(true);
+        const events = await fetchGoogleEvents();
+        const supabase = getSupabaseWithAuth(session?.access_token);
+        
+        const today = startOfDay(new Date());
+        const thirtyDaysLater = addDays(today, 30);
+        
+        const { data: availableSlots, error: availableSlotsError } = await supabase
+          .from('calendar_slots')
+          .select('*')
+          .gte('date', format(today, 'yyyy-MM-dd'))
+          .lte('date', format(thirtyDaysLater, 'yyyy-MM-dd'));
+        
+        if (availableSlotsError) throw new Error(availableSlotsError.message);
+        
+        const { data: bookedSlots, error: bookedSlotsError } = await supabase
+          .from('future_sessions')
+          .select('*, patients(name)')
+          .gte('session_date', format(today, 'yyyy-MM-dd'))
+          .lte('session_date', format(thirtyDaysLater, 'yyyy-MM-dd'));
+        
+        if (bookedSlotsError) throw new Error(bookedSlotsError.message);
+        
+        processCalendarDataWithGoogleEvents(availableSlots || [], bookedSlots || [], events);
+        
+        toast({
+          title: 'סנכרון יומן Google הצליח',
+          description: `סונכרנו ${events.length} אירועים מיומן Google`,
+        });
+      } catch (error: any) {
+        console.error('Error syncing with Google Calendar:', error);
+        toast({
+          title: 'שגיאה בסנכרון יומן Google',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } finally {
+        setIsSyncing(false);
+      }
+    } else {
+      toast({
+        title: 'אינך מחובר/ת ליומן Google',
+        description: 'יש להתחבר תחילה כדי לסנכרן את היומן',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleAddRecurringAvailability = async (rule: any) => {
@@ -673,18 +824,17 @@ const CalendarManagement: React.FC = () => {
 
   useEffect(() => {
     fetchAvailabilityData();
-  }, [currentDate]);
+  }, [currentDate, googleEvents]);
 
   useEffect(() => {
-    if (settings?.apiKey && settings?.calendarId && !isGoogleSynced && isInitialLoadComplete) {
-      console.log('Auto-syncing with Google Calendar on initial load');
-      syncWithGoogleCalendar([], true);
+    if (isGoogleAuthenticated && googleEvents.length > 0) {
+      fetchAvailabilityData();
     }
-  }, [settings, isInitialLoadComplete, isGoogleSynced]);
+  }, [isGoogleAuthenticated, googleEvents.length]);
 
   useEffect(() => {
-    setIsLoading(isSyncing || isLoadingSettings);
-  }, [isSyncing, isLoadingSettings]);
+    setIsLoading(isSyncing || isLoadingSettings || isLoadingGoogleEvents);
+  }, [isSyncing, isLoadingSettings, isLoadingGoogleEvents]);
 
   return (
     <AdminLayout title="ניהול זמינות יומן">
@@ -692,11 +842,25 @@ const CalendarManagement: React.FC = () => {
         <div className="flex flex-col space-y-4">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-900">ניהול זמינות יומן</h1>
-            <GoogleCalendarSync 
-              onSyncClick={handleGoogleSync} 
-              isLoading={isSyncing || isLoadingSettings} 
-              settingsError={settingsError}
-            />
+            <div className="flex items-center gap-2">
+              <GoogleOAuthButton 
+                isAuthenticated={isGoogleAuthenticated}
+                isAuthenticating={isGoogleAuthenticating}
+                onSignIn={signInWithGoogle}
+                onSignOut={signOutFromGoogle}
+              />
+              {isGoogleAuthenticated && (
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={handleGoogleSync}
+                  disabled={isSyncing || isLoadingGoogleEvents}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span>רענן יומן</span>
+                </Button>
+              )}
+            </div>
           </div>
           
           <Separator className="my-4" />
@@ -709,37 +873,24 @@ const CalendarManagement: React.FC = () => {
             />
           )}
           
-          {settingsError && (
+          {googleAuthError && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>שגיאה בהגדרות Google Calendar</AlertTitle>
+              <AlertTitle>שגיאה בהתחברות ליומן Google</AlertTitle>
               <AlertDescription>
-                לא ניתן לטעון את הגדרות יומן Google: {settingsError}
+                {googleAuthError}
               </AlertDescription>
             </Alert>
           )}
           
-          {syncComparison && (
+          {isGoogleAuthenticated && googleEvents.length > 0 && (
             <Alert className="mb-4 bg-blue-50 border-blue-200">
               <div className="flex items-center space-x-2 rtl:space-x-reverse">
                 <CalendarIcon className="h-4 w-4 text-blue-600" />
-                <AlertTitle className="text-blue-600">סטטוס סנכרון יומן</AlertTitle>
+                <AlertTitle className="text-blue-600">מצב יומן Google</AlertTitle>
               </div>
               <AlertDescription className="mt-2 text-sm">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                  <div className="bg-white p-2 rounded border border-blue-200">
-                    <p className="font-semibold text-blue-700">תואמים: {syncComparison.matchingEvents.length}</p>
-                    <p className="text-xs text-gray-600">אירועים שקיימים בשני היומנים</p>
-                  </div>
-                  <div className="bg-white p-2 rounded border border-orange-200">
-                    <p className="font-semibold text-orange-700">רק ב-Google: {syncComparison.onlyInGoogle.length}</p>
-                    <p className="text-xs text-gray-600">אירועים שקיימים רק ביומן Google</p>
-                  </div>
-                  <div className="bg-white p-2 rounded border border-blue-200">
-                    <p className="font-semibold text-blue-700">רק ב-Supabase: {syncComparison.onlyInSupabase.length}</p>
-                    <p className="text-xs text-gray-600">משבצות שקיימות רק במסד הנתונים</p>
-                  </div>
-                </div>
+                <p>מחובר ליומן Google. נטענו {googleEvents.length} אירועים.</p>
               </AlertDescription>
             </Alert>
           )}

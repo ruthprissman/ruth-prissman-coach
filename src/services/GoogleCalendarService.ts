@@ -2,6 +2,9 @@
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { addDays, format } from 'date-fns';
 
+// This service is now optional as we're using OAuth2 for Google Calendar integration
+// It remains for API key-based authentication if needed
+
 export interface GoogleCalendarSyncResult {
   events: GoogleCalendarEvent[];
   logs: string[];
