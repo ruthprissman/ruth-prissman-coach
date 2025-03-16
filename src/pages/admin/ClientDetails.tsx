@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, formatDistance, isAfter, subHours } from 'date-fns';
@@ -608,11 +607,6 @@ const ClientDetails: React.FC = () => {
                                   {getMeetingTypeIcon(session.meeting_type)}
                                   <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
                                 </div>
-                                {session.notes && (
-                                  <div className="text-sm mt-2 text-gray-600">
-                                    {session.notes}
-                                  </div>
-                                )}
                               </div>
                               
                               <div className="flex flex-col gap-2">
@@ -949,3 +943,4 @@ const ClientDetails: React.FC = () => {
 };
 
 export default ClientDetails;
+

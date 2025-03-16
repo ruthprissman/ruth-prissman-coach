@@ -110,7 +110,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
         ...prev,
         session_date: fsDate,
         meeting_type: fromFutureSession.meeting_type,
-        summary: fromFutureSession.notes || null,
+        summary: null, // Since notes no longer exists in FutureSession
       }));
     }
   }, [fromFutureSession]);

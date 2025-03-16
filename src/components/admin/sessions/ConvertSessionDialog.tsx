@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { FutureSession } from '@/types/session';
@@ -56,7 +55,7 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
   const form = useForm<SessionFormValues>({
     resolver: zodResolver(sessionSchema),
     defaultValues: {
-      summaryNotes: session.notes || '',
+      summaryNotes: '',
       paid: 'unpaid',
       paidAmount: patient.session_price ? patient.session_price.toString() : '',
       paymentMethod: 'cash',

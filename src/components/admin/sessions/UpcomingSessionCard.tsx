@@ -1,150 +1,114 @@
 
-import React, { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React from 'react';
+import { format } from 'date-fns';
+import { he } from 'date-fns/locale/he';
 import { FutureSession } from '@/types/session';
-import { Patient } from '@/types/patient';
-import { format, isPast, isFuture, isToday } from 'date-fns';
-import { Video, Phone, User, Calendar, Clock, X, MoreHorizontal } from 'lucide-react';
-import DeleteSessionDialog from './DeleteSessionDialog';
-import { formatDateInIsraelTimeZone, calculateSessionEndTime } from '@/utils/dateUtils';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { 
+  Calendar, Monitor, Phone, User, 
+  AlertTriangle, RefreshCw, History
+} from 'lucide-react';
 
 interface UpcomingSessionCardProps {
   session: FutureSession;
-  patient?: Patient | null;
-  onDelete?: () => void;
-  onEdit?: () => void;
-  onConvert?: () => void;
-  showControls?: boolean;
-  showPatientLink?: boolean;
+  isOverdue: boolean;
+  onMoveToHistorical: (session: FutureSession) => void;
+  onConvertSession: (session: FutureSession) => void;
 }
-
-export const getStatusClass = (session: FutureSession) => {
-  if (!session.session_date) return 'bg-gray-50';
-  
-  const sessionDate = new Date(session.session_date);
-  
-  if (isPast(sessionDate) && !isToday(sessionDate)) {
-    return 'bg-red-50 border-red-300';
-  } else if (isToday(sessionDate)) {
-    return 'bg-blue-50 border-blue-300';
-  } else if (isFuture(sessionDate)) {
-    return 'bg-green-50 border-green-300';
-  }
-  return 'bg-gray-50';
-};
-
-const SessionTypeIcon = ({ type }: { type: string }) => {
-  switch (type) {
-    case 'Zoom':
-      return <Video className="h-4 w-4 text-blue-600" />;
-    case 'Phone':
-      return <Phone className="h-4 w-4 text-green-600" />;
-    case 'In-Person':
-      return <User className="h-4 w-4 text-purple-600" />;
-    default:
-      return null;
-  }
-};
 
 const UpcomingSessionCard: React.FC<UpcomingSessionCardProps> = ({
   session,
-  patient,
-  onDelete,
-  onEdit,
-  onConvert,
-  showControls = true,
-  showPatientLink = true
+  isOverdue,
+  onMoveToHistorical,
+  onConvertSession
 }) => {
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  // Format the date for display
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: he });
+    } catch (e) {
+      return dateString;
+    }
+  };
 
-  // Format session date using Israel timezone
-  const formattedDate = formatDateInIsraelTimeZone(session.session_date, 'PPP');
-  const formattedTime = formatDateInIsraelTimeZone(session.session_date, 'HH:mm');
-  const endTime = calculateSessionEndTime(session.session_date);
-  
-  // Get the CSS class based on session status
-  const statusClass = getStatusClass(session);
+  // Get meeting type icon
+  const getMeetingTypeIcon = (type: string) => {
+    switch (type) {
+      case 'Zoom':
+        return <Monitor className="h-4 w-4 text-purple-700" />;
+      case 'Phone':
+        return <Phone className="h-4 w-4 text-purple-700" />;
+      case 'In-Person':
+        return <User className="h-4 w-4 text-purple-700" />;
+      default:
+        return null;
+    }
+  };
+
+  // Get meeting type text
+  const getMeetingTypeText = (type: string) => {
+    switch (type) {
+      case 'Zoom':
+        return 'זום';
+      case 'Phone':
+        return 'טלפון';
+      case 'In-Person':
+        return 'פגישה פרונטית';
+      default:
+        return type;
+    }
+  };
 
   return (
-    <Card className={`p-4 border shadow-sm ${statusClass}`}>
+    <div 
+      className={`p-3 rounded-md border ${isOverdue 
+        ? 'bg-red-50 border-red-200' 
+        : 'bg-purple-50 border-purple-200'}`}
+    >
       <div className="flex justify-between items-start">
-        <div className="space-y-2 flex-1">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-500" />
-            <span className="font-medium">{formattedDate}</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-gray-500" />
-            <span>{formattedTime} - {endTime}</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <SessionTypeIcon type={session.meeting_type} />
-            <span className="text-sm">{session.meeting_type}</span>
-          </div>
-          
-          {patient && (
-            <div className="mt-3 text-sm font-medium">
-              {showPatientLink ? (
-                <a
-                  href={`/admin/clients/${patient.id}`}
-                  className="text-blue-600 hover:underline"
-                >
-                  {patient.name}
-                </a>
-              ) : (
-                <span>{patient.name}</span>
-              )}
+        <div className="flex flex-col">
+          <div className="flex items-center">
+            {isOverdue && (
+              <AlertTriangle className="h-4 w-4 text-red-500 ml-1" />
+            )}
+            <div className="font-medium">
+              {formatDate(session.session_date)}
             </div>
-          )}
-          
-          {session.notes && (
-            <div className="mt-1 text-sm text-gray-500">{session.notes}</div>
-          )}
+          </div>
+          <div className="flex items-center mt-1 text-sm text-gray-600">
+            {getMeetingTypeIcon(session.meeting_type)}
+            <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
+          </div>
+          {/* Removed notes section as it's no longer part of FutureSession */}
         </div>
         
-        {showControls && (
-          <div className="flex flex-col gap-2">
-            {onEdit && (
-              <Button variant="ghost" size="sm" onClick={onEdit} className="h-8 px-2">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            )}
-            
-            {onDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setDeleteDialogOpen(true)}
-                className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-      
-      {onConvert && (
-        <div className="mt-3 pt-3 border-t">
-          <Button variant="outline" size="sm" onClick={onConvert} className="w-full">
-            המר לפגישה
+        <div className="flex flex-col gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-purple-300 hover:bg-purple-50 text-purple-700"
+            onClick={() => onMoveToHistorical(session)}
+          >
+            <History className="h-3 w-3 ml-1 text-purple-600" />
+            העבר לפגישה היסטורית
           </Button>
+          
+          {isOverdue && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-amber-300 hover:bg-amber-50 text-amber-700"
+              onClick={() => onConvertSession(session)}
+            >
+              <RefreshCw className="h-3 w-3 ml-1 text-amber-600" />
+              המר לפגישה שהושלמה
+            </Button>
+          )}
         </div>
-      )}
-      
-      {onDelete && (
-        <DeleteSessionDialog
-          open={deleteDialogOpen}
-          onOpenChange={setDeleteDialogOpen}
-          session={session}
-          onConfirm={onDelete}
-          formatDate={formatDateInIsraelTimeZone}
-        />
-      )}
-    </Card>
+      </div>
+    </div>
   );
 };
 
