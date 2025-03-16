@@ -17,6 +17,7 @@ import { RecurringAvailabilityDialog } from '@/components/admin/calendar/Recurri
 import { GoogleCalendarSync } from '@/components/admin/calendar/GoogleCalendarSync';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Calendar as CalendarIcon, AlertCircle } from 'lucide-react';
+import DebugLogPanel from '@/components/admin/calendar/DebugLogPanel';
 
 const CalendarManagement: React.FC = () => {
   const { user, session } = useAuth();
@@ -27,6 +28,8 @@ const CalendarManagement: React.FC = () => {
   const [isGoogleSynced, setIsGoogleSynced] = useState<boolean>(false);
   const [recurringDialogOpen, setRecurringDialogOpen] = useState<boolean>(false);
   const [tableExists, setTableExists] = useState<boolean>(true);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [showDebugLogs, setShowDebugLogs] = useState<boolean>(false);
 
   const hours = Array.from({ length: 16 }, (_, i) => {
     const hour = i + 8;
@@ -362,7 +365,12 @@ const CalendarManagement: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  const handleGoogleSync = async (success: boolean) => {
+  const handleGoogleSync = async (success: boolean, logs?: string[]) => {
+    if (logs && logs.length > 0) {
+      setDebugLogs(logs);
+      setShowDebugLogs(true);
+    }
+    
     if (success) {
       setIsGoogleSynced(true);
       await fetchAvailabilityData();
@@ -370,6 +378,9 @@ const CalendarManagement: React.FC = () => {
         title: 'סינכרון יומן גוגל הושלם בהצלחה!',
         description: 'היומן סונכרן בהצלחה והאירועים הפרטיים נטענו',
       });
+      setTimeout(() => {
+        setShowDebugLogs(false);
+      }, 2000);
     }
   };
 
@@ -510,7 +521,15 @@ const CalendarManagement: React.FC = () => {
           
           <Separator className="my-4" />
           
-          {!tableExists ? (
+          {showDebugLogs && (
+            <DebugLogPanel 
+              logs={debugLogs} 
+              onClose={() => setShowDebugLogs(false)}
+              title="יומן סנכרון Google Calendar" 
+            />
+          )}
+          
+          {!tableExists && !showDebugLogs ? (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>טבלת היומן חסרה</AlertTitle>
