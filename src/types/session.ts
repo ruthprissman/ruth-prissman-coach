@@ -9,6 +9,8 @@ export interface FutureSession {
   id: number;
   patient_id: number;
   scheduled_date: string;
+  start_time: string;
+  end_time?: string;
   meeting_type: 'Zoom' | 'Phone' | 'In-Person';
   notes: string | null;
 }

@@ -113,11 +113,12 @@ const CalendarManagement: React.FC = () => {
       }
       
       // 2. Fetch booked appointments from future_sessions
+      // Updated to use scheduled_date and start_time instead of date
       const { data: bookedSlots, error: bookedSlotsError } = await supabase
         .from('future_sessions')
         .select('*')
-        .gte('date', format(today, 'yyyy-MM-dd'))
-        .lte('date', format(thirtyDaysLater, 'yyyy-MM-dd'));
+        .gte('scheduled_date', format(today, 'yyyy-MM-dd'))
+        .lte('scheduled_date', format(thirtyDaysLater, 'yyyy-MM-dd'));
       
       if (bookedSlotsError) {
         throw new Error(bookedSlotsError.message);
@@ -192,10 +193,14 @@ const CalendarManagement: React.FC = () => {
       }
     });
     
-    // Add booked slots
+    // Add booked slots - UPDATED to use scheduled_date and start_time
     bookedSlots.forEach(session => {
-      const sessionDate = format(new Date(session.date), 'yyyy-MM-dd');
-      const sessionTime = session.start_time;
+      // Extract the date part from scheduled_date
+      const sessionDate = format(new Date(session.scheduled_date), 'yyyy-MM-dd');
+      
+      // Extract the time part from the timestamp or use a default
+      // Assuming start_time is a string like "09:00" or null
+      const sessionTime = session.start_time || '00:00';
       
       const dayMap = calendarData.get(sessionDate);
       if (dayMap && dayMap.has(sessionTime)) {

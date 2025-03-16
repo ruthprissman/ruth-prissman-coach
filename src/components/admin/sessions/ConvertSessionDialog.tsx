@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -55,7 +56,13 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
 
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: he });
+      // We now have separate date and time fields
+      const date = new Date(dateString);
+      if (futureSession.start_time) {
+        const [hours, minutes] = futureSession.start_time.split(':');
+        date.setHours(parseInt(hours, 10), parseInt(minutes, 10));
+      }
+      return format(date, 'dd/MM/yyyy HH:mm', { locale: he });
     } catch (e) {
       return dateString;
     }
@@ -77,13 +84,14 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
   const handleConvert = async () => {
     setIsSubmitting(true);
     try {
-      // Create new completed session
+      // Create new completed session with correct scheduled_date and start_time
       const { data: sessionData, error: sessionError } = await supabase
         .from('sessions')
         .insert([
           {
             patient_id: patientId,
             session_date: futureSession.scheduled_date,
+            session_time: futureSession.start_time,
             meeting_type: futureSession.meeting_type,
             sent_exercises: sentExercises,
             exercise_list: exerciseList.length > 0 ? exerciseList : null,
