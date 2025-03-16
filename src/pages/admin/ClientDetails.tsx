@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, formatDistance, isAfter, subHours } from 'date-fns';
@@ -44,6 +43,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import SessionEditDialog from '@/components/admin/SessionEditDialog';
 import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog';
@@ -671,52 +676,81 @@ const ClientDetails: React.FC = () => {
                                     <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
                                   </div>
                                 </div>
-                              </div>
-                              
-                              <div className="flex flex-col gap-2">
-                                <div className="flex flex-wrap gap-2 md:justify-end">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-purple-300 hover:bg-purple-50 text-purple-700 flex-1 md:flex-auto"
-                                    onClick={() => handleEditFutureSession(session)}
-                                  >
-                                    <Pencil className="h-3 w-3 ml-1 text-purple-600" />
-                                    עריכת פגישה
-                                  </Button>
-                                  
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-red-300 hover:bg-red-50 text-red-700 flex-1 md:flex-auto"
-                                    onClick={() => handleDeleteFutureSessionConfirm(session)}
-                                  >
-                                    <Trash2 className="h-3 w-3 ml-1 text-red-600" />
-                                    מחיקת פגישה
-                                  </Button>
-                                </div>
                                 
-                                <div className="flex flex-wrap gap-2 md:justify-end">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="border-purple-300 hover:bg-purple-50 text-purple-700 flex-1 md:flex-auto"
-                                    onClick={() => handleMoveToHistorical(session)}
-                                  >
-                                    <History className="h-3 w-3 ml-1 text-purple-600" />
-                                    העבר לפגישה היסטורית
-                                  </Button>
+                                {/* Action icons with tooltips */}
+                                <div className="flex gap-1.5">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-purple-600 hover:bg-purple-100 hover:text-purple-800"
+                                          onClick={() => handleEditFutureSession(session)}
+                                        >
+                                          <Pencil className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>עריכת פגישה</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-red-600 hover:bg-red-100 hover:text-red-800"
+                                          onClick={() => handleDeleteFutureSessionConfirm(session)}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>מחיקת פגישה</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-purple-600 hover:bg-purple-100 hover:text-purple-800"
+                                          onClick={() => handleMoveToHistorical(session)}
+                                        >
+                                          <History className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>העבר לפגישה היסטורית</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                   
                                   {isOverdue && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="border-amber-300 hover:bg-amber-50 text-amber-700 flex-1 md:flex-auto"
-                                      onClick={() => handleConvertSession(session)}
-                                    >
-                                      <RefreshCw className="h-3 w-3 ml-1 text-amber-600" />
-                                      המר לפגישה שהושלמה
-                                    </Button>
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-amber-600 hover:bg-amber-100 hover:text-amber-800"
+                                            onClick={() => handleConvertSession(session)}
+                                          >
+                                            <RefreshCw className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>המר לפגישה שהושלמה</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   )}
                                 </div>
                               </div>
@@ -844,212 +878,3 @@ const ClientDetails: React.FC = () => {
                                   <Edit className="h-4 w-4 ml-1 text-purple-600" />
                                   ערוך
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteSessionConfirm(session);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 ml-1 text-red-600" />
-                                  מחק
-                                </Button>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {expandedSessionId === session.id ? 
-                                <ChevronUp className="h-4 w-4 text-purple-600" /> : 
-                                <ChevronDown className="h-4 w-4 text-purple-600" />
-                              }
-                            </TableCell>
-                          </TableRow>
-                          
-                          {/* Expanded session details */}
-                          {expandedSessionId === session.id && (
-                            <TableRow className="bg-purple-50">
-                              <TableCell colSpan={6} className="p-0">
-                                <SessionDetailCollapsible
-                                  session={session}
-                                  isExpanded={expandedSessionId === session.id}
-                                  onToggle={() => toggleExpandSession(session.id)}
-                                  formatDateOnly={formatDateOnly}
-                                  getPaymentMethodText={getPaymentMethodText}
-                                  client={client}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Card>
-              )}
-            </div>
-            
-            {/* Edit client dialog */}
-            <Dialog open={isEditClientDialogOpen} onOpenChange={setIsEditClientDialogOpen}>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="text-center text-purple-800">עריכת פרטי לקוח</DialogTitle>
-                </DialogHeader>
-                
-                {editFormData && (
-                  <div className="space-y-4 py-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-purple-700">שם מלא</Label>
-                      <Input 
-                        id="name" 
-                        value={editFormData.name} 
-                        onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
-                        className="border-purple-200 focus-visible:ring-purple-500"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-purple-700">טלפון</Label>
-                      <Input 
-                        id="phone" 
-                        value={editFormData.phone || ''} 
-                        onChange={(e) => setEditFormData({...editFormData, phone: e.target.value || null})}
-                        className="border-purple-200 focus-visible:ring-purple-500"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-purple-700">אימייל</Label>
-                      <Input 
-                        id="email" 
-                        type="email"
-                        value={editFormData.email || ''} 
-                        onChange={(e) => setEditFormData({...editFormData, email: e.target.value || null})}
-                        className="border-purple-200 focus-visible:ring-purple-500"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="session_price" className="text-purple-700">מחיר לפגישה (₪)</Label>
-                      <Input 
-                        id="session_price" 
-                        type="number"
-                        value={editFormData.session_price === null ? '' : editFormData.session_price} 
-                        onChange={(e) => {
-                          const value = e.target.value === '' ? null : Number(e.target.value);
-                          setEditFormData({...editFormData, session_price: value});
-                        }}
-                        className="border-purple-200 focus-visible:ring-purple-500"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="notes" className="text-purple-700">הערות</Label>
-                      <Textarea 
-                        id="notes" 
-                        value={editFormData.notes || ''} 
-                        onChange={(e) => setEditFormData({...editFormData, notes: e.target.value || null})}
-                        className="border-purple-200 focus-visible:ring-purple-500 min-h-[100px]"
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
-                  <Button 
-                    onClick={handleUpdateClient}
-                    disabled={isSubmitting}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    {isSubmitting ? 'מעדכן...' : 'עדכן פרטים'}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsEditClientDialogOpen(false)}
-                    className="border-purple-200 text-purple-700 hover:bg-purple-50"
-                  >
-                    ביטול
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            
-            {/* Delete session dialog */}
-            <DeleteSessionDialog 
-              open={isDeleteSessionDialogOpen}
-              onOpenChange={setIsDeleteSessionDialogOpen}
-              session={sessionToDelete}
-              onConfirm={handleDeleteSession}
-              formatDate={formatDate}
-            />
-            
-            {/* Delete future session dialog */}
-            <DeleteFutureSessionDialog 
-              open={isDeleteFutureSessionDialogOpen}
-              onOpenChange={setIsDeleteFutureSessionDialogOpen}
-              session={futureSessionToDelete}
-              onConfirm={handleDeleteFutureSessionExecute}
-              formatDate={formatDate}
-            />
-            
-            {/* Convert session dialog */}
-            {sessionToConvert && (
-              <ConvertSessionDialog
-                open={isConvertSessionDialogOpen}
-                onOpenChange={setIsConvertSessionDialogOpen}
-                session={sessionToConvert}
-                patient={client}
-                onSessionConverted={handleSessionConverted}
-              />
-            )}
-            
-            {/* New future session dialog */}
-            <NewFutureSessionDialog
-              open={isNewFutureSessionDialogOpen}
-              onOpenChange={setIsNewFutureSessionDialogOpen}
-              patientId={Number(id)}
-              onSessionCreated={handleFutureSessionCreated}
-            />
-            
-            {/* Edit future session dialog */}
-            {futureSessionToEdit && (
-              <EditFutureSessionDialog
-                open={isEditFutureSessionDialogOpen}
-                onOpenChange={setIsEditFutureSessionDialogOpen}
-                session={futureSessionToEdit}
-                onSessionUpdated={handleFutureSessionUpdated}
-              />
-            )}
-            
-            {/* New historical session dialog */}
-            <NewHistoricalSessionDialog
-              open={isNewHistoricalSessionDialogOpen}
-              onOpenChange={setIsNewHistoricalSessionDialogOpen}
-              patientId={Number(id)}
-              patient={client}
-              onSessionCreated={handleHistoricalSessionCreated}
-            />
-            
-            {/* Move to historical dialog */}
-            {futureSessionToMove && (
-              <NewHistoricalSessionDialog
-                open={isMoveToHistoricalDialogOpen}
-                onOpenChange={(open) => {
-                  setIsMoveToHistoricalDialogOpen(open);
-                  if (!open) setFutureSessionToMove(null);
-                }}
-                patientId={Number(id)}
-                patient={client}
-                onSessionCreated={handleHistoricalSessionCreated}
-                fromFutureSession={futureSessionToMove}
-                onDeleteFutureSession={handleDeleteFutureSession}
-              />
-            )}
-          </div>
-        )}
-      </div>
-    </AdminLayout>
-  );
-};
-
-export default ClientDetails;
