@@ -23,7 +23,7 @@ export async function fetchGoogleCalendarEvents(
     const timeMax = thirtyDaysLater.toISOString();
     
     const encodedCalendarId = encodeURIComponent(calendarId);
-    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodedCalendarId}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&key=${apiKey}`;
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodedCalendarId}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&key=${apiKey}`;
     
     logs.push(`${new Date().toISOString()} - בקשת API נשלחה: ${url}`);
     
@@ -37,7 +37,16 @@ export async function fetchGoogleCalendarEvents(
     const data = await response.json();
     logs.push(`${new Date().toISOString()} - התקבלו ${data.items?.length || 0} אירועים מיומן Google`);
     
-    const events: GoogleCalendarEvent[] = data.items || [];
+    const events: GoogleCalendarEvent[] = data.items?.map((item: any) => ({
+      id: item.id,
+      summary: item.summary || 'אירוע ללא כותרת',
+      description: item.description || '',
+      start: item.start,
+      end: item.end,
+      status: item.status || 'confirmed',
+      syncStatus: 'google-only'
+    })) || [];
+    
     logs.push(`${new Date().toISOString()} - עיבוד אירועים הסתיים בהצלחה`);
     
     return {

@@ -8,7 +8,7 @@ import { TabsContent, Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TimeSlot, CalendarSlot, GoogleCalendarEvent, CalendarSyncComparison } from '@/types/calendar';
 import { getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { addDays, format, startOfWeek, startOfDay, addWeeks, addMinutes } from 'date-fns';
+import { addDays, format, startOfWeek, startOfDay, addWeeks, addMinutes, parseISO } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -364,11 +364,15 @@ const CalendarManagement: React.FC = () => {
         const dayMap = calendarData.get(googleDate);
         if (dayMap && dayMap.has(googleTime)) {
           const existingSlot = dayMap.get(googleTime);
+          const endTime = new Date(event.end.dateTime);
+          const formattedEndTime = format(endTime, 'HH:mm');
           
           dayMap.set(googleTime, {
             ...existingSlot!,
-            status: 'private',
+            status: 'booked',
             notes: event.summary || 'אירוע Google',
+            description: event.description,
+            fromGoogle: true,
             syncStatus: 'google-only'
           });
         }
@@ -388,18 +392,21 @@ const CalendarManagement: React.FC = () => {
         
         const dayMap = calendarData.get(sessionDate);
         if (dayMap && dayMap.has(sessionTime)) {
-          const endTime = addMinutes(sessionDateTime, 90);
-          const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
-          
-          let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
-          if (session.status === 'completed') status = 'completed';
-          if (session.status === 'canceled') status = 'canceled';
-          
-          dayMap.set(sessionTime, {
-            ...dayMap.get(sessionTime)!,
-            status,
-            notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`
-          });
+          const existingSlot = dayMap.get(sessionTime);
+          if (!existingSlot?.fromGoogle) {
+            const endTime = addMinutes(sessionDateTime, 90);
+            const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
+            
+            let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
+            if (session.status === 'completed') status = 'completed';
+            if (session.status === 'canceled') status = 'canceled';
+            
+            dayMap.set(sessionTime, {
+              ...dayMap.get(sessionTime)!,
+              status,
+              notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`
+            });
+          }
         }
       } catch (error) {
         console.error('Error processing session date:', error);
@@ -549,7 +556,7 @@ const CalendarManagement: React.FC = () => {
     } catch (error: any) {
       console.error('Error updating time slot:', error);
       toast({
-        title: 'שגיאה בעדכון משבצת הזמן',
+        title: 'שגיאה בעדכון מש��צת הזמן',
         description: error.message,
         variant: 'destructive',
       });

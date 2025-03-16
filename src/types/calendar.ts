@@ -15,6 +15,8 @@ export interface CalendarSlot {
   hour: string;
   status: 'available' | 'private' | 'unspecified' | 'booked' | 'completed' | 'canceled';
   notes?: string;
+  description?: string; // For Google Calendar event description
+  fromGoogle?: boolean; // Flag to indicate if this came from Google Calendar
   syncStatus?: 'synced' | 'google-only' | 'supabase-only';
 }
 
@@ -39,6 +41,7 @@ export interface RecurringRule {
 export interface GoogleCalendarEvent {
   id: string;
   summary: string;
+  description?: string;
   start: {
     dateTime: string;
     timeZone?: string;
@@ -47,7 +50,6 @@ export interface GoogleCalendarEvent {
     dateTime: string;
     timeZone?: string;
   };
-  description?: string;
   status?: string;
   syncStatus?: 'synced' | 'google-only';
 }

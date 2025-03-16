@@ -5,9 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { format, isToday, isTomorrow, addDays, addMinutes } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
-import { Calendar, Clock, Check, X, Lock } from 'lucide-react';
+import { Calendar, Clock, Check, X, Lock, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CalendarListViewProps {
   calendarData: Map<string, Map<string, CalendarSlot>>;
@@ -74,7 +80,16 @@ const CalendarListView: React.FC<CalendarListViewProps> = ({
   };
   
   // Get badge color and text for status
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, fromGoogle?: boolean) => {
+    // Handle Google Calendar events with specified colors
+    if (fromGoogle || status === 'booked' && fromGoogle) {
+      return { 
+        variant: 'outline' as const, 
+        color: 'text-[#CFB53B] border-[#5C4C8D] bg-[#5C4C8D]', 
+        text: 'תפוס (Google)' 
+      };
+    }
+    
     switch (status) {
       case 'available':
         return { variant: 'outline' as const, color: 'text-purple-600 border-purple-400 bg-purple-50', text: 'זמין' };
@@ -112,85 +127,107 @@ const CalendarListView: React.FC<CalendarListViewProps> = ({
   }
   
   return (
-    <div className="space-y-6">
-      {groupedSlots.map(([date, dateSlots]) => (
-        <Card key={date} className="overflow-hidden border-purple-200">
-          <div className="bg-purple-100 px-4 py-3 font-medium flex items-center justify-between">
-            <div className="flex items-center">
-              <Calendar className="h-5 w-5 mr-2 text-purple-700" />
-              <span>{formatDateForDisplay(date)} ({format(new Date(date), 'dd/MM/yyyy')})</span>
+    <TooltipProvider>
+      <div className="space-y-6">
+        {groupedSlots.map(([date, dateSlots]) => (
+          <Card key={date} className="overflow-hidden border-purple-200">
+            <div className="bg-purple-100 px-4 py-3 font-medium flex items-center justify-between">
+              <div className="flex items-center">
+                <Calendar className="h-5 w-5 mr-2 text-purple-700" />
+                <span>{formatDateForDisplay(date)} ({format(new Date(date), 'dd/MM/yyyy')})</span>
+              </div>
+              <span className="text-sm text-purple-700">
+                {dateSlots.filter(s => s.status === 'available').length} משבצות זמינות
+              </span>
             </div>
-            <span className="text-sm text-purple-700">
-              {dateSlots.filter(s => s.status === 'available').length} משבצות זמינות
-            </span>
-          </div>
-          <CardContent className="p-0">
-            <div className="divide-y">
-              {dateSlots.map((slot, index) => {
-                const statusBadge = getStatusBadge(slot.status);
-                
-                // Calculate end time for each slot (90 minutes from hour)
-                const [hourStr, minutesStr] = slot.hour.split(':');
-                const slotStart = new Date();
-                slotStart.setHours(parseInt(hourStr, 10), parseInt(minutesStr || '0', 10), 0, 0);
-                const slotEnd = addMinutes(slotStart, 90);
-                const endTimeDisplay = format(slotEnd, 'HH:mm');
-                
-                return (
-                  <div key={`${slot.date}-${slot.hour}-${index}`} className="p-4 flex items-center justify-between">
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-2 text-gray-500" />
-                      <span className="font-medium">{slot.hour} - {endTimeDisplay}</span>
-                      {slot.notes && (
-                        <span className="ml-2 text-sm text-gray-500">({slot.notes})</span>
-                      )}
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {dateSlots.map((slot, index) => {
+                  const statusBadge = getStatusBadge(slot.status, slot.fromGoogle);
+                  
+                  // Calculate end time for each slot (90 minutes from hour)
+                  const [hourStr, minutesStr] = slot.hour.split(':');
+                  const slotStart = new Date();
+                  slotStart.setHours(parseInt(hourStr, 10), parseInt(minutesStr || '0', 10), 0, 0);
+                  const slotEnd = addMinutes(slotStart, 90);
+                  const endTimeDisplay = format(slotEnd, 'HH:mm');
+                  
+                  const slotContent = (
+                    <div className="p-4 flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2 text-gray-500" />
+                        <span className="font-medium">{slot.hour} - {endTimeDisplay}</span>
+                        {slot.notes && (
+                          <span className="ml-2 text-sm text-gray-500">({slot.notes})</span>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                        <Badge variant={statusBadge.variant} className={statusBadge.color}>
+                          {statusBadge.text}
+                        </Badge>
+                        
+                        {slot.status !== 'booked' && (
+                          <div className="flex space-x-1 rtl:space-x-reverse">
+                            {slot.status !== 'available' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                onClick={() => onUpdateSlot(slot.date, slot.hour, 'available')}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {slot.status !== 'private' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                onClick={() => onUpdateSlot(slot.date, slot.hour, 'private')}
+                              >
+                                <Lock className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                              onClick={() => onUpdateSlot(slot.date, slot.hour, 'unspecified')}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                      <Badge variant={statusBadge.variant} className={statusBadge.color}>
-                        {statusBadge.text}
-                      </Badge>
-                      
-                      {slot.status !== 'booked' && (
-                        <div className="flex space-x-1 rtl:space-x-reverse">
-                          {slot.status !== 'available' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                              onClick={() => onUpdateSlot(slot.date, slot.hour, 'available')}
-                            >
-                              <Check className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {slot.status !== 'private' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                              onClick={() => onUpdateSlot(slot.date, slot.hour, 'private')}
-                            >
-                              <Lock className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                            onClick={() => onUpdateSlot(slot.date, slot.hour, 'unspecified')}
+                  );
+                  
+                  return (
+                    <div key={`${slot.date}-${slot.hour}-${index}`}>
+                      {slot.description ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            {slotContent}
+                          </TooltipTrigger>
+                          <TooltipContent 
+                            side="bottom"
+                            className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded"
                           >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
+                            {slot.description}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        slotContent
                       )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </TooltipProvider>
   );
 };
 
