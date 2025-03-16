@@ -53,11 +53,14 @@ export function useCalendarSettings() {
           tokenLength: session.access_token.length
         });
         
+        // Making request without Authorization header
+        console.log('Making request to get_calendar_settings without Authorization header');
+        
         const response = await fetch(
           'https://uwqwlltrfvokjlaufguz.supabase.co/functions/v1/get_calendar_settings',
           {
             headers: {
-              Authorization: `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
             },
           }
         );
