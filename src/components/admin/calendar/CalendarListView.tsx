@@ -3,7 +3,7 @@ import React from 'react';
 import { CalendarSlot } from '@/types/calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { format, isToday, isTomorrow, addDays } from 'date-fns';
+import { format, isToday, isTomorrow, addDays, addMinutes } from 'date-fns';
 import { Calendar, Clock, Check, X, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -124,11 +124,18 @@ const CalendarListView: React.FC<CalendarListViewProps> = ({
               {dateSlots.map((slot, index) => {
                 const statusBadge = getStatusBadge(slot.status);
                 
+                // Calculate end time for each slot (90 minutes from hour)
+                const [hourStr, minutesStr] = slot.hour.split(':');
+                const slotStart = new Date();
+                slotStart.setHours(parseInt(hourStr, 10), parseInt(minutesStr || '0', 10), 0, 0);
+                const slotEnd = addMinutes(slotStart, 90);
+                const endTimeDisplay = format(slotEnd, 'HH:mm');
+                
                 return (
                   <div key={`${slot.date}-${slot.hour}-${index}`} className="p-4 flex items-center justify-between">
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-2 text-gray-500" />
-                      <span className="font-medium">{slot.hour}</span>
+                      <span className="font-medium">{slot.hour} - {endTimeDisplay}</span>
                       {slot.notes && (
                         <span className="ml-2 text-sm text-gray-500">({slot.notes})</span>
                       )}

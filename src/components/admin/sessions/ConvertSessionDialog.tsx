@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addMinutes } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { 
   Dialog, 
@@ -81,17 +81,17 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
     setIsSubmitting(true);
     try {
       // Extract session date and time from the timestamp
-      const sessionStartTime = futureSession.start_time;
+      const sessionScheduledAt = futureSession.scheduled_at;
       
-      // Create new completed session with correct start_time
+      // Create new completed session with correct scheduled_at
       const { data: sessionData, error: sessionError } = await supabase
         .from('sessions')
         .insert([
           {
             patient_id: patientId,
-            session_date: sessionStartTime ? new Date(sessionStartTime).toISOString().split('T')[0] : null,
-            session_time: sessionStartTime ? new Date(sessionStartTime).toISOString().split('T')[1].substring(0, 5) : null,
-            meeting_type: futureSession.meeting_type,
+            session_date: sessionScheduledAt ? new Date(sessionScheduledAt).toISOString().split('T')[0] : null,
+            session_time: sessionScheduledAt ? new Date(sessionScheduledAt).toISOString().split('T')[1].substring(0, 5) : null,
+            meeting_type: futureSession.type === 'manual' ? 'In-Person' : 'Zoom',
             sent_exercises: sentExercises,
             exercise_list: exerciseList.length > 0 ? exerciseList : null,
             summary,
@@ -132,6 +132,13 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
     }
   };
 
+  // Calculate end time based on scheduled_at + 90 minutes
+  const getEndTime = (scheduledAt: string) => {
+    const date = new Date(scheduledAt);
+    const endTime = addMinutes(date, 90); // Add 90 minutes (1.5 hours)
+    return format(endTime, 'HH:mm', { locale: he });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -143,7 +150,9 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
           <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
             <p className="text-center text-purple-800">
               המרת הפגישה מתאריך<br />
-              <span className="font-bold">{formatDate(futureSession.start_time)}</span>
+              <span className="font-bold">{formatDate(futureSession.scheduled_at)}</span>
+              <br />
+              <span className="text-sm">שעת סיום: {getEndTime(futureSession.scheduled_at)}</span>
             </p>
           </div>
 

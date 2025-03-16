@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { TimeSlot, CalendarSlot } from '@/types/calendar';
 import { getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { addDays, format, startOfWeek, startOfDay, addWeeks } from 'date-fns';
+import { addDays, format, startOfWeek, startOfDay, addWeeks, addMinutes } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { RecurringAvailabilityDialog } from '@/components/admin/calendar/RecurringAvailabilityDialog';
@@ -103,9 +103,9 @@ const CalendarManagement: React.FC = () => {
       
       const { data: bookedSlots, error: bookedSlotsError } = await supabase
         .from('future_sessions')
-        .select('*')
-        .gte('start_time', format(today, 'yyyy-MM-dd'))
-        .lte('start_time', format(thirtyDaysLater, 'yyyy-MM-dd'));
+        .select('*, patients(name)')
+        .gte('scheduled_at', format(today, 'yyyy-MM-dd'))
+        .lte('scheduled_at', format(thirtyDaysLater, 'yyyy-MM-dd'));
       
       if (bookedSlotsError) {
         throw new Error(bookedSlotsError.message);
@@ -176,18 +176,22 @@ const CalendarManagement: React.FC = () => {
     });
     
     bookedSlots.forEach(session => {
-      if (!session.start_time) return;
+      if (!session.scheduled_at) return;
       
-      const sessionDate = format(new Date(session.start_time), 'yyyy-MM-dd');
-      const hours = new Date(session.start_time).getHours();
+      const sessionDate = format(new Date(session.scheduled_at), 'yyyy-MM-dd');
+      const hours = new Date(session.scheduled_at).getHours();
       const sessionTime = `${String(hours).padStart(2, '0')}:00`;
       
       const dayMap = calendarData.get(sessionDate);
       if (dayMap && dayMap.has(sessionTime)) {
+        // Calculate session end time (scheduled_at + 90 minutes)
+        const endTime = addMinutes(new Date(session.scheduled_at), 90);
+        const formattedEndTime = format(endTime, 'HH:mm');
+        
         dayMap.set(sessionTime, {
           ...dayMap.get(sessionTime)!,
           status: 'booked',
-          notes: `Booked: ${session.patients?.name || 'Unknown patient'}`
+          notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`
         });
       }
     });
