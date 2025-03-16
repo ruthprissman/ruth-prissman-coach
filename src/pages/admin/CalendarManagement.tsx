@@ -11,6 +11,7 @@ import { TimeSlot, CalendarSlot } from '@/types/calendar';
 import { getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { addDays, format, startOfWeek, startOfDay, addWeeks, addMinutes } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { RecurringAvailabilityDialog } from '@/components/admin/calendar/RecurringAvailabilityDialog';
@@ -104,8 +105,8 @@ const CalendarManagement: React.FC = () => {
       const { data: bookedSlots, error: bookedSlotsError } = await supabase
         .from('future_sessions')
         .select('*, patients(name)')
-        .gte('scheduled_at', format(today, 'yyyy-MM-dd'))
-        .lte('scheduled_at', format(thirtyDaysLater, 'yyyy-MM-dd'));
+        .gte('session_date', format(today, 'yyyy-MM-dd'))
+        .lte('session_date', format(thirtyDaysLater, 'yyyy-MM-dd'));
       
       if (bookedSlotsError) {
         throw new Error(bookedSlotsError.message);
@@ -176,23 +177,36 @@ const CalendarManagement: React.FC = () => {
     });
     
     bookedSlots.forEach(session => {
-      if (!session.scheduled_at) return;
+      if (!session.session_date) return;
       
-      const sessionDate = format(new Date(session.scheduled_at), 'yyyy-MM-dd');
-      const hours = new Date(session.scheduled_at).getHours();
-      const sessionTime = `${String(hours).padStart(2, '0')}:00`;
-      
-      const dayMap = calendarData.get(sessionDate);
-      if (dayMap && dayMap.has(sessionTime)) {
-        // Calculate session end time (scheduled_at + 90 minutes)
-        const endTime = addMinutes(new Date(session.scheduled_at), 90);
-        const formattedEndTime = format(endTime, 'HH:mm');
+      try {
+        // Convert to Israel time zone (Asia/Jerusalem)
+        const sessionDateTime = new Date(session.session_date);
+        const israelTime = formatInTimeZone(sessionDateTime, 'Asia/Jerusalem', 'yyyy-MM-dd HH:mm:ss');
         
-        dayMap.set(sessionTime, {
-          ...dayMap.get(sessionTime)!,
-          status: 'booked',
-          notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`
-        });
+        const sessionDate = israelTime.split(' ')[0]; // YYYY-MM-DD
+        const timeParts = israelTime.split(' ')[1].split(':'); // HH:MM:SS
+        const sessionTime = `${timeParts[0]}:00`; // Use only the hour, set minutes to 00
+        
+        const dayMap = calendarData.get(sessionDate);
+        if (dayMap && dayMap.has(sessionTime)) {
+          // Calculate session end time (session_date + 90 minutes)
+          const endTime = addMinutes(sessionDateTime, 90);
+          const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
+          
+          // Get appropriate status color
+          let status = 'booked';
+          if (session.status === 'completed') status = 'completed';
+          if (session.status === 'canceled') status = 'canceled';
+          
+          dayMap.set(sessionTime, {
+            ...dayMap.get(sessionTime)!,
+            status: status,
+            notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`
+          });
+        }
+      } catch (error) {
+        console.error('Error processing session date:', error);
       }
     });
     

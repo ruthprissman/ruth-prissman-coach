@@ -42,7 +42,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       case 'available':
         return { bg: 'bg-green-100', border: 'border-green-300', text: 'זמין לפגישות' };
       case 'booked':
-        return { bg: 'bg-red-100', border: 'border-red-300', text: 'תפוס - פגישה קיימת' };
+        return { bg: 'bg-purple-100', border: 'border-purple-300', text: 'תפוס - פגישה קיימת' };
+      case 'completed':
+        return { bg: 'bg-gray-100', border: 'border-gray-300', text: 'הושלם' };
+      case 'canceled':
+        return { bg: 'bg-red-100', border: 'border-red-300', text: 'בוטל' };
       case 'private':
         return { bg: 'bg-blue-100', border: 'border-blue-300', text: 'זמן פרטי - לא זמין' };
       default:
@@ -117,7 +121,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         onContextMenu={(e) => handleContextMenu(e, day.date, hour, status)}
                       >
                         {status === 'available' && <Check className="h-4 w-4 mx-auto text-green-600" />}
-                        {status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
+                        {status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-purple-600" />}
+                        {status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
+                        {status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
                         {status === 'private' && <Lock className="h-4 w-4 mx-auto text-blue-600" />}
                         {slot?.notes && <span className="text-xs mt-1 block truncate">{slot.notes}</span>}
                       </TableCell>

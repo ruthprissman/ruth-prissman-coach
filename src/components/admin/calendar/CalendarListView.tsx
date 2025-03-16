@@ -4,6 +4,7 @@ import { CalendarSlot } from '@/types/calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { format, isToday, isTomorrow, addDays, addMinutes } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { Calendar, Clock, Check, X, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -78,7 +79,11 @@ const CalendarListView: React.FC<CalendarListViewProps> = ({
       case 'available':
         return { variant: 'outline' as const, color: 'text-green-600 border-green-400 bg-green-50', text: 'זמין' };
       case 'booked':
-        return { variant: 'outline' as const, color: 'text-red-600 border-red-400 bg-red-50', text: 'תפוס' };
+        return { variant: 'outline' as const, color: 'text-purple-600 border-purple-400 bg-purple-50', text: 'תפוס' };
+      case 'completed':
+        return { variant: 'outline' as const, color: 'text-gray-600 border-gray-400 bg-gray-50', text: 'הושלם' };
+      case 'canceled':
+        return { variant: 'outline' as const, color: 'text-red-600 border-red-400 bg-red-50', text: 'בוטל' };
       case 'private':
         return { variant: 'outline' as const, color: 'text-blue-600 border-blue-400 bg-blue-50', text: 'פרטי' };
       default:

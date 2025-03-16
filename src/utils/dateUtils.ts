@@ -193,52 +193,60 @@ export const convertToHebrewDateSync = (date: Date): string => {
 };
 
 /**
- * Converts a local date (Israel time) to UTC for storage
- * @param israelDate Date in Israel time
- * @returns ISO string in UTC
+ * Converts a UTC date to Israel time (Asia/Jerusalem)
+ * @param dateString UTC date string
+ * @returns Date string formatted for Israel time zone
  */
-export const convertIsraelTimeToUTC = (israelDate: Date | null): string | null => {
-  if (!israelDate) return null;
-  // No need for manual conversion since toISOString() already converts to UTC
-  return israelDate.toISOString();
+export const convertToIsraelTime = (dateString: string | null | Date): string | null => {
+  if (!dateString) return null;
+  
+  try {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    const { formatInTimeZone } = require('date-fns-tz');
+    return formatInTimeZone(date, 'Asia/Jerusalem', 'yyyy-MM-dd HH:mm:ss');
+  } catch (error) {
+    console.error('Error converting to Israel time:', error);
+    return null;
+  }
 };
 
 /**
- * Converts a UTC date string to Israel time (UTC+2)
- * @param utcDateString UTC date string from database
- * @returns Date object adjusted to Israel time
- */
-export const convertUTCToIsraelTime = (utcDateString: string | null): Date | null => {
-  if (!utcDateString) return null;
-  
-  // Parse the UTC date
-  const utcDate = new Date(utcDateString);
-  
-  // Use date-fns-tz to convert to Israel time zone
-  // No manual adjustment needed as the library handles DST correctly
-  return utcDate;
-};
-
-/**
- * Formats a date in Israel time zone using date-fns-tz
- * @param date Date to format (can be string or Date object)
- * @param formatString Format string for date-fns
- * @returns Formatted date string in Israel time zone
+ * Formats a date for display in Israel time zone
+ * @param date Date to format (string or Date object)
+ * @param format Format string (default: dd/MM/yyyy HH:mm)
+ * @returns Formatted date string
  */
 export const formatDateInIsraelTimeZone = (
   date: Date | string | null,
-  formatString: string = 'dd/MM/yyyy'
+  formatStr: string = 'dd/MM/yyyy HH:mm'
 ): string => {
   if (!date) return '';
   
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
   try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
     const { formatInTimeZone } = require('date-fns-tz');
-    return formatInTimeZone(dateObj, 'Asia/Jerusalem', formatString, { locale: require('date-fns/locale/he') });
+    return formatInTimeZone(dateObj, 'Asia/Jerusalem', formatStr, { locale: require('date-fns/locale/he') });
   } catch (error) {
     console.error('Error formatting date in Israel time zone:', error);
-    // Fallback to default formatting
-    return dateObj.toLocaleDateString('he-IL');
+    // Fallback to simple format
+    return new Date(date).toLocaleDateString('he-IL');
+  }
+};
+
+/**
+ * Calculates the end time 90 minutes after the start time
+ * @param startTime The session start time
+ * @returns Formatted end time string
+ */
+export const calculateSessionEndTime = (startTime: string | Date): string => {
+  try {
+    const startDate = typeof startTime === 'string' ? new Date(startTime) : startTime;
+    const endTime = new Date(startDate.getTime() + 90 * 60000); // Add 90 minutes in milliseconds
+    
+    const { formatInTimeZone } = require('date-fns-tz');
+    return formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
+  } catch (error) {
+    console.error('Error calculating session end time:', error);
+    return '';
   }
 };

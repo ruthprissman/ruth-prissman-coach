@@ -1,307 +1,303 @@
 
 import React, { useState } from 'react';
-import { format, parseISO, addMinutes } from 'date-fns';
-import { he } from 'date-fns/locale/he';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { FutureSession } from '@/types/session';
+import { Patient } from '@/types/patient';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { getSupabaseWithAuth } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useToast } from '@/hooks/use-toast';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from '@/components/ui/checkbox';
-import { supabase } from '@/lib/supabase';
-import { useToast } from '@/hooks/use-toast';
-import { FutureSession } from '@/types/session';
-import { Check, X, BadgeDollarSign } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { format } from 'date-fns';
+import { formatDateInIsraelTimeZone, calculateSessionEndTime } from '@/utils/dateUtils';
 
 interface ConvertSessionDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  futureSession: FutureSession;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  session: FutureSession;
+  patient: Patient;
   onSessionConverted: () => void;
-  patientId: number;
-  sessionPrice: number | null;
 }
 
+// Validation schema for the form
+const sessionSchema = z.object({
+  summaryNotes: z.string().optional(),
+  paid: z.enum(['paid', 'unpaid', 'partial']),
+  paidAmount: z.string().optional(),
+  paymentMethod: z.enum(['cash', 'bit', 'transfer']).optional(),
+});
+
+type SessionFormValues = z.infer<typeof sessionSchema>;
+
 const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
-  isOpen,
-  onClose,
-  futureSession,
-  onSessionConverted,
-  patientId,
-  sessionPrice
+  open,
+  onOpenChange,
+  session,
+  patient,
+  onSessionConverted
 }) => {
+  const { session: authSession } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [summary, setSummary] = useState<string>('');
-  const [sentExercises, setSentExercises] = useState<boolean>(false);
-  const [exerciseList, setExerciseList] = useState<string[]>([]);
-  const [exerciseInput, setExerciseInput] = useState<string>('');
-  const [paymentStatus, setPaymentStatus] = useState<'paid' | 'partially_paid' | 'unpaid'>('unpaid');
-  const [paidAmount, setPaidAmount] = useState<number | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bit' | 'transfer' | null>(null);
-  const [paymentNotes, setPaymentNotes] = useState<string>('');
+  
+  // Get formatted session date and time using Israel timezone
+  const formattedDate = formatDateInIsraelTimeZone(session.session_date, 'PPP');
+  const formattedTime = formatDateInIsraelTimeZone(session.session_date, 'HH:mm');
+  const endTime = calculateSessionEndTime(session.session_date);
 
-  const formatDate = (dateString: string) => {
+  // Initialize form with default values
+  const form = useForm<SessionFormValues>({
+    resolver: zodResolver(sessionSchema),
+    defaultValues: {
+      summaryNotes: session.notes || '',
+      paid: 'unpaid',
+      paidAmount: patient.session_price ? patient.session_price.toString() : '',
+      paymentMethod: 'cash',
+    },
+  });
+
+  // Watch the paid field to conditionally render fields
+  const paidField = form.watch('paid');
+
+  // Handle form submission
+  const onSubmit = async (values: SessionFormValues) => {
     try {
-      // Handle timestamp format from the database
-      const date = new Date(dateString);
-      return format(date, 'dd/MM/yyyy HH:mm', { locale: he });
-    } catch (e) {
-      return dateString;
-    }
-  };
-
-  const handleAddExercise = () => {
-    if (exerciseInput.trim()) {
-      setExerciseList([...exerciseList, exerciseInput.trim()]);
-      setExerciseInput('');
-    }
-  };
-
-  const handleRemoveExercise = (index: number) => {
-    const newList = [...exerciseList];
-    newList.splice(index, 1);
-    setExerciseList(newList);
-  };
-
-  const handleConvert = async () => {
-    setIsSubmitting(true);
-    try {
-      // Extract session date and time from the timestamp
-      const sessionScheduledAt = futureSession.scheduled_at;
+      setIsSubmitting(true);
+      const supabase = getSupabaseWithAuth(authSession?.access_token);
       
-      // Create new completed session with correct scheduled_at
-      const { data: sessionData, error: sessionError } = await supabase
+      // Calculate payment information
+      const isPaid = values.paid === 'paid';
+      const isPartiallyPaid = values.paid === 'partial';
+      const paidAmount = (isPaid || isPartiallyPaid) && values.paidAmount ? parseInt(values.paidAmount) : 0;
+      const paymentStatus = isPaid ? 'paid' : isPartiallyPaid ? 'partially_paid' : 'unpaid';
+      
+      // Create new session record
+      const { data: newSession, error: sessionError } = await supabase
         .from('sessions')
-        .insert([
-          {
-            patient_id: patientId,
-            session_date: sessionScheduledAt ? new Date(sessionScheduledAt).toISOString().split('T')[0] : null,
-            session_time: sessionScheduledAt ? new Date(sessionScheduledAt).toISOString().split('T')[1].substring(0, 5) : null,
-            meeting_type: futureSession.type === 'manual' ? 'In-Person' : 'Zoom',
-            sent_exercises: sentExercises,
-            exercise_list: exerciseList.length > 0 ? exerciseList : null,
-            summary,
-            paid_amount: paidAmount,
-            payment_method: paymentMethod,
-            payment_status: paymentStatus,
-            payment_date: paymentStatus === 'paid' ? new Date().toISOString() : null,
-            payment_notes: paymentNotes || null
-          }
-        ])
-        .select();
-
-      if (sessionError) throw sessionError;
-
+        .insert({
+          patient_id: patient.id,
+          session_date: session.session_date, // Using the original session_date
+          meeting_type: session.meeting_type,
+          summary: values.summaryNotes,
+          sent_exercises: false,
+          paid_amount: paidAmount,
+          payment_method: isPaid || isPartiallyPaid ? values.paymentMethod : null,
+          payment_status: paymentStatus,
+          payment_date: isPaid || isPartiallyPaid ? new Date().toISOString() : null,
+        })
+        .select()
+        .single();
+      
+      if (sessionError) throw new Error(sessionError.message);
+      
       // Delete the future session
       const { error: deleteError } = await supabase
         .from('future_sessions')
         .delete()
-        .eq('id', futureSession.id);
-
-      if (deleteError) throw deleteError;
-
+        .eq('id', session.id);
+      
+      if (deleteError) throw new Error(deleteError.message);
+      
+      // Update patient financial status if needed
+      if (paymentStatus !== 'paid') {
+        await updatePatientFinancialStatus(patient.id, supabase);
+      }
+      
       toast({
-        title: "פגישה הומרה בהצלחה",
-        description: "הפגישה העתידית הומרה לפגישה שהושלמה"
+        title: 'פגישה הומרה בהצלחה',
+        description: `פגישה חדשה נוצרה עבור ${patient.name}`,
       });
-
+      
       onSessionConverted();
+      onOpenChange(false);
     } catch (error: any) {
       console.error('Error converting session:', error);
       toast({
-        title: "שגיאה בהמרת הפגישה",
-        description: error.message || "אנא נסה שוב מאוחר יותר",
-        variant: "destructive",
+        title: 'שגיאה בהמרת פגישה',
+        description: error.message,
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Calculate end time based on scheduled_at + 90 minutes
-  const getEndTime = (scheduledAt: string) => {
-    const date = new Date(scheduledAt);
-    const endTime = addMinutes(date, 90); // Add 90 minutes (1.5 hours)
-    return format(endTime, 'HH:mm', { locale: he });
+  // Update patient financial status
+  const updatePatientFinancialStatus = async (patientId: number, supabase: any) => {
+    try {
+      const { count, error } = await supabase
+        .from('sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('patient_id', patientId)
+        .neq('payment_status', 'paid');
+      
+      if (error) throw error;
+      
+      const financialStatus = count && count > 0 ? 'Has Outstanding Payments' : 'No Debts';
+      
+      const { error: updateError } = await supabase
+        .from('patients')
+        .update({ financial_status: financialStatus })
+        .eq('id', patientId);
+      
+      if (updateError) throw updateError;
+    } catch (error) {
+      console.error('Error updating patient financial status:', error);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-center text-purple-800">המרת פגישה עתידית לפגישה שהושלמה</DialogTitle>
+          <DialogTitle>המרת פגישה עתידית לפגישה שהושלמה</DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-4 py-2">
-          <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
-            <p className="text-center text-purple-800">
-              המרת הפגישה מתאריך<br />
-              <span className="font-bold">{formatDate(futureSession.scheduled_at)}</span>
-              <br />
-              <span className="text-sm">שעת סיום: {getEndTime(futureSession.scheduled_at)}</span>
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="summary" className="text-purple-700">סיכום פגישה</Label>
-            <Textarea 
-              id="summary" 
-              placeholder="הוסף סיכום לפגישה..."
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              className="border-purple-200 focus-visible:ring-purple-500 min-h-[100px]"
-            />
-          </div>
-
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <Checkbox 
-              id="sentExercises" 
-              checked={sentExercises}
-              onCheckedChange={(checked) => setSentExercises(checked as boolean)}
-              className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-            />
-            <Label htmlFor="sentExercises" className="text-purple-700">נשלחו תרגילים</Label>
-          </div>
-
-          {sentExercises && (
-            <div className="space-y-2 p-3 bg-purple-50 rounded-md border border-purple-200">
-              <Label htmlFor="exercises" className="text-purple-700">תרגילים שניתנו</Label>
-              
-              <div className="flex space-x-2 space-x-reverse">
-                <Input
-                  id="exercises"
-                  placeholder="שם התרגיל..."
-                  value={exerciseInput}
-                  onChange={(e) => setExerciseInput(e.target.value)}
-                  className="border-purple-200 focus-visible:ring-purple-500"
-                />
-                <Button 
-                  type="button" 
-                  onClick={handleAddExercise}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  הוסף
-                </Button>
-              </div>
-              
-              {exerciseList.length > 0 && (
-                <div className="mt-2">
-                  <ul className="space-y-1">
-                    {exerciseList.map((exercise, index) => (
-                      <li key={index} className="flex justify-between items-center bg-white p-2 rounded border border-purple-100">
-                        <span>{exercise}</span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleRemoveExercise(index)}
-                          className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+        
+        <div className="py-4">
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="font-medium">מטופל/ת:</span>
+              <span>{patient.name}</span>
             </div>
-          )}
-
-          <div className="space-y-4 p-3 bg-purple-50 rounded-md border border-purple-200">
-            <h3 className="font-medium text-purple-800">פרטי תשלום</h3>
-            
-            <div className="space-y-2">
-              <Label htmlFor="paymentStatus" className="text-purple-700">סטטוס תשלום</Label>
-              <Select
-                value={paymentStatus}
-                onValueChange={(value) => setPaymentStatus(value as 'paid' | 'partially_paid' | 'unpaid')}
-              >
-                <SelectTrigger id="paymentStatus" className="border-purple-200 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="בחר סטטוס תשלום" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="paid">שולם</SelectItem>
-                  <SelectItem value="partially_paid">שולם חלקית</SelectItem>
-                  <SelectItem value="unpaid">לא שולם</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex justify-between">
+              <span className="font-medium">תאריך:</span>
+              <span>{formattedDate}</span>
             </div>
-            
-            {paymentStatus !== 'unpaid' && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="paidAmount" className="text-purple-700">סכום ששולם (₪)</Label>
-                  <Input
-                    id="paidAmount"
-                    type="number"
-                    placeholder={sessionPrice ? `${sessionPrice}` : '0'}
-                    value={paidAmount === null ? '' : paidAmount}
-                    onChange={(e) => setPaidAmount(e.target.value === '' ? null : Number(e.target.value))}
-                    className="border-purple-200 focus-visible:ring-purple-500"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="paymentMethod" className="text-purple-700">אמצעי תשלום</Label>
-                  <Select
-                    value={paymentMethod || ''}
-                    onValueChange={(value) => setPaymentMethod(value === '' ? null : value as 'cash' | 'bit' | 'transfer')}
-                  >
-                    <SelectTrigger id="paymentMethod" className="border-purple-200 focus-visible:ring-purple-500">
-                      <SelectValue placeholder="בחר אמצעי תשלום" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cash">מזומן</SelectItem>
-                      <SelectItem value="bit">ביט</SelectItem>
-                      <SelectItem value="transfer">העברה בנקאית</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="paymentNotes" className="text-purple-700">הערות תשלום</Label>
-              <Textarea
-                id="paymentNotes"
-                placeholder="הוסף הערות לגבי התשלום..."
-                value={paymentNotes}
-                onChange={(e) => setPaymentNotes(e.target.value)}
-                className="border-purple-200 focus-visible:ring-purple-500"
+            <div className="flex justify-between">
+              <span className="font-medium">שעה:</span>
+              <span>{formattedTime} - {endTime}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">סוג פגישה:</span>
+              <span>{session.meeting_type}</span>
+            </div>
+          </div>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6">
+              <FormField
+                control={form.control}
+                name="summaryNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>סיכום פגישה</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="הוסף סיכום פגישה..."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </div>
+              
+              <FormField
+                control={form.control}
+                name="paid"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>סטטוס תשלום</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                          <RadioGroupItem value="paid" id="paid" />
+                          <Label htmlFor="paid">שולם</Label>
+                        </div>
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                          <RadioGroupItem value="partial" id="partial" />
+                          <Label htmlFor="partial">שולם חלקית</Label>
+                        </div>
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                          <RadioGroupItem value="unpaid" id="unpaid" />
+                          <Label htmlFor="unpaid">לא שולם</Label>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {(paidField === 'paid' || paidField === 'partial') && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="paidAmount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>סכום ששולם (₪)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="paymentMethod"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel>אמצעי תשלום</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-col space-y-1"
+                          >
+                            <div className="flex items-center space-x-2 space-x-reverse">
+                              <RadioGroupItem value="cash" id="cash" />
+                              <Label htmlFor="cash">מזומן</Label>
+                            </div>
+                            <div className="flex items-center space-x-2 space-x-reverse">
+                              <RadioGroupItem value="bit" id="bit" />
+                              <Label htmlFor="bit">ביט</Label>
+                            </div>
+                            <div className="flex items-center space-x-2 space-x-reverse">
+                              <RadioGroupItem value="transfer" id="transfer" />
+                              <Label htmlFor="transfer">העברה בנקאית</Label>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+              
+              <DialogFooter className="mt-6 gap-2 sm:gap-0">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'מעבד...' : 'המר פגישה'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  ביטול
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </div>
-
-        <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
-          <Button 
-            onClick={handleConvert}
-            disabled={isSubmitting}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            {isSubmitting ? 'מבצע המרה...' : 'המר פגישה'}
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={onClose}
-            className="border-purple-200 text-purple-700 hover:bg-purple-50"
-          >
-            ביטול
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

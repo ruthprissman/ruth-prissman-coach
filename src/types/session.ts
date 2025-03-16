@@ -8,13 +8,12 @@ export interface SessionWithPatient extends Session {
 export interface FutureSession {
   id: number;
   patient_id: number | null;
-  scheduled_at: string; // timestamp with time zone
-  title: string;
-  type: 'manual' | 'patient';
-  notes: string | null;
+  session_date: string; // timestamp without time zone
+  meeting_type: 'Zoom' | 'Phone' | 'In-Person';
+  status: 'available' | 'booked' | 'completed' | 'canceled';
   zoom_link?: string;
+  notes?: string | null;
   created_at?: string;
-  updated_at?: string;
 }
 
 export interface ClientStatistics {
