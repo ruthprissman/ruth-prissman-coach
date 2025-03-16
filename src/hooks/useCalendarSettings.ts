@@ -47,18 +47,19 @@ export function useCalendarSettings() {
         setError(null);
         
         // Debug log with session information
-        console.log('Fetching calendar settings from Edge Function with session:', { 
+        console.log('Fetching calendar settings from public URL with session:', { 
           sessionId: session.user.id,
           hasAccessToken: !!session.access_token,
           tokenLength: session.access_token.length
         });
         
-        // Making request without Authorization header
-        console.log('Making request to get_calendar_settings without Authorization header');
+        // Making request to the new public URL without any Authorization header
+        console.log('Making request to public get_calendar_settings URL without Authorization header');
         
         const response = await fetch(
-          'https://uwqwlltrfvokjlaufguz.supabase.co/functions/v1/get_calendar_settings',
+          'https://uwqwlltrfvokjlaufguz.functions.supabase.co/get_calendar_settings',
           {
+            method: 'GET',
             headers: {
               'Content-Type': 'application/json'
             },
@@ -66,7 +67,7 @@ export function useCalendarSettings() {
         );
         
         if (!response.ok) {
-          throw new Error(`שגיאה בהבאת הגדרות יומן: ${response.status}`);
+          throw new Error(`שגיאה בהבאת הגדרות יומן: ${response.status} - ${response.statusText}`);
         }
         
         const data = await response.json();
@@ -93,7 +94,15 @@ export function useCalendarSettings() {
         console.log('Calendar settings loaded successfully');
       } catch (err: any) {
         console.error('Error fetching calendar settings:', err);
-        setError(err.message);
+        
+        // Improved error handling with more detailed logs
+        if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
+          console.error('Network error when fetching calendar settings. Check network connection or CORS settings.');
+          setError('שגיאת רשת בהבאת הגדרות יומן. בדוק את חיבור הרשת או הגדרות CORS.');
+        } else {
+          setError(err.message);
+        }
+        
         toast({
           title: 'שגיאה בהבאת הגדרות יומן',
           description: err.message,
