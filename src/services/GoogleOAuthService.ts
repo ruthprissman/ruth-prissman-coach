@@ -63,17 +63,32 @@ export async function signInWithGoogle(): Promise<boolean> {
     await initGoogleAuth();
     const auth2 = window.gapi.auth2.getAuthInstance();
     
-    // Configure the OAuth popup to be in Hebrew
+    // Always show the account chooser by using these options
     const options = {
-      prompt: 'select_account',
+      prompt: 'select_account', // Always show account selection, even if user is already signed in
       ux_mode: 'popup',
-      locale: 'he',
+      locale: 'he', // Hebrew locale
     };
     
-    await auth2.signIn(options);
-    return auth2.isSignedIn.get();
-  } catch (error) {
+    // Start the sign-in flow
+    const googleUser = await auth2.signIn(options);
+    const isSignedIn = auth2.isSignedIn.get();
+    
+    // Get a detailed authResponse to check for cancellation
+    const authResponse = googleUser?.getAuthResponse(true);
+    if (!authResponse || !authResponse.access_token) {
+      throw new Error('ההתחברות בוטלה');
+    }
+    
+    return isSignedIn;
+  } catch (error: any) {
     console.error('Error signing in with Google:', error);
+    // Check if the error is about cancellation
+    if (error.error === 'popup_closed_by_user' || 
+        error.message?.includes('popup') || 
+        error.message?.includes('בוטל')) {
+      throw new Error('ההתחברות בוטלה');
+    }
     return false;
   }
 }

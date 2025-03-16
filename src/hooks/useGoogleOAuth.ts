@@ -100,7 +100,7 @@ export function useGoogleOAuth() {
       
       if (success) {
         toast({
-          title: 'התחברת בהצלחה ל-Google',
+          title: 'התחברת בהצלחה לחשבון גוגל',
           description: 'מתחיל בטעינת אירועי יומן...',
         });
         
@@ -122,11 +122,22 @@ export function useGoogleOAuth() {
         error: error.message
       });
       
-      toast({
-        title: 'שגיאה בהתחברות ל-Google',
-        description: error.message,
-        variant: 'destructive',
-      });
+      const errorMessage = error.message || 'שגיאה בהתחברות ל-Google';
+      
+      // Handle cancellation specifically
+      if (errorMessage.includes('בוטל') || errorMessage === 'ההתחברות בוטלה') {
+        toast({
+          title: 'ההתחברות בוטלה',
+          description: 'תהליך ההתחברות לגוגל בוטל',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'שגיאה בהתחברות ל-Google',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
       
       return false;
     }
