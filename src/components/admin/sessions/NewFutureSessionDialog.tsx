@@ -53,7 +53,7 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
   const [formData, setFormData] = useState<NewFutureSessionFormData>({
     session_date: new Date(),
     meeting_type: 'Zoom',
-    status: 'booked',
+    status: 'Scheduled',
     zoom_link: '',
   });
 
@@ -96,7 +96,7 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
     setFormData({
       session_date: new Date(),
       meeting_type: 'Zoom',
-      status: 'booked',
+      status: 'Scheduled',
       zoom_link: '',
     });
     setDate(new Date());
@@ -129,7 +129,7 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
           patient_id: patientId,
           session_date: combinedDate.toISOString(),
           meeting_type: formData.meeting_type,
-          status: formData.status,
+          status: 'Scheduled', // Always set to Scheduled for new sessions
           zoom_link: formData.zoom_link || null,
         });
 
@@ -213,24 +213,6 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
                 <SelectItem value="Zoom">זום</SelectItem>
                 <SelectItem value="Phone">טלפון</SelectItem>
                 <SelectItem value="In-Person">פגישה פרונטית</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="status" className="text-purple-700">סטטוס</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => handleSelectChange('status', value as any)}
-            >
-              <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
-                <SelectValue placeholder="בחר סטטוס" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="available">פנוי</SelectItem>
-                <SelectItem value="booked">מוזמן</SelectItem>
-                <SelectItem value="completed">הושלם</SelectItem>
-                <SelectItem value="canceled">בוטל</SelectItem>
               </SelectContent>
             </Select>
           </div>

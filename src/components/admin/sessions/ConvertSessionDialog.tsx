@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { FutureSession } from '@/types/session';
@@ -176,6 +177,10 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
             <div className="flex justify-between">
               <span className="font-medium">סוג פגישה:</span>
               <span>{session.meeting_type}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">סטטוס:</span>
+              <span>{session.status}</span>
             </div>
           </div>
           

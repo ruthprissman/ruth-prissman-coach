@@ -10,7 +10,7 @@ export interface FutureSession {
   patient_id: number | null;
   session_date: string; // timestamp without time zone
   meeting_type: 'Zoom' | 'Phone' | 'In-Person';
-  status: 'available' | 'booked' | 'completed' | 'canceled';
+  status: 'Scheduled' | 'Completed' | 'Cancelled';
   zoom_link?: string;
   created_at?: string;
 }
@@ -25,7 +25,7 @@ export interface ClientStatistics {
 export interface NewFutureSessionFormData {
   session_date: Date;
   meeting_type: 'Zoom' | 'Phone' | 'In-Person';
-  status: 'available' | 'booked' | 'completed' | 'canceled';
+  status: 'Scheduled' | 'Completed' | 'Cancelled';
   zoom_link?: string;
 }
 
