@@ -2,9 +2,9 @@
 import { GoogleCalendarEvent } from '@/types/calendar';
 
 // OAuth2 configuration
-const CLIENT_ID = '337864853786-2n9h6oj7c8m4a8j86b80q0p9h1qtbm2i.apps.googleusercontent.com';
+const CLIENT_ID = '216734901779-csrnr14nmkilae4blbolsip8mmibsk3t.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
-const REDIRECT_URI = window.location.origin + '/admin/calendar';
+const REDIRECT_URI = 'https://ruth-prissman-coach.lovable.app';
 
 export interface GoogleOAuthState {
   isAuthenticated: boolean;
@@ -27,7 +27,8 @@ export async function initGoogleAuth(): Promise<boolean> {
         window.gapi.load('auth2', () => {
           window.gapi.auth2.init({
             client_id: CLIENT_ID,
-            scope: SCOPES
+            scope: SCOPES,
+            redirect_uri: REDIRECT_URI
           }).then(() => {
             console.log('Google Auth initialized');
             resolve(true);
@@ -61,7 +62,15 @@ export async function signInWithGoogle(): Promise<boolean> {
   try {
     await initGoogleAuth();
     const auth2 = window.gapi.auth2.getAuthInstance();
-    await auth2.signIn();
+    
+    // Configure the OAuth popup to be in Hebrew
+    const options = {
+      prompt: 'select_account',
+      ux_mode: 'popup',
+      locale: 'he',
+    };
+    
+    await auth2.signIn(options);
     return auth2.isSignedIn.get();
   } catch (error) {
     console.error('Error signing in with Google:', error);
@@ -115,7 +124,7 @@ export async function fetchGoogleCalendarEvents(): Promise<GoogleCalendarEvent[]
     
     // Make the API request
     const response = await window.gapi.client.calendar.events.list({
-      'calendarId': 'primary',
+      'calendarId': 'ruthprissman@gmail.com',
       'timeMin': timeMin,
       'timeMax': timeMax,
       'singleEvents': true,

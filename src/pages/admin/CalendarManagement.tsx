@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -857,7 +858,7 @@ const CalendarManagement: React.FC = () => {
                   disabled={isSyncing || isLoadingGoogleEvents}
                 >
                   <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                  <span>רענן יומן</span>
+                  <span>סנכרון ידני</span>
                 </Button>
               )}
             </div>
