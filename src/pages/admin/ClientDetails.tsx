@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format, formatDistance, isAfter, subHours } from 'date-fns';
@@ -493,8 +494,10 @@ const ClientDetails: React.FC = () => {
       case 'paid':
         return 'שולם';
       case 'partial':
+      case 'partially_paid':
         return 'שולם חלקית';
       case 'pending':
+      case 'unpaid':
         return 'לא שולם';
       default:
         return status;
@@ -514,6 +517,7 @@ const ClientDetails: React.FC = () => {
           </Badge>
         );
       case 'partial':
+      case 'partially_paid':
         return (
           <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
             <BadgeDollarSign className="h-3 w-3 mr-1" />
@@ -521,6 +525,7 @@ const ClientDetails: React.FC = () => {
           </Badge>
         );
       case 'pending':
+      case 'unpaid':
         return (
           <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
             <CreditCard className="h-3 w-3 mr-1" />
@@ -875,3 +880,253 @@ const ClientDetails: React.FC = () => {
                             <TableCell>
                               <span className={session.payment_status === 'paid' ? 'text-green-600 font-medium' : ''}>
                                 ₪{session.paid_amount || 0}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-purple-600 hover:bg-purple-100"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEditSession(session);
+                                        }}
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>ערוך פגישה</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-red-600 hover:bg-red-100"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeleteSessionConfirm(session);
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>מחק פגישה</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleExpandSession(session.id);
+                                }}
+                              >
+                                {expandedSessionId === session.id ? (
+                                  <ChevronUp className="h-5 w-5 text-purple-600" />
+                                ) : (
+                                  <ChevronDown className="h-5 w-5 text-purple-600" />
+                                )}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                          
+                          {/* Expanded session details */}
+                          {expandedSessionId === session.id && (
+                            <TableRow>
+                              <TableCell colSpan={6} className="p-0">
+                                <SessionDetailCollapsible 
+                                  session={session} 
+                                  formatDate={formatDate}
+                                  getPaymentMethodText={getPaymentMethodText}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              )}
+            </div>
+            
+            {/* Edit client dialog */}
+            <Dialog open={isEditClientDialogOpen} onOpenChange={setIsEditClientDialogOpen}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>עריכת פרטי לקוח</DialogTitle>
+                  <DialogDescription>
+                    ערוך את פרטי הלקוח {client.name}
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  <div className="grid w-full gap-1.5">
+                    <Label htmlFor="name">שם מלא</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={editFormData?.name || ''}
+                      onChange={handleEditFormInputChange}
+                    />
+                  </div>
+                  
+                  <div className="grid w-full gap-1.5">
+                    <Label htmlFor="phone">טלפון</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      value={editFormData?.phone || ''}
+                      onChange={handleEditFormInputChange}
+                    />
+                  </div>
+                  
+                  <div className="grid w-full gap-1.5">
+                    <Label htmlFor="email">אימייל</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={editFormData?.email || ''}
+                      onChange={handleEditFormInputChange}
+                    />
+                  </div>
+                  
+                  <div className="grid w-full gap-1.5">
+                    <Label htmlFor="session_price">מחיר לפגישה</Label>
+                    <Input
+                      id="session_price"
+                      name="session_price"
+                      type="number"
+                      value={editFormData?.session_price || ''}
+                      onChange={handleEditFormInputChange}
+                    />
+                  </div>
+                  
+                  <div className="grid w-full gap-1.5">
+                    <Label htmlFor="notes">הערות</Label>
+                    <Textarea
+                      id="notes"
+                      name="notes"
+                      value={editFormData?.notes || ''}
+                      onChange={handleEditFormInputChange}
+                      className="min-h-[120px]"
+                    />
+                  </div>
+                </div>
+                
+                <DialogFooter className="mt-6">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsEditClientDialogOpen(false)}
+                  >
+                    ביטול
+                  </Button>
+                  <Button 
+                    onClick={handleUpdateClient}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'שומר...' : 'שמור שינויים'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            
+            {/* Edit Session Dialog */}
+            {sessionToEdit && (
+              <SessionEditDialog
+                isOpen={isEditSessionDialogOpen}
+                onOpenChange={setIsEditSessionDialogOpen}
+                session={sessionToEdit}
+                onUpdated={handleSessionUpdated}
+              />
+            )}
+            
+            {/* Delete Session Dialog */}
+            <DeleteSessionDialog
+              open={isDeleteSessionDialogOpen}
+              onOpenChange={setIsDeleteSessionDialogOpen}
+              session={sessionToDelete}
+              onConfirm={handleDeleteSession}
+              formatDate={formatDate}
+            />
+            
+            {/* Convert Session Dialog */}
+            {sessionToConvert && (
+              <ConvertSessionDialog
+                isOpen={isConvertSessionDialogOpen}
+                onOpenChange={setIsConvertSessionDialogOpen}
+                session={sessionToConvert}
+                patientId={id ? parseInt(id) : 0}
+                onSessionConverted={handleSessionConverted}
+              />
+            )}
+            
+            {/* New Future Session Dialog */}
+            <NewFutureSessionDialog
+              isOpen={isNewFutureSessionDialogOpen} 
+              onOpenChange={setIsNewFutureSessionDialogOpen}
+              patientId={id ? parseInt(id) : 0}
+              patient={client}
+              onFutureSessionCreated={handleFutureSessionCreated}
+            />
+            
+            {/* New Historical Session Dialog */}
+            <NewHistoricalSessionDialog
+              isOpen={isMoveToHistoricalDialogOpen || isNewHistoricalSessionDialogOpen}
+              onOpenChange={(open) => {
+                if (isMoveToHistoricalDialogOpen) {
+                  setIsMoveToHistoricalDialogOpen(open);
+                } else {
+                  setIsNewHistoricalSessionDialogOpen(open);
+                }
+              }}
+              patientId={id ? parseInt(id) : 0}
+              patient={client}
+              onSessionCreated={handleHistoricalSessionCreated}
+              defaultSessionData={futureSessionToMove}
+              isMoveOperation={!!futureSessionToMove}
+              onAfterCreate={futureSessionToMove ? handleDeleteFutureSession : undefined}
+            />
+            
+            {/* Edit Future Session Dialog */}
+            {futureSessionToEdit && (
+              <EditFutureSessionDialog
+                isOpen={isEditFutureSessionDialogOpen}
+                onOpenChange={setIsEditFutureSessionDialogOpen}
+                session={futureSessionToEdit}
+                onUpdated={handleFutureSessionUpdated}
+              />
+            )}
+            
+            {/* Delete Future Session Dialog */}
+            <DeleteFutureSessionDialog
+              open={isDeleteFutureSessionDialogOpen}
+              onOpenChange={setIsDeleteFutureSessionDialogOpen}
+              session={futureSessionToDelete}
+              onConfirm={handleDeleteFutureSessionExecute}
+              formatDate={formatDate}
+            />
+          </div>
+        )}
+      </div>
+    </AdminLayout>
+  );
+};
+
+export default ClientDetails;
