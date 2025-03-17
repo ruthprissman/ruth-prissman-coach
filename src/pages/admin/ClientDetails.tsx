@@ -878,3 +878,8 @@ const ClientDetails: React.FC = () => {
                                   <Edit className="h-4 w-4 ml-1 text-purple-600" />
                                   ערוך
                                 </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        </React.Fragment>
+                  
