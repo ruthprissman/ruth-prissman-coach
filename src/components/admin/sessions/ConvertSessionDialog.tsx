@@ -1,315 +1,87 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import React, { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 import { FutureSession } from '@/types/session';
 import { Patient } from '@/types/patient';
-import { Button } from '@/components/ui/button';
-import { getSupabaseWithAuth } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useToast } from '@/hooks/use-toast';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { formatDateInIsraelTimeZone, calculateSessionEndTime } from '@/utils/dateUtils';
+import NewHistoricalSessionDialog from './NewHistoricalSessionDialog';
 
 interface ConvertSessionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   session: FutureSession | null;
-  patientId: string | number;
-  onConverted: () => void;
+  patientId: number;
+  onConverted?: () => void;
 }
-
-// Validation schema for the form
-const sessionSchema = z.object({
-  summaryNotes: z.string().optional(),
-  paid: z.enum(['paid', 'partial', 'pending']),
-  paidAmount: z.string().optional(),
-  paymentMethod: z.enum(['cash', 'bit', 'transfer']).optional(),
-});
-
-type SessionFormValues = z.infer<typeof sessionSchema>;
 
 const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
   open,
   onOpenChange,
   session,
   patientId,
-  onConverted
+  onConverted,
 }) => {
-  const { session: authSession } = useAuth();
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  if (!session) return null;
-  
-  // Get formatted session date and time using Israel timezone
-  const formattedDate = formatDateInIsraelTimeZone(session.session_date, 'PPP');
-  const formattedTime = formatDateInIsraelTimeZone(session.session_date, 'HH:mm');
-  const endTime = calculateSessionEndTime(session.session_date);
+  const [patient, setPatient] = useState<Patient | null>(null);
 
-  // Initialize form with default values
-  const form = useForm<SessionFormValues>({
-    resolver: zodResolver(sessionSchema),
-    defaultValues: {
-      summaryNotes: '',
-      paid: 'pending',
-      paidAmount: '0',
-      paymentMethod: 'cash',
-    },
-  });
+  useEffect(() => {
+    const fetchPatient = async () => {
+      if (patientId) {
+        try {
+          const { data, error } = await supabase
+            .from('patients')
+            .select('*')
+            .eq('id', patientId)
+            .single();
+            
+          if (error) throw error;
+          setPatient(data as Patient);
+        } catch (error) {
+          console.error('Error fetching patient:', error);
+        }
+      }
+    };
+    
+    if (open) {
+      fetchPatient();
+    }
+  }, [patientId, open]);
 
-  // Watch the paid field to conditionally render fields
-  const paidField = form.watch('paid');
-
-  // Handle form submission
-  const onSubmit = async (values: SessionFormValues) => {
+  const handleDeleteFutureSession = async () => {
+    if (!session) return;
+    
     try {
-      setIsSubmitting(true);
-      const supabase = getSupabaseWithAuth(authSession?.access_token);
-      
-      // Get patient data
-      const { data: patientData, error: patientError } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('id', patientId)
-        .single();
-      
-      if (patientError) throw new Error(patientError.message);
-      
-      // Calculate payment information
-      const isPaid = values.paid === 'paid';
-      const isPartiallyPaid = values.paid === 'partial';
-      const paidAmount = (isPaid || isPartiallyPaid) && values.paidAmount ? parseInt(values.paidAmount) : 0;
-      const paymentStatus = values.paid; // Use the exact value from the form
-      
-      // Create new session record
-      const { data: newSession, error: sessionError } = await supabase
-        .from('sessions')
-        .insert({
-          patient_id: patientId,
-          session_date: session.session_date, // Use the original session_date without timezone conversion
-          meeting_type: session.meeting_type,
-          summary: values.summaryNotes,
-          sent_exercises: false,
-          paid_amount: paidAmount,
-          payment_method: isPaid || isPartiallyPaid ? values.paymentMethod : null,
-          payment_status: paymentStatus,
-          payment_date: isPaid || isPartiallyPaid ? new Date().toISOString() : null,
-        })
-        .select()
-        .single();
-      
-      if (sessionError) throw new Error(sessionError.message);
-      
-      // Delete the future session
-      const { error: deleteError } = await supabase
+      const { error } = await supabase
         .from('future_sessions')
         .delete()
         .eq('id', session.id);
       
-      if (deleteError) throw new Error(deleteError.message);
-      
-      // Update patient financial status if needed
-      if (paymentStatus !== 'paid') {
-        await updatePatientFinancialStatus(Number(patientId), supabase);
-      }
-      
-      toast({
-        title: 'פגישה הומרה בהצלחה',
-        description: `פגישה חדשה נוצרה עבור ${patientData.name}`,
-      });
-      
-      onConverted();
-      onOpenChange(false);
-    } catch (error: any) {
-      console.error('Error converting session:', error);
-      toast({
-        title: 'שגיאה בהמרת פגישה',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Update patient financial status
-  const updatePatientFinancialStatus = async (patientId: number, supabase: any) => {
-    try {
-      const { count, error } = await supabase
-        .from('sessions')
-        .select('*', { count: 'exact', head: true })
-        .eq('patient_id', patientId)
-        .neq('payment_status', 'paid');
-      
       if (error) throw error;
       
-      const financialStatus = count && count > 0 ? 'Has Outstanding Payments' : 'No Debts';
-      
-      const { error: updateError } = await supabase
-        .from('patients')
-        .update({ financial_status: financialStatus })
-        .eq('id', patientId);
-      
-      if (updateError) throw updateError;
+      return true;
     } catch (error) {
-      console.error('Error updating patient financial status:', error);
+      console.error('Error deleting future session:', error);
+      toast({
+        title: "שגיאה במחיקת פגישה עתידית",
+        description: "לא ניתן למחוק את הפגישה העתידית",
+        variant: "destructive"
+      });
+      throw error;
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]" dir="rtl">
-        <DialogHeader>
-          <DialogTitle>המרת פגישה עתידית לפגישה שהושלמה</DialogTitle>
-        </DialogHeader>
-        
-        <div className="py-4">
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="font-medium">תאריך:</span>
-              <span>{formattedDate}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium">שעה:</span>
-              <span>{formattedTime} - {endTime}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium">סוג פגישה:</span>
-              <span>{session.meeting_type}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium">סטטוס:</span>
-              <span>{session.status}</span>
-            </div>
-          </div>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-6">
-              <FormField
-                control={form.control}
-                name="summaryNotes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>סיכום פגישה</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="הוסף סיכום פגישה..."
-                        className="resize-none"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="paid"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>סטטוס תשלום</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex flex-col space-y-1"
-                      >
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                          <RadioGroupItem value="paid" id="paid" />
-                          <Label htmlFor="paid">שולם</Label>
-                        </div>
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                          <RadioGroupItem value="partial" id="partial" />
-                          <Label htmlFor="partial">שולם חלקית</Label>
-                        </div>
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                          <RadioGroupItem value="pending" id="pending" />
-                          <Label htmlFor="pending">ממתין לתשלום</Label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {(paidField === 'paid' || paidField === 'partial') && (
-                <>
-                  <FormField
-                    control={form.control}
-                    name="paidAmount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>סכום ששולם (₪)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="paymentMethod"
-                    render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <FormLabel>אמצעי תשלום</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex flex-col space-y-1"
-                          >
-                            <div className="flex items-center space-x-2 space-x-reverse">
-                              <RadioGroupItem value="cash" id="cash" />
-                              <Label htmlFor="cash">מזומן</Label>
-                            </div>
-                            <div className="flex items-center space-x-2 space-x-reverse">
-                              <RadioGroupItem value="bit" id="bit" />
-                              <Label htmlFor="bit">ביט</Label>
-                            </div>
-                            <div className="flex items-center space-x-2 space-x-reverse">
-                              <RadioGroupItem value="transfer" id="transfer" />
-                              <Label htmlFor="transfer">העברה בנקאית</Label>
-                            </div>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
-              
-              <DialogFooter className="mt-6 gap-2 sm:gap-0">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'מעבד...' : 'המר פגישה'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                >
-                  ביטול
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <NewHistoricalSessionDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      patientId={patientId}
+      patient={patient}
+      onSessionCreated={() => {
+        if (onConverted) onConverted();
+      }}
+      fromFutureSession={session}
+      onDeleteFutureSession={handleDeleteFutureSession}
+    />
   );
 };
 

@@ -1,23 +1,16 @@
 
 import React from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter 
-} from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Calendar } from 'lucide-react';
 import { Session } from '@/types/patient';
-import { FutureSession } from '@/types/session';
 
 interface DeleteSessionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  session: Session | FutureSession | null;
+  session: Session | null;
   onConfirm: () => void;
-  formatDate: (dateString: string) => string;
+  formatDate: (date: string | null) => string;
 }
 
 const DeleteSessionDialog: React.FC<DeleteSessionDialogProps> = ({
@@ -25,41 +18,46 @@ const DeleteSessionDialog: React.FC<DeleteSessionDialogProps> = ({
   onOpenChange,
   session,
   onConfirm,
-  formatDate,
+  formatDate
 }) => {
+  if (!session) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>מחיקת פגישה</DialogTitle>
-          <DialogDescription>
-            {session && (
-              <>
-                האם אתה בטוח שברצונך למחוק את הפגישה מהתאריך {" "}
-                {formatDate(session.session_date)}?
-                <div className="mt-2 text-red-500">
-                  פעולה זו לא ניתנת לביטול לאחר אישור.
-                </div>
-              </>
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="flex justify-between sm:justify-between">
-          <Button 
-            variant="outline" 
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent dir="rtl">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-purple-800">מחיקת פגישה היסטורית</AlertDialogTitle>
+        </AlertDialogHeader>
+        <AlertDialogDescription className="space-y-4">
+          <p>האם את בטוחה שברצונך למחוק את הפגישה?</p>
+          
+          <div className="flex items-center text-gray-700 mt-2">
+            <Calendar className="h-4 w-4 ml-2 text-purple-600" />
+            <span className="font-semibold">{formatDate(session.session_date)}</span>
+          </div>
+          
+          <p className="text-red-600 text-sm mt-4">
+            שימי לב: פעולה זו אינה ניתנת לביטול. כל הנתונים המשויכים לפגישה זו ימחקו.
+          </p>
+        </AlertDialogDescription>
+        <AlertDialogFooter className="flex-row-reverse gap-2 sm:gap-0">
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            מחק פגישה
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => onOpenChange(false)}
+            className="border-purple-200 text-purple-700"
           >
             ביטול
           </Button>
-          <Button 
-            variant="destructive" 
-            onClick={onConfirm}
-          >
-            כן, מחק פגישה
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

@@ -36,8 +36,8 @@ interface EditFutureSessionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   session: FutureSession | null;
-  patientId?: string | number;
-  onUpdated: () => void;
+  patientId: number;
+  onUpdated?: () => void;
 }
 
 const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
@@ -52,21 +52,16 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState<string>('');
   
-  const [formData, setFormData] = useState<{
-    session_date: Date;
-    meeting_type: 'Zoom' | 'Phone' | 'In-Person';
-    status: 'Scheduled' | 'Completed' | 'Cancelled';
-    zoom_link?: string;
-  }>({
-    session_date: new Date(),
+  const [formData, setFormData] = useState<Omit<FutureSession, 'id' | 'patient_id' | 'created_at'>>({
+    session_date: '',
     meeting_type: 'Zoom',
     status: 'Scheduled',
     zoom_link: '',
   });
 
-  // Initialize form data when session changes
+  // Initialize form with session data when it's loaded
   useEffect(() => {
-    if (session) {
+    if (session && open) {
       const sessionDate = new Date(session.session_date);
       
       setDate(sessionDate);
@@ -77,13 +72,13 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
       );
       
       setFormData({
-        session_date: sessionDate,
+        session_date: session.session_date,
         meeting_type: session.meeting_type,
         status: session.status,
         zoom_link: session.zoom_link || '',
       });
     }
-  }, [session]);
+  }, [session, open]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -102,7 +97,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
       const [hours, minutes] = e.target.value.split(':').map(Number);
       const newDate = new Date(date);
       newDate.setHours(hours, minutes);
-      setFormData((prev) => ({ ...prev, session_date: newDate }));
+      setFormData((prev) => ({ ...prev, session_date: newDate.toISOString() }));
     }
   };
 
@@ -116,7 +111,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
         newDate.setHours(hours, minutes);
       }
       
-      setFormData((prev) => ({ ...prev, session_date: newDate }));
+      setFormData((prev) => ({ ...prev, session_date: newDate.toISOString() }));
     }
   };
 
@@ -124,7 +119,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
     if (!session || !date) {
       toast({
         title: "שגיאה",
-        description: "יש לבחור תאריך",
+        description: "חסרים נתונים נדרשים",
         variant: "destructive",
       });
       return;
@@ -145,7 +140,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
           session_date: combinedDate.toISOString(),
           meeting_type: formData.meeting_type,
           status: formData.status,
-          zoom_link: formData.zoom_link || null,
+          zoom_link: formData.meeting_type === 'Zoom' ? formData.zoom_link : null,
         })
         .eq('id', session.id);
 
@@ -153,10 +148,10 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
 
       toast({
         title: "פגישה עודכנה בהצלחה",
-        description: "פרטי הפגישה עודכנו בהצלחה",
+        description: "נתוני הפגישה עודכנו בהצלחה",
       });
 
-      onUpdated();
+      if (onUpdated) onUpdated();
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error updating future session:', error);
@@ -170,11 +165,15 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
     }
   };
 
+  if (!session) return null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center text-purple-800">עריכת פגישה עתידית</DialogTitle>
+          <DialogTitle className="text-center text-purple-800">
+            עריכת פגישה עתידית
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2" dir="rtl">
@@ -270,7 +269,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
             disabled={isSubmitting}
             className="bg-purple-600 hover:bg-purple-700"
           >
-            {isSubmitting ? 'מעדכן פגישה...' : 'עדכן פגישה'}
+            {isSubmitting ? 'מעדכן פגישה...' : 'שמור שינויים'}
           </Button>
           <Button
             variant="outline"

@@ -18,6 +18,9 @@ import DeleteFutureSessionDialog from '@/components/admin/sessions/DeleteFutureS
 import EditFutureSessionDialog from '@/components/admin/sessions/EditFutureSessionDialog';
 import ConvertSessionDialog from '@/components/admin/sessions/ConvertSessionDialog';
 import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog';
+import NewFutureSessionDialog from '@/components/admin/sessions/NewFutureSessionDialog';
+import RecurringSessionDialog from '@/components/admin/sessions/RecurringSessionDialog';
+import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistoricalSessionDialog';
 
 const ClientDetails = () => {
   const { id } = useParams();
@@ -46,6 +49,9 @@ const ClientDetails = () => {
     open: false,
     session: null
   });
+  const [newFutureSessionDialog, setNewFutureSessionDialog] = useState<boolean>(false);
+  const [recurringSessionDialog, setRecurringSessionDialog] = useState<boolean>(false);
+  const [newHistoricalSessionDialog, setNewHistoricalSessionDialog] = useState<boolean>(false);
 
   useEffect(() => {
     if (patientId) {
@@ -325,11 +331,18 @@ const ClientDetails = () => {
 
           <TabsContent value="future_sessions" className="p-4">
             <div className="flex justify-between mb-6">
-              <Button className="bg-purple-600 hover:bg-purple-700 mr-2">
+              <Button 
+                className="bg-purple-600 hover:bg-purple-700 mr-2"
+                onClick={() => setNewFutureSessionDialog(true)}
+              >
                 <Plus className="h-4 w-4 ml-1" />
                 יצירת פגישה חדשה
               </Button>
-              <Button variant="outline" className="border-purple-200 text-purple-700">
+              <Button 
+                variant="outline" 
+                className="border-purple-200 text-purple-700"
+                onClick={() => setRecurringSessionDialog(true)}
+              >
                 <Repeat className="h-4 w-4 ml-1" />
                 יצירת פגישה חוזרת
               </Button>
@@ -409,7 +422,10 @@ const ClientDetails = () => {
 
           <TabsContent value="historical_sessions" className="p-4">
             <div className="flex justify-end mb-6">
-              <Button className="bg-purple-600 hover:bg-purple-700">
+              <Button 
+                className="bg-purple-600 hover:bg-purple-700"
+                onClick={() => setNewHistoricalSessionDialog(true)}
+              >
                 <Plus className="h-4 w-4 ml-1" />
                 יצירת פגישה היסטורית חדשה
               </Button>
@@ -514,6 +530,30 @@ const ClientDetails = () => {
         session={convertSessionDialog.session}
         patientId={patientId}
         onConverted={fetchClientData}
+      />
+
+      <NewFutureSessionDialog
+        open={newFutureSessionDialog}
+        onOpenChange={setNewFutureSessionDialog}
+        patientId={patientId}
+        patientName={patient.name}
+        onCreated={fetchClientData}
+      />
+
+      <RecurringSessionDialog
+        open={recurringSessionDialog}
+        onOpenChange={setRecurringSessionDialog}
+        patientId={patientId}
+        patientName={patient.name}
+        onCreated={fetchClientData}
+      />
+
+      <NewHistoricalSessionDialog
+        open={newHistoricalSessionDialog}
+        onOpenChange={setNewHistoricalSessionDialog}
+        patientId={patientId}
+        patient={patient}
+        onSessionCreated={fetchClientData}
       />
     </AdminLayout>
   );
