@@ -47,7 +47,7 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
     }
   }, [patientId, open]);
 
-  const handleDeleteFutureSession = async () => {
+  const handleDeleteFutureSession = async (): Promise<void> => {
     if (!session) return;
     
     try {
@@ -58,7 +58,7 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
       
       if (error) throw error;
       
-      return true;
+      // Previously returned true, but now we don't return anything (void)
     } catch (error) {
       console.error('Error deleting future session:', error);
       toast({
