@@ -1,18 +1,44 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Phone, Mail, DollarSign, FileText } from 'lucide-react';
+import { Phone, Mail, DollarSign, FileText, PencilIcon } from 'lucide-react';
 import { Patient } from '@/types/patient';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import EditClientDialog from '@/components/admin/clients/EditClientDialog';
 
 interface ClientInfoCardProps {
   patient: Patient;
+  onPatientUpdated?: () => void;
 }
 
-const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ patient }) => {
+const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ patient, onPatientUpdated }) => {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
   return (
-    <Card className="border-purple-200 overflow-hidden">
+    <Card className="border-purple-200 overflow-hidden relative">
       <CardHeader className="pb-3 bg-purple-50">
-        <CardTitle className="text-2xl text-purple-700">{patient.name}</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-2xl text-purple-700">{patient.name}</CardTitle>
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setIsEditDialogOpen(true)}
+                  className="h-8 w-8 p-0 text-purple-600 hover:text-purple-800 hover:bg-purple-100"
+                >
+                  <PencilIcon className="h-4 w-4" />
+                  <span className="sr-only">ערוך פרטי לקוח</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent dir="rtl">
+                <p>ערוך פרטי לקוח</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </CardHeader>
       <CardContent className="pt-6">
         <div className="grid gap-6 md:grid-cols-2">
@@ -57,6 +83,13 @@ const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ patient }) => {
           </div>
         </div>
       </CardContent>
+
+      <EditClientDialog 
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        patient={patient}
+        onPatientUpdated={onPatientUpdated}
+      />
     </Card>
   );
 };

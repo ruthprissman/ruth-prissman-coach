@@ -304,7 +304,10 @@ const ClientDetails = () => {
   return (
     <AdminLayout title={`${patient.name} - פרטי לקוח`}>
       <div className="grid gap-6 md:grid-cols-2 mb-6">
-        <ClientInfoCard patient={patient} />
+        <ClientInfoCard 
+          patient={patient} 
+          onPatientUpdated={fetchClientData}
+        />
         <ClientStatisticsCard 
           statistics={statistics}
           formatDateOnly={formatDateOnly}
@@ -579,4 +582,3 @@ const ClientDetails = () => {
 };
 
 export default ClientDetails;
-
