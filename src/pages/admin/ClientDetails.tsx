@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -11,9 +10,10 @@ import { formatDateInIsraelTimeZone } from '@/utils/dateUtils';
 import { toast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Plus, Repeat } from 'lucide-react';
+import { Calendar, Clock, Plus, Repeat, Pencil, Trash2, RefreshCw } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import DeleteFutureSessionDialog from '@/components/admin/sessions/DeleteFutureSessionDialog';
 import EditFutureSessionDialog from '@/components/admin/sessions/EditFutureSessionDialog';
 import ConvertSessionDialog from '@/components/admin/sessions/ConvertSessionDialog';
@@ -32,7 +32,6 @@ const ClientDetails = () => {
   const [futureSessions, setFutureSessions] = useState<FutureSession[]>([]);
   const [historicalSessions, setHistoricalSessions] = useState<Session[]>([]);
 
-  // Dialog states
   const [deleteSessionDialog, setDeleteSessionDialog] = useState<{open: boolean, session: Session | null}>({
     open: false,
     session: null
@@ -62,7 +61,6 @@ const ClientDetails = () => {
   const fetchClientData = async () => {
     setLoading(true);
     try {
-      // Fetch patient details
       const { data: patientData, error: patientError } = await supabase
         .from('patients')
         .select('*')
@@ -73,7 +71,6 @@ const ClientDetails = () => {
       
       setPatient(patientData as Patient);
 
-      // Fetch session statistics
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
         .select('*')
@@ -83,7 +80,6 @@ const ClientDetails = () => {
       
       setHistoricalSessions(sessionsData as Session[]);
       
-      // Fetch future sessions
       const { data: futureSessionsData, error: futureSessionsError } = await supabase
         .from('future_sessions')
         .select('*')
@@ -95,7 +91,6 @@ const ClientDetails = () => {
       
       setFutureSessions(futureSessionsData as FutureSession[]);
 
-      // Fetch next session
       const { data: nextSessionData, error: nextSessionError } = await supabase
         .from('future_sessions')
         .select('*')
@@ -106,7 +101,6 @@ const ClientDetails = () => {
 
       if (nextSessionError) throw nextSessionError;
 
-      // Calculate total debt
       const session_price = patientData.session_price || 0;
       const totalDebt = sessionsData.reduce((sum: number, session: Session) => {
         if (session.payment_status === 'unpaid') {
@@ -117,7 +111,6 @@ const ClientDetails = () => {
         return sum;
       }, 0);
       
-      // Get latest session date
       const sortedSessions = [...sessionsData].sort((a, b) => 
         new Date(b.session_date).getTime() - new Date(a.session_date).getTime()
       );
@@ -198,7 +191,6 @@ const ClientDetails = () => {
         description: "הפגישה העתידית נמחקה בהצלחה",
       });
       
-      // Refresh data
       fetchClientData();
     } catch (error) {
       console.error('Error deleting future session:', error);
@@ -228,7 +220,6 @@ const ClientDetails = () => {
         description: "הפגישה נמחקה בהצלחה",
       });
       
-      // Refresh data
       fetchClientData();
     } catch (error) {
       console.error('Error deleting session:', error);
@@ -388,30 +379,59 @@ const ClientDetails = () => {
                       )}
 
                       <div className="flex justify-end space-x-2 space-x-reverse mt-4">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleEditFutureSession(session)}
-                          className="text-purple-600 hover:text-purple-800 hover:bg-purple-100"
-                        >
-                          עריכה
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleConvertSession(session)}
-                          className="text-green-600 hover:text-green-800 hover:bg-green-100"
-                        >
-                          המרה
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDeleteFutureSession(session)}
-                          className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                        >
-                          מחיקה
-                        </Button>
+                        <TooltipProvider delayDuration={300}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleEditFutureSession(session)}
+                                className="text-green-600 hover:text-green-800 hover:bg-green-100"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent dir="rtl">
+                              <p>עריכת פגישה</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider delayDuration={300}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleConvertSession(session)}
+                                className="text-purple-600 hover:text-purple-800 hover:bg-purple-100"
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent dir="rtl">
+                              <p>העבר לפגישה היסטורית</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider delayDuration={300}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleDeleteFutureSession(session)}
+                                className="text-red-600 hover:text-red-800 hover:bg-red-100"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent dir="rtl">
+                              <p>מחיקת פגישה</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                   </Card>
@@ -499,7 +519,6 @@ const ClientDetails = () => {
         </Tabs>
       </div>
 
-      {/* Dialogs */}
       <DeleteFutureSessionDialog
         open={deleteFutureSessionDialog.open}
         onOpenChange={(open) => setDeleteFutureSessionDialog({ ...deleteFutureSessionDialog, open })}
