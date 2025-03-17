@@ -11,6 +11,23 @@ export interface Patient {
   has_upcoming_sessions?: boolean;
   is_active?: boolean;
   financial_status?: 'No Debts' | 'Has Outstanding Payments' | null;
+  
+  // Adding missing fields that are used in ClientDetails
+  address?: string | null;
+  date_of_birth?: string | null;
+  gender?: 'male' | 'female' | 'other' | null;
+  occupation?: string | null;
+  referral_source?: string | null;
+  status?: 'Active' | 'Inactive' | 'Suspended' | 'Completed' | string;
+  emergency_contact?: string | null;
+  emergency_phone?: string | null;
+  previous_therapy?: string | null;
+  reason_for_therapy?: string | null;
+  medical_history?: string | null;
+  allergies?: string | null;
+  medications?: string | null;
+  family_status?: string | null;
+  children?: string | null;
 }
 
 export interface Session {

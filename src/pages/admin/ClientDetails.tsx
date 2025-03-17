@@ -45,8 +45,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { 
   Patient, 
-  Session, 
-  SessionFormData 
+  Session
 } from '@/types/patient';
 import { FutureSession } from '@/types/session';
 import { Calendar, CalendarDays, Calculator, Clock, Edit, MoreVertical, Plus, Trash, Trash2 } from 'lucide-react';
@@ -68,7 +67,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 // Empty client object for initialization
 const emptyClient: Patient = {
   id: 0,
-  created_at: '',
   name: '',
   email: '',
   phone: '',
@@ -82,7 +80,6 @@ const emptyClient: Patient = {
   emergency_contact: null,
   emergency_phone: null,
   last_session_date: null,
-  next_session_date: null,
   notes: null,
   session_price: 0,
   previous_therapy: null,
@@ -100,7 +97,7 @@ const clientSchema = z.object({
   email: z.string().email({ message: "אימייל לא תקין" }).or(z.literal('')),
   phone: z.string().min(9, { message: "מספר טלפון חייב להכיל לפחות 9 ספרות" }),
   session_price: z.coerce.number().min(0, { message: "מחיר חייב להיות חיובי" }),
-  address: z.string().optional(),
+  address: z.string().optional().nullable(),
   gender: z.string().optional().nullable(),
   date_of_birth: z.string().optional().nullable(),
   occupation: z.string().optional().nullable(),
@@ -561,7 +558,7 @@ const ClientDetails = () => {
   };
 
   return (
-    <AdminLayout>
+    <AdminLayout title="פרטי לקוח">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">פרטי לקוח</h1>
         <div className="flex gap-2">
@@ -1049,19 +1046,19 @@ const ClientDetails = () => {
         <div className="mb-6">
           <div className="grid md:grid-cols-3 gap-6">
             <ClientStatisticsCard
-              title="מספר פגישות"
+              label="מספר פגישות"
               value={stats.sessionsCount}
               description="סך כל הפגישות"
               icon={<Calendar className="h-8 w-8 text-blue-500" />}
             />
             <ClientStatisticsCard
-              title="תשלומים שבוצעו"
+              label="תשלומים שבוצעו"
               value={stats.completedPayments}
               description="מתוך סך כל הפגישות"
               icon={<Calculator className="h-8 w-8 text-green-500" />}
             />
             <ClientStatisticsCard
-              title="ממתינים לתשלום"
+              label="ממתינים לתשלום"
               value={stats.pendingPayments}
               description="מספר פגישות שלא שולמו"
               icon={<Clock className="h-8 w-8 text-amber-500" />}
@@ -1088,11 +1085,37 @@ const ClientDetails = () => {
                 </Button>
               </CardHeader>
               <CardContent>
-                <PatientSessionFilters 
-                  onFilterChange={handleFilterChange}
-                  paymentStatus={sessionFilters.paymentStatus}
-                  dateSortOrder={sessionFilters.dateSortOrder}
-                />
+                {/* Note: We're manually passing props to PatientSessionFilters since it seems to have different props than SessionFilters */}
+                <div className="mt-4">
+                  <div className="flex flex-wrap gap-4 mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor="paymentStatus" className="ml-2">סטטוס תשלום</Label>
+                      <select
+                        id="paymentStatus"
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        value={sessionFilters.paymentStatus}
+                        onChange={(e) => handleFilterChange({ paymentStatus: e.target.value })}
+                      >
+                        <option value="all">הכל</option>
+                        <option value="paid">שולם</option>
+                        <option value="partially_paid">שולם חלקי</option>
+                        <option value="unpaid">לא שולם</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Label htmlFor="dateSortOrder" className="ml-2">מיון לפי תאריך</Label>
+                      <select
+                        id="dateSortOrder"
+                        className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        value={sessionFilters.dateSortOrder}
+                        onChange={(e) => handleFilterChange({ dateSortOrder: e.target.value })}
+                      >
+                        <option value="desc">מהחדש לישן</option>
+                        <option value="asc">מהישן לחדש</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
                 
                 <div className="mt-4">
                   {filteredSessions.length > 0 ? (
@@ -1120,11 +1143,11 @@ const ClientDetails = () => {
                             <TableCell>
                               <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                 ${session.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 
-                                  session.payment_status === 'partial' ? 'bg-amber-100 text-amber-800' : 
+                                  session.payment_status === 'partially_paid' ? 'bg-amber-100 text-amber-800' : 
                                   'bg-red-100 text-red-800'}`}
                               >
                                 {session.payment_status === 'paid' ? 'שולם' : 
-                                 session.payment_status === 'partial' ? 'שולם חלקית' : 
+                                 session.payment_status === 'partially_paid' ? 'שולם חלקית' : 
                                  'ממתין לתשלום'}
                               </div>
                             </TableCell>
@@ -1319,7 +1342,7 @@ const ClientDetails = () => {
                     </div>
                     <div>
                       <h3 className="text-sm font-medium mb-1">טלפון לחירום:</h3>
-                      <p className="text-sm" dir="ltr" className="text-left">{client.emergency_phone || 'לא צוין'}</p>
+                      <p dir="ltr" className="text-sm text-left">{client.emergency_phone || 'לא צוין'}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -1332,8 +1355,6 @@ const ClientDetails = () => {
       {/* Dialogs and Modals */}
       {editingSession && (
         <SessionEditDialog
-          open={showSessionEditDialog}
-          onClose={() => setShowSessionEditDialog(false)}
           session={editingSession}
           onUpdated={handleSessionUpdate}
         />
@@ -1362,7 +1383,7 @@ const ClientDetails = () => {
         onOpenChange={setShowNewFutureSessionDialog}
         patientId={clientId}
         patientName={client.name}
-        onSessionCreated={handleFutureSessionCreated}
+        onCreated={handleFutureSessionCreated}
       />
       
       <NewHistoricalSessionDialog
@@ -1370,7 +1391,7 @@ const ClientDetails = () => {
         onOpenChange={setShowNewSessionDialog}
         patientId={clientId}
         patient={client}
-        onSessionCreated={handleSessionCreated}
+        onCreated={handleSessionCreated}
       />
       
       {futureSessionToMove && (
@@ -1379,9 +1400,8 @@ const ClientDetails = () => {
           onOpenChange={setShowMoveToHistoryDialog}
           patientId={clientId}
           patient={client}
-          onSessionCreated={handleSessionCreated}
+          onCreated={handleAfterMoveToHistory}
           fromFutureSession={futureSessionToMove}
-          onDeleteFutureSession={handleAfterMoveToHistory}
         />
       )}
       
