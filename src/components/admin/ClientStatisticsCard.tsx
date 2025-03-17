@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar, DollarSign, BookOpen } from 'lucide-react';
 import { ClientStatistics } from '@/types/session';
 
 interface ClientStatisticsCardProps {
