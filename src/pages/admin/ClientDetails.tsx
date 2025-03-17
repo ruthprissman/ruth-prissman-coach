@@ -1,1130 +1,1405 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { format, formatDistance, isAfter, subHours } from 'date-fns';
-import { he } from 'date-fns/locale/he';
-import { 
-  ArrowRight, Edit, Trash2, AlertTriangle, 
-  RefreshCw, Phone, User, Monitor, 
-  Check, X, CreditCard, BadgeDollarSign, Calendar, 
-  Search, ChevronDown, ChevronUp, Info,
-  PlusCircle, ArrowDownToLine, History, Pencil
-} from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { Patient, Session, Exercise } from '@/types/patient';
-import { FutureSession, ClientStatistics } from '@/types/session';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Card, CardContent, CardDescription, CardFooter, 
-  CardHeader, CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Dialog, DialogContent, DialogDescription, DialogFooter, 
-  DialogHeader, DialogTitle 
-} from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { 
+  Form, 
+  FormControl, 
+  FormDescription, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-
-import SessionEditDialog from '@/components/admin/SessionEditDialog';
-import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog';
-import DeleteFutureSessionDialog from '@/components/admin/sessions/DeleteFutureSessionDialog';
-import ConvertSessionDialog from '@/components/admin/sessions/ConvertSessionDialog';
-import SessionDetailCollapsible from '@/components/admin/sessions/SessionDetailCollapsible';
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
+import { 
+  Patient, 
+  Session, 
+  SessionFormData 
+} from '@/types/patient';
+import { FutureSession } from '@/types/session';
+import { Calendar, CalendarDays, Calculator, Clock, Edit, MoreVertical, Plus, Trash, Trash2 } from 'lucide-react';
 import ClientStatisticsCard from '@/components/admin/ClientStatisticsCard';
-import NewFutureSessionDialog from '@/components/admin/sessions/NewFutureSessionDialog';
-import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistoricalSessionDialog';
-import EditFutureSessionDialog from '@/components/admin/sessions/EditFutureSessionDialog';
+import SessionsList from '@/components/admin/sessions/SessionsList';
+import PatientSessionFilters from '@/components/admin/sessions/PatientSessionFilters';
+import SessionEditDialog from '@/components/admin/SessionEditDialog';
 import { formatDateInIsraelTimeZone } from '@/utils/dateUtils';
+import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog';
+import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistoricalSessionDialog';
+import ConvertSessionDialog from '@/components/admin/sessions/ConvertSessionDialog';
+import NewFutureSessionDialog from '@/components/admin/sessions/NewFutureSessionDialog';
+import EditFutureSessionDialog from '@/components/admin/sessions/EditFutureSessionDialog';
+import DeleteFutureSessionDialog from '@/components/admin/sessions/DeleteFutureSessionDialog';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
-console.log("🚀 ClientDetails.tsx is loaded!");
+// Empty client object for initialization
+const emptyClient: Patient = {
+  id: 0,
+  created_at: '',
+  name: '',
+  email: '',
+  phone: '',
+  address: '',
+  date_of_birth: null,
+  gender: null,
+  occupation: null,
+  referral_source: null,
+  status: 'Active',
+  financial_status: 'No Debts',
+  emergency_contact: null,
+  emergency_phone: null,
+  last_session_date: null,
+  next_session_date: null,
+  notes: null,
+  session_price: 0,
+  previous_therapy: null,
+  reason_for_therapy: null,
+  allergies: null,
+  medications: null,
+  medical_history: null,
+  family_status: null,
+  children: null,
+};
 
-const ClientDetails: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+// Client validation schema
+const clientSchema = z.object({
+  name: z.string().min(2, { message: "שם הלקוח חייב להכיל לפחות 2 תווים" }),
+  email: z.string().email({ message: "אימייל לא תקין" }).or(z.literal('')),
+  phone: z.string().min(9, { message: "מספר טלפון חייב להכיל לפחות 9 ספרות" }),
+  session_price: z.coerce.number().min(0, { message: "מחיר חייב להיות חיובי" }),
+  address: z.string().optional(),
+  gender: z.string().optional().nullable(),
+  date_of_birth: z.string().optional().nullable(),
+  occupation: z.string().optional().nullable(),
+  referral_source: z.string().optional().nullable(),
+  emergency_contact: z.string().optional().nullable(),
+  emergency_phone: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  status: z.string(),
+  previous_therapy: z.string().optional().nullable(),
+  reason_for_therapy: z.string().optional().nullable(),
+  medical_history: z.string().optional().nullable(),
+  allergies: z.string().optional().nullable(),
+  medications: z.string().optional().nullable(),
+  family_status: z.string().optional().nullable(),
+  children: z.string().optional().nullable(),
+});
+
+type ClientFormValues = z.infer<typeof clientSchema>;
+
+const ClientDetails = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
-
-  console.log("🚀 ClientDetails component rendering with ID:", id);
-
-  // State variables
-  const [client, setClient] = useState<Patient | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [upcomingSessions, setUpcomingSessions] = useState<FutureSession[]>([]);
-  const [statistics, setStatistics] = useState<ClientStatistics | null>(null);
-  const [pastSessions, setPastSessions] = useState<Session[]>([]);
+  const clientId = parseInt(id || '0');
+  
+  const [client, setClient] = useState<Patient>(emptyClient);
+  const [originalClient, setOriginalClient] = useState<Patient>(emptyClient);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [filteredSessions, setFilteredSessions] = useState<Session[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [expandedSessionId, setExpandedSessionId] = useState<number | null>(null);
-
-  // Dialog states
-  const [isEditClientDialogOpen, setIsEditClientDialogOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState<Patient | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleteSessionDialogOpen, setIsDeleteSessionDialogOpen] = useState(false);
+  const [futureSessions, setFutureSessions] = useState<FutureSession[]>([]);
+  const [stats, setStats] = useState<{
+    sessionsCount: number;
+    completedPayments: number;
+    pendingPayments: number;
+    averageSessionLength: number;
+  }>({
+    sessionsCount: 0,
+    completedPayments: 0,
+    pendingPayments: 0,
+    averageSessionLength: 60,
+  });
+  
+  // Dialog/Sheet states
+  const [editMode, setEditMode] = useState(false);
+  const [savingChanges, setSavingChanges] = useState(false);
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [showSessionEditDialog, setShowSessionEditDialog] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
-  const [isEditSessionDialogOpen, setIsEditSessionDialogOpen] = useState(false);
-  const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null);
-  const [isConvertSessionDialogOpen, setIsConvertSessionDialogOpen] = useState(false);
-  const [sessionToConvert, setSessionToConvert] = useState<FutureSession | null>(null);
-  
-  // New dialog states
-  const [isNewFutureSessionDialogOpen, setIsNewFutureSessionDialogOpen] = useState(false);
-  const [isNewHistoricalSessionDialogOpen, setIsNewHistoricalSessionDialogOpen] = useState(false);
-  const [isMoveToHistoricalDialogOpen, setIsMoveToHistoricalDialogOpen] = useState(false);
-  const [futureSessionToMove, setFutureSessionToMove] = useState<FutureSession | null>(null);
-  
-  // New states for future session editing and deletion
-  const [isEditFutureSessionDialogOpen, setIsEditFutureSessionDialogOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
+  const [futureSessionToConvert, setFutureSessionToConvert] = useState<FutureSession | null>(null);
+  const [showConvertDialog, setShowConvertDialog] = useState(false);
+  const [showNewFutureSessionDialog, setShowNewFutureSessionDialog] = useState(false);
   const [futureSessionToEdit, setFutureSessionToEdit] = useState<FutureSession | null>(null);
-  const [isDeleteFutureSessionDialogOpen, setIsDeleteFutureSessionDialogOpen] = useState(false);
+  const [showEditFutureSessionDialog, setShowEditFutureSessionDialog] = useState(false);
   const [futureSessionToDelete, setFutureSessionToDelete] = useState<FutureSession | null>(null);
+  const [showDeleteFutureSessionDialog, setShowDeleteFutureSessionDialog] = useState(false);
+  const [futureSessionToMove, setFutureSessionToMove] = useState<FutureSession | null>(null);
+  const [showMoveToHistoryDialog, setShowMoveToHistoryDialog] = useState(false);
+  
+  // Filter states
+  const [sessionFilters, setSessionFilters] = useState({
+    status: 'all',
+    paymentStatus: 'all',
+    dateSortOrder: 'desc',
+  });
 
+  // Form setup
+  const form = useForm<ClientFormValues>({
+    resolver: zodResolver(clientSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      session_price: 0,
+      address: '',
+      gender: '',
+      date_of_birth: '',
+      occupation: '',
+      referral_source: '',
+      emergency_contact: '',
+      emergency_phone: '',
+      notes: '',
+      status: 'Active',
+      previous_therapy: '',
+      reason_for_therapy: '',
+      medical_history: '',
+      allergies: '',
+      medications: '',
+      family_status: '',
+      children: '',
+    }
+  });
+  
   // Fetch client data
-  const fetchClientData = async () => {
-    if (!id) return;
+  const fetchClientData = useCallback(async () => {
+    if (!clientId) return;
     
-    console.log("📌 Fetching client data for ID:", id);
-    setIsLoading(true);
     try {
-      // Fetch client information
-      const { data: clientData, error: clientError } = await supabase
+      const { data, error } = await supabase
         .from('patients')
         .select('*')
-        .eq('id', id)
+        .eq('id', clientId)
         .single();
+        
+      if (error) throw error;
       
-      if (clientError) throw clientError;
-      
-      console.log("📌 Client Data:", clientData);
-      setClient(clientData);
-      setEditFormData(clientData);
-      
-      // Fetch upcoming sessions - using session_date
-      const { data: upcomingData, error: upcomingError } = await supabase
-        .from('future_sessions')
-        .select('*')
-        .eq('patient_id', id)
-        .order('session_date', { ascending: true })
-        .limit(3);
-      
-      if (upcomingError) throw upcomingError;
-      
-      console.log("📌 Upcoming Sessions:", upcomingData);
-      setUpcomingSessions(upcomingData || []);
-      
-      // Fetch past sessions
-      const { data: sessionsData, error: sessionsError } = await supabase
+      if (data) {
+        setClient(data);
+        setOriginalClient(data);
+        
+        // Reset form with client data
+        form.reset({
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          session_price: data.session_price || 0,
+          address: data.address || '',
+          gender: data.gender || '',
+          date_of_birth: data.date_of_birth || '',
+          occupation: data.occupation || '',
+          referral_source: data.referral_source || '',
+          emergency_contact: data.emergency_contact || '',
+          emergency_phone: data.emergency_phone || '',
+          notes: data.notes || '',
+          status: data.status || 'Active',
+          previous_therapy: data.previous_therapy || '',
+          reason_for_therapy: data.reason_for_therapy || '',
+          medical_history: data.medical_history || '',
+          allergies: data.allergies || '',
+          medications: data.medications || '',
+          family_status: data.family_status || '',
+          children: data.children || '',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching client:', error);
+      toast.error('שגיאה בטעינת פרטי לקוח');
+    }
+  }, [clientId, form]);
+  
+  // Fetch sessions
+  const fetchSessions = useCallback(async () => {
+    if (!clientId) return;
+    
+    try {
+      const { data, error } = await supabase
         .from('sessions')
         .select('*')
-        .eq('patient_id', id)
+        .eq('patient_id', clientId)
         .order('session_date', { ascending: false });
+        
+      if (error) throw error;
       
-      if (sessionsError) throw sessionsError;
-      
-      console.log("📌 Sessions Data:", sessionsData);
-      setPastSessions(sessionsData || []);
-      setFilteredSessions(sessionsData || []);
+      setSessions(data || []);
+      setFilteredSessions(data || []);
       
       // Calculate statistics
-      const totalSessions = sessionsData?.length || 0;
-      
-      let totalDebt = 0;
-      sessionsData?.forEach(session => {
-        if (session.payment_status !== 'paid') {
-          totalDebt += (clientData.session_price || 0) - (session.paid_amount || 0);
-        }
-      });
-      
-      const lastSession = sessionsData && sessionsData.length > 0 
-        ? sessionsData[0].session_date 
-        : null;
-      
-      // Use session_date for next session
-      const nextSession = upcomingData && upcomingData.length > 0 
-        ? upcomingData[0].session_date 
-        : null;
-      
-      const stats = {
-        total_sessions: totalSessions,
-        total_debt: totalDebt,
-        last_session: lastSession,
-        next_session: nextSession
-      };
-      
-      console.log("📌 Statistics:", stats);
-      setStatistics(stats);
-      
-    } catch (error: any) {
-      console.error('❌ Error fetching client data:', error);
-      toast({
-        title: "שגיאה בטעינת נתוני לקוח",
-        description: error.message || "אנא נסה שוב מאוחר יותר",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      if (data) {
+        const completedPayments = data.filter(s => s.payment_status === 'paid').length;
+        const pendingPayments = data.filter(s => s.payment_status !== 'paid').length;
+        const totalSessions = data.length;
+        
+        setStats({
+          sessionsCount: totalSessions,
+          completedPayments,
+          pendingPayments,
+          averageSessionLength: 60, // Default value, could be calculated from data
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      toast.error('שגיאה בטעינת פגישות');
     }
-  };
-
-  // Fetch data on component mount and when id changes
-  useEffect(() => {
-    console.log("🔄 useEffect triggered for ID:", id);
-    fetchClientData();
-  }, [id]);
-
-  // Filter sessions based on search term
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredSessions(pastSessions);
-      return;
+  }, [clientId]);
+  
+  // Fetch future sessions
+  const fetchFutureSessions = useCallback(async () => {
+    if (!clientId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('future_sessions')
+        .select('*')
+        .eq('patient_id', clientId)
+        .order('session_date', { ascending: true });
+        
+      if (error) throw error;
+      
+      setFutureSessions(data || []);
+    } catch (error) {
+      console.error('Error fetching future sessions:', error);
+      toast.error('שגיאה בטעינת פגישות עתידיות');
+    }
+  }, [clientId]);
+  
+  // Apply filters to sessions
+  const applyFilters = useCallback(() => {
+    let filtered = [...sessions];
+    
+    // Apply payment status filter
+    if (sessionFilters.paymentStatus !== 'all') {
+      filtered = filtered.filter(s => s.payment_status === sessionFilters.paymentStatus);
     }
     
-    const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    
-    const filtered = pastSessions.filter(session => {
-      return (
-        (session.summary && session.summary.toLowerCase().includes(lowerCaseSearchTerm)) ||
-        (session.session_date && session.session_date.toLowerCase().includes(lowerCaseSearchTerm)) ||
-        (session.exercise_list && session.exercise_list.some(ex => 
-          ex.toLowerCase().includes(lowerCaseSearchTerm)
-        ))
-      );
+    // Apply sort order
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.session_date).getTime();
+      const dateB = new Date(b.session_date).getTime();
+      return sessionFilters.dateSortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
     
     setFilteredSessions(filtered);
-  }, [searchTerm, pastSessions]);
+  }, [sessions, sessionFilters]);
+  
+  // Load data on initial render and when client ID changes
+  useEffect(() => {
+    fetchClientData();
+    fetchSessions();
+    fetchFutureSessions();
+  }, [clientId, fetchClientData, fetchSessions, fetchFutureSessions]);
+  
+  // Apply filters when filter settings or sessions change
+  useEffect(() => {
+    applyFilters();
+  }, [sessions, sessionFilters, applyFilters]);
 
-  // Handle client update
-  const handleUpdateClient = async () => {
-    if (!editFormData || !id) return;
+  // Handle client edit form submission
+  const handleFormSubmit = async (data: ClientFormValues) => {
+    if (!clientId) return;
     
-    setIsSubmitting(true);
+    setSavingChanges(true);
+    
     try {
       const { error } = await supabase
         .from('patients')
         .update({
-          name: editFormData.name,
-          phone: editFormData.phone,
-          email: editFormData.email,
-          notes: editFormData.notes,
-          session_price: editFormData.session_price
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          session_price: data.session_price,
+          address: data.address || null,
+          gender: data.gender || null,
+          date_of_birth: data.date_of_birth || null,
+          occupation: data.occupation || null,
+          referral_source: data.referral_source || null,
+          emergency_contact: data.emergency_contact || null,
+          emergency_phone: data.emergency_phone || null,
+          notes: data.notes || null,
+          status: data.status,
+          previous_therapy: data.previous_therapy || null,
+          reason_for_therapy: data.reason_for_therapy || null,
+          medical_history: data.medical_history || null,
+          allergies: data.allergies || null,
+          medications: data.medications || null,
+          family_status: data.family_status || null,
+          children: data.children || null,
         })
-        .eq('id', id);
-      
+        .eq('id', clientId);
+        
       if (error) throw error;
       
-      toast({
-        title: "פרטי לקוח עודכנו בהצלחה",
-        description: `הפרטים של ${editFormData.name} עודכנו במערכת`,
-      });
-      
-      setIsEditClientDialogOpen(false);
-      await fetchClientData();
-    } catch (error: any) {
-      console.error('Error updating client:', error);
-      toast({
-        title: "שגיאה בעדכון פרטי לקוח",
-        description: error.message || "אנא נסה שוב מאוחר יותר",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Convert future session to completed session
-  const handleConvertSession = async (futureSession: FutureSession) => {
-    setSessionToConvert(futureSession);
-    setIsConvertSessionDialogOpen(true);
-  };
-
-  // Move future session to historical
-  const handleMoveToHistorical = (futureSession: FutureSession) => {
-    setFutureSessionToMove(futureSession);
-    setIsMoveToHistoricalDialogOpen(true);
-  };
-
-  // Delete future session after moving to historical
-  const handleDeleteFutureSession = async () => {
-    if (!futureSessionToMove) return;
-    
-    try {
-      const { error } = await supabase
-        .from('future_sessions')
-        .delete()
-        .eq('id', futureSessionToMove.id);
-      
-      if (error) throw error;
-      
-      await fetchClientData();
-      return Promise.resolve();
+      toast.success('פרטי הלקוח עודכנו בהצלחה');
+      setEditMode(false);
+      fetchClientData();
     } catch (error) {
-      console.error('Error deleting future session:', error);
-      return Promise.reject(error);
+      console.error('Error updating client:', error);
+      toast.error('שגיאה בעדכון פרטי לקוח');
+    } finally {
+      setSavingChanges(false);
     }
   };
 
-  // Handle session conversion confirmation
-  const handleSessionConverted = async () => {
-    await fetchClientData();
-    setIsConvertSessionDialogOpen(false);
-    setSessionToConvert(null);
+  // Handle form cancel
+  const handleFormCancel = () => {
+    form.reset({
+      name: originalClient.name || '',
+      email: originalClient.email || '',
+      phone: originalClient.phone || '',
+      session_price: originalClient.session_price || 0,
+      address: originalClient.address || '',
+      gender: originalClient.gender || '',
+      date_of_birth: originalClient.date_of_birth || '',
+      occupation: originalClient.occupation || '',
+      referral_source: originalClient.referral_source || '',
+      emergency_contact: originalClient.emergency_contact || '',
+      emergency_phone: originalClient.emergency_phone || '',
+      notes: originalClient.notes || '',
+      status: originalClient.status || 'Active',
+      previous_therapy: originalClient.previous_therapy || '',
+      reason_for_therapy: originalClient.reason_for_therapy || '',
+      medical_history: originalClient.medical_history || '',
+      allergies: originalClient.allergies || '',
+      medications: originalClient.medications || '',
+      family_status: originalClient.family_status || '',
+      children: originalClient.children || '',
+    });
+    setEditMode(false);
   };
-
-  // Handle delete session
-  const handleDeleteSessionConfirm = (session: Session) => {
+  
+  // Handle session edit
+  const handleEditSession = (session: Session) => {
+    setEditingSession(session);
+    setShowSessionEditDialog(true);
+  };
+  
+  // Handle session update
+  const handleSessionUpdate = async () => {
+    await fetchSessions();
+    setShowSessionEditDialog(false);
+    setEditingSession(null);
+    toast.success('הפגישה עודכנה בהצלחה');
+  };
+  
+  // Handle session delete
+  const handleDeleteSession = (session: Session) => {
     setSessionToDelete(session);
-    setIsDeleteSessionDialogOpen(true);
+    setShowDeleteDialog(true);
   };
-
-  // Handle session deletion
-  const handleDeleteSession = async () => {
-    if (!sessionToDelete) return;
-    
-    setIsSubmitting(true);
+  
+  // Confirm session delete
+  const handleConfirmDeleteSession = async () => {
     try {
+      if (!sessionToDelete) return;
+      
       const { error } = await supabase
         .from('sessions')
         .delete()
         .eq('id', sessionToDelete.id);
-      
+        
       if (error) throw error;
       
-      toast({
-        title: "פגישה נמחקה בהצלחה",
-        description: `הפגישה נמחקה בהצלחה`,
-      });
-      
-      await fetchClientData();
-    } catch (error: any) {
-      console.error('Error deleting session:', error);
-      toast({
-        title: "שגיאה במחיקת פגישה",
-        description: error.message || "אנא נסה שוב מאוחר יותר",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-      setIsDeleteSessionDialogOpen(false);
+      toast.success('הפגישה נמחקה בהצלחה');
+      await fetchSessions();
+      setShowDeleteDialog(false);
       setSessionToDelete(null);
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      toast.error('שגיאה במחיקת פגישה');
     }
   };
-
-  // Handle edit session
-  const handleEditSession = (session: Session) => {
-    setSessionToEdit(session);
-    setIsEditSessionDialogOpen(true);
-  };
-
-  // Handle session update
-  const handleSessionUpdated = async () => {
-    await fetchClientData();
-    setIsEditSessionDialogOpen(false);
-    setSessionToEdit(null);
-  };
-
-  // Handle new future session created
-  const handleFutureSessionCreated = async () => {
-    await fetchClientData();
-    setIsNewFutureSessionDialogOpen(false);
-  };
-
-  // Handle new historical session created
-  const handleHistoricalSessionCreated = async () => {
-    await fetchClientData();
-    setIsNewHistoricalSessionDialogOpen(false);
-    
-    // After successful creation, also clear the future session being moved
-    setFutureSessionToMove(null);
+  
+  // Handle future session conversion
+  const handleConvertFutureSession = (session: FutureSession) => {
+    setFutureSessionToConvert(session);
+    setShowConvertDialog(true);
   };
   
-  // New handlers for future session edit/delete
+  // Handle session converted
+  const handleSessionConverted = async () => {
+    await fetchSessions();
+    await fetchFutureSessions();
+    setShowConvertDialog(false);
+    setFutureSessionToConvert(null);
+    toast.success('הפגישה הומרה והועברה להיסטוריה בהצלחה');
+  };
+  
+  // Handle future session edit
   const handleEditFutureSession = (session: FutureSession) => {
     setFutureSessionToEdit(session);
-    setIsEditFutureSessionDialogOpen(true);
+    setShowEditFutureSessionDialog(true);
   };
   
+  // Handle future session update
   const handleFutureSessionUpdated = async () => {
-    await fetchClientData();
-    setIsEditFutureSessionDialogOpen(false);
+    await fetchFutureSessions();
+    setShowEditFutureSessionDialog(false);
     setFutureSessionToEdit(null);
+    toast.success('הפגישה העתידית עודכנה בהצלחה');
   };
   
-  const handleDeleteFutureSessionConfirm = (session: FutureSession) => {
+  // Handle future session delete
+  const handleDeleteFutureSession = (session: FutureSession) => {
     setFutureSessionToDelete(session);
-    setIsDeleteFutureSessionDialogOpen(true);
+    setShowDeleteFutureSessionDialog(true);
   };
   
-  const handleDeleteFutureSessionExecute = async () => {
-    if (!futureSessionToDelete) return;
-    
-    setIsSubmitting(true);
+  // Confirm future session delete
+  const handleConfirmDeleteFutureSession = async () => {
     try {
+      if (!futureSessionToDelete) return;
+      
       const { error } = await supabase
         .from('future_sessions')
         .delete()
         .eq('id', futureSessionToDelete.id);
-      
+        
       if (error) throw error;
       
-      toast({
-        title: "פגישה עתידית נמחקה בהצלחה",
-        description: `הפגישה נמחקה בהצלחה`,
-      });
-      
-      await fetchClientData();
-    } catch (error: any) {
-      console.error('Error deleting future session:', error);
-      toast({
-        title: "שגיאה במחיקת פגישה",
-        description: error.message || "אנא נסה שוב מאוחר יותר",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-      setIsDeleteFutureSessionDialogOpen(false);
+      toast.success('הפגישה העתידית נמחקה בהצלחה');
+      await fetchFutureSessions();
+      setShowDeleteFutureSessionDialog(false);
       setFutureSessionToDelete(null);
+    } catch (error) {
+      console.error('Error deleting future session:', error);
+      toast.error('שגיאה במחיקת פגישה עתידית');
     }
   };
-
-  // Fix the input onChange handler to properly handle session_price as a number
-  const handleEditFormInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    
-    if (name === 'session_price') {
-      // Convert session_price to a number or null
-      const numValue = value === '' ? null : Number(value);
-      setEditFormData(prev => prev ? { ...prev, [name]: numValue } : null);
-    } else {
-      setEditFormData(prev => prev ? { ...prev, [name]: value } : null);
+  
+  // Handle future session move to history
+  const handleMoveToHistory = (session: FutureSession) => {
+    setFutureSessionToMove(session);
+    setShowMoveToHistoryDialog(true);
+  };
+  
+  // Handle after move to history
+  const handleAfterMoveToHistory = async () => {
+    try {
+      if (!futureSessionToMove) return;
+      
+      // Delete the future session after it has been moved to history
+      const { error } = await supabase
+        .from('future_sessions')
+        .delete()
+        .eq('id', futureSessionToMove.id);
+        
+      if (error) throw error;
+      
+      await fetchSessions();
+      await fetchFutureSessions();
+      setShowMoveToHistoryDialog(false);
+      setFutureSessionToMove(null);
+      toast.success('הפגישה הועברה בהצלחה להיסטוריה');
+    } catch (error) {
+      console.error('Error during move operation:', error);
+      toast.error('שגיאה בפעולת ההעברה');
     }
   };
-
+  
+  // Create new session
+  const handleSessionCreated = async () => {
+    await fetchSessions();
+    setShowNewSessionDialog(false);
+    toast.success('פגישה חדשה נוצרה בהצלחה');
+  };
+  
+  // Create new future session
+  const handleFutureSessionCreated = async () => {
+    await fetchFutureSessions();
+    setShowNewFutureSessionDialog(false);
+    toast.success('פגישה עתידית חדשה נוצרה בהצלחה');
+  };
+  
+  // Handle filter change
+  const handleFilterChange = (filters: {
+    status?: string;
+    paymentStatus?: string;
+    dateSortOrder?: string;
+  }) => {
+    setSessionFilters(prevState => ({
+      ...prevState,
+      ...filters,
+    }));
+  };
+  
   // Format date for display
   const formatDate = (dateString: string) => {
-    try {
-      return formatDateInIsraelTimeZone(new Date(dateString), 'dd/MM/yyyy HH:mm');
-    } catch (e) {
-      return dateString;
-    }
-  };
-
-  // Format date only (without time)
-  const formatDateOnly = (dateString: string | null) => {
-    if (!dateString) return '-';
-    try {
-      return formatDateInIsraelTimeZone(new Date(dateString), 'dd/MM/yyyy');
-    } catch (e) {
-      return dateString;
-    }
-  };
-
-  // Get meeting type icon
-  const getMeetingTypeIcon = (type: string) => {
-    switch (type) {
-      case 'Zoom':
-        return <Monitor className="h-4 w-4 text-purple-700" />;
-      case 'Phone':
-        return <Phone className="h-4 w-4 text-purple-700" />;
-      case 'In-Person':
-        return <User className="h-4 w-4 text-purple-700" />;
-      default:
-        return null;
-    }
-  };
-
-  // Get meeting type text
-  const getMeetingTypeText = (type: string) => {
-    switch (type) {
-      case 'Zoom':
-        return 'זום';
-      case 'Phone':
-        return 'טלפון';
-      case 'In-Person':
-        return 'פגישה פרונטית';
-      default:
-        return type;
-    }
-  };
-
-  // Get payment method text
-  const getPaymentMethodText = (method: string | null) => {
-    if (!method) return '-';
-    switch (method) {
-      case 'cash':
-        return 'מזומן';
-      case 'bit':
-        return 'ביט';
-      case 'transfer':
-        return 'העברה בנקאית';
-      default:
-        return method;
-    }
-  };
-
-  // Get payment status text
-  const getPaymentStatusText = (status: string | null) => {
-    if (!status) return 'לא שולם';
-    switch (status) {
-      case 'paid':
-        return 'שולם';
-      case 'partial':
-      case 'partially_paid':
-        return 'שולם חלקית';
-      case 'pending':
-      case 'unpaid':
-        return 'לא שולם';
-      default:
-        return status;
-    }
-  };
-
-  // Get payment status badge
-  const getPaymentStatusBadge = (status: string | null) => {
-    if (!status) status = 'pending';
-    
-    switch (status) {
-      case 'paid':
-        return (
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            <Check className="h-3 w-3 mr-1" />
-            {getPaymentStatusText(status)}
-          </Badge>
-        );
-      case 'partial':
-      case 'partially_paid':
-        return (
-          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-            <BadgeDollarSign className="h-3 w-3 mr-1" />
-            {getPaymentStatusText(status)}
-          </Badge>
-        );
-      case 'pending':
-      case 'unpaid':
-        return (
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-            <CreditCard className="h-3 w-3 mr-1" />
-            {getPaymentStatusText(status)}
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline">
-            {status}
-          </Badge>
-        );
-    }
-  };
-
-  // Check if session is overdue
-  const isSessionOverdue = (sessionDate: string) => {
-    const now = new Date();
-    const fortyEightHoursAgo = subHours(now, 48);
-    const sessionDateTime = new Date(sessionDate);
-    
-    return isAfter(fortyEightHoursAgo, sessionDateTime);
-  };
-
-  // Toggle expand session
-  const toggleExpandSession = (sessionId: number) => {
-    if (expandedSessionId === sessionId) {
-      setExpandedSessionId(null);
-    } else {
-      setExpandedSessionId(sessionId);
-    }
+    return formatDateInIsraelTimeZone(dateString, 'dd/MM/yyyy HH:mm');
   };
 
   return (
-    <AdminLayout title="פרטי לקוח">
-      <div dir="rtl">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : !client ? (
-          <div className="text-center space-y-4 p-10">
-            <p className="text-lg font-medium">לקוח לא נמצא</p>
-            <Button onClick={() => navigate('/admin/patients')}>
-              <ArrowRight className="ml-2 h-4 w-4" />
-              חזרה לרשימת הלקוחות
+    <AdminLayout>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">פרטי לקוח</h1>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/admin/patients')}
+          >
+            חזרה לרשימת הלקוחות
+          </Button>
+          {!editMode ? (
+            <Button onClick={() => setEditMode(true)}>
+              <Edit className="h-4 w-4 mr-2" />
+              ערוך פרטים
             </Button>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/admin/patients')}
-              className="mb-4 flex items-center"
-            >
-              <ArrowRight className="ml-2 h-4 w-4" />
-              חזרה לרשימת הלקוחות
-            </Button>
-            
-            {/* Alert for unpaid sessions */}
-            {statistics && statistics.total_debt > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-                <div className="flex items-center">
-                  <AlertTriangle className="h-5 w-5 text-red-500 ml-2" />
-                  <p className="text-red-700">
-                    <span className="font-bold">שים לב:</span> ללקוח זה יש חוב פתוח של ₪{statistics.total_debt}
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            {/* Client info card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex flex-row-reverse justify-between items-start">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setIsEditClientDialogOpen(true)}
-                    className="border-purple-300 hover:bg-purple-50 text-purple-700"
-                  >
-                    <Edit className="h-4 w-4 ml-2 text-purple-600" />
-                    עריכת פרטים
-                  </Button>
-                  <div className="text-right">
-                    <CardTitle className="text-2xl text-purple-800">{client.name}</CardTitle>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-medium mb-2 text-purple-700">פרטי קשר</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between border-b pb-2">
-                          <span className="font-medium text-purple-600">טלפון:</span>
-                          <span dir="ltr">{client.phone || '-'}</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-2">
-                          <span className="font-medium text-purple-600">אימייל:</span>
-                          <span>{client.email || '-'}</span>
-                        </div>
-                        <div className="flex justify-between border-b pb-2">
-                          <span className="font-medium text-purple-600">מחיר לפגישה:</span>
-                          <span>{client.session_price ? `₪${client.session_price}` : '-'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+          ) : null}
+        </div>
+      </div>
+
+      {editMode ? (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>עריכת פרטי לקוח</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>שם מלא *</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
-                  <div>
-                    <h3 className="text-lg font-medium mb-2 text-purple-700">הערות</h3>
-                    <div className="bg-purple-50 p-3 rounded border border-purple-100 min-h-[100px]">
-                      {client.notes || 'אין הערות'}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Stats and upcoming sessions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Upcoming sessions */}
-              <Card className="border-purple-200">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="text-xl text-purple-700">פגישות קרובות</CardTitle>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setIsNewFutureSessionDialogOpen(true)}
-                      className="border-purple-300 hover:bg-purple-50 text-purple-700"
-                    >
-                      <PlusCircle className="h-4 w-4 ml-2 text-purple-600" />
-                      יצירת פגישה עתידית חדשה
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {upcomingSessions.length === 0 ? (
-                    <p className="text-center text-gray-500 py-4">אין פגישות קרובות מתוכננות</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {upcomingSessions.map((session) => {
-                        const isOverdue = isSessionOverdue(session.session_date);
-                        
-                        return (
-                          <div 
-                            key={session.id} 
-                            className={`p-3 rounded-md border ${isOverdue 
-                              ? 'bg-red-50 border-red-200' 
-                              : 'bg-purple-50 border-purple-200'}`}
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>אימייל</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>טלפון *</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>כתובת</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="session_price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>מחיר פגישה (₪) *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="number" 
+                            min="0"
+                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="date_of_birth"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>תאריך לידה</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="date" 
+                            value={field.value || ''} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>מגדר</FormLabel>
+                        <FormControl>
+                          <select 
+                            className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            {...field}
+                            value={field.value || ''}
                           >
-                            <div className="flex flex-col gap-3">
-                              <div className="flex justify-between items-start">
-                                <div className="flex flex-col">
-                                  <div className="flex items-center">
-                                    {isOverdue && (
-                                      <AlertTriangle className="h-4 w-4 text-red-500 ml-1" />
-                                    )}
-                                    <div className="font-medium">
-                                      {formatDate(session.session_date)}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center mt-1 text-sm text-gray-600">
-                                    {getMeetingTypeIcon(session.meeting_type)}
-                                    <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
-                                  </div>
-                                </div>
-                                
-                                {/* Action icons with tooltips */}
-                                <div className="flex gap-1.5">
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 text-purple-600 hover:bg-purple-100 hover:text-purple-800"
-                                          onClick={() => handleEditFutureSession(session)}
-                                        >
-                                          <Pencil className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>עריכת פגישה</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                  
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 text-red-600 hover:bg-red-100 hover:text-red-800"
-                                          onClick={() => handleDeleteFutureSessionConfirm(session)}
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>מחיקת פגישה</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                  
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 text-purple-600 hover:bg-purple-100 hover:text-purple-800"
-                                          onClick={() => handleMoveToHistorical(session)}
-                                        >
-                                          <History className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>העבר לפגישה היסטורית</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                  
-                                  {isOverdue && (
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-amber-600 hover:bg-amber-100 hover:text-amber-800"
-                                            onClick={() => handleConvertSession(session)}
-                                          >
-                                            <RefreshCw className="h-4 w-4" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>המר לפגישה שהושלמה</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      
-                      {upcomingSessions.length > 0 && (
-                        <div className="flex justify-center pt-2">
-                          <Button 
-                            variant="ghost" 
-                            className="text-purple-600 hover:text-purple-800 hover:bg-purple-50"
-                            onClick={() => toast({
-                              title: "בקרוב",
-                              description: "תצוגת כל הפגישות העתידיות תהיה זמינה בקרוב",
-                            })}
+                            <option value="">בחר מגדר</option>
+                            <option value="male">זכר</option>
+                            <option value="female">נקבה</option>
+                            <option value="other">אחר</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="occupation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>עיסוק</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>סטטוס לקוח</FormLabel>
+                        <FormControl>
+                          <select 
+                            className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            {...field}
                           >
-                            הצג את כל הפגישות העתידיות
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              
-              {/* Client statistics */}
-              <ClientStatisticsCard 
-                statistics={statistics}
-                formatDateOnly={formatDateOnly}
-              />
-            </div>
-            
-            {/* Past sessions section */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsNewHistoricalSessionDialogOpen(true)}
-                  className="border-purple-300 hover:bg-purple-50 text-purple-700"
-                >
-                  <ArrowDownToLine className="h-4 w-4 ml-2 text-purple-600" />
-                  יצירת פגישה היסטורית חדשה
-                </Button>
-                <h3 className="text-xl font-bold text-purple-800">היסטוריית פגישות</h3>
-              </div>
-              
-              {/* Search bar */}
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="חיפוש בפגישות..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 border-purple-200 focus-visible:ring-purple-500"
-                />
-              </div>
-              
-              {/* No sessions message */}
-              {filteredSessions.length === 0 && (
-                <Card>
-                  <CardContent className="p-8 text-center">
-                    <p className="text-gray-500">
-                      {pastSessions.length === 0 
-                        ? 'אין פגישות קודמות עבור לקוח זה' 
-                        : 'לא נמצאו פגישות התואמות את החיפוש שלך'}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-              
-              {/* Sessions table */}
-              {filteredSessions.length > 0 && (
-                <Card className="border-purple-200">
-                  <Table>
-                    <TableHeader className="bg-purple-100">
-                      <TableRow>
-                        <TableHead className="text-purple-800 font-bold">תאריך</TableHead>
-                        <TableHead className="text-purple-800 font-bold">סוג פגישה</TableHead>
-                        <TableHead className="text-purple-800 font-bold">סטטוס תשלום</TableHead>
-                        <TableHead className="text-purple-800 font-bold">סכום ששולם</TableHead>
-                        <TableHead className="text-purple-800 font-bold">פעולות</TableHead>
-                        <TableHead></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredSessions.map((session, index) => (
-                        <React.Fragment key={session.id}>
-                          <TableRow 
-                            className={`cursor-pointer hover:bg-purple-50 ${index % 2 === 0 ? 'bg-white' : 'bg-purple-50'}`}
-                            onClick={() => toggleExpandSession(session.id)}
-                          >
-                            <TableCell className="font-medium">
-                              <div className="flex items-center">
-                                <Calendar className="h-4 w-4 ml-2 text-purple-600" />
-                                {formatDate(session.session_date)}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center">
-                                {getMeetingTypeIcon(session.meeting_type)}
-                                <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {getPaymentStatusBadge(session.payment_status)}
-                            </TableCell>
-                            <TableCell>
-                              <span className={session.payment_status === 'paid' ? 'text-green-600 font-medium' : ''}>
-                                ₪{session.paid_amount || 0}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-purple-600 hover:bg-purple-100"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleEditSession(session);
-                                        }}
-                                      >
-                                        <Edit className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>ערוך פגישה</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                                
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-red-600 hover:bg-red-100"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleDeleteSessionConfirm(session);
-                                        }}
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>מחק פגישה</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleExpandSession(session.id);
-                                }}
-                              >
-                                {expandedSessionId === session.id ? (
-                                  <ChevronUp className="h-5 w-5 text-purple-600" />
-                                ) : (
-                                  <ChevronDown className="h-5 w-5 text-purple-600" />
-                                )}
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                          
-                          {/* Expanded session details */}
-                          {expandedSessionId === session.id && (
-                            <TableRow>
-                              <TableCell colSpan={6} className="p-0">
-                                <SessionDetailCollapsible 
-                                  session={session} 
-                                  formatDate={formatDate}
-                                  getPaymentMethodText={getPaymentMethodText}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </Card>
-              )}
-            </div>
-            
-            {/* Edit client dialog */}
-            <Dialog open={isEditClientDialogOpen} onOpenChange={setIsEditClientDialogOpen}>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>עריכת פרטי לקוח</DialogTitle>
-                  <DialogDescription>
-                    ערוך את פרטי הלקוח {client.name}
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-4">
-                  <div className="grid w-full gap-1.5">
-                    <Label htmlFor="name">שם מלא</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={editFormData?.name || ''}
-                      onChange={handleEditFormInputChange}
-                    />
-                  </div>
-                  
-                  <div className="grid w-full gap-1.5">
-                    <Label htmlFor="phone">טלפון</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      value={editFormData?.phone || ''}
-                      onChange={handleEditFormInputChange}
-                    />
-                  </div>
-                  
-                  <div className="grid w-full gap-1.5">
-                    <Label htmlFor="email">אימייל</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={editFormData?.email || ''}
-                      onChange={handleEditFormInputChange}
-                    />
-                  </div>
-                  
-                  <div className="grid w-full gap-1.5">
-                    <Label htmlFor="session_price">מחיר לפגישה</Label>
-                    <Input
-                      id="session_price"
-                      name="session_price"
-                      type="number"
-                      value={editFormData?.session_price || ''}
-                      onChange={handleEditFormInputChange}
-                    />
-                  </div>
-                  
-                  <div className="grid w-full gap-1.5">
-                    <Label htmlFor="notes">הערות</Label>
-                    <Textarea
-                      id="notes"
-                      name="notes"
-                      value={editFormData?.notes || ''}
-                      onChange={handleEditFormInputChange}
-                      className="min-h-[120px]"
-                    />
-                  </div>
+                            <option value="Active">פעיל</option>
+                            <option value="Inactive">לא פעיל</option>
+                            <option value="Suspended">מושהה</option>
+                            <option value="Completed">סיים טיפול</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
                 
-                <DialogFooter className="mt-6">
+                <Separator className="my-6" />
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="emergency_contact"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>איש קשר לחירום</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="emergency_phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>טלפון לחירום</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <Separator className="my-6" />
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="previous_therapy"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>טיפולים קודמים</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            value={field.value || ''} 
+                            className="min-h-[80px]" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="reason_for_therapy"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>סיבה לפנייה לטיפול</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            value={field.value || ''} 
+                            className="min-h-[80px]" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="referral_source"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>איך הגיע אלינו</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="family_status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>מצב משפחתי</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="children"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ילדים</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <Separator className="my-6" />
+                
+                <div className="grid md:grid-cols-1 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="medical_history"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>היסטוריה רפואית</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            value={field.value || ''} 
+                            className="min-h-[80px]" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="allergies"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>אלרגיות</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="medications"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>תרופות</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            value={field.value || ''} 
+                            className="min-h-[80px]" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>הערות כלליות</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            value={field.value || ''} 
+                            className="min-h-[100px]" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="flex justify-end gap-2 pt-4">
                   <Button 
+                    type="button" 
                     variant="outline" 
-                    onClick={() => setIsEditClientDialogOpen(false)}
+                    onClick={handleFormCancel}
                   >
                     ביטול
                   </Button>
                   <Button 
-                    onClick={handleUpdateClient}
-                    disabled={isSubmitting}
+                    type="submit" 
+                    disabled={savingChanges}
                   >
-                    {isSubmitting ? 'שומר...' : 'שמור שינויים'}
+                    {savingChanges ? 'שומר שינויים...' : 'שמור שינויים'}
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            
-            {/* Edit Session Dialog */}
-            {sessionToEdit && (
-              <SessionEditDialog
-                isOpen={isEditSessionDialogOpen}
-                onOpenChange={setIsEditSessionDialogOpen}
-                session={sessionToEdit}
-                onUpdated={handleSessionUpdated}
-              />
-            )}
-            
-            {/* Delete Session Dialog */}
-            <DeleteSessionDialog
-              open={isDeleteSessionDialogOpen}
-              onOpenChange={setIsDeleteSessionDialogOpen}
-              session={sessionToDelete}
-              onConfirm={handleDeleteSession}
-              formatDate={formatDate}
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid md:grid-cols-3 gap-6 mb-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">פרטי קשר</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div>
+                  <span className="font-medium">שם: </span>
+                  <span>{client.name}</span>
+                </div>
+                <div>
+                  <span className="font-medium">טלפון: </span>
+                  <span dir="ltr" className="text-left inline-block">{client.phone}</span>
+                </div>
+                <div>
+                  <span className="font-medium">אימייל: </span>
+                  <span dir="ltr" className="text-left inline-block">{client.email}</span>
+                </div>
+                <div>
+                  <span className="font-medium">כתובת: </span>
+                  <span>{client.address || 'לא צוין'}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">מידע אישי</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div>
+                  <span className="font-medium">תאריך לידה: </span>
+                  <span>
+                    {client.date_of_birth 
+                      ? formatDateInIsraelTimeZone(client.date_of_birth, 'dd/MM/yyyy') 
+                      : 'לא צוין'}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-medium">מגדר: </span>
+                  <span>
+                    {client.gender === 'male' ? 'זכר' : 
+                     client.gender === 'female' ? 'נקבה' : 
+                     client.gender === 'other' ? 'אחר' : 'לא צוין'}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-medium">עיסוק: </span>
+                  <span>{client.occupation || 'לא צוין'}</span>
+                </div>
+                <div>
+                  <span className="font-medium">מחיר פגישה: </span>
+                  <span>{client.session_price || 0} ₪</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">מידע נוסף</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div>
+                  <span className="font-medium">סטטוס: </span>
+                  <span>{
+                    client.status === 'Active' ? 'פעיל' :
+                    client.status === 'Inactive' ? 'לא פעיל' :
+                    client.status === 'Suspended' ? 'מושהה' :
+                    client.status === 'Completed' ? 'סיים טיפול' :
+                    client.status
+                  }</span>
+                </div>
+                <div>
+                  <span className="font-medium">סטטוס כספי: </span>
+                  <span>{
+                    client.financial_status === 'No Debts' ? 'ללא חובות' :
+                    client.financial_status === 'Has Outstanding Payments' ? 'יש תשלומים פתוחים' :
+                    client.financial_status
+                  }</span>
+                </div>
+                <div>
+                  <span className="font-medium">איך הגיע אלינו: </span>
+                  <span>{client.referral_source || 'לא צוין'}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      
+      {!editMode && (
+        <div className="mb-6">
+          <div className="grid md:grid-cols-3 gap-6">
+            <ClientStatisticsCard
+              title="מספר פגישות"
+              value={stats.sessionsCount}
+              description="סך כל הפגישות"
+              icon={<Calendar className="h-8 w-8 text-blue-500" />}
             />
-            
-            {/* Convert Session Dialog */}
-            {sessionToConvert && (
-              <ConvertSessionDialog
-                isOpen={isConvertSessionDialogOpen}
-                onOpenChange={setIsConvertSessionDialogOpen}
-                session={sessionToConvert}
-                patientId={id ? parseInt(id) : 0}
-                onSessionConverted={handleSessionConverted}
-              />
-            )}
-            
-            {/* New Future Session Dialog */}
-            <NewFutureSessionDialog
-              isOpen={isNewFutureSessionDialogOpen} 
-              onOpenChange={setIsNewFutureSessionDialogOpen}
-              patientId={id ? parseInt(id) : 0}
-              patient={client}
-              onFutureSessionCreated={handleFutureSessionCreated}
+            <ClientStatisticsCard
+              title="תשלומים שבוצעו"
+              value={stats.completedPayments}
+              description="מתוך סך כל הפגישות"
+              icon={<Calculator className="h-8 w-8 text-green-500" />}
             />
-            
-            {/* New Historical Session Dialog */}
-            <NewHistoricalSessionDialog
-              isOpen={isMoveToHistoricalDialogOpen || isNewHistoricalSessionDialogOpen}
-              onOpenChange={(open) => {
-                if (isMoveToHistoricalDialogOpen) {
-                  setIsMoveToHistoricalDialogOpen(open);
-                } else {
-                  setIsNewHistoricalSessionDialogOpen(open);
-                }
-              }}
-              patientId={id ? parseInt(id) : 0}
-              patient={client}
-              onSessionCreated={handleHistoricalSessionCreated}
-              defaultSessionData={futureSessionToMove}
-              isMoveOperation={!!futureSessionToMove}
-              onAfterCreate={futureSessionToMove ? handleDeleteFutureSession : undefined}
-            />
-            
-            {/* Edit Future Session Dialog */}
-            {futureSessionToEdit && (
-              <EditFutureSessionDialog
-                isOpen={isEditFutureSessionDialogOpen}
-                onOpenChange={setIsEditFutureSessionDialogOpen}
-                session={futureSessionToEdit}
-                onUpdated={handleFutureSessionUpdated}
-              />
-            )}
-            
-            {/* Delete Future Session Dialog */}
-            <DeleteFutureSessionDialog
-              open={isDeleteFutureSessionDialogOpen}
-              onOpenChange={setIsDeleteFutureSessionDialogOpen}
-              session={futureSessionToDelete}
-              onConfirm={handleDeleteFutureSessionExecute}
-              formatDate={formatDate}
+            <ClientStatisticsCard
+              title="ממתינים לתשלום"
+              value={stats.pendingPayments}
+              description="מספר פגישות שלא שולמו"
+              icon={<Clock className="h-8 w-8 text-amber-500" />}
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
+      
+      {!editMode && (
+        <Tabs defaultValue="history" className="my-6">
+          <TabsList className="mb-4">
+            <TabsTrigger value="history">היסטוריית פגישות</TabsTrigger>
+            <TabsTrigger value="future">פגישות עתידיות</TabsTrigger>
+            <TabsTrigger value="notes">הערות ומידע רפואי</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="history">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between py-4">
+                <CardTitle>פגישות</CardTitle>
+                <Button onClick={() => setShowNewSessionDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  פגישה חדשה
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <PatientSessionFilters 
+                  onFilterChange={handleFilterChange}
+                  paymentStatus={sessionFilters.paymentStatus}
+                  dateSortOrder={sessionFilters.dateSortOrder}
+                />
+                
+                <div className="mt-4">
+                  {filteredSessions.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>תאריך</TableHead>
+                          <TableHead>סוג פגישה</TableHead>
+                          <TableHead>סכום ששולם</TableHead>
+                          <TableHead>סטטוס תשלום</TableHead>
+                          <TableHead className="text-right">פעולות</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredSessions.map((session) => (
+                          <TableRow key={session.id}>
+                            <TableCell>{formatDate(session.session_date)}</TableCell>
+                            <TableCell>
+                              {session.meeting_type === 'Zoom' ? 'זום' : 
+                               session.meeting_type === 'Phone' ? 'טלפון' : 
+                               session.meeting_type === 'In-Person' ? 'פרונטלית' : 
+                               session.meeting_type}
+                            </TableCell>
+                            <TableCell>{session.paid_amount || 0} ₪</TableCell>
+                            <TableCell>
+                              <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                ${session.payment_status === 'paid' ? 'bg-green-100 text-green-800' : 
+                                  session.payment_status === 'partial' ? 'bg-amber-100 text-amber-800' : 
+                                  'bg-red-100 text-red-800'}`}
+                              >
+                                {session.payment_status === 'paid' ? 'שולם' : 
+                                 session.payment_status === 'partial' ? 'שולם חלקית' : 
+                                 'ממתין לתשלום'}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditSession(session)}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    ערוך פגישה
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDeleteSession(session)}>
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    מחק פגישה
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-muted-foreground">אין פגישות להצגה</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="future">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between py-4">
+                <CardTitle>פגישות עתידיות</CardTitle>
+                <Button onClick={() => setShowNewFutureSessionDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  פגישה עתידית חדשה
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="mt-4">
+                  {futureSessions.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>תאריך</TableHead>
+                          <TableHead>סוג פגישה</TableHead>
+                          <TableHead>סטטוס</TableHead>
+                          <TableHead className="text-right">פעולות</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {futureSessions.map((session) => (
+                          <TableRow key={session.id}>
+                            <TableCell>{formatDate(session.session_date)}</TableCell>
+                            <TableCell>
+                              {session.meeting_type === 'Zoom' ? 'זום' : 
+                               session.meeting_type === 'Phone' ? 'טלפון' : 
+                               session.meeting_type === 'In-Person' ? 'פרונטלית' : 
+                               session.meeting_type}
+                            </TableCell>
+                            <TableCell>
+                              <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                ${session.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' : 
+                                  session.status === 'Completed' ? 'bg-green-100 text-green-800' : 
+                                  session.status === 'Cancelled' ? 'bg-red-100 text-red-800' : 
+                                  'bg-gray-100 text-gray-800'}`}
+                              >
+                                {session.status === 'Scheduled' ? 'מתוכנן' : 
+                                 session.status === 'Completed' ? 'הושלם' : 
+                                 session.status === 'Cancelled' ? 'בוטל' : 
+                                 session.status}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditFutureSession(session)}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    ערוך פגישה
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleMoveToHistory(session)}>
+                                    <Calendar className="h-4 w-4 mr-2" />
+                                    העבר להיסטוריה
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleConvertFutureSession(session)}>
+                                    <CalendarDays className="h-4 w-4 mr-2" />
+                                    המר לפגישה שהושלמה
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDeleteFutureSession(session)}>
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    מחק פגישה
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-muted-foreground">אין פגישות עתידיות להצגה</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="notes">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">הערות</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[200px]">
+                    <p className="text-sm">{client.notes || 'אין הערות להצגה'}</p>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">מידע רפואי</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">היסטוריה רפואית:</h3>
+                      <p className="text-sm">{client.medical_history || 'לא צוין'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">אלרגיות:</h3>
+                      <p className="text-sm">{client.allergies || 'לא צוין'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">תרופות:</h3>
+                      <p className="text-sm">{client.medications || 'לא צוין'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">מידע טיפולי</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">טיפולים קודמים:</h3>
+                      <p className="text-sm">{client.previous_therapy || 'לא צוין'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">סיבה לפנייה לטיפול:</h3>
+                      <p className="text-sm">{client.reason_for_therapy || 'לא צוין'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">פרטים אישיים</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">מצב משפחתי:</h3>
+                      <p className="text-sm">{client.family_status || 'לא צוין'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">ילדים:</h3>
+                      <p className="text-sm">{client.children || 'לא צוין'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">איש קשר לחירום:</h3>
+                      <p className="text-sm">{client.emergency_contact || 'לא צוין'}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">טלפון לחירום:</h3>
+                      <p className="text-sm" dir="ltr" className="text-left">{client.emergency_phone || 'לא צוין'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      )}
+      
+      {/* Dialogs and Modals */}
+      {editingSession && (
+        <SessionEditDialog
+          open={showSessionEditDialog}
+          onClose={() => setShowSessionEditDialog(false)}
+          session={editingSession}
+          onUpdated={handleSessionUpdate}
+        />
+      )}
+      
+      <DeleteSessionDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        session={sessionToDelete}
+        onConfirm={handleConfirmDeleteSession}
+        formatDate={formatDate}
+      />
+      
+      {futureSessionToConvert && (
+        <ConvertSessionDialog
+          open={showConvertDialog}
+          onOpenChange={setShowConvertDialog}
+          session={futureSessionToConvert}
+          patientId={clientId}
+          onConverted={handleSessionConverted}
+        />
+      )}
+      
+      <NewFutureSessionDialog
+        open={showNewFutureSessionDialog}
+        onOpenChange={setShowNewFutureSessionDialog}
+        patientId={clientId}
+        patientName={client.name}
+        onSessionCreated={handleFutureSessionCreated}
+      />
+      
+      <NewHistoricalSessionDialog
+        open={showNewSessionDialog}
+        onOpenChange={setShowNewSessionDialog}
+        patientId={clientId}
+        patient={client}
+        onSessionCreated={handleSessionCreated}
+      />
+      
+      {futureSessionToMove && (
+        <NewHistoricalSessionDialog
+          open={showMoveToHistoryDialog}
+          onOpenChange={setShowMoveToHistoryDialog}
+          patientId={clientId}
+          patient={client}
+          onSessionCreated={handleSessionCreated}
+          fromFutureSession={futureSessionToMove}
+          onDeleteFutureSession={handleAfterMoveToHistory}
+        />
+      )}
+      
+      {futureSessionToEdit && (
+        <EditFutureSessionDialog
+          open={showEditFutureSessionDialog}
+          onOpenChange={setShowEditFutureSessionDialog}
+          session={futureSessionToEdit}
+          onUpdated={handleFutureSessionUpdated}
+        />
+      )}
+      
+      <DeleteFutureSessionDialog
+        open={showDeleteFutureSessionDialog}
+        onOpenChange={setShowDeleteFutureSessionDialog}
+        session={futureSessionToDelete}
+        onConfirm={handleConfirmDeleteFutureSession}
+      />
     </AdminLayout>
   );
 };
