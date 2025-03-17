@@ -62,9 +62,13 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
   // Initialize form with session data when it's loaded
   useEffect(() => {
     if (session && open) {
+      // Convert UTC to local date for the input fields - we'll convert back on submit
       const sessionDate = new Date(session.session_date);
       
+      // Set the date and time values for editing
       setDate(sessionDate);
+      
+      // Format time in 24-hour format
       setTime(
         sessionDate.getHours().toString().padStart(2, '0') + 
         ':' + 

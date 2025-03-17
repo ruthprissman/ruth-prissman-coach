@@ -1,3 +1,4 @@
+
 /**
  * Converts a JavaScript Date to a Hebrew date string
  * @param date JavaScript Date object
@@ -189,6 +190,61 @@ export const convertToHebrewDateSync = (date: Date): string => {
   } catch (error) {
     console.error('Error converting to Hebrew date synchronously:', error);
     return fallbackDateFormat(date);
+  }
+};
+
+/**
+ * Converts a UTC date to Israel time (Asia/Jerusalem)
+ * @param dateString UTC date string or Date object
+ * @returns Formatted date string in Israel time zone in format dd/MM/yyyy, HH:mm
+ */
+export const formatDateTimeInIsrael = (dateString: string | null | Date): string => {
+  if (!dateString) return '';
+  
+  try {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    
+    // Format date in Israel time zone
+    const formatter = new Intl.DateTimeFormat('he-IL', {
+      timeZone: 'Asia/Jerusalem',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    
+    return formatter.format(date).replace(/\./g, '/');
+  } catch (error) {
+    console.error('Error formatting date in Israel time zone:', error);
+    return '';
+  }
+};
+
+/**
+ * Formats a date for display in Israel time zone (date only)
+ * @param date Date to format (string or Date object)
+ * @returns Formatted date string (dd/MM/yyyy)
+ */
+export const formatDateOnlyInIsrael = (date: string | null | Date): string => {
+  if (!date) return '';
+  
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    // Format date in Israel time zone (date only)
+    const formatter = new Intl.DateTimeFormat('he-IL', {
+      timeZone: 'Asia/Jerusalem',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    
+    return formatter.format(dateObj).replace(/\./g, '/');
+  } catch (error) {
+    console.error('Error formatting date in Israel time zone:', error);
+    return '';
   }
 };
 

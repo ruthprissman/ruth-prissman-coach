@@ -57,8 +57,6 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
         .eq('id', session.id);
       
       if (error) throw error;
-      
-      // Previously returned true, but now we don't return anything (void)
     } catch (error) {
       console.error('Error deleting future session:', error);
       toast({

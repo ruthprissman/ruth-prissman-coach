@@ -6,7 +6,7 @@ import ClientInfoCard from '@/components/admin/ClientInfoCard';
 import ClientStatisticsCard from '@/components/admin/ClientStatisticsCard';
 import { Patient, Session } from '@/types/patient';
 import { ClientStatistics, FutureSession } from '@/types/session';
-import { formatDateInIsraelTimeZone } from '@/utils/dateUtils';
+import { formatDateTimeInIsrael, formatDateOnlyInIsrael } from '@/utils/dateUtils';
 import { toast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
@@ -139,12 +139,12 @@ const ClientDetails = () => {
 
   const formatDateOnly = (date: string | null) => {
     if (!date) return 'אין מידע';
-    return formatDateInIsraelTimeZone(date, 'dd/MM/yyyy');
+    return formatDateOnlyInIsrael(date);
   };
 
   const formatDateTime = (date: string | null) => {
     if (!date) return 'אין מידע';
-    return formatDateInIsraelTimeZone(date, 'dd/MM/yyyy HH:mm');
+    return formatDateTimeInIsrael(date);
   };
 
   const handleEditFutureSession = (session: FutureSession) => {
@@ -579,3 +579,4 @@ const ClientDetails = () => {
 };
 
 export default ClientDetails;
+
