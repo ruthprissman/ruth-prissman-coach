@@ -103,7 +103,7 @@
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
-    opacity: 0.6; /* Adjusted opacity to 60% */
+    opacity: 0.4; /* Adjusted opacity to 40% */
     z-index: -1;
     pointer-events: none;
   }
@@ -166,7 +166,7 @@
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
-    opacity: 0.6; /* Adjusted opacity to 60% */
+    opacity: 0.4; /* Adjusted opacity to 40% */
     z-index: -1;
     pointer-events: none;
   }
