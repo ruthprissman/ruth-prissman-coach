@@ -73,14 +73,15 @@ export default function About() {
 
             <div className="order-1 md:order-2 flex justify-center md:justify-start">
               <img 
-                src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/glass-pebbles.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzaXRlX2ltZ3MvZ2xhc3MtcGViYmxlcy5qcGciLCJpYXQiOjE3MDE0MzA2MjEsImV4cCI6MjMzMjE1MDYyMX0.W_IHovHIHJwgkzNS_O5xA9J_Dky-mZetKRhLXEp5q0Y" 
-                alt="אבני זכוכית צבעוניות" 
+                src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs//default.jpg" 
+                alt="רות פריסמן" 
                 className="rounded-2xl shadow-lg max-w-full h-auto object-cover"
               />
             </div>
           </div>
 
           <div className="text-center">
+            <p className="text-lg mb-4 text-[#4A235A] font-medium">רוצה לשמוע עוד?</p>
             <Button asChild className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm">
               <Link to="/contact">צור קשר</Link>
             </Button>
