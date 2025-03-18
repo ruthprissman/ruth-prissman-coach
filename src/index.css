@@ -88,11 +88,30 @@
   body {
     @apply bg-background text-foreground font-heebo;
     direction: rtl;
-    background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/clear-background.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzaXRlX2ltZ3MvY2xlYXItYmFja2dyb3VuZC5zdmciLCJpYXQiOjE3NDE0NzA2NDQsImV4cCI6MjM3MjE5MDY0NH0.u-cLcoISyc4f9SRWjf6NTT4scz57D3ENQDqvEHIa1xU') !important;
+    position: relative;
+  }
+  
+  /* Add a pseudo-element for the background with reduced opacity */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/clear-background.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzaXRlX2ltZ3MvY2xlYXItYmFja2dyb3VuZC5zdmciLCJpYXQiOjE3NDE0NzA2NDQsImV4cCI6MjM3MjE5MDY0NH0.u-cLcoISyc4f9SRWjf6NTT4scz57D3ENQDqvEHIa1xU');
     background-repeat: no-repeat;
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
+    opacity: 0.2; /* Set opacity to 20% */
+    z-index: -1; /* Place it behind all content */
+    pointer-events: none; /* Allow interactions with elements behind it */
+  }
+
+  /* Remove the direct background from body */
+  body {
+    background-image: none !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -135,12 +154,26 @@
     @apply mx-auto;
   }
 
-  .unsubscribe-page {
-    background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/clear-background.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzaXRlX2ltZ3MvY2xlYXItYmFja2dyb3VuZC5zdmciLCJpYXQiOjE3NDE0NzA2NDQsImV4cCI6MjM3MjE5MDY0NH0.u-cLcoISyc4f9SRWjf6NTT4scz57D3ENQDqvEHIa1xU') !important;
+  /* Update the unsubscribe-page class to use the same background approach */
+  .unsubscribe-page::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/clear-background.svg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzaXRlX2ltZ3MvY2xlYXItYmFja2dyb3VuZC5zdmciLCJpYXQiOjE3NDE0NzA2NDQsImV4cCI6MjM3MjE5MDY0NH0.u-cLcoISyc4f9SRWjf6NTT4scz57D3ENQDqvEHIa1xU');
     background-repeat: no-repeat;
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
+    opacity: 0.2;
+    z-index: -1;
+    pointer-events: none;
+  }
+  
+  .unsubscribe-page {
+    background-image: none !important;
   }
   
   /* Filter input styles */
