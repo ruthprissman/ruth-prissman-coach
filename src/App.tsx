@@ -25,6 +25,7 @@ import { PublicationProvider } from './contexts/PublicationContext';
 import { Toaster } from './components/ui/toaster';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
+import { ScrollToTop } from './components/ScrollToTop';
 
 import './index.css';
 
@@ -36,6 +37,7 @@ function App() {
       <AuthProvider>
         <PublicationProvider>
           <Router>
+            <ScrollToTop />
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
