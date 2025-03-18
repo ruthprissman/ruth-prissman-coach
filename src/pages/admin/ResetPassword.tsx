@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({

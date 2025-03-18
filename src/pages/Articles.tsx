@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import { Article } from '@/types/article';
 import ArticleCard from '@/components/ArticleCard';
 import ArticleFilters from '@/components/ArticleFilters';

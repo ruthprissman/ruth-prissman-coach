@@ -19,7 +19,7 @@ import { Article, Category, PublicationFormData, PublishLocationType } from '@/t
 import RichTextEditor from '@/components/admin/articles/RichTextEditor';
 import PublicationSettings from '@/components/admin/articles/PublicationSettings';
 import PublishModal from '@/components/admin/articles/PublishModal';
-import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -771,3 +771,4 @@ const ArticleEditor: React.FC = () => {
 };
 
 export default ArticleEditor;
+

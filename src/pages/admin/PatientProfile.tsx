@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Patient, Session } from '@/types/patient';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import { 
   ArrowRight, CalendarPlus, Edit, Trash2, Monitor, Phone, User, 
   Check, X, CreditCard, BadgeDollarSign, Calendar, Info, 

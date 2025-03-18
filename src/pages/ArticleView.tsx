@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Article } from '@/types/article';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import { ChevronRight, Calendar, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -225,7 +224,6 @@ const ArticleView = () => {
               
               {siteLinks.length > 0 && (
                 <div className="mt-8 pt-6 border-t border-gray-200">
-                  {/* Removed the title "קישורים נוספים" as requested */}
                   <div className="article-links">
                     {siteLinks.map(link => {
                       const url = formatUrl(link.url);

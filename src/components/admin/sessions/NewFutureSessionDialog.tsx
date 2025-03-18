@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { NewFutureSessionFormData } from '@/types/session';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 
 import {
   Dialog,

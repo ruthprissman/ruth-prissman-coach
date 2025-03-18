@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -8,7 +7,7 @@ import FailedPublicationsPanel from '@/components/admin/articles/FailedPublicati
 import { Button } from '@/components/ui/button';
 import { Article, Category } from '@/types/article';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
 const ArticlesManagement: React.FC = () => {

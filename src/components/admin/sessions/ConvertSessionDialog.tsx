@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import { FutureSession } from '@/types/session';
 import { Patient } from '@/types/patient';
 import NewHistoricalSessionDialog from './NewHistoricalSessionDialog';

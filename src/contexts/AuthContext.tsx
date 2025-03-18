@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase, getSupabaseWithAuth, clearAuthClientCache } from '@/lib/supabase';
+import { supabaseClient as supabase, clearSupabaseClientCache } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
 type AuthContextType = {
@@ -55,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (event === 'SIGNED_OUT') {
           // Clear cached auth clients on logout
-          clearAuthClientCache();
+          clearSupabaseClientCache();
         }
       }
     );
@@ -199,7 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     if (session?.access_token) {
-      clearAuthClientCache(session.access_token);
+      clearSupabaseClientCache(session.access_token);
     }
     
     await supabase.auth.signOut();

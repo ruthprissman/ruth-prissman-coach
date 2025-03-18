@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -23,6 +22,7 @@ import { useCalendarSettings } from '@/hooks/useCalendarSettings';
 import { fetchGoogleCalendarEvents, compareCalendarData } from '@/services/GoogleCalendarService';
 import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { Button } from '@/components/ui/button';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 
 const CalendarManagement: React.FC = () => {
   const { user, session } = useAuth();
@@ -656,7 +656,7 @@ const CalendarManagement: React.FC = () => {
       
       toast({
         title: 'עדכון בוצע בהצלחה',
-        description: `סטטוס המשבצת עודכן ל${newStatus === 'available' ? 'זמין' : newStatus === 'private' ? 'פרטי' : 'לא מוגדר'}`,
+        description: `סטטוס המשבצ�� עודכן ל${newStatus === 'available' ? 'זמין' : newStatus === 'private' ? 'פרטי' : 'לא מוגדר'}`,
       });
     } catch (error: any) {
       console.error('Error updating time slot:', error);
@@ -978,3 +978,4 @@ const CalendarManagement: React.FC = () => {
 };
 
 export default CalendarManagement;
+

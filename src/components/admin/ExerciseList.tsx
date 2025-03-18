@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import { Exercise } from '@/types/patient';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -45,7 +44,6 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
   const fetchExercises = async () => {
     setLoading(true);
     try {
-      // Simplified query to fetch only exercises without patient relation
       const { data, error } = await supabase
         .from('exercises')
         .select('*')

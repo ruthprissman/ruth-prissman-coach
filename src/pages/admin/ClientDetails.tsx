@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 import AdminLayout from '@/components/admin/AdminLayout';
 import ClientInfoCard from '@/components/admin/ClientInfoCard';
 import ClientStatisticsCard from '@/components/admin/ClientStatisticsCard';
@@ -582,3 +582,4 @@ const ClientDetails = () => {
 };
 
 export default ClientDetails;
+

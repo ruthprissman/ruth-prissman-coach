@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { FutureSession } from '@/types/session';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient as supabase } from '@/lib/supabaseClient';
 
 import {
   Dialog,
@@ -59,16 +58,12 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
     zoom_link: '',
   });
 
-  // Initialize form with session data when it's loaded
   useEffect(() => {
     if (session && open) {
-      // Convert UTC to local date for the input fields - we'll convert back on submit
       const sessionDate = new Date(session.session_date);
       
-      // Set the date and time values for editing
       setDate(sessionDate);
       
-      // Format time in 24-hour format
       setTime(
         sessionDate.getHours().toString().padStart(2, '0') + 
         ':' + 
@@ -96,7 +91,6 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTime(e.target.value);
     
-    // Update session_date with new time
     if (date) {
       const [hours, minutes] = e.target.value.split(':').map(Number);
       const newDate = new Date(date);
@@ -109,7 +103,6 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
     if (newDate) {
       setDate(newDate);
       
-      // Preserve the selected time
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
         newDate.setHours(hours, minutes);
@@ -131,7 +124,6 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Format the combined date and time for database
       const combinedDate = date;
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
