@@ -59,12 +59,12 @@ const Index = () => {
                   <img 
                     ref={logoRef}
                     src="https://www.dropbox.com/scl/fi/azdu7fp5k6yp5m1v72ggn/logo.png?rlkey=uo9zfon43x3mxhqi2xgl813it&st=5sj644gg&raw=1" 
-                    alt="רות פריסמן - קוד הנפש" 
+                    alt="רות פריסמן - מאמנת קוד הנפש" 
                     className="w-20 h-20 md:w-24 md:h-24 object-contain cursor-pointer"
                   />
                   <div className="text-center">
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-alef text-[#4A235A] gold-text-shadow">
-                      רות פריסמן - קוד הנפש
+                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-alef text-[#4A235A] gold-text-shadow">
+                      רות פריסמן - מאמנת קוד הנפש
                     </h1>
                     <p className="text-lg md:text-xl text-purple-light mt-2 font-alef gold-text-shadow">
                       מבט חדש על חיים מוכרים
