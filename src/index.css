@@ -91,7 +91,7 @@
     position: relative;
   }
   
-  /* Add a pseudo-element for the background with reduced opacity */
+  /* Add a pseudo-element for the background with increased opacity */
   body::before {
     content: "";
     position: fixed;
@@ -104,7 +104,7 @@
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
-    opacity: 0.2; /* Set opacity to 20% */
+    opacity: 0.9; /* Increased opacity to 90% */
     z-index: -1; /* Place it behind all content */
     pointer-events: none; /* Allow interactions with elements behind it */
   }
@@ -154,7 +154,7 @@
     @apply mx-auto;
   }
 
-  /* Update the unsubscribe-page class to use the same background approach */
+  /* Update the unsubscribe-page class to use the same background approach with increased opacity */
   .unsubscribe-page::before {
     content: "";
     position: fixed;
@@ -167,7 +167,7 @@
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
-    opacity: 0.2;
+    opacity: 0.9; /* Increased opacity to 90% */
     z-index: -1;
     pointer-events: none;
   }
