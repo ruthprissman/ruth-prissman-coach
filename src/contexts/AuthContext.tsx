@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabaseClient as supabase, clearSupabaseClientCache } from '@/lib/supabaseClient';
+import { supabase, clearSupabaseClientCache } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
+
+const supabaseClient = supabase();
 
 type AuthContextType = {
   user: User | null;
@@ -27,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchSession = async () => {
       try {
         setIsLoading(true);
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await supabaseClient.auth.getSession();
         
         if (error) {
           console.error('Error fetching session:', error);
@@ -45,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchSession();
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.id);
         
@@ -66,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
     setIsLoading(false);
     
     if (error) {
@@ -89,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // בדיקה האם קיים כבר מנהל במערכת
   const checkAdminExists = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('profiles')
         .select('id')
         .eq('role', 'admin')
@@ -125,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // יצירת משתמש חדש
-      const { error: signUpError, data } = await supabase.auth.signUp({ 
+      const { error: signUpError, data } = await supabaseClient.auth.signUp({ 
         email, 
         password,
         options: {
@@ -139,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // יצירת רשומה בטבלת הפרופילים
       if (data.user) {
-        const { error: profileError } = await supabase
+        const { error: profileError } = await supabaseClient
           .from('profiles')
           .insert([{ 
             id: data.user.id, 
@@ -172,7 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPassword = async (email: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/admin/reset-password`,
       });
       
@@ -197,11 +199,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    if (session?.access_token) {
-      clearSupabaseClientCache(session.access_token);
-    }
+    clearSupabaseClientCache();
     
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     toast({
       title: "התנתקת בהצלחה",
       description: "להתראות בפעם הבאה",

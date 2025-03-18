@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,8 +8,10 @@ import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
+
+const supabaseClient = supabase();
 
 const formSchema = z.object({
   password: z.string().min(6, "סיסמה חייבת להיות לפחות 6 תווים"),
@@ -40,7 +41,7 @@ const ResetPassword: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { error } = await supabaseClient.auth.updateUser({
         password: data.password,
       });
       

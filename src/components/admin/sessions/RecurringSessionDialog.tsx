@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Calendar, Clock, Repeat } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 import {
   Dialog,
@@ -29,6 +29,8 @@ import {
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+
+const supabaseClient = supabase();
 
 interface RecurringSessionDialogProps {
   open: boolean;
@@ -109,7 +111,7 @@ const RecurringSessionDialog: React.FC<RecurringSessionDialogProps> = ({
         });
       }
 
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('future_sessions')
         .insert(sessions);
 

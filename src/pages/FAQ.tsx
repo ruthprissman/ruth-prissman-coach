@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import markdownit from 'markdown-it';
 import { Navigation } from '@/components/Navigation';
@@ -8,14 +7,14 @@ import { Footer } from '@/components/Footer';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 
-// Update interface to match database schema
 interface FAQItem {
   id: string;
   question: string;
   answer: string;
 }
 
-// Initialize markdown parser
+const supabaseClient = supabase();
+
 const md = markdownit({
   html: true,
   linkify: true,
@@ -34,7 +33,7 @@ export default function FAQ() {
         setIsLoading(true);
         setError(null);
         
-        const { data, error: supabaseError } = await supabase
+        const { data, error: supabaseError } = await supabaseClient
           .from('faq_questions')
           .select('*')
           .order('id');
@@ -66,7 +65,6 @@ export default function FAQ() {
     fetchFAQs();
   }, [toast]);
 
-  // Safe markdown render function with validation - updated to use 'answer' field
   const renderMarkdown = (markdownText: string | null | undefined) => {
     if (!markdownText || typeof markdownText !== 'string' || markdownText.trim() === '') {
       return '<p class="text-gray-500 italic">לא קיימת תשובה זמינה כרגע.</p>';

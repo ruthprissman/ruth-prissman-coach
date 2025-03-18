@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
 import {
@@ -24,6 +23,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+
+const supabaseClient = supabase();
 
 interface AddExerciseDialogProps {
   open: boolean;
@@ -66,7 +67,7 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.from('exercises').insert({
+      const { error } = await supabaseClient.from('exercises').insert({
         exercise_name: values.exercise_name,
         description: values.description || null,
         file_url: values.file_url || null,

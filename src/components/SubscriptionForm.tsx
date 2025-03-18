@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
+
+const supabaseClient = supabase();
 
 export function SubscriptionForm() {
   const [email, setEmail] = useState('');
@@ -28,7 +30,7 @@ export function SubscriptionForm() {
     
     try {
       // Check if email already exists
-      const { data: existingData } = await supabase
+      const { data: existingData } = await supabaseClient
         .from('content_subscribers')
         .select('id, is_subscribed, name')
         .eq('email', email)
@@ -42,7 +44,7 @@ export function SubscriptionForm() {
           });
         } else {
           // Re-subscribe and update name if provided
-          await supabase
+          await supabaseClient
             .from('content_subscribers')
             .update({ 
               is_subscribed: true, 
@@ -60,7 +62,7 @@ export function SubscriptionForm() {
         }
       } else {
         // Add new subscriber
-        await supabase
+        await supabaseClient
           .from('content_subscribers')
           .insert({ 
             email, 

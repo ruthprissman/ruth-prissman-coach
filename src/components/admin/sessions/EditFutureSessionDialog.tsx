@@ -4,7 +4,7 @@ import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { FutureSession } from '@/types/session';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 import {
   Dialog,
@@ -30,6 +30,8 @@ import {
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+
+const supabaseClient = supabase();
 
 interface EditFutureSessionDialogProps {
   open: boolean;
@@ -130,7 +132,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
         combinedDate.setHours(hours, minutes);
       }
 
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('future_sessions')
         .update({
           session_date: combinedDate.toISOString(),

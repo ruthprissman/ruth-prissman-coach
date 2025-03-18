@@ -4,7 +4,7 @@ import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { NewFutureSessionFormData } from '@/types/session';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 import {
   Dialog,
@@ -30,6 +30,8 @@ import {
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+
+const supabaseClient = supabase();
 
 interface NewFutureSessionDialogProps {
   open: boolean;
@@ -72,7 +74,6 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTime(e.target.value);
     
-    // Update session_date with new time
     if (date) {
       const [hours, minutes] = e.target.value.split(':').map(Number);
       const newDate = new Date(date);
@@ -85,7 +86,6 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
     if (newDate) {
       setDate(newDate);
       
-      // Preserve the selected time
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
         newDate.setHours(hours, minutes);
@@ -119,20 +119,19 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Format the combined date and time for database
       const combinedDate = date;
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
         combinedDate.setHours(hours, minutes);
       }
 
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('future_sessions')
         .insert({
           patient_id: patientId,
           session_date: combinedDate.toISOString(),
           meeting_type: formData.meeting_type,
-          status: 'Scheduled', // Always set to Scheduled for new sessions
+          status: 'Scheduled',
           zoom_link: formData.zoom_link || null,
         });
 

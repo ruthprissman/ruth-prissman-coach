@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { Article } from '@/types/article';
 import ArticleCard from '@/components/ArticleCard';
 import ArticleFilters from '@/components/ArticleFilters';
@@ -10,6 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
+const supabaseClient = supabase();
 
 const Articles = () => {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -24,7 +25,7 @@ const Articles = () => {
     const fetchArticles = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
           .from('professional_content')
           .select(`
             *,

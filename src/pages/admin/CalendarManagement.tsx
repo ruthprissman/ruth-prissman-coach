@@ -655,7 +655,7 @@ const CalendarManagement: React.FC = () => {
       setCalendarData(newCalendarData);
       
       toast({
-        title: 'עדכון בוצע בהצלחה',
+        title: 'עדכון ��וצע בהצלחה',
         description: `סטטוס המשבצ�� עודכן ל${newStatus === 'available' ? 'זמין' : newStatus === 'private' ? 'פרטי' : 'לא מוגדר'}`,
       });
     } catch (error: any) {

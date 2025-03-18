@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { Patient } from '@/types/patient';
 
@@ -25,6 +24,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+
+const supabaseClient = supabase();
 
 interface EditClientDialogProps {
   open: boolean;
@@ -95,7 +96,7 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
         session_price: values.session_price === '' ? null : values.session_price,
       };
 
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('patients')
         .update(patientData)
         .eq('id', patient.id);
