@@ -2,11 +2,11 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 
-const supabaseClient = supabase();
+const supabase = supabaseClient();
 
 export function StorySubscriptionForm() {
   const [email, setEmail] = useState('');

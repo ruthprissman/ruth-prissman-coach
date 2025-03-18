@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { FutureSession } from '@/types/session';
 import { Patient } from '@/types/patient';
 import NewHistoricalSessionDialog from './NewHistoricalSessionDialog';
 
-const supabaseClient = supabase();
+const supabase = supabaseClient();
 
 interface ConvertSessionDialogProps {
   open: boolean;
@@ -30,7 +29,7 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
     const fetchPatient = async () => {
       if (patientId) {
         try {
-          const { data, error } = await supabaseClient
+          const { data, error } = await supabase
             .from('patients')
             .select('*')
             .eq('id', patientId)
@@ -53,7 +52,7 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
     if (!session) return;
     
     try {
-      const { error } = await supabaseClient
+      const { error } = await supabase
         .from('future_sessions')
         .delete()
         .eq('id', session.id);

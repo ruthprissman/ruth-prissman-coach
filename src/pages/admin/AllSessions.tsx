@@ -49,7 +49,8 @@ const AllSessions: React.FC = () => {
     try {
       console.log("Fetching sessions, auth session:", !!authSession);
       
-      const { data, error } = await supabaseClient()
+      const supabase = supabaseClient();
+      const { data, error } = await supabase
         .from('sessions')
         .select(`
           *,
@@ -66,7 +67,7 @@ const AllSessions: React.FC = () => {
       setSessions(data as SessionWithPatient[] || []);
       setFilteredSessions(data as SessionWithPatient[] || []);
       
-      const { data: patientsData, error: patientsError } = await supabaseClient()
+      const { data: patientsData, error: patientsError } = await supabase
         .from('patients')
         .select('*')
         .order('name');
@@ -162,7 +163,8 @@ const AllSessions: React.FC = () => {
     if (!sessionToDelete) return;
     
     try {
-      const { error } = await supabaseClient()
+      const supabase = supabaseClient();
+      const { error } = await supabase
         .from('sessions')
         .delete()
         .eq('id', sessionToDelete.id);

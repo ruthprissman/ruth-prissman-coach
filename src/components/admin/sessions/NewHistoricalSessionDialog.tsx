@@ -5,7 +5,7 @@ import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { NewHistoricalSessionFormData, FutureSession } from '@/types/session';
 import { Patient } from '@/types/patient';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { formatDateInIsraelTimeZone } from '@/utils/dateUtils';
 
 import {
@@ -76,6 +76,8 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     payment_date: null,
     payment_notes: null,
   });
+
+  const supabase = supabaseClient();
 
   useEffect(() => {
     const fetchExercises = async () => {

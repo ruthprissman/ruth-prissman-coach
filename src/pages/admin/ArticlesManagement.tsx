@@ -7,10 +7,10 @@ import FailedPublicationsPanel from '@/components/admin/articles/FailedPublicati
 import { Button } from '@/components/ui/button';
 import { Article, Category } from '@/types/article';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
-const supabaseClient = supabase();
+const supabase = supabaseClient();
 
 const ArticlesManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const ArticlesManagement: React.FC = () => {
     try {
       setIsLoading(true);
       
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('professional_content')
         .select(`
           *,
@@ -51,7 +51,7 @@ const ArticlesManagement: React.FC = () => {
   
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('categories')
         .select('*')
         .order('name');

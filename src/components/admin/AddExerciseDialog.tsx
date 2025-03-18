@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -24,7 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import FileUploadField from './FileUploadField';
 
-const supabaseClient = supabase();
+const supabase = supabaseClient();
 
 interface AddExerciseDialogProps {
   isOpen: boolean;
@@ -85,13 +85,13 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
       const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError, data } = await supabaseClient.storage
+      const { error: uploadError, data } = await supabase.storage
         .from('exercises_files')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabaseClient.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('exercises_files')
         .getPublicUrl(filePath);
 
@@ -125,7 +125,7 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
         }
       }
 
-      const { error } = await supabaseClient.from('exercises').insert({
+      const { error } = await supabase.from('exercises').insert({
         exercise_name: values.exercise_name,
         description: values.description || null,
         file_url: fileUrl,

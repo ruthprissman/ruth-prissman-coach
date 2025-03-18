@@ -1,158 +1,123 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { KeyRound, Lock } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { z } from 'zod';
 import { useForm } from 'react-hook-form';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
-
-const supabaseClient = supabase();
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 const formSchema = z.object({
-  password: z.string().min(6, "סיסמה חייבת להיות לפחות 6 תווים"),
-  confirmPassword: z.string().min(6, "סיסמה חייבת להיות לפחות 6 תווים"),
+  password: z.string().min(6, {
+    message: "הסיסמה חייבת להכיל לפחות 6 תווים",
+  }),
+  confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "הסיסמאות אינן תואמות",
-  path: ["confirmPassword"],
+  message: "הסיסמאות לא תואמות",
+  path: ["confirmPassword"], // path of error
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
-const ResetPassword: React.FC = () => {
+const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
   const { toast } = useToast();
-  
-  const form = useForm<FormValues>({
+
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      password: '',
-      confirmPassword: '',
+      password: "",
+      confirmPassword: "",
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabaseClient.auth.updateUser({
+      if (!token) {
+        toast({
+          title: "שגיאה באיפוס סיסמה",
+          description: "מזהה איפוס חסר או לא תקין",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const supabase = supabaseClient();
+      const { error } = await supabase.auth.updateUser({
         password: data.password,
       });
       
       if (error) throw error;
       
       toast({
-        title: "סיסמה עודכנה בהצלחה",
-        description: "✅ כעת תוכל/י להתחבר עם הסיסמה החדשה",
+        title: "הסיסמה עודכנה",
+        description: "הסיסמה עודכנה בהצלחה. ניתן כעת להתחבר עם הסיסמה החדשה"
       });
       
-      setIsSuccess(true);
+      // Redirect to login page after successful password reset
       setTimeout(() => {
-        navigate('/admin/login');
-      }, 3000);
+        navigate('/login');
+      }, 2000);
     } catch (error: any) {
+      console.error("Password reset error:", error);
       toast({
-        title: "עדכון סיסמה נכשל",
-        description: `❌ ${error.message}`,
-        variant: "destructive",
+        title: "שגיאה באיפוס סיסמה",
+        description: error.message,
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
-        <div className="text-center mb-8">
-          <KeyRound className="w-12 h-12 text-purple-dark mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-purple-dark">הגדרת סיסמה חדשה</h1>
-          <p className="text-gray-600 mt-2">אנא הזן את הסיסמה החדשה שלך</p>
-        </div>
-        
-        {isSuccess ? (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-8 h-8">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">הסיסמה עודכנה בהצלחה!</h2>
-            <p className="text-gray-600 mb-4">מיד תועבר/י לדף ההתחברות...</p>
-          </div>
-        ) : (
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <Card className="w-full max-w-md p-4">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">איפוס סיסמה</CardTitle>
+        </CardHeader>
+        <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="password"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-right block">סיסמה חדשה</FormLabel>
+                  <FormItem>
+                    <FormLabel>סיסמה חדשה</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          {...field}
-                          type="password"
-                          placeholder="הקלד סיסמה חדשה"
-                          className="w-full text-right pr-10"
-                          dir="rtl"
-                        />
-                      </div>
+                      <Input type="password" placeholder="הכנס סיסמה חדשה" {...field} />
                     </FormControl>
-                    <FormMessage className="text-right" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-              
               <FormField
                 control={form.control}
                 name="confirmPassword"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-right block">אימות סיסמה</FormLabel>
+                  <FormItem>
+                    <FormLabel>אישור סיסמה</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          {...field}
-                          type="password"
-                          placeholder="הקלד שוב את הסיסמה החדשה"
-                          className="w-full text-right pr-10"
-                          dir="rtl"
-                        />
-                      </div>
+                      <Input type="password" placeholder="אשר את הסיסמה החדשה" {...field} />
                     </FormControl>
-                    <FormMessage className="text-right" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-[#4A235A] hover:bg-[#7E69AB] text-white"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <span className="mr-2">מעדכן סיסמה...</span>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  </>
-                ) : (
-                  'עדכן סיסמה'
-                )}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "מאפס סיסמה..." : "אפס סיסמה"}
               </Button>
             </form>
           </Form>
-        )}
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

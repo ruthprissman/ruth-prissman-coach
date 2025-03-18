@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabaseClient } from '@/lib/supabaseClient';
 import AdminLayout from '@/components/admin/AdminLayout';
 import ClientInfoCard from '@/components/admin/ClientInfoCard';
 import ClientStatisticsCard from '@/components/admin/ClientStatisticsCard';
@@ -21,6 +21,8 @@ import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog
 import NewFutureSessionDialog from '@/components/admin/sessions/NewFutureSessionDialog';
 import RecurringSessionDialog from '@/components/admin/sessions/RecurringSessionDialog';
 import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistoricalSessionDialog';
+
+const supabase = supabaseClient();
 
 const ClientDetails = () => {
   const { id } = useParams();
@@ -183,14 +185,14 @@ const ClientDetails = () => {
         .from('future_sessions')
         .delete()
         .eq('id', deleteFutureSessionDialog.session.id);
-      
+    
       if (error) throw error;
-      
+    
       toast({
         title: "פגישה נמחקה",
         description: "הפגישה העתידית נמחקה בהצלחה",
       });
-      
+    
       fetchClientData();
     } catch (error) {
       console.error('Error deleting future session:', error);
@@ -582,4 +584,3 @@ const ClientDetails = () => {
 };
 
 export default ClientDetails;
-

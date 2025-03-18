@@ -4,7 +4,7 @@ import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { NewFutureSessionFormData } from '@/types/session';
-import { supabase } from '@/lib/supabaseClient';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 import {
   Dialog,
@@ -31,7 +31,7 @@ import {
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 
-const supabaseClient = supabase();
+const supabase = supabaseClient();
 
 interface NewFutureSessionDialogProps {
   open: boolean;
