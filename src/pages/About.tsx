@@ -4,7 +4,6 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Heart, Sun, Leaf } from 'lucide-react';
 
 export default function About() {
   return (
@@ -13,53 +12,77 @@ export default function About() {
       <main className="flex-grow relative z-10">
         <div className="container mx-auto px-4 py-16 md:py-24">
           <h1 className="text-center text-3xl md:text-4xl lg:text-5xl font-alef text-[#4A235A] mb-12 gold-text-shadow">
-            אודות רות פריסמן – קוד הנפש
+            אודות רות פריסמן - מאמנת קוד הנפש
           </h1>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div className="md:col-span-2 space-y-6 text-right">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <div className="order-2 md:order-1 space-y-6 text-right">
               <p className="text-lg text-right">
-                רות פריסמן היא מטפלת רגשית מוסמכת עם ניסיון של למעלה מעשרים שנה בהנחיית אנשים במסע שלהם לגילוי עצמי וצמיחה אישית. עם רקע בפסיכולוגיה ולימודי רוחניות, רות פיתחה את "קוד הנפש" - שיטה ייחודית המשלבת תובנות מודרניות עם חוכמה עתיקה.
+                נעים להכיר, אני רות פריסמן
               </p>
               <p className="text-lg text-right">
-                בקליניקה הפרטית שלה ברמת גן, רות מלווה מטופלים בתהליכי שינוי משמעותיים, מסייעת להם לפתוח דלתות חדשות ולהתגבר על אתגרים רגשיים מורכבים.
+                גם החיים שלי, כמו החיים שלך, הם סיפור מתמשך. 
+                יש בו פרקים של רגשות סוערים וגם של אדישות, 
+                של רצונות מוגדרים או לא ממש, 
+                של עיבוד פנימי ושל עייפות, 
+                של בחירות והחלטות, עם יותר ופחות מודעות.
               </p>
               <p className="text-lg text-right">
-                "קוד הנפש" היא שיטה המבוססת על הבנה עמוקה של הקשר בין רגשות, מחשבות והתנהגויות. השיטה מאפשרת למטופלים להבין את המנגנונים הנפשיים המניעים אותם, לזהות דפוסים מגבילים ולפתח את היכולת להתמודד עם מצבים מאתגרים בדרך מודעת ומעצימה.
+                במשך שנים, האמנתי שתחושות 
+                הדחיה והריחוק, 
+                חוסר האמון עד בגידה, 
+                האשמה והלקאה עצמית, 
+                חוסר אונים ואובדן שליטה, 
+                הן גזירה שהיא חלק מהחיים.
+              </p>
+              <p className="text-lg text-right">
+                ובעצם כל הזמן הייתי במסלול התנגשות עם החוויות הפנימיות האלה,
+                מנסה לברוח מהן, דרך ריצוי אחרים או התבצרות בשלי,
+                דרך מסירות בלי גבולות או דכדוך,
+                דרך אחריות ונתינה מקסימלית או התמקדות בעצמי בלבד,
+                דרך עשיה בלי סוף או אדישות מוחלטת.
+              </p>
+              <p className="text-lg text-right">
+                כשגיליתי את שיטת קוד הנפש, 
+                שפיתחה שמחה אביטן, 
+                היא אפשרה לי לשנות את הכל.
+              </p>
+              <p className="text-lg text-right">
+                התחלתי להתבונן על העולם מבפנים החוצה, 
+                להפריד בין הדחף האוטומטי לרצון אמיתי ומבורר,
+                להכיר את היכולות שלי, לאהוב אותם, 
+                להכיר את היכולות של הסביבה שלי ולאהוב אותם,
+                לבחון את המידות שלי, לזהות הקצנות וגם איזון
+                ולבחור. כל הזמן לבחור.
+              </p>
+              <p className="text-lg text-right">
+                מאז, 
+                אני לא מפסיקה ללמוד ולהתפתח
+                ותוך כדי עוזרת לאנשים,
+                לזהות בתוך עצמם את הרצון, את היכולות,
+                את האמונה בעצמם, בסביבה, בבורא,
+                את הקצוות והאמצע.
+              </p>
+              <p className="text-lg text-right">
+                אם את מרגישה שאת מוכנה להתחיל במסע הזה, 
+                את מוזמנת לקבוע פגישה אישית
+                לקבל מבט חדש על החיים המוכרים שלך, 
+                להרוויח שלווה אמיתית, סיפוק ושמחה.
               </p>
             </div>
 
-            <div className="flex justify-center md:justify-end">
+            <div className="order-1 md:order-2 flex justify-center md:justify-start">
               <img 
-                src="https://www.dropbox.com/s/b86bweqhp41dw8m/original-image.jpg?st=wdhpssr7&raw=1" 
-                alt="רות פריסמן" 
-                className="rounded-2xl shadow-lg w-64 h-64 md:w-72 md:h-72 object-cover"
+                src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/glass-pebbles.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzaXRlX2ltZ3MvZ2xhc3MtcGViYmxlcy5qcGciLCJpYXQiOjE3MDE0MzA2MjEsImV4cCI6MjMzMjE1MDYyMX0.W_IHovHIHJwgkzNS_O5xA9J_Dky-mZetKRhLXEp5q0Y" 
+                alt="אבני זכוכית צבעוניות" 
+                className="rounded-2xl shadow-lg max-w-full h-auto object-cover"
               />
             </div>
           </div>
 
-          <div className="backdrop-blur-sm bg-white/90 rounded-xl p-6 shadow-md mb-12 text-right">
-            <h2 className="text-2xl font-alef text-[#4A235A] mb-6 text-center">ערכי הליבה וגישת הטיפול</h2>
-            <div className="space-y-4 text-right">
-              <div className="flex flex-row-reverse items-center gap-4">
-                <p className="text-lg text-right flex-grow">מסע של גילוי עצמי – פיתוח מודעות עצמית היא אבן יסוד בהבנת הקשר בין חוויות העבר לדפוסי ההווה</p>
-                <Sun className="text-gold-DEFAULT flex-shrink-0" size={24} />
-              </div>
-              <div className="flex flex-row-reverse items-center gap-4">
-                <p className="text-lg text-right flex-grow">צמיחה רגשית – פיתוח כלים לעיבוד רגשות ושליטה בתגובות רגשיות, המאפשרים התמודדות יעילה עם אתגרים</p>
-                <Heart className="text-gold-DEFAULT flex-shrink-0" size={24} />
-              </div>
-              <div className="flex flex-row-reverse items-center gap-4">
-                <p className="text-lg text-right flex-grow">טרנספורמציה – שינוי מהותי המתרחש כאשר משחררים דפוסים מגבילים ופותחים דלת לאפשרויות חדשות</p>
-                <Leaf className="text-gold-DEFAULT flex-shrink-0" size={24} />
-              </div>
-            </div>
-          </div>
-
           <div className="text-center">
-            <h3 className="text-xl font-alef text-[#4A235A] mb-4">רוצה לשמוע עוד על השיטה?</h3>
             <Button asChild className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm">
-              <Link to="/contact#contact-form">צרו קשר עם רות</Link>
+              <Link to="/contact">צור קשר</Link>
             </Button>
           </div>
         </div>
