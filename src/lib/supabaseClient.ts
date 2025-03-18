@@ -62,7 +62,7 @@ class SupabaseClientManager {
     // Update current session
     this.currentSession = session;
     
-    if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+    if (event === 'SIGNED_OUT') {
       // Clear any authenticated clients on logout
       this.clearAuthClientCache();
     } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
