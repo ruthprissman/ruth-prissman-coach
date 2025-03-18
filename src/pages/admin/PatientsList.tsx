@@ -1,287 +1,449 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import AdminLayout from '@/components/admin/AdminLayout';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Patient } from '@/types/patient';
-import { supabaseClient } from '@/lib/supabaseClient';
-import { useToast } from '@/hooks/use-toast';
-import { Search, Plus, Pencil, Trash2, RefreshCw } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import AddClientDialog from '@/components/admin/clients/AddClientDialog';
-import EditClientDialog from '@/components/admin/clients/EditClientDialog';
-import DeleteClientDialog from '@/components/admin/clients/DeleteClientDialog';
 
-const PatientsList = () => {
+import React, { useState, useEffect } from 'react';
+import AdminLayout from '@/components/admin/AdminLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { 
+  UserPlus, 
+  RefreshCw, 
+  Search, 
+  Wrench, 
+  Calendar, 
+  BadgeDollarSign, 
+  Filter, 
+  ChevronDown, 
+  ChevronUp,
+  SlidersHorizontal 
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { Patient } from '@/types/patient';
+import { supabase } from '@/lib/supabase';
+import AddPatientDialog from '@/components/admin/AddPatientDialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { cn } from '@/lib/utils';
+import PatientsListFilters from '@/components/admin/patients/PatientsListFilters';
+
+const PatientsList: React.FC = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [addClientDialogOpen, setAddClientDialogOpen] = useState(false);
-  const [editClientDialogOpen, setEditClientDialogOpen] = useState(false);
-  const [deleteClientDialogOpen, setDeleteClientDialogOpen] = useState(false);
-  const [patientToEdit, setPatientToEdit] = useState<Patient | null>(null);
-  const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
-  const [isDeletingPatient, setIsDeletingPatient] = useState(false);
-  const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
-  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'name' | 'last_session'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [debtFilter, setDebtFilter] = useState<'all' | 'has_debt' | 'no_debt'>('all');
+  const [dateRangeFilter, setDateRangeFilter] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({
+    from: undefined,
+    to: undefined,
+  });
   const { toast } = useToast();
-  const navigate = useNavigate();
 
-  const fetchPatients = useCallback(async () => {
+  const fetchPatients = async () => {
     setIsLoading(true);
-    setError(null);
-    
     try {
-      const supabase = supabaseClient();
-      let query = supabase
+      // First, fetch basic patient data
+      const { data: patientsData, error: patientsError } = await supabase
         .from('patients')
         .select('*')
-        .order('name');
-      
-      if (activeTab === 'active') {
-        query = query.eq('is_active', true);
-      } else if (activeTab === 'inactive') {
-        query = query.eq('is_active', false);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      setPatients(data || []);
-      setFilteredPatients(data || []);
+        .order('name', { ascending: true });
+
+      if (patientsError) throw patientsError;
+
+      // For each patient, fetch their latest session date and status
+      const patientsWithDetails = await Promise.all((patientsData || []).map(async (patient) => {
+        // Get latest session
+        const { data: latestSession } = await supabase
+          .from('sessions')
+          .select('session_date')
+          .eq('patient_id', patient.id)
+          .order('session_date', { ascending: false })
+          .limit(1)
+          .single();
+
+        // Check for unpaid sessions (assuming there's a paid field in sessions table)
+        const { data: unpaidSessions } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('patient_id', patient.id)
+          .neq('payment_status', 'paid')
+          .limit(1);
+
+        // Check for upcoming sessions
+        const { data: upcomingSessions } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('patient_id', patient.id)
+          .gt('session_date', new Date().toISOString())
+          .limit(1);
+
+        // Calculate if patient is active (had session in last 6 months)
+        const isActive = latestSession?.session_date && 
+          (new Date(latestSession.session_date).getTime() > new Date().getTime() - (180 * 24 * 60 * 60 * 1000));
+
+        return {
+          ...patient,
+          last_session_date: latestSession?.session_date || null,
+          has_unpaid_sessions: (unpaidSessions?.length || 0) > 0,
+          has_upcoming_sessions: (upcomingSessions?.length || 0) > 0,
+          is_active: isActive,
+        };
+      }));
+
+      setPatients(patientsWithDetails);
+      setFilteredPatients(patientsWithDetails);
     } catch (error: any) {
       console.error('Error fetching patients:', error);
-      setError(error.message || 'Failed to fetch patients');
       toast({
-        title: "שגיאה בטעינת לקוחות",
+        title: "שגיאה בטעינת נתוני לקוחות",
         description: error.message || "אנא נסה שוב מאוחר יותר",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  }, [activeTab, toast]);
+  };
 
   useEffect(() => {
     fetchPatients();
-  }, [fetchPatients]);
+  }, []);
 
+  // Apply filters and search
   useEffect(() => {
-    const filtered = patients.filter(patient =>
-      patient.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredPatients(filtered);
-  }, [searchTerm, patients]);
+    if (patients.length === 0) return;
 
-  const handleAddClient = () => {
-    setAddClientDialogOpen(true);
-  };
-
-  const handleEditPatient = (patient: Patient) => {
-    setPatientToEdit(patient);
-    setEditClientDialogOpen(true);
-  };
-
-  const handleDeletePatient = (patient: Patient) => {
-    setPatientToDelete(patient);
-    setDeleteClientDialogOpen(true);
-  };
-
-  const confirmDeletePatient = async () => {
-    if (!patientToDelete) return;
-    
-    setIsDeletingPatient(true);
-    
     try {
-      const supabase = supabaseClient();
-      
-      // First check if this patient has any sessions
-      const { count: sessionsCount, error: sessionsError } = await supabase
-        .from('sessions')
-        .select('*', { count: 'exact', head: true })
-        .eq('patient_id', patientToDelete.id);
-      
-      if (sessionsError) throw sessionsError;
-      
-      // Check if patient has future sessions
-      const { count: futureSessionsCount, error: futureSessionsError } = await supabase
-        .from('future_sessions')
-        .select('*', { count: 'exact', head: true })
-        .eq('patient_id', patientToDelete.id);
-      
-      if (futureSessionsError) throw futureSessionsError;
-      
-      if (sessionsCount || futureSessionsCount) {
-        // Has related data, mark as inactive instead of deleting
-        const { error: updateError } = await supabase
-          .from('patients')
-          .update({ is_active: false })
-          .eq('id', patientToDelete.id);
-        
-        if (updateError) throw updateError;
-        
-        toast({
-          title: "לקוח הועבר לארכיון",
-          description: "הלקוח סומן כלא פעיל ולא יופיע ברשימת הלקוחות הפעילים"
-        });
-      } else {
-        // No related data, can delete
-        const { error: deleteError } = await supabase
-          .from('patients')
-          .delete()
-          .eq('id', patientToDelete.id);
-        
-        if (deleteError) throw deleteError;
-        
-        toast({
-          title: "לקוח נמחק",
-          description: "הלקוח נמחק בהצלחה מהמערכת"
-        });
+      let filtered = [...patients];
+
+      // Apply search filter
+      if (searchTerm) {
+        filtered = filtered.filter(patient =>
+          patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (patient.email && patient.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (patient.phone && patient.phone.includes(searchTerm))
+        );
       }
-      
-      fetchPatients();
-    } catch (error: any) {
-      console.error('Error deleting patient:', error);
-      toast({
-        title: "שגיאה במחיקת לקוח",
-        description: error.message || "אנא נסה שוב מאוחר יותר",
-        variant: "destructive"
+
+      // Apply status filter
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter(patient => 
+          statusFilter === 'active' ? patient.is_active : !patient.is_active
+        );
+      }
+
+      // Apply debt filter
+      if (debtFilter !== 'all') {
+        filtered = filtered.filter(patient => 
+          debtFilter === 'has_debt' ? patient.has_unpaid_sessions : !patient.has_unpaid_sessions
+        );
+      }
+
+      // Apply date range filter
+      if (dateRangeFilter.from) {
+        filtered = filtered.filter(patient => 
+          patient.last_session_date && new Date(patient.last_session_date) >= dateRangeFilter.from!
+        );
+      }
+
+      if (dateRangeFilter.to) {
+        filtered = filtered.filter(patient => 
+          patient.last_session_date && new Date(patient.last_session_date) <= dateRangeFilter.to!
+        );
+      }
+
+      // Apply sorting
+      filtered.sort((a, b) => {
+        if (sortOrder === 'name') {
+          return sortDirection === 'asc' 
+            ? a.name.localeCompare(b.name) 
+            : b.name.localeCompare(a.name);
+        } else { // sort by last_session_date
+          const dateA = a.last_session_date ? new Date(a.last_session_date).getTime() : 0;
+          const dateB = b.last_session_date ? new Date(b.last_session_date).getTime() : 0;
+          return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+        }
       });
-    } finally {
-      setIsDeletingPatient(false);
-      setDeleteClientDialogOpen(false);
-      setPatientToDelete(null);
+
+      setFilteredPatients(filtered);
+    } catch (error) {
+      console.error('Error applying filters:', error);
+    }
+  }, [patients, searchTerm, sortOrder, sortDirection, statusFilter, debtFilter, dateRangeFilter]);
+
+  const resetFilters = () => {
+    setSearchTerm('');
+    setSortOrder('name');
+    setSortDirection('asc');
+    setStatusFilter('all');
+    setDebtFilter('all');
+    setDateRangeFilter({ from: undefined, to: undefined });
+  };
+
+  const toggleSort = (field: 'name' | 'last_session') => {
+    if (sortOrder === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortOrder(field);
+      setSortDirection('asc');
     }
   };
 
-  const handlePatientUpdated = () => {
-    fetchPatients();
-    setEditClientDialogOpen(false);
-    setPatientToEdit(null);
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '-';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy', { locale: he });
+    } catch (e) {
+      return '-';
+    }
   };
 
-  const handlePatientAdded = () => {
-    fetchPatients();
-    setAddClientDialogOpen(false);
+  const getPatientStatusClasses = (patient: Patient) => {
+    if (patient.has_unpaid_sessions) {
+      return 'border-r-4 border-[#FFD700] bg-white';
+    }
+    if (patient.last_session_date && 
+        new Date(patient.last_session_date).getTime() < new Date().getTime() - (180 * 24 * 60 * 60 * 1000)) {
+      return 'border-r-4 border-[#CCCCCC] bg-white';
+    }
+    if (patient.has_upcoming_sessions) {
+      return 'border-r-4 border-[#7E69AB] bg-white';
+    }
+    return 'bg-white';
+  };
+
+  const handleAddPatient = async (newPatient: Omit<Patient, 'id'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('patients')
+        .insert([newPatient])
+        .select();
+      
+      if (error) throw error;
+      
+      toast({
+        title: "לקוחה נוספה בהצלחה",
+        description: `${newPatient.name} נוספה לרשימת הלקוחות`,
+      });
+      
+      await fetchPatients();
+      return true;
+    } catch (error: any) {
+      console.error('Error adding patient:', error);
+      toast({
+        title: "שגיאה בהוספת לקוחה",
+        description: error.message || "אנא נסה שוב מאוחר יותר",
+        variant: "destructive",
+      });
+      return false;
+    }
   };
 
   return (
     <AdminLayout title="ניהול לקוחות">
-      <div className="space-y-6">
-        <Card>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <Tabs defaultValue="active" className="w-full" onValueChange={setActiveTab}>
-                <TabsList className="w-full">
-                  <TabsTrigger value="active" className="w-1/2">לקוחות פעילים</TabsTrigger>
-                  <TabsTrigger value="inactive" className="w-1/2">לקוחות לא פעילים</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Button onClick={handleAddClient} className="bg-purple-600 hover:bg-purple-700">
-                <Plus className="h-4 w-4 ml-2" />
-                הוסף לקוח
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col space-y-6">
+        {/* Top controls */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="relative w-full md:w-80">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              className="pr-10"
+              placeholder="חיפוש לפי שם, אימייל או טלפון"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex space-x-4 space-x-reverse w-full md:w-auto">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+              className="flex-1 md:flex-none"
+            >
+              <SlidersHorizontal className="h-4 w-4 ml-2" />
+              {isFiltersExpanded ? 'הסתר סינון' : 'הצג סינון'}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={fetchPatients}
+              disabled={isLoading}
+              className="flex-1 md:flex-none"
+            >
+              <RefreshCw className={`h-4 w-4 ml-2 ${isLoading ? 'animate-spin' : ''}`} />
+              רענון
+            </Button>
+            <Button 
+              onClick={() => setIsDialogOpen(true)}
+              className="flex-1 md:flex-none bg-[#CFB53B] hover:bg-[#996515] text-black"
+            >
+              <UserPlus className="h-4 w-4 ml-2" />
+              הוספת לקוחה חדשה
+            </Button>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <Input
-                type="text"
-                placeholder="חיפוש לקוח..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <Button variant="outline">
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Filters section */}
+        {isFiltersExpanded && (
+          <PatientsListFilters 
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            debtFilter={debtFilter}
+            setDebtFilter={setDebtFilter}
+            dateRangeFilter={dateRangeFilter}
+            setDateRangeFilter={setDateRangeFilter}
+            resetFilters={resetFilters}
+          />
+        )}
 
-        <Card>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-              </div>
-            ) : error ? (
-              <div className="text-red-500">{error}</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>שם</TableHead>
-                      <TableHead>טלפון</TableHead>
-                      <TableHead>אימייל</TableHead>
-                      <TableHead className="text-right">פעולות</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPatients.map((patient) => (
-                      <TableRow key={patient.id}>
-                        <TableCell>{patient.name}</TableCell>
-                        <TableCell>{patient.phone || 'לא הוגדר'}</TableCell>
-                        <TableCell>{patient.email || 'לא הוגדר'}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditPatient(patient)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeletePatient(patient)}
-                              disabled={isDeletingPatient}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Patients summary */}
+        <div className="bg-white shadow rounded-lg p-4">
+          <p className="text-[#4A235A] font-medium">
+            סה"כ {filteredPatients.length} לקוחות {searchTerm && 'התואמים את החיפוש'}
+            {filteredPatients.length !== patients.length && ` (מתוך ${patients.length} סה"כ)`}
+          </p>
+        </div>
+
+        {/* Patients table */}
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="w-10 h-10 border-4 border-[#7E69AB] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : filteredPatients.length === 0 ? (
+            <div className="text-center p-10">
+              <p className="text-gray-500">לא נמצאו לקוחות{searchTerm ? " התואמים את החיפוש" : ""}.</p>
+              {searchTerm && (
+                <Button variant="link" onClick={() => setSearchTerm('')}>
+                  נקה חיפוש
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader className="bg-[#F8F7FA]">
+                <TableRow>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => toggleSort('name')}
+                  >
+                    <div className="flex items-center">
+                      שם מלא
+                      {sortOrder === 'name' && (
+                        sortDirection === 'asc' ? 
+                          <ChevronUp className="h-4 w-4 ml-1" /> : 
+                          <ChevronDown className="h-4 w-4 ml-1" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>טלפון</TableHead>
+                  <TableHead>אימייל</TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => toggleSort('last_session')}
+                  >
+                    <div className="flex items-center">
+                      פגישה אחרונה
+                      {sortOrder === 'last_session' && (
+                        sortDirection === 'asc' ? 
+                          <ChevronUp className="h-4 w-4 ml-1" /> : 
+                          <ChevronDown className="h-4 w-4 ml-1" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead>סטטוס תשלום</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPatients.map((patient, index) => (
+                  <TableRow 
+                    key={patient.id}
+                    className={`${getPatientStatusClasses(patient)} ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-[#F0EBF8] transition-colors`}
+                  >
+                    <TableCell>
+                      <Link 
+                        to={`/admin/patients/${patient.id}`}
+                        className="text-[#4A235A] hover:text-[#CFB53B] hover:underline font-medium flex items-center"
+                      >
+                        {patient.name}
+                        {!patient.is_active && (
+                          <Badge variant="outline" className="ml-2 text-xs bg-gray-100">לא פעיל</Badge>
+                        )}
+                      </Link>
+                    </TableCell>
+                    <TableCell dir="ltr" className="text-right">{patient.phone || '-'}</TableCell>
+                    <TableCell>{patient.email || '-'}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 text-[#7E69AB] ml-1.5" />
+                        {formatDate(patient.last_session_date)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        {patient.has_unpaid_sessions ? (
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 flex items-center">
+                            <BadgeDollarSign className="h-3.5 w-3.5 text-[#CFB53B] ml-1" />
+                            חוב פתוח
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center">
+                            אין חוב
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end">
+                        <Link to={`/admin/patients/${patient.id}`}>
+                          <Button variant="ghost" size="sm" className="text-[#7E69AB] hover:text-[#CFB53B] hover:bg-[#F0EBF8]">
+                            <Wrench className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
       </div>
 
-      <AddClientDialog
-        open={addClientDialogOpen}
-        onOpenChange={setAddClientDialogOpen}
-        onPatientAdded={handlePatientAdded}
-      />
-
-      <EditClientDialog
-        open={editClientDialogOpen}
-        onOpenChange={setEditClientDialogOpen}
-        patient={patientToEdit || { id: 0, name: '' }}
-        onPatientUpdated={handlePatientUpdated}
-      />
-
-      <DeleteClientDialog
-        open={deleteClientDialogOpen}
-        onOpenChange={setDeleteClientDialogOpen}
-        patient={patientToDelete}
-        onConfirm={confirmDeletePatient}
-        isDeleting={isDeletingPatient}
+      <AddPatientDialog 
+        isOpen={isDialogOpen} 
+        onClose={() => setIsDialogOpen(false)} 
+        onAddPatient={handleAddPatient}
       />
     </AdminLayout>
   );

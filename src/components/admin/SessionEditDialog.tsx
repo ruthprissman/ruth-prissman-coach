@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Session, Exercise } from '@/types/patient';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { CalendarIcon, Check } from 'lucide-react';
 import { format } from 'date-fns';
@@ -65,12 +66,14 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   const { toast } = useToast();
   const [originalValues, setOriginalValues] = useState<SessionFormValues | null>(null);
 
+  // Map database payment status to form payment status
   const mapPaymentStatus = (status: string): 'paid' | 'partial' | 'pending' => {
     if (status === 'paid') return 'paid';
     if (status === 'partially_paid' || status === 'partial') return 'partial';
     return 'pending';
   };
 
+  // Map form payment status to database payment status
   const mapPaymentStatusToDatabase = (status: string): string => {
     if (status === 'paid') return 'paid';
     if (status === 'partial') return 'partial';
@@ -169,7 +172,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   useEffect(() => {
     const fetchExercises = async () => {
       try {
-        const { data, error } = await supabaseClient()
+        const { data, error } = await supabase
           .from('exercises')
           .select('*')
           .order('exercise_name');
@@ -200,7 +203,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
         data.payment_method = 'cash';
       }
       
-      const { error } = await supabaseClient()
+      const { error } = await supabase
         .from('sessions')
         .update({
           session_date: data.session_date.toISOString(),
@@ -241,7 +244,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
 
   const updatePatientFinancialStatus = async (patientId: number) => {
     try {
-      const { count, error } = await supabaseClient()
+      const { count, error } = await supabase
         .from('sessions')
         .select('*', { count: 'exact', head: true })
         .eq('patient_id', patientId)
@@ -251,7 +254,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       
       const financialStatus = count && count > 0 ? 'Has Outstanding Payments' : 'No Debts';
       
-      const { error: updateError } = await supabaseClient()
+      const { error: updateError } = await supabase
         .from('patients')
         .update({ financial_status: financialStatus })
         .eq('id', patientId);

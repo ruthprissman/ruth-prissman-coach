@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 import { Exercise } from '@/types/patient';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -21,8 +22,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Download, Search, SortAsc, SortDesc } from 'lucide-react';
 import { format } from 'date-fns';
-
-const supabaseClient = supabase();
 
 interface ExerciseListProps {
   refreshTrigger: number;
@@ -46,7 +45,8 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
   const fetchExercises = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabaseClient
+      // Simplified query to fetch only exercises without patient relation
+      const { data, error } = await supabase
         .from('exercises')
         .select('*')
         .order(sortField, { ascending: sortDirection === 'asc' });

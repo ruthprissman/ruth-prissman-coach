@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Article, PublishLocationType } from '@/types/article';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import PublicationService from '@/services/PublicationService';
@@ -53,6 +53,12 @@ const PublishModal: React.FC<PublishModalProps> = ({
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [selectedOptionsForPreview, setSelectedOptionsForPreview] = useState<PublishOption[]>([]);
 
+  const getSupabaseClient = () => {
+    return authSession?.access_token 
+      ? getSupabaseWithAuth(authSession.access_token)
+      : supabase;
+  };
+
   useEffect(() => {
     if (!isOpen || !article) return;
 
@@ -60,7 +66,9 @@ const PublishModal: React.FC<PublishModalProps> = ({
       setLoading(true);
       
       try {
-        const { data: publishOptionsData, error: optionsError } = await supabaseClient()
+        const supabaseClient = getSupabaseClient();
+        
+        const { data: publishOptionsData, error: optionsError } = await supabaseClient
           .from('article_publications')
           .select('*')
           .eq('content_id', article.id);
@@ -140,6 +148,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
   const saveNewLocations = async () => {
     if (!article) return;
     
+    const supabaseClient = getSupabaseClient();
     const newLocations = publishOptions.filter(opt => opt.isNew);
     
     if (newLocations.length === 0) return;
@@ -151,7 +160,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
     }));
     
     try {
-      const { error } = await supabaseClient()
+      const { error } = await supabaseClient
         .from('article_publications')
         .insert(locationsToInsert);
         
@@ -213,7 +222,8 @@ const PublishModal: React.FC<PublishModalProps> = ({
           if (option.id) {
             await publicationService.retryPublication(option.id);
           } else {
-            const { data, error } = await supabaseClient()
+            const supabaseClient = getSupabaseClient();
+            const { data, error } = await supabaseClient
               .from('article_publications')
               .select('id')
               .eq('content_id', article.id)

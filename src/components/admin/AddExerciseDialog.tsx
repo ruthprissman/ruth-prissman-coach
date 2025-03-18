@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -23,8 +24,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import FileUploadField from './FileUploadField';
-
-const supabase = supabaseClient();
 
 interface AddExerciseDialogProps {
   isOpen: boolean;
@@ -66,6 +65,7 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
   const validateFileName = (file?: File): boolean => {
     if (!file) return true;
     
+    // Check if filename contains Hebrew characters
     const hebrewPattern = /[\u0590-\u05FF]/;
     if (hebrewPattern.test(file.name)) {
       toast({
@@ -81,6 +81,7 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
 
   const uploadFile = async (file: File): Promise<string | null> => {
     try {
+      // Create a unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
@@ -91,6 +92,7 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
 
       if (uploadError) throw uploadError;
 
+      // Get the public URL
       const { data: { publicUrl } } = supabase.storage
         .from('exercises_files')
         .getPublicUrl(filePath);
@@ -111,11 +113,13 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
     setIsLoading(true);
     
     try {
+      // Validate filename if file exists
       if (values.file && !validateFileName(values.file)) {
         setIsLoading(false);
         return;
       }
 
+      // If file exists, upload it
       let fileUrl = null;
       if (values.file) {
         fileUrl = await uploadFile(values.file);
@@ -125,6 +129,7 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
         }
       }
 
+      // Insert exercise into database without patient_id
       const { error } = await supabase.from('exercises').insert({
         exercise_name: values.exercise_name,
         description: values.description || null,

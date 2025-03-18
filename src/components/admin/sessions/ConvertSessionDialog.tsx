@@ -1,11 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 import { FutureSession } from '@/types/session';
 import { Patient } from '@/types/patient';
 import NewHistoricalSessionDialog from './NewHistoricalSessionDialog';
-
-const supabase = supabaseClient();
 
 interface ConvertSessionDialogProps {
   open: boolean;

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,7 +7,7 @@ import {
   Users, Calendar, CreditCard, Mail, LogOut,
   BarChart, User, Clock, DollarSign, Home
 } from 'lucide-react';
-import { supabaseClient as supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 
 interface Stats {
   totalPatients: number;

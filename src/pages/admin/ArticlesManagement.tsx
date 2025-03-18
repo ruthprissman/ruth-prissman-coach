@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, RefreshCw } from 'lucide-react';
@@ -7,10 +8,8 @@ import FailedPublicationsPanel from '@/components/admin/articles/FailedPublicati
 import { Button } from '@/components/ui/button';
 import { Article, Category } from '@/types/article';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-
-const supabase = supabaseClient();
 
 const ArticlesManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -25,7 +24,11 @@ const ArticlesManagement: React.FC = () => {
     try {
       setIsLoading(true);
       
-      const { data, error } = await supabase
+      const supabaseClient = session?.access_token 
+        ? getSupabaseWithAuth(session.access_token)
+        : supabase;
+      
+      const { data, error } = await supabaseClient
         .from('professional_content')
         .select(`
           *,
@@ -51,7 +54,11 @@ const ArticlesManagement: React.FC = () => {
   
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
+      const supabaseClient = session?.access_token 
+        ? getSupabaseWithAuth(session.access_token)
+        : supabase;
+      
+      const { data, error } = await supabaseClient
         .from('categories')
         .select('*')
         .order('name');

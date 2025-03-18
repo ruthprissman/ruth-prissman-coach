@@ -1,10 +1,28 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
+import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
-import FutureSessionsCalendar from '@/components/admin/FutureSessionsCalendar';
-import { FutureSession } from '@/types/session';
-import { Patient } from '@/types/patient';
-import { supabaseClient } from '@/lib/supabaseClient';
-import { useToast } from '@/hooks/use-toast';
+import CalendarGrid from '@/components/admin/calendar/CalendarGrid';
+import CalendarListView from '@/components/admin/calendar/CalendarListView';
+import CalendarToolbar from '@/components/admin/calendar/CalendarToolbar';
+import { TabsContent, Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TimeSlot, CalendarSlot, GoogleCalendarEvent, CalendarSyncComparison } from '@/types/calendar';
+import { getSupabaseWithAuth } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { addDays, format, startOfWeek, startOfDay, addWeeks, addMinutes, parseISO } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { RecurringAvailabilityDialog } from '@/components/admin/calendar/RecurringAvailabilityDialog';
+import { GoogleCalendarSync } from '@/components/admin/calendar/GoogleCalendarSync';
+import { GoogleOAuthButton } from '@/components/admin/calendar/GoogleOAuthButton';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Calendar as CalendarIcon, AlertCircle, RefreshCw, Settings } from 'lucide-react';
+import DebugLogPanel from '@/components/admin/calendar/DebugLogPanel';
+import { useCalendarSettings } from '@/hooks/useCalendarSettings';
+import { fetchGoogleCalendarEvents, compareCalendarData } from '@/services/GoogleCalendarService';
+import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
+import { Button } from '@/components/ui/button';
 
 const CalendarManagement: React.FC = () => {
   const { user, session } = useAuth();
@@ -637,8 +655,8 @@ const CalendarManagement: React.FC = () => {
       setCalendarData(newCalendarData);
       
       toast({
-        title: 'עדכון ����וצע בהצלחה',
-        description: `סטטוס המשבצ�� עודכן ל${newStatus === 'available' ? 'זמין' : newStatus === 'private' ? 'פרטי' : 'לא מוגדר'}`,
+        title: 'עדכון בוצע בהצלחה',
+        description: `סטטוס המשבצת עודכן ל${newStatus === 'available' ? 'זמין' : newStatus === 'private' ? 'פרטי' : 'לא מוגדר'}`,
       });
     } catch (error: any) {
       console.error('Error updating time slot:', error);
@@ -960,4 +978,3 @@ const CalendarManagement: React.FC = () => {
 };
 
 export default CalendarManagement;
-
