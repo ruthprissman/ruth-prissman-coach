@@ -110,7 +110,7 @@ export default function FAQ() {
             </div>
           ) : (
             <div className="max-w-4xl mx-auto">
-              <Accordion type="single" collapsible className="w-full space-y-4" defaultValue={faqItems[0]?.id}>
+              <Accordion type="single" collapsible className="w-full space-y-4">
                 {faqItems.map((item) => (
                   <AccordionItem 
                     key={item.id} 
