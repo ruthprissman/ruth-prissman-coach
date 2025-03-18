@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -75,7 +74,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         ? getSupabaseWithAuth(authSession.access_token)
         : supabase;
       
-      // Prepare data for submission
+      // Prepare data for submission - no transformation needed for HTML content
       const formattedData = {
         title: data.title,
         content_markdown: data.content_markdown,

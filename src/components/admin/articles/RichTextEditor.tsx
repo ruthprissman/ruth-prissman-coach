@@ -21,7 +21,7 @@ interface RichTextEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
-  articleTitle?: string; // Added article title prop
+  articleTitle?: string;
 }
 
 const DEFAULT_INITIAL_DATA = {
@@ -35,59 +35,89 @@ const DEFAULT_INITIAL_DATA = {
   ]
 };
 
-const markdownToEditorJS = (markdown: string): any => {
-  if (!markdown) return DEFAULT_INITIAL_DATA;
+// Convert HTML to EditorJS blocks
+const htmlToEditorJS = (html: string): any => {
+  if (!html) return DEFAULT_INITIAL_DATA;
   
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
   const blocks = [];
   
-  const paragraphs = markdown.split('\n\n');
+  // Process each element
+  const elements = Array.from(doc.body.childNodes);
   
-  for (let p of paragraphs) {
-    p = p.trim();
-    if (!p) continue;
+  for (const element of elements) {
+    if (element.nodeType === Node.TEXT_NODE) {
+      if (element.textContent?.trim()) {
+        blocks.push({
+          type: 'paragraph',
+          data: { text: element.textContent }
+        });
+      }
+      continue;
+    }
     
-    if (p.startsWith('# ')) {
-      blocks.push({
-        type: 'header',
-        data: { text: p.substring(2), level: 1 }
-      });
-    } else if (p.startsWith('## ')) {
-      blocks.push({
-        type: 'header',
-        data: { text: p.substring(3), level: 2 }
-      });
-    } else if (p.startsWith('### ')) {
-      blocks.push({
-        type: 'header',
-        data: { text: p.substring(4), level: 3 }
-      });
-    } else if (p.match(/^[*-] /m)) {
-      const items = p.split('\n').map(item => item.replace(/^[*-] /, ''));
-      blocks.push({
-        type: 'list',
-        data: { style: 'unordered', items }
-      });
-    } else if (p.match(/^\d+\. /m)) {
-      const items = p.split('\n').map(item => item.replace(/^\d+\. /, ''));
-      blocks.push({
-        type: 'list',
-        data: { style: 'ordered', items }
-      });
-    } else if (p.startsWith('> ')) {
-      blocks.push({
-        type: 'quote',
-        data: { text: p.substring(2), caption: '' }
-      });
-    } else if (p.startsWith('```') && p.endsWith('```')) {
-      blocks.push({
-        type: 'code',
-        data: { code: p.substring(3, p.length - 3) }
-      });
-    } else {
-      blocks.push({
-        type: 'paragraph',
-        data: { text: p }
-      });
+    if (element.nodeType !== Node.ELEMENT_NODE) continue;
+    
+    const el = element as HTMLElement;
+    
+    // Process based on tag name
+    switch (el.tagName.toLowerCase()) {
+      case 'h1':
+      case 'h2':
+      case 'h3':
+        blocks.push({
+          type: 'header',
+          data: { 
+            text: el.innerHTML,
+            level: parseInt(el.tagName.charAt(1))
+          }
+        });
+        break;
+        
+      case 'p':
+        blocks.push({
+          type: 'paragraph',
+          data: { text: el.innerHTML }
+        });
+        break;
+        
+      case 'ul':
+        const ulItems = Array.from(el.querySelectorAll('li')).map(li => li.innerHTML);
+        blocks.push({
+          type: 'list',
+          data: { style: 'unordered', items: ulItems }
+        });
+        break;
+        
+      case 'ol':
+        const olItems = Array.from(el.querySelectorAll('li')).map(li => li.innerHTML);
+        blocks.push({
+          type: 'list',
+          data: { style: 'ordered', items: olItems }
+        });
+        break;
+        
+      case 'blockquote':
+        blocks.push({
+          type: 'quote',
+          data: { text: el.innerHTML, caption: '' }
+        });
+        break;
+        
+      case 'pre':
+        blocks.push({
+          type: 'code',
+          data: { code: el.textContent || '' }
+        });
+        break;
+        
+      default:
+        // Handle divs and other elements as paragraphs
+        blocks.push({
+          type: 'paragraph',
+          data: { text: el.innerHTML }
+        });
     }
   }
   
@@ -106,7 +136,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
   onChange,
   placeholder = 'התחל לכתוב כאן...',
   className = '',
-  articleTitle = '', // Default to empty string if not provided
+  articleTitle = '',
 }, ref) => {
   const editorInstance = useRef<EditorJS | null>(null);
   const isEditorReady = useRef(false);
@@ -128,44 +158,47 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     return content.replace(/כתבי לי/g, emailLink);
   };
 
-  const convertToMarkdown = (data: any): string => {
+  // Convert EditorJS blocks to HTML
+  const convertToHTML = (data: any): string => {
     if (!data || !data.blocks || data.blocks.length === 0) return '';
     
-    let markdown = '';
+    let html = '';
     
     for (const block of data.blocks) {
       switch (block.type) {
-        case 'header':
-          markdown += `${'#'.repeat(block.data.level)} ${block.data.text}\n\n`;
+        case 'header': {
+          const level = block.data.level || 2;
+          html += `<h${level}>${block.data.text}</h${level}>`;
           break;
+        }
         case 'paragraph':
-          markdown += `${block.data.text}\n\n`;
+          html += `<p>${block.data.text}</p>`;
           break;
-        case 'list':
-          for (let i = 0; i < block.data.items.length; i++) {
-            const item = block.data.items[i];
-            markdown += block.data.style === 'ordered' 
-              ? `${i + 1}. ${item}\n` 
-              : `- ${item}\n`;
+        case 'list': {
+          const tag = block.data.style === 'ordered' ? 'ol' : 'ul';
+          html += `<${tag}>`;
+          for (const item of block.data.items) {
+            html += `<li>${item}</li>`;
           }
-          markdown += '\n';
+          html += `</${tag}>`;
           break;
+        }
         case 'quote':
-          markdown += `> ${block.data.text}\n\n`;
+          html += `<blockquote>${block.data.text}</blockquote>`;
           break;
         case 'code':
-          markdown += `\`\`\`\n${block.data.code}\n\`\`\`\n\n`;
+          html += `<pre>${block.data.code}</pre>`;
           break;
         default:
           if (block.data.text) {
-            markdown += `${block.data.text}\n\n`;
+            html += `<p>${block.data.text}</p>`;
           }
       }
     }
     
-    // Process email links before returning the markdown
-    const processedMarkdown = articleTitle ? processEmailLinks(markdown.trim(), articleTitle) : markdown.trim();
-    return processedMarkdown;
+    // Process email links before returning the HTML
+    const processedHTML = articleTitle ? processEmailLinks(html, articleTitle) : html;
+    return processedHTML;
   };
 
   const saveContent = async () => {
@@ -177,12 +210,12 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
       const data = await editorInstance.current.save();
       
       if (data) {
-        const newMarkdown = convertToMarkdown(data);
-        contentRef.current = newMarkdown;
+        const newHTML = convertToHTML(data);
+        contentRef.current = newHTML;
         
-        onChange(newMarkdown);
+        onChange(newHTML);
         
-        console.log('Content saved and passed to parent form:', newMarkdown.substring(0, 100) + '...');
+        console.log('Content saved as HTML and passed to parent form:', newHTML.substring(0, 100) + '...');
         
         hasUnsavedChangesRef.current = false;
         setShowUnsavedIndicator(false);
@@ -230,7 +263,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
           },
           paragraph: {
             class: Paragraph,
-            inlineToolbar: false,
+            inlineToolbar: true,
             config: {
               preserveBlank: true,
               preserveLineBreaks: true
@@ -252,7 +285,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
             shortcut: 'CMD+SHIFT+M',
           }
         },
-        data: markdownToEditorJS(defaultValue),
+        data: htmlToEditorJS(defaultValue),
         placeholder: placeholder,
         logLevel: 'ERROR',
         autofocus: true,
