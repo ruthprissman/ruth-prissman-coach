@@ -103,9 +103,9 @@
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
-    opacity: 0.87; /* Adjusted opacity to 87% */
-    z-index: -1; /* Place it behind all content */
-    pointer-events: none; /* Allow interactions with elements behind it */
+    opacity: 0.6; /* Adjusted opacity to 60% */
+    z-index: -1;
+    pointer-events: none;
   }
 
   /* Remove the direct background from body */
@@ -166,7 +166,7 @@
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
-    opacity: 0.87; /* Adjusted opacity to 87% */
+    opacity: 0.6; /* Adjusted opacity to 60% */
     z-index: -1;
     pointer-events: none;
   }
