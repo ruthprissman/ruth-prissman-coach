@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface ArticleDialogProps {
@@ -27,7 +27,6 @@ interface ArticleDialogProps {
   onSave: () => void;
 }
 
-// Define the schema for form validation
 const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
   content_markdown: z.string().min(1, { message: "תוכן חובה" }),
@@ -52,7 +51,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
   const isEditMode = !!article;
   const dialogTitle = isEditMode ? "עריכת מאמר" : "מאמר חדש";
 
-  // Default values for the form
   const defaultValues: FormValues = {
     title: article?.title || '',
     content_markdown: article?.content_markdown || '',
@@ -70,11 +68,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
     setIsSaving(true);
     
     try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
-      
-      // Prepare data for submission - no transformation needed for HTML content
       const formattedData = {
         title: data.title,
         content_markdown: data.content_markdown,
@@ -83,22 +76,19 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         contact_email: data.contact_email || null,
       };
       
-      // Check if scheduled publish date has passed and we should auto-publish
       if (data.scheduled_publish && new Date(data.scheduled_publish) <= new Date()) {
         formattedData['published_at'] = new Date().toISOString();
       }
       
       if (isEditMode && article) {
-        // Update existing article
-        const { error } = await supabaseClient
+        const { error } = await supabaseClient()
           .from('professional_content')
           .update(formattedData)
           .eq('id', article.id);
           
         if (error) throw error;
       } else {
-        // Create new article
-        const { error } = await supabaseClient
+        const { error } = await supabaseClient()
           .from('professional_content')
           .insert(formattedData);
           
@@ -127,7 +117,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Title */}
             <FormField
               control={form.control}
               name="title"
@@ -142,7 +131,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
               )}
             />
             
-            {/* Category */}
             <FormField
               control={form.control}
               name="category_id"
@@ -172,7 +160,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
               )}
             />
             
-            {/* Schedule Publish Date */}
             <FormField
               control={form.control}
               name="scheduled_publish"
@@ -213,7 +200,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
               )}
             />
             
-            {/* Contact Email */}
             <FormField
               control={form.control}
               name="contact_email"
@@ -228,7 +214,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
               )}
             />
             
-            {/* Content */}
             <FormField
               control={form.control}
               name="content_markdown"

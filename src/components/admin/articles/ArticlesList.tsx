@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -16,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import PublishModal from './PublishModal';
 import PublicationService, { EmailDeliveryStats } from '@/services/PublicationService';
@@ -145,18 +144,14 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
     setIsDeleting(true);
     
     try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
-      
       // Delete any content publish options first (if they exist)
-      await supabaseClient
+      await supabaseClient()
         .from('content_publish_options')
         .delete()
         .eq('content_id', articleToDelete.id);
       
       // Delete the article
-      const { error } = await supabaseClient
+      const { error } = await supabaseClient()
         .from('professional_content')
         .delete()
         .eq('id', articleToDelete.id);
@@ -197,7 +192,6 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
     fetchEmailStats();
   };
 
-  // Get article status based on publications
   const getArticleStatus = (article: Article) => {
     if (article.published_at) {
       return (
@@ -216,7 +210,6 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
     }
   };
 
-  // Render email delivery status
   const renderEmailDeliveryStatus = (articleId: number) => {
     const stats = emailStats.get(articleId);
     
@@ -328,7 +321,6 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
         )}
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={!!articleToDelete} onOpenChange={() => !isDeleting && cancelDelete()}>
         <DialogContent>
           <DialogHeader>
@@ -357,7 +349,6 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Publish Modal */}
       <PublishModal
         article={articleToPublish}
         isOpen={isPublishModalOpen}

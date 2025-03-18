@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Exercise } from '@/types/patient';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 
@@ -44,7 +44,7 @@ const ExerciseManagerDialog: React.FC<ExerciseManagerDialogProps> = ({ isOpen, o
   const fetchExercises = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient()
         .from('exercises')
         .select('*')
         .order('exercise_name');
@@ -73,7 +73,7 @@ const ExerciseManagerDialog: React.FC<ExerciseManagerDialogProps> = ({ isOpen, o
   const handleAddExercise = async (data: ExerciseFormValues) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('exercises')
         .insert([{
           exercise_name: data.exercise_name,
@@ -106,7 +106,7 @@ const ExerciseManagerDialog: React.FC<ExerciseManagerDialogProps> = ({ isOpen, o
     
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('exercises')
         .update({
           exercise_name: data.exercise_name,
@@ -141,7 +141,7 @@ const ExerciseManagerDialog: React.FC<ExerciseManagerDialogProps> = ({ isOpen, o
     if (!confirm("האם אתה בטוח שברצונך למחוק תרגיל זה?")) return;
     
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('exercises')
         .delete()
         .eq('id', id);
