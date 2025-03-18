@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
 import About from './pages/About';
@@ -25,8 +24,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import { PublicationProvider } from './contexts/PublicationContext';
 import { Toaster } from './components/ui/toaster';
 import FAQ from './pages/FAQ';
+import Terms from './pages/Terms';
 
-// Import only index.css, not App.css
 import './index.css';
 
 function App() {
@@ -47,9 +46,10 @@ function App() {
               <Route path="/articles/:id" element={<ArticleView />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<Terms />} />
               <Route path="/faq" element={<FAQ />} />
 
-              {/* Admin auth routes - Make sure these are outside ProtectedRoute */}
+              {/* Admin auth routes */}
               <Route path="/admin/login" element={<Login />} />
               <Route path="/admin/reset-password" element={<ResetPassword />} />
               
