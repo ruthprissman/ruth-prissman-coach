@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -16,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface ArticleDialogProps {
@@ -70,9 +71,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
     setIsSaving(true);
     
     try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
+      const supabase = supabaseClient();
       
       // Prepare data for submission - no transformation needed for HTML content
       const formattedData = {
@@ -90,7 +89,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
       
       if (isEditMode && article) {
         // Update existing article
-        const { error } = await supabaseClient
+        const { error } = await supabase
           .from('professional_content')
           .update(formattedData)
           .eq('id', article.id);
@@ -98,7 +97,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         if (error) throw error;
       } else {
         // Create new article
-        const { error } = await supabaseClient
+        const { error } = await supabase
           .from('professional_content')
           .insert(formattedData);
           
