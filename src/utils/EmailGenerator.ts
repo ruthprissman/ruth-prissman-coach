@@ -156,10 +156,10 @@ export class EmailGenerator {
       console.log('[EmailGenerator] Processing link:', JSON.stringify(link, null, 2));
       
       // Skip empty links
-      if (!link.title) {
-        console.log('[EmailGenerator] Skipping link with empty title');
-        continue;
-      }
+      //if (!link.title) {
+      //  console.log('[EmailGenerator] Skipping link with empty title');
+       // continue;
+     // }
       
       linksHtml += '<li style="margin-bottom: 10px; text-align: right; direction: rtl;">';
       
