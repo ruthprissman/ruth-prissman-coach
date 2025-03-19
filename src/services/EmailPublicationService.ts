@@ -1,5 +1,5 @@
 
-import { supabaseClient } from '@/lib/supabaseClient';
+import { supabaseClient, getFreshSupabaseClient, executeWithRetry } from '@/lib/supabaseClient';
 import { EmailDeliveryStats } from './PublicationService';
 import { DatabaseService } from './DatabaseService';
 import { EmailGenerator } from '../utils/EmailGenerator';
@@ -98,13 +98,14 @@ export class EmailPublicationService {
       const successfulEmails: string[] = [];
       const failedEmails: string[] = [];
       
-      // 7. Send emails via Supabase Edge Function
+      // 7. Send emails via Supabase Edge Function using the fresh client
       console.log('[Email Publication] Starting to send emails to ' + subscribers.length + ' subscribers');
       
-      const client = supabaseClient();
+      // Get a fresh client with guaranteed new token
+      const freshClient = await getFreshSupabaseClient();
       
       // Get the current user session from the client
-      const { data } = await client.auth.getSession();
+      const { data } = await freshClient.auth.getSession();
       const token = data.session?.access_token || '';
       
       if (!token) {
@@ -127,33 +128,46 @@ export class EmailPublicationService {
           // First clean up any previous failed attempts for this recipient
           await this.cleanupFailedEmails(article.id, [recipientEmail]);
           
-          // Send the email using the Supabase Edge Function
+          // Send the email using the Supabase Edge Function with retry capability
           console.log('[Email Publication] Sending API request to edge function for: ' + recipientEmail);
-          const response = await fetch(this.supabaseEdgeFunctionUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              to: recipientEmail,
-              subject: article.title,
-              html: emailContent,
-              articleId: article.id
-            })
+          
+          await executeWithRetry(async () => {
+            // Get a fresh token each time to ensure it's valid
+            const freshClient = await getFreshSupabaseClient();
+            const { data } = await freshClient.auth.getSession();
+            const freshToken = data.session?.access_token;
+            
+            if (!freshToken) {
+              throw new Error('No valid token available for edge function call');
+            }
+            
+            const response = await fetch(this.supabaseEdgeFunctionUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${freshToken}`
+              },
+              body: JSON.stringify({
+                to: recipientEmail,
+                subject: article.title,
+                html: emailContent,
+                articleId: article.id
+              })
+            });
+            
+            console.log('[Email Publication] Edge function response status: ' + response.status);
+            
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`Failed with status ${response.status}: ${errorText}`);
+            }
+            
+            return response;
           });
           
-          console.log('[Email Publication] Edge function response status: ' + response.status);
-          
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[Email Publication] Failed to send email to ' + recipientEmail + ': ' + errorText);
-            failedEmails.push(recipientEmail);
-          } else {
-            console.log('[Email Publication] Successfully sent email to: ' + recipientEmail);
-            successfulEmails.push(recipientEmail);
-          }
-        } catch (error) {
+          console.log('[Email Publication] Successfully sent email to: ' + recipientEmail);
+          successfulEmails.push(recipientEmail);
+        } catch (error: any) {
           console.error('[Email Publication] Error sending to ' + recipientEmail + ':', error);
           failedEmails.push(recipientEmail);
         }
@@ -249,32 +263,35 @@ export class EmailPublicationService {
    */
   private async ensureArticleIsPublished(articleId: number): Promise<void> {
     try {
-      const client = supabaseClient();
-      
-      const { data, error } = await client
-        .from('professional_content')
-        .select('published_at')
-        .eq('id', articleId)
-        .single();
-      
-      if (error) {
-        console.error("Error checking article " + articleId + " publish status:", error);
-        return;
-      }
-      
-      // If the article is not already published, mark it as published now
-      if (!data.published_at) {
-        const { error: updateError } = await client
-          .from('professional_content')
-          .update({ published_at: new Date().toISOString() })
-          .eq('id', articleId);
+      // Use executeWithRetry to handle token expiration
+      await executeWithRetry(async () => {
+        const client = supabaseClient();
         
-        if (updateError) {
-          console.error("Error updating article " + articleId + " publish status:", updateError);
-        } else {
-          console.log("Article " + articleId + " has been marked as published");
+        const { data, error } = await client
+          .from('professional_content')
+          .select('published_at')
+          .eq('id', articleId)
+          .single();
+        
+        if (error) {
+          console.error("Error checking article " + articleId + " publish status:", error);
+          return;
         }
-      }
+        
+        // If the article is not already published, mark it as published now
+        if (!data.published_at) {
+          const { error: updateError } = await client
+            .from('professional_content')
+            .update({ published_at: new Date().toISOString() })
+            .eq('id', articleId);
+          
+          if (updateError) {
+            console.error("Error updating article " + articleId + " publish status:", updateError);
+          } else {
+            console.log("Article " + articleId + " has been marked as published");
+          }
+        }
+      });
     } catch (error) {
       console.error("Error in ensureArticleIsPublished for article " + articleId + ":", error);
     }

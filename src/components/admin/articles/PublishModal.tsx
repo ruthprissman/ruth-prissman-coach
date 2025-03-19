@@ -7,13 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Article, PublishLocationType } from '@/types/article';
-import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import PublicationService from '@/services/PublicationService';
 import EmailPreviewModal from './EmailPreviewModal';
 import { formatInTimeZone } from 'date-fns-tz';
 import { he } from 'date-fns/locale';
+import { supabaseClient, getFreshSupabaseClient, getTokenInfo } from '@/lib/supabaseClient';
 
 interface PublishOption {
   id?: number;
@@ -52,12 +52,10 @@ const PublishModal: React.FC<PublishModalProps> = ({
   const [failedLocations, setFailedLocations] = useState<string[]>([]);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [selectedOptionsForPreview, setSelectedOptionsForPreview] = useState<PublishOption[]>([]);
-
-  const getSupabaseClient = () => {
-    return authSession?.access_token 
-      ? getSupabaseWithAuth(authSession.access_token)
-      : supabase;
-  };
+  const [tokenStatus, setTokenStatus] = useState<{isValid: boolean, lastRefresh: string}>({ 
+    isValid: false, 
+    lastRefresh: 'unknown' 
+  });
 
   useEffect(() => {
     if (!isOpen || !article) return;
@@ -66,9 +64,17 @@ const PublishModal: React.FC<PublishModalProps> = ({
       setLoading(true);
       
       try {
-        const supabaseClient = getSupabaseClient();
+        const tokenInfo = getTokenInfo();
+        setTokenStatus({
+          isValid: !tokenInfo.isExpiringSoon,
+          lastRefresh: tokenInfo.lastRefresh
+        });
         
-        const { data: publishOptionsData, error: optionsError } = await supabaseClient
+        console.log('[PublishModal] Current token status:', tokenInfo);
+        
+        const client = supabaseClient();
+        
+        const { data: publishOptionsData, error: optionsError } = await client
           .from('article_publications')
           .select('*')
           .eq('content_id', article.id);
@@ -148,7 +154,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
   const saveNewLocations = async () => {
     if (!article) return;
     
-    const supabaseClient = getSupabaseClient();
+    const client = supabaseClient();
     const newLocations = publishOptions.filter(opt => opt.isNew);
     
     if (newLocations.length === 0) return;
@@ -160,7 +166,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
     }));
     
     try {
-      const { error } = await supabaseClient
+      const { error } = await client
         .from('article_publications')
         .insert(locationsToInsert);
         
@@ -215,7 +221,17 @@ const PublishModal: React.FC<PublishModalProps> = ({
       const failedOnes: string[] = [];
       
       const publicationService = PublicationService;
-      publicationService.start(authSession?.access_token);
+      
+      const freshClient = await getFreshSupabaseClient();
+      const { data } = await freshClient.auth.getSession();
+      const freshToken = data.session?.access_token;
+      
+      if (!freshToken) {
+        throw new Error('Failed to obtain a valid token for publication');
+      }
+      
+      console.log('PublishModal: Starting publication with fresh token, length:', freshToken.length);
+      publicationService.start(freshToken);
       
       console.log('PublishModal: Starting publication process for', optionsToPublish.length, 'locations');
       
@@ -227,8 +243,9 @@ const PublishModal: React.FC<PublishModalProps> = ({
             await publicationService.retryPublication(option.id);
             console.log('PublishModal: Publication with ID completed:', option.id);
           } else {
-            const supabaseClient = getSupabaseClient();
-            const { data, error } = await supabaseClient
+            const freshClient = await getFreshSupabaseClient();
+            
+            const { data, error } = await freshClient
               .from('article_publications')
               .select('id')
               .eq('content_id', article.id)
@@ -243,7 +260,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
             } else {
               console.log('PublishModal: No publication ID found, creating direct publication');
               
-              const { data: newPub, error: insertError } = await supabaseClient
+              const { data: newPub, error: insertError } = await freshClient
                 .from('article_publications')
                 .insert({
                   content_id: article.id,
@@ -336,7 +353,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
                 <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
                   {publishOptions.length === 0 ? (
                     <div className="text-center text-muted-foreground py-4">
-                      אין מיקומי פרסום מוגדרים. הוסף מיקום חדש כדי להתחיל.
+                      אין מיקומי פרסום מוגדרים. ה��סף מיקום חדש כדי להתחיל.
                     </div>
                   ) : (
                     publishOptions.map((option, index) => (
