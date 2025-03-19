@@ -116,7 +116,7 @@ export class EmailGenerator {
     // Footer
     html += '<div class="footer">';
     html += '<p>נשלח באמצעות מערכת הפרסום האוטומטית.</p>';
-    html += '<p>&copy; ' + new Date().getFullYear() + ' רות פריסמן. כל הזכויות שמ��רות.</p>';
+    html += '<p>&copy; ' + new Date().getFullYear() + ' רות פריסמן. כל הזכויות שמורות.</p>';
     html += '</div>';
     
     html += '</div>'; // container
