@@ -97,7 +97,10 @@ export class EmailPublicationService {
       console.log('[Email Publication] Starting to send emails to ' + subscribers.length + ' subscribers');
       
       const client = supabaseClient();
-      const token = client.auth.session()?.access_token || '';
+      
+      // Fix: Use the current user session from the client instead of calling session() method
+      const { data } = await client.auth.getSession();
+      const token = data.session?.access_token || '';
       
       for (const recipientEmail of subscribers) {
         try {
