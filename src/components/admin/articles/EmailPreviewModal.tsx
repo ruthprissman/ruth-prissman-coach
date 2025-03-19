@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,17 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   const generateEmailPreview = () => {
     const title = article.title || '';
     const content = article.content_markdown || '';
+    
+    console.log('[EmailPreviewModal] Generating email preview with:', {
+      title,
+      contentLength: content?.length || 0,
+      hasStaticLinks: !!article.staticLinks,
+      staticLinksCount: article.staticLinks?.length || 0
+    });
+    
+    if (article.staticLinks && article.staticLinks.length > 0) {
+      console.log('[EmailPreviewModal] Static links before processing:', JSON.stringify(article.staticLinks, null, 2));
+    }
     
     // Create a preview that matches the actual email template
     return `
@@ -52,15 +62,26 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   
   // Generate preview HTML for links
   const generateLinksPreview = (links: Array<{id: number, title: string, url: string}> = []) => {
-    if (!links || links.length === 0) return '';
+    console.log('[EmailPreviewModal] generateLinksPreview called with:', JSON.stringify(links, null, 2));
     
-    return links.map(link => {
-      if (!link.title) return '';
+    if (!links || links.length === 0) {
+      console.log('[EmailPreviewModal] No links to preview');
+      return '';
+    }
+    
+    const linksHtml = links.map(link => {
+      console.log('[EmailPreviewModal] Processing link in preview:', JSON.stringify(link, null, 2));
+      
+      if (!link.title) {
+        console.log('[EmailPreviewModal] Skipping link with empty title');
+        return '';
+      }
       
       let linkHtml = '<li style="margin-bottom: 10px; text-align: right; direction: rtl;">';
       
       // Check if it's a WhatsApp link
       if (link.url && link.url.startsWith('https://wa.me/')) {
+        console.log('[EmailPreviewModal] Creating WhatsApp link with icon');
         linkHtml += `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" 
                       style="display: inline-flex; align-items: center; color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: 'Heebo', Arial, sans-serif;">
                       <svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366" style="margin-left: 5px;">
@@ -69,19 +90,25 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
       } 
       // Regular link with URL
       else if (link.url) {
+        console.log('[EmailPreviewModal] Creating regular link with URL:', link.url);
         linkHtml += `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" 
                     style="color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: 'Heebo', Arial, sans-serif;">
                     ${escapeHtml(link.title)}</a>`;
       } 
       // Text only (no URL)
       else {
+        console.log('[EmailPreviewModal] Creating text-only item (no URL)');
         linkHtml += `<strong style="color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: 'Heebo', Arial, sans-serif;">
                     ${escapeHtml(link.title)}</strong>`;
       }
       
       linkHtml += '</li>';
+      console.log('[EmailPreviewModal] Generated link HTML length:', linkHtml.length);
       return linkHtml;
     }).join('');
+    
+    console.log('[EmailPreviewModal] All links preview HTML generated, length:', linksHtml.length);
+    return linksHtml;
   };
   
   // Simple HTML escaping for preview safety
