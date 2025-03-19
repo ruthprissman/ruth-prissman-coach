@@ -46,6 +46,7 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
   
   const retryPublication = async (publicationId: number) => {
     try {
+      // Use the instance method which will call the static method internally
       await PublicationService.retryPublication(publicationId);
       
       toast({
