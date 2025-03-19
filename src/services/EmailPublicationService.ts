@@ -74,6 +74,8 @@ export class EmailPublicationService {
         staticLinks: staticLinks || []
       });
       
+      console.log('[Email Publication] Generated email content, length: ' + emailContent.length);
+      
       // 4. Validate the generated email content
       const diagnosisResult = this.emailDiagnostics.diagnoseEmailContent(
         emailContent, 
@@ -86,8 +88,11 @@ export class EmailPublicationService {
         return false;
       }
       
+      console.log('[Email Publication] Email content validated successfully');
+      
       // 5. Generate content integrity hash for verification
       const beforeSendHash = this.emailDiagnostics.logContentIntegrityHash(emailContent, 'before-send', article.id);
+      console.log('[Email Publication] Content integrity hash generated: ' + beforeSendHash);
       
       // 6. Prepare for batch sending (could be improved with actual batching)
       const successfulEmails: string[] = [];
@@ -98,16 +103,32 @@ export class EmailPublicationService {
       
       const client = supabaseClient();
       
-      // Fix: Use the current user session from the client instead of calling session() method
+      // Get the current user session from the client
       const { data } = await client.auth.getSession();
       const token = data.session?.access_token || '';
       
-      for (const recipientEmail of subscribers) {
+      if (!token) {
+        console.error('[Email Publication] No authentication token available, cannot send emails');
+        return false;
+      }
+      
+      console.log('[Email Publication] Authentication token obtained, length: ' + token.length);
+      console.log('[Email Publication] Using Supabase Edge Function URL: ' + this.supabaseEdgeFunctionUrl);
+      
+      // For debugging only: Send to first 2 subscribers in development
+      const recipientsToSend = process.env.NODE_ENV === 'development' 
+        ? subscribers.slice(0, 2) 
+        : subscribers;
+      
+      for (const recipientEmail of recipientsToSend) {
         try {
+          console.log('[Email Publication] Preparing to send email to: ' + recipientEmail);
+          
           // First clean up any previous failed attempts for this recipient
           await this.cleanupFailedEmails(article.id, [recipientEmail]);
           
           // Send the email using the Supabase Edge Function
+          console.log('[Email Publication] Sending API request to edge function for: ' + recipientEmail);
           const response = await fetch(this.supabaseEdgeFunctionUrl, {
             method: 'POST',
             headers: {
@@ -122,11 +143,14 @@ export class EmailPublicationService {
             })
           });
           
+          console.log('[Email Publication] Edge function response status: ' + response.status);
+          
           if (!response.ok) {
             const errorText = await response.text();
             console.error('[Email Publication] Failed to send email to ' + recipientEmail + ': ' + errorText);
             failedEmails.push(recipientEmail);
           } else {
+            console.log('[Email Publication] Successfully sent email to: ' + recipientEmail);
             successfulEmails.push(recipientEmail);
           }
         } catch (error) {
@@ -153,6 +177,7 @@ export class EmailPublicationService {
       ];
       
       await this.databaseService.logEmailResults(logs);
+      console.log('[Email Publication] Email logs stored in database');
       
       // 10. Mark the article as published if needed
       await this.ensureArticleIsPublished(article.id);

@@ -90,16 +90,17 @@ class PublicationService {
     try {
       // Get current timestamp
       const now = new Date().toISOString();
+      console.log(`[Publication Service] Checking for scheduled publications at ${now}`);
 
       // Get all publications that are scheduled and not yet published
       const scheduledPublications = await this.databaseService.getScheduledPublications(now);
 
       if (!scheduledPublications || scheduledPublications.length === 0) {
-        console.log("No publications scheduled for now");
+        console.log("[Publication Service] No publications scheduled for now");
         return;
       }
 
-      console.log(`Found ${scheduledPublications.length} publications to process`);
+      console.log(`[Publication Service] Found ${scheduledPublications.length} publications to process`);
 
       // Group by article to handle multiple publication locations for the same article
       const articlePublicationsMap = new Map<number, PublishReadyArticle>();
@@ -110,7 +111,7 @@ class PublicationService {
         const professionalContent = pub.professional_content as unknown as ProfessionalContent; 
         
         if (!professionalContent) {
-          console.error(`Missing professional content for article ${articleId}`);
+          console.error(`[Publication Service] Missing professional content for article ${articleId}`);
           continue;
         }
         
@@ -139,13 +140,16 @@ class PublicationService {
         }
       }
 
+      console.log(`[Publication Service] Grouped into ${articlePublicationsMap.size} unique articles`);
+
       // Publish each article
       for (const [articleId, article] of articlePublicationsMap.entries()) {
+        console.log(`[Publication Service] Publishing article ${articleId} to ${article.article_publications.length} locations`);
         await this.publishArticle(article);
       }
 
     } catch (error) {
-      console.error("Error checking scheduled publications:", error);
+      console.error("[Publication Service] Error checking scheduled publications:", error);
     }
   }
 
@@ -154,6 +158,8 @@ class PublicationService {
    */
   private async publishArticle(article: PublishReadyArticle): Promise<void> {
     try {
+      console.log(`[Publication Service] Starting publication process for article ${article.id}`);
+      
       // First check if the article is already published on the website
       const existingArticle = await this.databaseService.getArticle(article.id);
       
@@ -162,6 +168,8 @@ class PublicationService {
       // Process each publication location
       for (const publication of article.article_publications) {
         try {
+          console.log(`[Publication Service] Publishing article ${article.id} to ${publication.publish_location}`);
+          
           switch (publication.publish_location) {
             case 'Website':
               if (needsWebsitePublishing) {
@@ -170,6 +178,7 @@ class PublicationService {
               break;
               
             case 'Email':
+              console.log(`[Publication Service] Starting email publication for article ${article.id}`);
               await this.publishToEmail(article);
               break;
               
@@ -182,20 +191,21 @@ class PublicationService {
               break;
             
             default:
-              console.log("Unknown publication location: " + publication.publish_location);
+              console.log("[Publication Service] Unknown publication location: " + publication.publish_location);
           }
           
           // Mark this publication as published
           await this.markPublicationAsDone(publication.id as number);
+          console.log(`[Publication Service] Successfully published article ${article.id} to ${publication.publish_location}`);
           
         } catch (pubError) {
-          console.error(`Error publishing article ${article.id} to ${publication.publish_location}:`, pubError);
+          console.error(`[Publication Service] Error publishing article ${article.id} to ${publication.publish_location}:`, pubError);
           // Continue with other publications
         }
       }
       
     } catch (error) {
-      console.error(`Error publishing article ${article.id}:`, error);
+      console.error(`[Publication Service] Error publishing article ${article.id}:`, error);
     }
   }
 
@@ -229,23 +239,24 @@ class PublicationService {
    * Publish article to email subscribers
    */
   private async publishToEmail(article: PublishReadyArticle): Promise<void> {
-    console.log('[Email Publication] Starting email publication workflow for article ' + article.id);
+    console.log('[Publication Service] Starting email publication workflow for article ' + article.id);
     
     try {
       // Now we call the actual email sending service that handles the email generation and sending
+      console.log('[Publication Service] Calling EmailPublicationService.sendEmailPublication');
       const result = await this.emailService.sendEmailPublication(article);
       
       if (result) {
-        console.log('[Email Publication] Successfully sent emails for article ' + article.id);
+        console.log('[Publication Service] Successfully sent emails for article ' + article.id);
       } else {
-        console.warn('[Email Publication] Failed to send emails for article ' + article.id);
+        console.warn('[Publication Service] Failed to send emails for article ' + article.id);
       }
     } catch (error) {
-      console.error('[Email Publication] Error in publishToEmail for article ' + article.id + ':', error);
+      console.error('[Publication Service] Error in publishToEmail for article ' + article.id + ':', error);
       throw error; // Re-throw to be caught by publishArticle
     }
     
-    console.log('[Email Publication] Email publication workflow completed for article ' + article.id);
+    console.log('[Publication Service] Email publication workflow completed for article ' + article.id);
   }
 
   /**
@@ -288,6 +299,7 @@ class PublicationService {
    */
   public static async retryPublication(publicationId: number): Promise<void> {
     try {
+      console.log(`[Publication Service] Retrying publication ${publicationId}`);
       const instance = PublicationService.getInstance();
       const dbService = instance.databaseService;
       
@@ -298,16 +310,18 @@ class PublicationService {
         throw new Error(`Publication ${publicationId} not found`);
       }
       
+      console.log(`[Publication Service] Found publication for article ${publication.content_id}, location: ${publication.publish_location}`);
+      
       // Reset the publication's published date so it can be retried
       await dbService.resetPublicationDate(publicationId);
       
-      console.log(`Publication ${publicationId} has been reset for retry`);
+      console.log(`[Publication Service] Publication ${publicationId} has been reset for retry`);
       
       // Force an immediate check for publications
       instance.checkScheduledPublications();
       
     } catch (error) {
-      console.error(`Error retrying publication ${publicationId}:`, error);
+      console.error(`[Publication Service] Error retrying publication ${publicationId}:`, error);
       throw error;
     }
   }

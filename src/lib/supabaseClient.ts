@@ -35,6 +35,8 @@ class SupabaseClientManager {
     
     // Initialize session on startup
     this.initSession();
+    
+    console.log('[Supabase] Client manager initialized');
   }
 
   /**
@@ -46,10 +48,13 @@ class SupabaseClientManager {
       this.currentSession = data.session;
       
       if (data.session?.access_token) {
+        console.log('[Supabase] Session found during initialization');
         this.createAuthenticatedClient(data.session.access_token);
+      } else {
+        console.log('[Supabase] No session found during initialization');
       }
     } catch (error) {
-      console.error("Failed to initialize Supabase session:", error);
+      console.error("[Supabase] Failed to initialize Supabase session:", error);
     }
   }
 
@@ -57,7 +62,7 @@ class SupabaseClientManager {
    * Handle auth state changes
    */
   private handleAuthChange = (event: AuthChangeEvent, session: Session | null): void => {
-    console.log(`Supabase auth event: ${event}`);
+    console.log(`[Supabase] Auth event: ${event}`);
     
     // Update current session
     this.currentSession = session;
@@ -81,6 +86,8 @@ class SupabaseClientManager {
     if (this.authClient && this.currentSession?.access_token === accessToken) {
       return;
     }
+    
+    console.log('[Supabase] Creating authenticated client');
     
     // Create new authenticated client
     this.authClient = createClient(
@@ -115,6 +122,7 @@ class SupabaseClientManager {
    * Clear any cached authenticated clients (used on logout)
    */
   public clearAuthClientCache(): void {
+    console.log('[Supabase] Clearing auth client cache');
     this.authClient = null;
   }
 }

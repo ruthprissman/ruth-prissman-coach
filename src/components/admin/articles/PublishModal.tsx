@@ -217,10 +217,15 @@ const PublishModal: React.FC<PublishModalProps> = ({
       const publicationService = PublicationService;
       publicationService.start(authSession?.access_token);
       
+      console.log('PublishModal: Starting publication process for', optionsToPublish.length, 'locations');
+      
       for (const option of optionsToPublish) {
         try {
+          console.log('PublishModal: Publishing to', option.publish_location);
+          
           if (option.id) {
             await publicationService.retryPublication(option.id);
+            console.log('PublishModal: Publication with ID completed:', option.id);
           } else {
             const supabaseClient = getSupabaseClient();
             const { data, error } = await supabaseClient
@@ -231,10 +236,31 @@ const PublishModal: React.FC<PublishModalProps> = ({
               .single();
               
             if (error) throw error;
+            
             if (data?.id) {
               await publicationService.retryPublication(data.id);
+              console.log('PublishModal: Publication with found ID completed:', data.id);
             } else {
-              throw new Error(`Publication not found for ${option.publish_location}`);
+              console.log('PublishModal: No publication ID found, creating direct publication');
+              
+              const { data: newPub, error: insertError } = await supabaseClient
+                .from('article_publications')
+                .insert({
+                  content_id: article.id,
+                  publish_location: option.publish_location,
+                  scheduled_date: new Date().toISOString()
+                })
+                .select('id')
+                .single();
+                
+              if (insertError) throw insertError;
+              
+              if (newPub?.id) {
+                await publicationService.retryPublication(newPub.id);
+                console.log('PublishModal: New publication completed with ID:', newPub.id);
+              } else {
+                throw new Error(`Failed to create publication record for ${option.publish_location}`);
+              }
             }
           }
         } catch (error: any) {
