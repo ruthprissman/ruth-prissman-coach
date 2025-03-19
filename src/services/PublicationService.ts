@@ -795,4 +795,4 @@ class PublicationService {
       // For now, we'll just ensure that the import for Google Fonts is properly placed
       // and that the style tag is in the head section
       
-      const hasStyleTag = html.includes('<style>');
+      const hasStyleTag = html.includes('<
