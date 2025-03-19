@@ -116,8 +116,16 @@ export class EmailGenerator {
    * @param text Text to escape
    * @returns Escaped text
    */
-  private escapeHtml(text: string): string {
-    return text
+  private escapeHtml(text: string | null | undefined): string {
+    // Handle undefined or null values
+    if (text === null || text === undefined) {
+      return '';
+    }
+    
+    // Convert to string if needed (in case it's a number or other type)
+    const str = String(text);
+    
+    return str
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")

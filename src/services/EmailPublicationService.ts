@@ -1,4 +1,3 @@
-
 import { supabaseClient, getFreshSupabaseClient, executeWithRetry } from '@/lib/supabaseClient';
 import { EmailDeliveryStats } from './PublicationService';
 import { DatabaseService } from './DatabaseService';
@@ -54,6 +53,22 @@ export class EmailPublicationService {
     console.log('[Email Publication] Starting email publication process for article ' + article.id + ': "' + article.title + '"');
     
     try {
+      // Validate that the article has the required properties
+      if (!article || !article.id) {
+        console.error('[Email Publication] Invalid article object provided');
+        return false;
+      }
+      
+      // Ensure article has title and content
+      if (!article.title || !article.content_markdown) {
+        console.error('[Email Publication] Article is missing title or content: ' + JSON.stringify({
+          id: article.id,
+          hasTitle: !!article.title,
+          hasContent: !!article.content_markdown
+        }));
+        return false;
+      }
+      
       // 1. Fetch all active email subscribers
       const subscribers = await this.databaseService.fetchActiveSubscribers();
       if (!subscribers || subscribers.length === 0) {
@@ -69,8 +84,8 @@ export class EmailPublicationService {
       
       // 3. Generate email HTML content
       const emailContent = this.emailGenerator.generateEmailContent({
-        title: article.title,
-        content: article.content_markdown,
+        title: article.title || 'No Title',
+        content: article.content_markdown || '',
         staticLinks: staticLinks || []
       });
       
@@ -198,7 +213,7 @@ export class EmailPublicationService {
       
       return successfulEmails.length > 0;
     } catch (error) {
-      console.error('[Email Publication] Error in sendEmailPublication for article ' + article.id + ':', error);
+      console.error('[Email Publication] Error in sendEmailPublication for article ' + (article?.id || 'unknown') + ':', error);
       return false;
     }
   }
