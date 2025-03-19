@@ -46,16 +46,22 @@ export class EmailGenerator {
     html += 'body { margin: 0; padding: 0; font-family: "Heebo", Arial, sans-serif; line-height: 1.8; color: #4A148C; width: 100%; background-color: #f9f9f9; text-align: center; }';
     html += 'h1, h2, h3, h4, .title { font-family: "Alef", Arial, sans-serif; font-weight: 700; text-align: center; }';
     html += 'p { margin-bottom: 16px; font-size: 16px; line-height: 1.8; text-align: center; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); direction: rtl; font-family: "Heebo", Arial, sans-serif; }';
-    html += 'a { text-decoration: none; color: #4A148C; font-weight: bold; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: "Heebo", Arial, sans-serif; }';
+    
+    // Updated styles for all links
+    html += 'a { text-decoration: none; color: #4A148C; font-weight: bold; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: "Alef", Arial, sans-serif; }';
+    html += 'a:hover { text-decoration: none; }';
+    
+    // Rest of the styles
     html += '.container { max-width: 600px; margin: 0 auto; background-color: transparent; border-radius: 8px; overflow: hidden; margin-top: 20px; margin-bottom: 20px; }';
     html += '.header { padding: 20px; text-align: center; }';
     html += '.header h1 { color: #4A148C; margin: 0; font-size: 28px; font-weight: 700; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); text-align: center; }';
     html += '.content { padding: 30px 20px; text-align: center; }';
     html += '.content p { margin-bottom: 16px; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); text-align: center !important; }';
-    html += '.links { padding: 20px; background-color: transparent; margin-top: 20px; border-radius: 4px; }';
-    html += '.links ul { list-style-type: disc; padding-right: 20px; padding-left: 0; margin: 15px 0; text-align: right; }';
-    html += '.links li { margin-bottom: 10px; text-align: right; direction: rtl; }';
-    html += '.links a { color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); text-align: right; font-family: "Heebo", Arial, sans-serif; }';
+    
+    // Updated links styles (now using p tags instead of list items)
+    html += '.links { padding: 20px; background-color: transparent; margin-top: 20px; }';
+    html += '.link-p { font-family: "Alef", Arial, sans-serif; font-size: 14px; text-align: center; margin-bottom: 20px; color: #4A148C; font-weight: bold; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); direction: rtl; }';
+    
     html += '.footer { padding: 20px; text-align: center; background-color: transparent; }';
     html += '.footer p { margin: 5px 0; font-size: 14px; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); text-align: center; }';
     html += '.cta-button { display: inline-block; background-color: #4A148C; color: white !important; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; margin: 20px 0; text-shadow: none; font-family: "Alef", Arial, sans-serif; }';
@@ -99,19 +105,17 @@ export class EmailGenerator {
     html += options.content; // We're using the processed content directly, which is safe because formatting happens before this
     html += '</div>';
     
-    // Add static links if provided
+    // Add static links if provided - now using p tags instead of ul/li
     if (options.staticLinks && options.staticLinks.length > 0) {
       html += '<div class="links">';
-      html += '<ul style="list-style-type: disc; padding-right: 20px; text-align: right;">';
       html += this.generateEmailLinks(options.staticLinks);
-      html += '</ul>';
       html += '</div>';
     }
     
     // Footer
     html += '<div class="footer">';
     html += '<p>נשלח באמצעות מערכת הפרסום האוטומטית.</p>';
-    html += '<p>&copy; ' + new Date().getFullYear() + ' רות פריסמן. כל הזכויות שמורות.</p>';
+    html += '<p>&copy; ' + new Date().getFullYear() + ' רות פריסמן. כל הזכויות שמ��רות.</p>';
     html += '</div>';
     
     html += '</div>'; // container
@@ -155,41 +159,43 @@ export class EmailGenerator {
       console.log('[EmailGenerator] Processing link:', JSON.stringify(link, null, 2));
       
       // Skip empty links
-      if (!link.fixed_text) {
+      if (!link.title) {
         console.log('[EmailGenerator] Skipping link with empty text');
         continue;
       }
       
-      linksHtml += '<li style="margin-bottom: 10px; text-align: right; direction: rtl;">';
+      // Start paragraph tag with proper styling for centered links
+      linksHtml += '<p class="link-p" style="font-family: \'Alef\', Arial, sans-serif; font-size: 14px; text-align: center; margin-bottom: 20px; color: #4A148C; font-weight: bold; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); direction: rtl;">';
       
       // Check if it's a WhatsApp link
       if (link.url && link.url.startsWith('https://wa.me/')) {
         console.log('[EmailGenerator] Processing as WhatsApp link with icon');
         linksHtml += '<a href="' + this.escapeHtml(link.url) + '" target="_blank" rel="noopener noreferrer" ' +
-                    'style="display: inline-flex; align-items: center; color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Heebo\', Arial, sans-serif;">' +
+                    'style="display: inline-flex; align-items: center; color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Alef\', Arial, sans-serif;">' +
                     '<svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366" style="margin-left: 5px;">' +
                     '<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>' +
                     '</svg>' + 
-                    this.escapeHtml(link.fixed_text) + '</a>';
+                    this.escapeHtml(link.title) + '</a>';
         console.log('[EmailGenerator] Generated WhatsApp link HTML');
       } 
       // Regular link with URL
       else if (link.url) {
         console.log('[EmailGenerator] Processing as regular link with URL:', link.url);
         linksHtml += '<a href="' + this.escapeHtml(link.url) + '" target="_blank" rel="noopener noreferrer" ' +
-                    'style="color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Heebo\', Arial, sans-serif;">' +
-                    this.escapeHtml(link.fixed_text) + '</a>';
+                    'style="color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Alef\', Arial, sans-serif;">' +
+                    this.escapeHtml(link.title) + '</a>';
         console.log('[EmailGenerator] Generated regular link HTML');
       } 
       // Text only (no URL - like notes or call-to-actions)
       else {
         console.log('[EmailGenerator] Processing as text-only (no URL)');
-        linksHtml += '<strong style="color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Heebo\', Arial, sans-serif;">' + 
-                    this.escapeHtml(link.fixed_text) + '</strong>';
+        linksHtml += '<strong style="color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Alef\', Arial, sans-serif;">' + 
+                    this.escapeHtml(link.title) + '</strong>';
         console.log('[EmailGenerator] Generated text-only HTML');
       }
       
-      linksHtml += '</li>';
+      // Close paragraph tag
+      linksHtml += '</p>';
       console.log('[EmailGenerator] Completed HTML for this link');
     }
     
@@ -222,12 +228,12 @@ export class EmailGenerator {
     // Replace italic text
     formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
     
-    // Replace links
-    formatted = formatted.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    // Replace links with updated styling (Alef font)
+    formatted = formatted.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="font-family: \'Alef\', Arial, sans-serif; color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">$1</a>');
     
-    // Special handling for WhatsApp links
+    // Special handling for WhatsApp links with updated styling
     formatted = formatted.replace(/<a href="(https:\/\/wa\.me\/.*?)"(.*?)>(.*?)<\/a>/g, 
-      '<a href="$1"$2 style="display: inline-flex; align-items: center; font-family: \'Heebo\', Arial, sans-serif;"><svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366" style="margin-left: 5px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>$3</a>');
+      '<a href="$1"$2 style="display: inline-flex; align-items: center; font-family: \'Alef\', Arial, sans-serif; color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);"><svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366" style="margin-left: 5px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>$3</a>');
     
     return formatted;
   }
