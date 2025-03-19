@@ -29,10 +29,11 @@ export class EmailGenerator {
     html += '.content-wrapper {padding: 30px 20px;background-color: transparent;text-align: center;}';
     html += '.title {color: #4A148C;margin: 0;font-size: 28px;font-weight: 700;font-family: "Alef", sans-serif;text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);padding: 20px;text-align: center;}';
     html += '.content {font-size: 16px;margin-bottom: 20px;line-height: 1.8;font-family: "Heebo", sans-serif;text-align: center !important;}';
-    html += '.links ul { padding-right: 20px; }';
-    html += '.links li { margin-bottom: 8px; }';
-    html += 'a { color: #3182ce; text-decoration: none; }';
-    html += 'a:hover { text-decoration: underline; }';
+    html += '.cta-button {background-color: #4A148C;color: white;padding: 12px 24px;text-decoration: none;border-radius: 4px;font-weight: bold;display: inline-block;margin: 20px 0;text-shadow: none;font-family: "Alef", sans-serif;}';
+    html += '.link-section {margin: 30px 0; text-align: center; }';
+    html += '.footer-link {display: block;margin: 10px 0;text-align: center;font-family: "Alef", sans-serif; font-weight: bold;color: #4A148C;text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);  }';
+    html += '.copyright { font-size: 12px; margin-top: 20px; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);  font-family: Heebo", sans-serif;text-align: center; }';
+    html += '@media only screen and (max-width: 620px) {.email-container { width: 100% !important; }.content-wrapper { padding: 15px 10px !important; .title { font-size: 22px !important; }.content, p, a {  font-size: 16px !important; }}';
     html += '</style>';
     html += '</head>';
     html += '<body>';
