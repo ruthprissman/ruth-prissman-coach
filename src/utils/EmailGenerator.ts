@@ -1,4 +1,3 @@
-
 /**
  * Generator for email HTML content
  */
@@ -141,7 +140,7 @@ export class EmailGenerator {
    * @param links Array of link objects
    * @returns Formatted HTML for links
    */
-  private generateEmailLinks(links: Array<{id: number, fixed_text: string, url: string}>): string {
+  private generateEmailLinks(links: Array<{id: number, title: string, url: string}>): string {
     console.log('[EmailGenerator] Received staticLinks:', JSON.stringify(links, null, 2));
     
     if (!links || links.length === 0) {
@@ -154,7 +153,12 @@ export class EmailGenerator {
     
     for (const link of links) {
       console.log('[EmailGenerator] Processing link:', JSON.stringify(link, null, 2));
-     
+      
+      // Skip empty links
+      if (!link.fixed_text) {
+        console.log('[EmailGenerator] Skipping link with empty text');
+        continue;
+      }
       
       linksHtml += '<li style="margin-bottom: 10px; text-align: right; direction: rtl;">';
       
