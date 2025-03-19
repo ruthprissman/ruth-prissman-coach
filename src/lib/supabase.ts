@@ -6,7 +6,7 @@ import { supabaseClient, getFreshSupabaseClient, clearSupabaseClientCache, getSu
 type SupabaseTypedClient = SupabaseClient<any, "public", any>;
 
 // For backward compatibility, export the client getter
-export const supabase: SupabaseTypedClient = supabaseClient;
+export const supabase: SupabaseTypedClient = supabaseClient() as SupabaseTypedClient;
 
 // Create a function to get a Supabase client with auth (for backward compatibility)
 export const getSupabaseWithAuth = async (accessToken?: string): Promise<SupabaseTypedClient> => {
