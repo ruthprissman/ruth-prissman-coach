@@ -40,7 +40,7 @@ export class EmailGenerator {
     html += '<div class="container">';
     
     // Header
-    html += '<div class="header">';
+    html += '<div class="header" >';
     html += '<h1>' + this.escapeHtml(options.title) + '</h1>';
     html += '</div>';
     
