@@ -155,7 +155,7 @@ export class EmailGenerator {
     for (const link of links) {
       console.log('[EmailGenerator] Processing link:', JSON.stringify(link, null, 2));
       
-       Skip empty links
+      // Skip empty links
       if (!link.fixed_text) {
         console.log('[EmailGenerator] Skipping link with empty text');
         continue;
