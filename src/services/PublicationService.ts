@@ -795,4 +795,50 @@ class PublicationService {
       // For now, we'll just ensure that the import for Google Fonts is properly placed
       // and that the style tag is in the head section
       
-      const hasStyleTag = html.includes('<
+      const hasStyleTag = html.includes('<style>');
+      
+      // Add basic style tag if none exists
+      if (!hasStyleTag) {
+        return html.replace('<head>', '<head><style>/* Consolidated styles */</style>');
+      }
+      
+      return html;
+    } catch (error) {
+      console.error("Error consolidating styles:", error);
+      return html; // Return original if consolidation fails
+    }
+  }
+
+  /**
+   * Optimize HTML for email delivery
+   * @param html The HTML content to optimize
+   * @returns Optimized HTML string
+   */
+  private optimizeEmailHtml(html: string): string {
+    if (!html) return '';
+    
+    try {
+      console.log("Optimizing email HTML content");
+      
+      // Step 1: Minify the HTML
+      const minifiedHtml = this.minifyHtml(html);
+      
+      // Step 2: Consolidate styles
+      const optimizedHtml = this.consolidateStyles(minifiedHtml);
+      
+      // Step 3: Check size and log warning if too large
+      const sizeInKB = (new TextEncoder().encode(optimizedHtml).length / 1024).toFixed(2);
+      console.log(`Email HTML size: ${sizeInKB}KB`);
+      
+      if (parseFloat(sizeInKB) > 90) {
+        console.warn(`Email HTML is large (${sizeInKB}KB) and may be clipped by some email providers`);
+      }
+      
+      return optimizedHtml;
+    } catch (error) {
+      console.error("Error optimizing email HTML:", error);
+      return html; // Return original if optimization fails
+    }
+  }
+
+
