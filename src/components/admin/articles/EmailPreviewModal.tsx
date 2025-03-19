@@ -23,21 +23,20 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
     const title = article.title || '';
     const content = article.content_markdown || '';
     
-    // Create a simple HTML email preview
+    // Create a preview that matches the actual email template
     return `
-      <div style="direction: rtl; text-align: center; font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-        <div style="border-bottom: 2px solid #4a5568; padding-bottom: 15px; margin-bottom: 20px;">
-          <h1 style="color: #2d3748; font-size: 24px; margin-bottom: 8px;">${title}</h1>
-          <p style="color: #718096; font-size: 14px;">נשלח מאת: רות פריסמן</p>
+      <div style="direction: rtl; font-family: 'Heebo', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.85); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden;">
+        <div style="padding: 20px; text-align: center; border-bottom: 2px solid #eaeaea;">
+          <h1 style="color: #4A148C; margin: 0; font-size: 28px; font-weight: 700; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: 'Alef', sans-serif;">${title}</h1>
         </div>
         
-        <div style="line-height: 1.6; color: #4a5568; text-align: center;">
+        <div style="padding: 30px 20px; text-align: center; line-height: 1.8; color: #4A148C;">
           ${formatContent(content)}
         </div>
         
-        <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #e0e0e0; color: #718096; font-size: 12px;">
-          <p>נשלח באמצעות מערכת הפרסום האוטומטית.</p>
-          <p>© רות פריסמן ${new Date().getFullYear()}</p>
+        <div style="padding: 20px; text-align: center; border-top: 2px solid #eaeaea; background-color: rgba(255, 255, 255, 0.7);">
+          <p style="margin: 5px 0; font-size: 14px; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">נשלח באמצעות מערכת הפרסום האוטומטית.</p>
+          <p style="margin: 5px 0; font-size: 14px; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">© רות פריסמן ${new Date().getFullYear()} כל הזכויות שמורות.</p>
         </div>
       </div>
     `;
@@ -52,12 +51,12 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
     let formatted = markdown.replace(/\n/g, '<br>');
     
     // Replace markdown headers
-    formatted = formatted.replace(/^# (.*?)$/gm, '<h1 style="color: #2d3748; font-size: 22px;">$1</h1>');
-    formatted = formatted.replace(/^## (.*?)$/gm, '<h2 style="color: #2d3748; font-size: 20px;">$1</h2>');
-    formatted = formatted.replace(/^### (.*?)$/gm, '<h3 style="color: #2d3748; font-size: 18px;">$1</h3>');
+    formatted = formatted.replace(/^# (.*?)$/gm, '<h1 style="color: #4A148C; font-size: 22px; font-family: \'Alef\', sans-serif; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">$1</h1>');
+    formatted = formatted.replace(/^## (.*?)$/gm, '<h2 style="color: #4A148C; font-size: 20px; font-family: \'Alef\', sans-serif; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">$1</h2>');
+    formatted = formatted.replace(/^### (.*?)$/gm, '<h3 style="color: #4A148C; font-size: 18px; font-family: \'Alef\', sans-serif; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">$1</h3>');
     
     // Replace links (this is a simplified version)
-    formatted = formatted.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" style="color: #4299e1; text-decoration: none;">$1</a>');
+    formatted = formatted.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" style="color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Alef\', sans-serif;">$1</a>');
     
     // Replace bold text
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -82,7 +81,10 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="py-4 border rounded-md p-4 bg-gray-50 overflow-auto max-h-[50vh]">
+        <div className="py-4 border rounded-md p-4 bg-gray-50 overflow-auto max-h-[50vh]" 
+             style={{backgroundImage: 'url(https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg)', 
+                     backgroundSize: 'cover', 
+                     backgroundPosition: 'center'}}>
           <div dangerouslySetInnerHTML={{ __html: generateEmailPreview() }} />
         </div>
         

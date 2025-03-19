@@ -21,39 +21,49 @@ export class EmailGenerator {
     html += '<meta charset="UTF-8">';
     html += '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
     html += '<title>' + this.escapeHtml(options.title) + '</title>';
-    html += '<style>  @import url("https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Heebo:wght@300;400;500;700&display=swap");';
-    html += 'body { font-family: "Heebo", sans-serif;  line-height: 1.8;color: #4A148C;text-align: center;background-color: transparent;}';
-    html += 'h1, h2, h3, h4, a, .title {font-family: "Alef", sans-serif;font-weight: 700;}'
-    html += 'p {margin-bottom: 16px;text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);text-align: center !important;}';
-    html += 'a {color: #4A148C;font-weight: bold;text-decoration: none;text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);font-family: "Alef", sans-serif;}';
-    html += '.content-wrapper {padding: 30px 20px;background-color: transparent;text-align: center;}';
-    html += '.title {color: #4A148C;margin: 0;font-size: 28px;font-weight: 700;font-family: "Alef", sans-serif;text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);padding: 20px;text-align: center;}';
-    html += '.content {font-size: 16px;margin-bottom: 20px;line-height: 1.8;font-family: "Heebo", sans-serif;text-align: center !important;}';
-    html += '.cta-button {background-color: #4A148C;color: white;padding: 12px 24px;text-decoration: none;border-radius: 4px;font-weight: bold;display: inline-block;margin: 20px 0;text-shadow: none;font-family: "Alef", sans-serif;}';
-    html += '.link-section {margin: 30px 0; text-align: center; }';
-    html += '.footer-link {display: block;margin: 10px 0;text-align: center;font-family: "Alef", sans-serif; font-weight: bold;color: #4A148C;text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);  }';
-    html += '.copyright { font-size: 12px; margin-top: 20px; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);  font-family: Heebo", sans-serif;text-align: center; }';
-    html += '@media only screen and (max-width: 620px) {.email-container { width: 100% !important; }.content-wrapper { padding: 15px 10px !important; .title { font-size: 22px !important; }.content, p, a {  font-size: 16px !important; }}';
+    html += '<style>@import url("https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Heebo:wght@300;400;500;700&display=swap");';
+    html += 'body { font-family: "Heebo", sans-serif; line-height: 1.8; color: #4A148C; margin: 0; padding: 0; direction: rtl; background-color: #f9f9f9; background-image: url("https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg"); background-repeat: no-repeat; background-size: cover; background-position: center; background-attachment: fixed; width: 100%; height: 100%; }';
+    html += 'h1, h2, h3, h4, a, .title { font-family: "Alef", sans-serif; font-weight: 700; }';
+    html += '.container { max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.85); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden; margin-top: 20px; margin-bottom: 20px; }';
+    html += '.header { padding: 20px; text-align: center; border-bottom: 2px solid #eaeaea; }';
+    html += '.header h1 { color: #4A148C; margin: 0; font-size: 28px; font-weight: 700; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); }';
+    html += '.content { padding: 30px 20px; text-align: center; }';
+    html += '.content p { margin-bottom: 16px; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); text-align: center !important; }';
+    html += '.links { padding: 20px; background-color: rgba(255, 255, 255, 0.5); margin-top: 20px; border-radius: 4px; text-align: center; }';
+    html += '.links h3 { color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); margin-top: 0; }';
+    html += '.links ul { list-style: none; padding: 0; text-align: center; }';
+    html += '.links li { margin-bottom: 10px; }';
+    html += '.links a { color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); }';
+    html += '.footer { padding: 20px; text-align: center; border-top: 2px solid #eaeaea; background-color: rgba(255, 255, 255, 0.7); }';
+    html += '.footer p { margin: 5px 0; font-size: 14px; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); }';
+    html += '.cta-button { display: inline-block; background-color: #4A148C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; margin: 20px 0; text-shadow: none; font-family: "Alef", sans-serif; }';
+    html += '@media only screen and (max-width: 620px) { .container { width: 100% !important; margin: 10px 0 !important; } .header h1 { font-size: 22px !important; } .content, .links, .footer { padding: 15px 10px !important; } p, a { font-size: 16px !important; } }';
     html += '</style>';
     html += '</head>';
     html += '<body>';
+    
+    // Table-based structure for better email client compatibility
+    html += '<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" width="100%" style="max-width: 600px; margin: 0 auto;">';
+    html += '<tr><td align="center" valign="top">';
+    
+    // Container
     html += '<div class="container">';
     
     // Header
-    html += '<div class="header" >';
+    html += '<div class="header">';
     html += '<h1>' + this.escapeHtml(options.title) + '</h1>';
     html += '</div>';
     
     // Content
     html += '<div class="content">';
-    html += options.content;//this.formatMarkdown(options.content);
+    html += options.content; // We're using the processed content directly, which is safe because formatting happens before this
     html += '</div>';
     
     // Add static links if provided
     if (options.staticLinks && options.staticLinks.length > 0) {
-     // html += '<div class="links">';
-    //  html += '<h3>קישורים מומלצים:</h3>';
-    //  html += '<ul>';
+      html += '<div class="links">';
+      html += '<h3>קישורים מומלצים:</h3>';
+      html += '<ul>';
       
       for (const link of options.staticLinks) {
         html += '<li><a href="' + this.escapeHtml(link.url) + '" target="_blank" rel="noopener noreferrer">' 
@@ -71,6 +81,10 @@ export class EmailGenerator {
     html += '</div>';
     
     html += '</div>'; // container
+    
+    html += '</td></tr>';
+    html += '</table>';
+    
     html += '</body>';
     html += '</html>';
     
