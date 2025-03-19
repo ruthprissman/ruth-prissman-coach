@@ -162,13 +162,23 @@ export class EmailPublicationService {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${freshToken}`
               },
-              body: JSON.stringify({
+             /*body: JSON.stringify({
                 to: recipientEmail,
                 subject: article.title,
                 html: emailContent,
                 articleId: article.id
               })
-            });
+            });*/
+              body: JSON.stringify({
+              emailList: [recipientEmail],
+              subject: article.title,
+              sender: { 
+                email: "RuthPrissman@gmail.com", 
+                name: "רות פריסמן - קוד הנפש" 
+              },
+              htmlContent: emailContent
+            })
+          });
             
             console.log('[Email Publication] Edge function response status: ' + response.status);
             
