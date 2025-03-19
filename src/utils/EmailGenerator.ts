@@ -103,10 +103,10 @@ export class EmailGenerator {
     
     // Add static links if provided
     if (options.staticLinks && options.staticLinks.length > 0) {
-      html += '<div class="links">';
+    /*  html += '<div class="links">';
       html += '<h3>קישורים מומלצים:</h3>';
       html += '<ul style="list-style-type: disc; padding-right: 20px; text-align: right;">';
-      
+      */
       html += this.generateEmailLinks(options.staticLinks);
       
       html += '</ul>';
