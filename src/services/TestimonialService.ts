@@ -1,9 +1,10 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { Testimonial } from '@/types/testimonial';
 
 export const fetchTestimonials = async (): Promise<Testimonial[]> => {
   try {
+    const supabase = supabaseClient();
     const { data, error } = await supabase
       .from('testimonials')
       .select('*')
