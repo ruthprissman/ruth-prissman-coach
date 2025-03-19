@@ -49,9 +49,9 @@ export class EmailGenerator {
     
     // Add static links if provided
     if (options.staticLinks && options.staticLinks.length > 0) {
-      html += '<div class="links">';
-      html += '<h3>קישורים מומלצים:</h3>';
-      html += '<ul>';
+     // html += '<div class="links">';
+    //  html += '<h3>קישורים מומלצים:</h3>';
+    //  html += '<ul>';
       
       for (const link of options.staticLinks) {
         html += '<li><a href="' + this.escapeHtml(link.url) + '" target="_blank" rel="noopener noreferrer">' 
