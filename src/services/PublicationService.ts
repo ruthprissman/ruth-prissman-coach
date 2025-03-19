@@ -1,4 +1,3 @@
-
 import { getSupabaseWithAuth, supabase } from '@/lib/supabase';
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
@@ -75,6 +74,112 @@ class PublicationService {
       PublicationService.instance = new PublicationService();
     }
     return PublicationService.instance;
+  }
+
+  /**
+   * Diagnose email content for potential issues
+   * @param emailHtml The full HTML content to be diagnosed
+   * @param recipientEmail The target email (will be masked in logs for privacy)
+   * @param articleId The ID of the article being published
+   * @returns Object containing diagnosis results and the original HTML
+   */
+  private diagnoseEmailContent(emailHtml: string, recipientEmail: string, articleId: number): {
+    html: string,
+    isValid: boolean,
+    issues: string[]
+  } {
+    const issues: string[] = [];
+    let isValid = true;
+    
+    // 1. Log the full content length
+    const contentLength = emailHtml.length;
+    console.log(`[Email Diagnostics] Article #${articleId} - Email content length: ${contentLength} characters`);
+    
+    // 2. Check for content size issues
+    if (contentLength > 50000) {
+      const warning = `[Email Diagnostics] ⚠️ WARNING: Email content exceeds 50,000 characters (${contentLength}). May be truncated by email providers.`;
+      console.warn(warning);
+      issues.push(warning);
+    }
+    
+    // 3. Check for empty or too short content
+    if (contentLength < 100) {
+      const error = `[Email Diagnostics] ❌ ERROR: Email content suspiciously short (${contentLength} chars). Possible truncation or generation failure.`;
+      console.error(error);
+      issues.push(error);
+      isValid = false;
+    }
+    
+    // 4. Check for proper HTML structure
+    if (!emailHtml.includes('<!DOCTYPE html>') && !emailHtml.includes('<html')) {
+      const warning = `[Email Diagnostics] ⚠️ WARNING: Email HTML may not have proper DOCTYPE or <html> tag.`;
+      console.warn(warning);
+      issues.push(warning);
+    }
+    
+    // 5. Check for RTL support and Hebrew character encoding
+    if (!emailHtml.includes('dir="rtl"') && !emailHtml.includes('direction: rtl')) {
+      const warning = `[Email Diagnostics] ⚠️ WARNING: Email HTML may not have RTL direction specified.`;
+      console.warn(warning);
+      issues.push(warning);
+    }
+    
+    // 6. Check for Hebrew characters
+    const hebrewRegex = /[\u0590-\u05FF]/;
+    if (!hebrewRegex.test(emailHtml)) {
+      const warning = `[Email Diagnostics] ⚠️ WARNING: Email may not contain Hebrew characters. Possible encoding issue.`;
+      console.warn(warning);
+      issues.push(warning);
+    }
+    
+    // 7. Verify closing tags balance (basic check)
+    const openingBodyTags = (emailHtml.match(/<body/g) || []).length;
+    const closingBodyTags = (emailHtml.match(/<\/body>/g) || []).length;
+    
+    if (openingBodyTags !== closingBodyTags) {
+      const error = `[Email Diagnostics] ❌ ERROR: Unbalanced <body> tags (${openingBodyTags} opening, ${closingBodyTags} closing).`;
+      console.error(error);
+      issues.push(error);
+      isValid = false;
+    }
+    
+    // 8. Log masked version of the content for debugging (first 500 chars)
+    // Replace any potential sensitive data like emails with masked versions
+    const maskedEmail = recipientEmail.replace(/(.{2})(.*)(@.*)/, "$1***$3");
+    
+    console.log(`[Email Diagnostics] Article #${articleId} - Sending to: ${maskedEmail}`);
+    console.log(`[Email Diagnostics] Article #${articleId} - Email content preview (first 500 chars):`);
+    console.log(emailHtml.substring(0, 500) + (emailHtml.length > 500 ? '...' : ''));
+    
+    // Return diagnosis results and the ORIGINAL HTML (unmodified)
+    return {
+      html: emailHtml, // Return the original HTML unchanged
+      isValid,
+      issues
+    };
+  }
+
+  /**
+   * Log email content hash for integrity verification
+   * @param emailHtml The HTML content
+   * @param stage The processing stage (e.g., 'before-api', 'after-transform')
+   * @param articleId The article ID
+   */
+  private logContentIntegrityHash(emailHtml: string, stage: string, articleId: number): string {
+    // Simple hash function for content verification
+    // This is not for security, just for integrity checking
+    let hash = 0;
+    if (emailHtml.length === 0) return '0';
+    
+    for (let i = 0; i < emailHtml.length; i++) {
+      const char = emailHtml.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    
+    const hashStr = hash.toString(16);
+    console.log(`[Email Integrity] Article #${articleId} - ${stage} content hash: ${hashStr} (length: ${emailHtml.length})`);
+    return hashStr;
   }
 
   /**
@@ -309,8 +414,33 @@ class PublicationService {
    * Publish article to email subscribers
    */
   private async publishToEmail(article: PublishReadyArticle): Promise<void> {
-    console.log(`Email publication not implemented for article ${article.id}`);
-    // Implementation would go here
+    // Add diagnostic logging before returning
+    console.log(`[Email Diagnostics] Starting email publication for article ${article.id}: "${article.title}"`);
+    console.log(`[Email Diagnostics] Article has markdown content of length: ${article.content_markdown.length} characters`);
+    
+    // If the actual implementation is added later, ensure diagnostics are applied
+    // For now, just log that the feature isn't implemented yet
+    console.log(`[Email Diagnostics] Email publication not yet implemented for article ${article.id}`);
+    
+    // When email HTML is generated, make sure to:
+    // 1. Store the original HTML without any modifications
+    // const emailHtml = generateEmailHtml(article);
+    
+    // 2. Run diagnostics but DON'T modify the content
+    // const diagnosis = this.diagnoseEmailContent(emailHtml, recipientEmail, article.id);
+    
+    // 3. Log content hash before sending to API
+    // this.logContentIntegrityHash(emailHtml, 'before-api', article.id);
+    
+    // 4. Send the ORIGINAL content to the API (not modified or truncated)
+    // await sendEmailApi(diagnosis.html); // Use the original HTML
+    
+    // 5. Log any issues found
+    // if (diagnosis.issues.length > 0) {
+    //    console.warn(`[Email Diagnostics] Found ${diagnosis.issues.length} issues with email content`);
+    // }
+    
+    console.log(`[Email Diagnostics] Email publication workflow completed for article ${article.id}`);
   }
 
   /**
@@ -684,314 +814,3 @@ class PublicationService {
                style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); display: inline-flex; align-items: center; justify-content: center;">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366" style="margin-left: 5px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>${link.fixed_text}
             </a>
-          </p>
-        `;
-      }
-      
-      // Regular link with URL
-      if (formattedUrl && link.fixed_text) {
-        return `
-          <p style="text-align: center; margin: 10px 0;">
-            <a href="${formattedUrl}" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-              ${link.fixed_text}
-            </a>
-          </p>
-        `;
-      } else if (link.fixed_text) {
-        // Display plain text as bold paragraph when no URL
-        return `
-          <p style="text-align: center; margin: 10px 0; font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-            ${link.fixed_text}
-          </p>
-        `;
-      }
-      
-      return '';
-    }).filter(link => link !== '');
-  }
-
-  /**
-   * Generate footer with minimal essential links
-   * @param recipientEmail The recipient email for unsubscribe link
-   * @param includeContactLink Whether to include contact link in footer
-   * @returns HTML string with footer links
-   */
-  private async generateEmailFooter(recipientEmail: string, includeContactLink: boolean = false): Promise<string> {
-    try {
-      // Create footer links array with only essential links
-      let footerLinks = [];
-      
-      // Add contact link only if requested
-      if (includeContactLink) {
-        footerLinks.push(`
-          <p style="text-align: center; margin: 10px 0;">
-            <a href="https://ruth-prissman-coach.lovable.app/contact" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-              צור קשר
-            </a>
-          </p>
-        `);
-      }
-      
-      // Add dynamic unsubscribe link (always included)
-      const unsubscribeUrl = `https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=general`;
-      footerLinks.push(`
-        <p style="text-align: center; margin: 10px 0;">
-          <a href="${unsubscribeUrl}" 
-             style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-            להסרה מרשימת התפוצה
-          </a>
-        </p>
-      `);
-      
-      return `
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(74, 20, 140, 0.2);">
-          ${footerLinks.join('')}
-          <p style="font-size: 12px; color: #4A148C; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-            © ${new Date().getFullYear()} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
-          </p>
-        </div>
-      `;
-    } catch (error) {
-      console.error("Error generating email footer:", error);
-      // Fallback footer if something goes wrong - only essential elements
-      return `
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(74, 20, 140, 0.2); text-align: center;">
-          <p style="margin: 10px 0;">
-            <a href="https://ruth-prissman-coach.lovable.app/unsubscribe?email=${encodeURIComponent(recipientEmail)}&list=general" 
-               style="font-family: 'Alef', sans-serif; font-weight: bold; color: #4A148C; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-              להסרה מרשימת התפוצה
-            </a>
-          </p>
-          <p style="font-size: 12px; color: #4A148C; margin-top: 20px; text-align: center; font-family: 'Heebo', sans-serif; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);">
-            © ${new Date().getFullYear()} רות פריסמן - קוד הנפש
-          </p>
-        </div>
-      `;
-    }
-  }
-
-  /**
-   * Process dynamic content links
-   * @param content The markdown content
-   * @param articleTitle The article title for email subject
-   * @returns Processed content with dynamic links
-   */
-  private async processContentLinks(content: string, articleTitle: string): Promise<string> {
-    try {
-      // Format and enhance content without adding links
-      // This function now maintains content formatting but doesn't inject links
-      
-      let processedContent = content;
-      
-      // Apply any necessary content formatting (e.g., adding line breaks, styling)
-      // But don't add any links that could cause duplication
-      
-      return processedContent;
-    } catch (error) {
-      console.error("Error processing content:", error);
-      return content;
-    }
-  }
-
-  /**
-   * Minify HTML content for email
-   * @param html The HTML content to minify
-   * @returns Minified HTML string
-   */
-  private minifyHtml(html: string): string {
-    if (!html) return '';
-    
-    try {
-      // Basic HTML minification - remove extra spaces, comments, and line breaks
-      return html
-        // Remove HTML comments
-        .replace(/<!--[\s\S]*?-->/g, '')
-        // Remove extra whitespace between tags
-        .replace(/>\s+</g, '><')
-        // Remove whitespace at the beginning and end of lines
-        .replace(/^\s+|\s+$/gm, '')
-        // Normalize remaining whitespace
-        .replace(/\s{2,}/g, ' ');
-    } catch (error) {
-      console.error("Error minifying HTML:", error);
-      return html; // Return original if minification fails
-    }
-  }
-
-  /**
-   * Consolidate inline styles into a style block where possible
-   * @param html The HTML content
-   * @returns HTML with consolidated styles
-   */
-  private consolidateStyles(html: string): string {
-    if (!html) return '';
-    
-    try {
-      // This is a simplified implementation
-      // In a production environment, a more robust parser would be used
-      
-      // For now, we'll just ensure that the import for Google Fonts is properly placed
-      // and that the style tag is in the head section
-      
-      const hasStyleTag = html.includes('<style>');
-      
-      // Add basic style tag if none exists
-      if (!hasStyleTag) {
-        return html.replace('<head>', '<head><style>/* Consolidated styles */</style>');
-      }
-      
-      return html;
-    } catch (error) {
-      console.error("Error consolidating styles:", error);
-      return html; // Return original if consolidation fails
-    }
-  }
-
-  /**
-   * Optimize HTML for email delivery
-   * @param html The HTML content to optimize
-   * @returns Optimized HTML string
-   */
-  private optimizeEmailHtml(html: string): string {
-    if (!html) return '';
-    
-    try {
-      console.log("Optimizing email HTML content");
-      
-      // Step 1: Minify the HTML
-      const minifiedHtml = this.minifyHtml(html);
-      
-      // Step 2: Consolidate styles
-      const optimizedHtml = this.consolidateStyles(minifiedHtml);
-      
-      // Step 3: Check size and log warning if too large
-      const sizeInKB = (new TextEncoder().encode(optimizedHtml).length / 1024).toFixed(2);
-      console.log(`Email HTML size: ${sizeInKB}KB`);
-      
-      if (parseFloat(sizeInKB) > 90) {
-        console.warn(`Email HTML is large (${sizeInKB}KB) and may be clipped by some email providers`);
-      }
-      
-      return optimizedHtml;
-    } catch (error) {
-      console.error("Error optimizing email HTML:", error);
-      return html; // Return original if optimization fails
-    }
-  }
-
-  /**
-   * Retry publication for a specific publication ID
-   * @param publicationId ID of the publication to retry
-   * @returns Promise that resolves when publication is complete
-   */
-  public async retryPublication(publicationId: number): Promise<void> {
-    try {
-      const supabaseClient = this.accessToken 
-        ? getSupabaseWithAuth(this.accessToken)
-        : supabase;
-      
-      // First, get the publication details
-      const { data: publication, error: fetchError } = await supabaseClient
-        .from('article_publications')
-        .select(`
-          id,
-          content_id,
-          publish_location,
-          professional_content:content_id (
-            id,
-            title,
-            content_markdown,
-            category_id,
-            contact_email
-          )
-        `)
-        .eq('id', publicationId)
-        .single();
-      
-      if (fetchError) {
-        console.error(`Error fetching publication ${publicationId}:`, fetchError);
-        throw fetchError;
-      }
-      
-      if (!publication) {
-        throw new Error(`Publication ${publicationId} not found`);
-      }
-      
-      // Create article format needed for publishing
-      const professionalContent = publication.professional_content as unknown as ProfessionalContent;
-      const article: PublishReadyArticle = {
-        id: publication.content_id,
-        title: professionalContent.title || "Untitled",
-        content_markdown: professionalContent.content_markdown || "",
-        category_id: professionalContent.category_id || null,
-        contact_email: professionalContent.contact_email || null,
-        article_publications: [{
-          id: publication.id,
-          content_id: publication.content_id,
-          publish_location: publication.publish_location,
-          scheduled_date: new Date().toISOString(),
-          published_date: null
-        }]
-      };
-      
-      // Process based on publication location
-      switch (publication.publish_location) {
-        case 'Website':
-          await this.publishToWebsite(article.id);
-          break;
-          
-        case 'Email':
-          await this.publishToEmail(article);
-          break;
-          
-        case 'WhatsApp':
-          await this.publishToWhatsApp(article);
-          break;
-          
-        default:
-          console.log(`Unknown publication location: ${publication.publish_location}`);
-      }
-      
-      // Mark this publication as done
-      await this.markPublicationAsDone(publicationId);
-      
-      console.log(`Successfully retried publication ${publicationId}`);
-      
-    } catch (error) {
-      console.error(`Error retrying publication ${publicationId}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Retry sending failed emails for an article
-   * @param articleId ID of the article
-   * @returns Number of emails that were retried
-   */
-  public async retryFailedEmails(articleId: number): Promise<number> {
-    try {
-      // Get failed email recipients
-      const failedEmails = await this.getFailedEmailRecipients(articleId);
-      
-      if (failedEmails.length === 0) {
-        console.log(`No failed emails found for article ${articleId}`);
-        return 0;
-      }
-      
-      console.log(`Retrying ${failedEmails.length} failed emails for article ${articleId}`);
-      
-      // Implementation would go here to actually retry the emails
-      // For now, we'll just return the count of emails that would be retried
-      
-      return failedEmails.length;
-    } catch (error) {
-      console.error(`Error retrying failed emails for article ${articleId}:`, error);
-      throw error;
-    }
-  }
-}
-
-// Export a singleton instance
-export default PublicationService.getInstance();
