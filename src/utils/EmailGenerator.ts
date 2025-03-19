@@ -21,13 +21,14 @@ export class EmailGenerator {
     html += '<meta charset="UTF-8">';
     html += '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
     html += '<title>' + this.escapeHtml(options.title) + '</title>';
-    html += '<style>';
-    html += 'body { font-family: Arial, sans-serif; direction: rtl; text-align: right; color: #333; line-height: 1.6; }';
-    html += '.container { max-width: 600px; margin: 0 auto; padding: 20px; }';
-    html += '.header { border-bottom: 2px solid #4a5568; padding-bottom: 20px; margin-bottom: 20px; text-align: center; }';
-    html += '.content { margin-bottom: 30px; }';
-    html += '.footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eaeaea; font-size: 12px; color: #666; text-align: center; }';
-    html += '.links { margin: 20px 0; padding: 15px; background-color: #f7f7f7; border-radius: 5px; }';
+    html += '<style>  @import url("https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Heebo:wght@300;400;500;700&display=swap");';
+    html += 'body { font-family: "Heebo", sans-serif;  line-height: 1.8;color: #4A148C;text-align: center;background-color: transparent;}';
+    html += 'h1, h2, h3, h4, a, .title {font-family: "Alef", sans-serif;font-weight: 700;}'
+    html += 'p {margin-bottom: 16px;text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);text-align: center !important;}';
+    html += 'a {color: #4A148C;font-weight: bold;text-decoration: none;text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);font-family: "Alef", sans-serif;}';
+    html += '.content-wrapper {padding: 30px 20px;background-color: transparent;text-align: center;}';
+    html += '.title {color: #4A148C;margin: 0;font-size: 28px;font-weight: 700;font-family: "Alef", sans-serif;text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7);padding: 20px;text-align: center;}';
+    html += '.content {font-size: 16px;margin-bottom: 20px;line-height: 1.8;font-family: "Heebo", sans-serif;text-align: center !important;}';
     html += '.links ul { padding-right: 20px; }';
     html += '.links li { margin-bottom: 8px; }';
     html += 'a { color: #3182ce; text-decoration: none; }';
