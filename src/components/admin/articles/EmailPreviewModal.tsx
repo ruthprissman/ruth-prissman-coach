@@ -25,12 +25,12 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
     
     // Create a preview that matches the actual email template
     return `
-      <div dir="rtl" style="direction: rtl; font-family: 'Heebo', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.85); border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); overflow: hidden;">
+      <div dir="rtl" style="direction: rtl; font-family: 'Heebo', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: transparent; border-radius: 8px; overflow: hidden;">
         <div style="padding: 20px; text-align: center; border-bottom: 2px solid #eaeaea;">
           <h1 style="color: #4A148C; margin: 0; font-size: 28px; font-weight: 700; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: 'Alef', sans-serif; text-align: center;">${title}</h1>
         </div>
         
-        <div style="padding: 30px 20px; text-align: right; line-height: 1.8; color: #4A148C; direction: rtl;">
+        <div style="padding: 30px 20px; text-align: center; line-height: 1.8; color: #4A148C; direction: rtl;">
           ${formatContent(content)}
         </div>
         
