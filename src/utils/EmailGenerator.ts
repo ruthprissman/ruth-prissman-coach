@@ -44,7 +44,7 @@ export class EmailGenerator {
     
     // Content
     html += '<div class="content">';
-    html += this.formatMarkdown(options.content);
+    html += options.content;//this.formatMarkdown(options.content);
     html += '</div>';
     
     // Add static links if provided
