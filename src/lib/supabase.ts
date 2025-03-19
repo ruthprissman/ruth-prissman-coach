@@ -1,6 +1,6 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { supabaseClient, getFreshSupabaseClient, clearSupabaseClientCache } from './supabaseClient';
+import { supabaseClient, getFreshSupabaseClient, clearSupabaseClientCache, getSupabaseClient } from './supabaseClient';
 
 // Define specific type for Supabase client
 type SupabaseTypedClient = SupabaseClient<any, "public", any>;
@@ -12,7 +12,10 @@ export const supabase: SupabaseTypedClient = supabaseClient();
 export const getSupabaseWithAuth = async (accessToken?: string): Promise<SupabaseTypedClient> => {
   // This ignores the accessToken parameter and always uses the supabaseClientManager
   console.warn('[Supabase] getSupabaseWithAuth is deprecated, use supabaseClient() instead');
-  return supabaseClient();
+  
+  // Return a Promise<SupabaseTypedClient> to match the expected return type
+  const client = supabaseClient();
+  return client;
 };
 
 // For backward compatibility

@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { RefreshCw } from 'lucide-react';
-import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePublication } from '@/contexts/PublicationContext';
 import { FailedPublication, ProfessionalContent, PublicationWithContent } from '@/types/article';
@@ -30,14 +31,13 @@ const FailedPublicationsPanel: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const supabaseClient = session?.access_token 
-        ? getSupabaseWithAuth(session.access_token) 
-        : supabase;
+      // Use the synchronous supabaseClient() which returns the client directly, not a Promise
+      const supabaseInstance = supabaseClient();
       
       const now = new Date().toISOString();
       
       // Fetch publications where scheduled_date is in the past but published_date is null
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabaseInstance
         .from('article_publications')
         .select(`
           id,

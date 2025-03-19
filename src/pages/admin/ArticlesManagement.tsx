@@ -8,7 +8,7 @@ import FailedPublicationsPanel from '@/components/admin/articles/FailedPublicati
 import { Button } from '@/components/ui/button';
 import { Article, Category } from '@/types/article';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
 const ArticlesManagement: React.FC = () => {
@@ -24,11 +24,10 @@ const ArticlesManagement: React.FC = () => {
     try {
       setIsLoading(true);
       
-      const supabaseClient = session?.access_token 
-        ? getSupabaseWithAuth(session.access_token)
-        : supabase;
+      // Use the synchronous supabaseClient() which returns the client directly, not a Promise
+      const supabaseInstance = supabaseClient();
       
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabaseInstance
         .from('professional_content')
         .select(`
           *,
@@ -54,11 +53,10 @@ const ArticlesManagement: React.FC = () => {
   
   const fetchCategories = async () => {
     try {
-      const supabaseClient = session?.access_token 
-        ? getSupabaseWithAuth(session.access_token)
-        : supabase;
+      // Use the synchronous supabaseClient() which returns the client directly, not a Promise
+      const supabaseInstance = supabaseClient();
       
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabaseInstance
         .from('categories')
         .select('*')
         .order('name');

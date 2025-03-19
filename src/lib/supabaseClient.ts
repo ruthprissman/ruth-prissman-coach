@@ -391,12 +391,12 @@ class SupabaseClientManager {
 // Create a singleton instance
 const supabaseManager = new SupabaseClientManager();
 
-// Export the supabase client getter
+// Export the supabase client getter (SYNC version, no Promise)
 export const supabaseClient = (): SupabaseTypedClient => supabaseManager.getClient();
 
-// Export the fresh client getter
-export const getFreshSupabaseClient = (): Promise<SupabaseTypedClient> => 
-  supabaseManager.getFreshClient();
+// Export the fresh client getter (ASYNC version, returns Promise)
+export const getFreshSupabaseClient = async (): Promise<SupabaseTypedClient> => 
+  await supabaseManager.getFreshClient();
 
 // Export operation executor with retry capability
 export const executeWithRetry = <T>(operation: () => Promise<T>): Promise<T> =>
@@ -408,6 +408,14 @@ export const clearSupabaseClientCache = (): void => supabaseManager.clearAuthCli
 // Export token info getter for debugging
 export const getTokenInfo = (): ReturnType<typeof supabaseManager.getTokenInfo> => 
   supabaseManager.getTokenInfo();
+
+/**
+ * Helper function to safely get a Supabase client from either an async or sync source
+ * This resolves the TypeScript error when using functions that return Promise<SupabaseTypedClient>
+ */
+export const getSupabaseClient = async (clientPromise: SupabaseTypedClient | Promise<SupabaseTypedClient>): Promise<SupabaseTypedClient> => {
+  return clientPromise instanceof Promise ? await clientPromise : clientPromise;
+};
 
 /**
  * MIGRATION GUIDE
