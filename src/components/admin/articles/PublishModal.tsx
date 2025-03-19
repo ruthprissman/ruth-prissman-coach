@@ -214,7 +214,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
       
       const failedOnes: string[] = [];
       
-      const publicationService = PublicationService.getInstance();
+      const publicationService = PublicationService;
       publicationService.start(authSession?.access_token);
       
       for (const option of optionsToPublish) {

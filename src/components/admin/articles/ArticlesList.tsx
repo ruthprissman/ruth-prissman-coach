@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -53,7 +52,7 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
   const fetchEmailStats = async () => {
     try {
       setIsLoadingStats(true);
-      const publicationService = PublicationService.getInstance();
+      const publicationService = PublicationService;
       publicationService.start(authSession?.access_token);
       
       const statsMap = new Map<number, EmailDeliveryStats>();
@@ -87,7 +86,7 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
     try {
       setRetryingEmails(prev => [...prev, articleId]);
       
-      const publicationService = PublicationService.getInstance();
+      const publicationService = PublicationService;
       publicationService.start(authSession?.access_token);
       
       const retriedCount = await publicationService.retryFailedEmails(articleId);
@@ -197,7 +196,6 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
     fetchEmailStats();
   };
 
-  // Get article status based on publications
   const getArticleStatus = (article: Article) => {
     if (article.published_at) {
       return (
@@ -216,7 +214,6 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
     }
   };
 
-  // Render email delivery status
   const renderEmailDeliveryStatus = (articleId: number) => {
     const stats = emailStats.get(articleId);
     
@@ -328,7 +325,6 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
         )}
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={!!articleToDelete} onOpenChange={() => !isDeleting && cancelDelete()}>
         <DialogContent>
           <DialogHeader>
@@ -357,7 +353,6 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Publish Modal */}
       <PublishModal
         article={articleToPublish}
         isOpen={isPublishModalOpen}

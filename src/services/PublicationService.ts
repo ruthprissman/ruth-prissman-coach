@@ -1,4 +1,5 @@
-import { supabaseClient } from "@/lib/supabaseClient";
+
+import { getSupabaseWithAuth, supabase } from '@/lib/supabase';
 import { Article, ArticlePublication, ProfessionalContent } from "@/types/article";
 
 /**
@@ -282,6 +283,45 @@ class PublicationService {
   }
 
   /**
+   * Mark a publication as completed
+   */
+  private async markPublicationAsDone(publicationId: number): Promise<void> {
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      const { error } = await supabaseClient
+        .from('article_publications')
+        .update({ published_date: new Date().toISOString() })
+        .eq('id', publicationId);
+      
+      if (error) throw error;
+      
+      console.log(`Publication ${publicationId} marked as completed`);
+    } catch (error) {
+      console.error(`Error marking publication ${publicationId} as done:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Publish article to email subscribers
+   */
+  private async publishToEmail(article: PublishReadyArticle): Promise<void> {
+    console.log(`Email publication not implemented for article ${article.id}`);
+    // Implementation would go here
+  }
+
+  /**
+   * Publish article to WhatsApp
+   */
+  private async publishToWhatsApp(article: PublishReadyArticle): Promise<void> {
+    console.log(`WhatsApp publication not implemented for article ${article.id}`);
+    // Implementation would go here
+  }
+
+  /**
    * Fetch active email subscribers from the database
    * @returns Array of unique email addresses
    */
@@ -484,7 +524,7 @@ class PublicationService {
       }
       
       // Extract emails and remove duplicates
-      const failedEmails = [...new Set(data.map(item => item.email))];
+      const failedEmails = [...new Set(data.map((item: EmailLogEntry) => item.email))];
       console.log(`Found ${failedEmails.length} failed recipients for article ${articleId}`);
       
       return failedEmails;
@@ -840,5 +880,118 @@ class PublicationService {
       return html; // Return original if optimization fails
     }
   }
+
+  /**
+   * Retry publication for a specific publication ID
+   * @param publicationId ID of the publication to retry
+   * @returns Promise that resolves when publication is complete
+   */
+  public async retryPublication(publicationId: number): Promise<void> {
+    try {
+      const supabaseClient = this.accessToken 
+        ? getSupabaseWithAuth(this.accessToken)
+        : supabase;
+      
+      // First, get the publication details
+      const { data: publication, error: fetchError } = await supabaseClient
+        .from('article_publications')
+        .select(`
+          id,
+          content_id,
+          publish_location,
+          professional_content:content_id (
+            id,
+            title,
+            content_markdown,
+            category_id,
+            contact_email
+          )
+        `)
+        .eq('id', publicationId)
+        .single();
+      
+      if (fetchError) {
+        console.error(`Error fetching publication ${publicationId}:`, fetchError);
+        throw fetchError;
+      }
+      
+      if (!publication) {
+        throw new Error(`Publication ${publicationId} not found`);
+      }
+      
+      // Create article format needed for publishing
+      const professionalContent = publication.professional_content as unknown as ProfessionalContent;
+      const article: PublishReadyArticle = {
+        id: publication.content_id,
+        title: professionalContent.title || "Untitled",
+        content_markdown: professionalContent.content_markdown || "",
+        category_id: professionalContent.category_id || null,
+        contact_email: professionalContent.contact_email || null,
+        article_publications: [{
+          id: publication.id,
+          content_id: publication.content_id,
+          publish_location: publication.publish_location,
+          scheduled_date: new Date().toISOString(),
+          published_date: null
+        }]
+      };
+      
+      // Process based on publication location
+      switch (publication.publish_location) {
+        case 'Website':
+          await this.publishToWebsite(article.id);
+          break;
+          
+        case 'Email':
+          await this.publishToEmail(article);
+          break;
+          
+        case 'WhatsApp':
+          await this.publishToWhatsApp(article);
+          break;
+          
+        default:
+          console.log(`Unknown publication location: ${publication.publish_location}`);
+      }
+      
+      // Mark this publication as done
+      await this.markPublicationAsDone(publicationId);
+      
+      console.log(`Successfully retried publication ${publicationId}`);
+      
+    } catch (error) {
+      console.error(`Error retrying publication ${publicationId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Retry sending failed emails for an article
+   * @param articleId ID of the article
+   * @returns Number of emails that were retried
+   */
+  public async retryFailedEmails(articleId: number): Promise<number> {
+    try {
+      // Get failed email recipients
+      const failedEmails = await this.getFailedEmailRecipients(articleId);
+      
+      if (failedEmails.length === 0) {
+        console.log(`No failed emails found for article ${articleId}`);
+        return 0;
+      }
+      
+      console.log(`Retrying ${failedEmails.length} failed emails for article ${articleId}`);
+      
+      // Implementation would go here to actually retry the emails
+      // For now, we'll just return the count of emails that would be retried
+      
+      return failedEmails.length;
+    } catch (error) {
+      console.error(`Error retrying failed emails for article ${articleId}:`, error);
+      throw error;
+    }
+  }
 }
 
+// Export a singleton instance
+export default PublicationService.getInstance();

@@ -28,7 +28,7 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
   
   // Initialize and stop the publication service based on auth state
   useEffect(() => {
-    const publicationService = PublicationService.getInstance();
+    const publicationService = PublicationService;
     
     if (session?.access_token) {
       publicationService.start(session.access_token);
@@ -46,8 +46,7 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
   
   const retryPublication = async (publicationId: number) => {
     try {
-      const publicationService = PublicationService.getInstance();
-      await publicationService.retryPublication(publicationId);
+      await PublicationService.retryPublication(publicationId);
       
       toast({
         title: "פרסום הושלם בהצלחה",
