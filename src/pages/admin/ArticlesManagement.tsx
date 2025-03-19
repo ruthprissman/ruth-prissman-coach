@@ -24,8 +24,8 @@ const ArticlesManagement: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Use the synchronous supabaseClient() which returns the client directly, not a Promise
-      const supabaseInstance = supabaseClient();
+      // Await the supabaseClient to get the actual client instance
+      const supabaseInstance = await supabaseClient();
       
       const { data, error } = await supabaseInstance
         .from('professional_content')
@@ -53,8 +53,8 @@ const ArticlesManagement: React.FC = () => {
   
   const fetchCategories = async () => {
     try {
-      // Use the synchronous supabaseClient() which returns the client directly, not a Promise
-      const supabaseInstance = supabaseClient();
+      // Await the supabaseClient to get the actual client instance
+      const supabaseInstance = await supabaseClient();
       
       const { data, error } = await supabaseInstance
         .from('categories')

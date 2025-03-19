@@ -32,7 +32,7 @@ const FailedPublicationsPanel: React.FC = () => {
     
     try {
       // Use the synchronous supabaseClient() which returns the client directly, not a Promise
-      const supabaseInstance = supabaseClient();
+      const supabaseInstance = await supabaseClient();
       
       const now = new Date().toISOString();
       

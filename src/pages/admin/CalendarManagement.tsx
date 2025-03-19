@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -7,7 +6,7 @@ import CalendarListView from '@/components/admin/calendar/CalendarListView';
 import CalendarToolbar from '@/components/admin/calendar/CalendarToolbar';
 import { TabsContent, Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TimeSlot, CalendarSlot, GoogleCalendarEvent, CalendarSyncComparison } from '@/types/calendar';
-import { getSupabaseWithAuth } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { addDays, format, startOfWeek, startOfDay, addWeeks, addMinutes, parseISO } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -70,7 +69,7 @@ const CalendarManagement: React.FC = () => {
 
   const checkTableExists = async () => {
     try {
-      const supabase = getSupabaseWithAuth(session?.access_token);
+      const supabase = await supabaseClient();
       
       const { error } = await supabase
         .from('calendar_slots')
@@ -101,7 +100,7 @@ const CalendarManagement: React.FC = () => {
         return;
       }
       
-      const supabase = getSupabaseWithAuth(session?.access_token);
+      const supabase = await supabaseClient();
       
       const today = startOfDay(new Date());
       const thirtyDaysLater = addDays(today, 30);
@@ -277,7 +276,7 @@ const CalendarManagement: React.FC = () => {
       
       let slots = supabaseSlots;
       if (!slots || slots.length === 0) {
-        const supabase = getSupabaseWithAuth(session?.access_token);
+        const supabase = await supabaseClient();
         const today = startOfDay(new Date());
         const thirtyDaysLater = addDays(today, 30);
         
@@ -294,7 +293,7 @@ const CalendarManagement: React.FC = () => {
       const comparison = compareCalendarData(googleEvents, slots);
       setSyncComparison(comparison);
       
-      const supabase = getSupabaseWithAuth(session?.access_token);
+      const supabase = await supabaseClient();
       const today = startOfDay(new Date());
       const thirtyDaysLater = addDays(today, 30);
       
@@ -564,7 +563,7 @@ const CalendarManagement: React.FC = () => {
     }
     
     try {
-      const supabase = getSupabaseWithAuth(session?.access_token);
+      const supabase = await supabaseClient();
       
       const { error } = await supabase
         .from('calendar_slots')
@@ -605,7 +604,7 @@ const CalendarManagement: React.FC = () => {
     }
     
     try {
-      const supabase = getSupabaseWithAuth(session?.access_token);
+      const supabase = await supabaseClient();
       const dayMap = calendarData.get(date);
       
       if (!dayMap) return;
@@ -680,7 +679,7 @@ const CalendarManagement: React.FC = () => {
       try {
         setIsSyncing(true);
         const events = await fetchGoogleEvents();
-        const supabase = getSupabaseWithAuth(session?.access_token);
+        const supabase = await supabaseClient();
         
         const today = startOfDay(new Date());
         const thirtyDaysLater = addDays(today, 30);
@@ -737,7 +736,7 @@ const CalendarManagement: React.FC = () => {
     }
     
     try {
-      const supabase = getSupabaseWithAuth(session?.access_token);
+      const supabase = await supabaseClient();
       const slots: any[] = [];
       
       const startDate = new Date(rule.startDate);
@@ -790,7 +789,7 @@ const CalendarManagement: React.FC = () => {
 
   const createCalendarSlotsTable = async () => {
     try {
-      const supabase = getSupabaseWithAuth(session?.access_token);
+      const supabase = await supabaseClient();
       
       const { error } = await supabase.rpc('create_calendar_slots_table');
       

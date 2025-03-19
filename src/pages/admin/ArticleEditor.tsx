@@ -19,7 +19,7 @@ import { Article, Category, PublicationFormData, PublishLocationType } from '@/t
 import RichTextEditor from '@/components/admin/articles/RichTextEditor';
 import PublicationSettings from '@/components/admin/articles/PublicationSettings';
 import PublishModal from '@/components/admin/articles/PublishModal';
-import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -102,11 +102,9 @@ const ArticleEditor: React.FC = () => {
     },
   });
 
-  const getSupabaseClient = useCallback(() => {
-    return authSession?.access_token 
-      ? getSupabaseWithAuth(authSession.access_token)
-      : supabase;
-  }, [authSession]);
+  const getSupabaseClient = useCallback(async () => {
+    return await supabaseClient();
+  }, []);
 
   const fetchArticleData = useCallback(async () => {
     if (!isEditMode) {
@@ -115,9 +113,9 @@ const ArticleEditor: React.FC = () => {
     }
 
     try {
-      const supabaseClient = getSupabaseClient();
+      const supabaseInstance = await getSupabaseClient();
 
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabaseInstance
         .from('professional_content')
         .select(`
           *,
@@ -159,13 +157,13 @@ const ArticleEditor: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [authSession, id, isEditMode, form, toast, getSupabaseClient]);
+  }, [id, isEditMode, form, toast, getSupabaseClient]);
 
   const fetchCategories = useCallback(async () => {
     try {
-      const supabaseClient = getSupabaseClient();
+      const supabaseInstance = await getSupabaseClient();
 
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabaseInstance
         .from('categories')
         .select('*')
         .order('name');
@@ -228,7 +226,7 @@ const ArticleEditor: React.FC = () => {
         }
       }
       
-      const supabaseClient = getSupabaseClient();
+      const supabaseInstance = await getSupabaseClient();
       
       if (!data.content_markdown && contentRef.current) {
         console.log('Using contentRef as fallback for missing content_markdown');
@@ -256,7 +254,7 @@ const ArticleEditor: React.FC = () => {
       let articleId: number;
       
       if (isEditMode && id) {
-        const { error } = await supabaseClient
+        const { error } = await supabaseInstance
           .from('professional_content')
           .update(formattedData)
           .eq('id', Number(id));
@@ -265,7 +263,7 @@ const ArticleEditor: React.FC = () => {
         
         articleId = Number(id);
       } else {
-        const { data: newArticle, error } = await supabaseClient
+        const { data: newArticle, error } = await supabaseInstance
           .from('professional_content')
           .insert(formattedData)
           .select('id')
@@ -310,14 +308,14 @@ const ArticleEditor: React.FC = () => {
 
   const savePublications = async (articleId: number, publicationsData: PublicationFormData[]) => {
     try {
-      const supabaseClient = getSupabaseClient();
+      const supabaseInstance = await getSupabaseClient();
       
       const publicationsToDelete = publicationsData
         .filter(pub => pub.isDeleted && pub.id)
         .map(pub => pub.id);
       
       if (publicationsToDelete.length > 0) {
-        const { error } = await supabaseClient
+        const { error } = await supabaseInstance
           .from('article_publications')
           .delete()
           .in('id', publicationsToDelete);
@@ -345,7 +343,7 @@ const ArticleEditor: React.FC = () => {
         }));
       
       if (newPublications.length > 0) {
-        const { error: insertError } = await supabaseClient
+        const { error: insertError } = await supabaseInstance
           .from('article_publications')
           .insert(newPublications);
         
@@ -353,7 +351,7 @@ const ArticleEditor: React.FC = () => {
       }
       
       if (existingPublications.length > 0) {
-        const { error: updateError } = await supabaseClient
+        const { error: updateError } = await supabaseInstance
           .from('article_publications')
           .upsert(existingPublications);
         
@@ -394,14 +392,14 @@ const ArticleEditor: React.FC = () => {
     setIsDeleting(true);
     
     try {
-      const supabaseClient = getSupabaseClient();
+      const supabaseInstance = await getSupabaseClient();
       
-      await supabaseClient
+      await supabaseInstance
         .from('article_publications')
         .delete()
         .eq('content_id', Number(id));
       
-      const { error } = await supabaseClient
+      const { error } = await supabaseInstance
         .from('professional_content')
         .delete()
         .eq('id', Number(id));

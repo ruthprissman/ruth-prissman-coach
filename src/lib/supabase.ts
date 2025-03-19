@@ -14,8 +14,7 @@ export const getSupabaseWithAuth = async (accessToken?: string): Promise<Supabas
   console.warn('[Supabase] getSupabaseWithAuth is deprecated, use supabaseClient() instead');
   
   // Return a Promise<SupabaseTypedClient> to match the expected return type
-  const client = supabaseClient();
-  return client;
+  return await supabaseClient();
 };
 
 // For backward compatibility

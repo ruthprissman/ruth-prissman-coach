@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import PublishModal from './PublishModal';
 import PublicationService, { EmailDeliveryStats } from '@/services/PublicationService';
@@ -144,18 +144,16 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
     setIsDeleting(true);
     
     try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
+      const supabaseInstance = await supabaseClient();
       
       // Delete any content publish options first (if they exist)
-      await supabaseClient
+      await supabaseInstance
         .from('content_publish_options')
         .delete()
         .eq('content_id', articleToDelete.id);
       
       // Delete the article
-      const { error } = await supabaseClient
+      const { error } = await supabaseInstance
         .from('professional_content')
         .delete()
         .eq('id', articleToDelete.id);

@@ -4,7 +4,7 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { Patient, Session } from '@/types/patient';
 import { SessionWithPatient } from '@/types/session';
-import { supabase, getSupabaseWithAuth } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -49,11 +49,9 @@ const AllSessions: React.FC = () => {
     try {
       console.log("Fetching sessions, auth session:", !!authSession);
       
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
+      const client = await supabaseClient();
       
-      const { data, error } = await supabaseClient
+      const { data, error } = await client
         .from('sessions')
         .select(`
           *,
@@ -70,7 +68,7 @@ const AllSessions: React.FC = () => {
       setSessions(data as SessionWithPatient[] || []);
       setFilteredSessions(data as SessionWithPatient[] || []);
       
-      const { data: patientsData, error: patientsError } = await supabaseClient
+      const { data: patientsData, error: patientsError } = await client
         .from('patients')
         .select('*')
         .order('name');
@@ -166,11 +164,9 @@ const AllSessions: React.FC = () => {
     if (!sessionToDelete) return;
     
     try {
-      const supabaseClient = authSession?.access_token 
-        ? getSupabaseWithAuth(authSession.access_token)
-        : supabase;
+      const client = await supabaseClient();
         
-      const { error } = await supabaseClient
+      const { error } = await client
         .from('sessions')
         .delete()
         .eq('id', sessionToDelete.id);
