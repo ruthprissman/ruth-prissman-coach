@@ -1,3 +1,4 @@
+
 export interface Category {
   id: number;
   name: string;
@@ -35,7 +36,7 @@ export interface Article {
   created_at?: string;
   categories?: Category; // Add the joined category data
   article_publications?: ArticlePublication[];
-  staticLinks?: Array<{id: number, title: string, url: string}>; // Add the staticLinks property
+  staticLinks?: Array<{id: number, fixed_text: string, url: string}>; // Updated to use fixed_text instead of title
 }
 
 // Form data interface with proper types for form inputs
