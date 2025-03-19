@@ -840,5 +840,5 @@ class PublicationService {
       return html; // Return original if optimization fails
     }
   }
-
+}
 
