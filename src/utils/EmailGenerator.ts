@@ -141,7 +141,7 @@ export class EmailGenerator {
    * @param links Array of link objects
    * @returns Formatted HTML for links
    */
-  private generateEmailLinks(links: Array<{id: number, title: string, url: string}>): string {
+  private generateEmailLinks(links: Array<{id: number, fixed_text: string, url: string}>): string {
     console.log('[EmailGenerator] Received staticLinks:', JSON.stringify(links, null, 2));
     
     if (!links || links.length === 0) {
