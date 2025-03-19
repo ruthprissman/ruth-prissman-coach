@@ -46,6 +46,122 @@ export class EmailPublicationService {
   }
 
   /**
+   * Send email publication for an article
+   * @param article The article to publish via email
+   * @returns Promise<boolean> Whether the email was sent successfully
+   */
+  public async sendEmailPublication(article: any): Promise<boolean> {
+    console.log('[Email Publication] Starting email publication process for article ' + article.id + ': "' + article.title + '"');
+    
+    try {
+      // 1. Fetch all active email subscribers
+      const subscribers = await this.databaseService.fetchActiveSubscribers();
+      if (!subscribers || subscribers.length === 0) {
+        console.log('[Email Publication] No active subscribers found for article ' + article.id);
+        return false;
+      }
+      
+      console.log('[Email Publication] Found ' + subscribers.length + ' active subscribers for article ' + article.id);
+      
+      // 2. Fetch any static links to include in the email
+      const staticLinks = await this.databaseService.fetchStaticLinks();
+      console.log('[Email Publication] Retrieved ' + (staticLinks?.length || 0) + ' static links for email template');
+      
+      // 3. Generate email HTML content
+      const emailContent = this.emailGenerator.generateEmailContent({
+        title: article.title,
+        content: article.content_markdown,
+        staticLinks: staticLinks || []
+      });
+      
+      // 4. Validate the generated email content
+      const diagnosisResult = this.emailDiagnostics.diagnoseEmailContent(
+        emailContent, 
+        subscribers[0], // Use first email for diagnosis
+        article.id
+      );
+      
+      if (!diagnosisResult.isValid) {
+        console.error('[Email Publication] Email content validation failed for article ' + article.id + ': ' + diagnosisResult.issues.join('; '));
+        return false;
+      }
+      
+      // 5. Generate content integrity hash for verification
+      const beforeSendHash = this.emailDiagnostics.logContentIntegrityHash(emailContent, 'before-send', article.id);
+      
+      // 6. Prepare for batch sending (could be improved with actual batching)
+      const successfulEmails: string[] = [];
+      const failedEmails: string[] = [];
+      
+      // 7. Send emails via Supabase Edge Function
+      console.log('[Email Publication] Starting to send emails to ' + subscribers.length + ' subscribers');
+      
+      const client = supabaseClient();
+      const token = client.auth.session()?.access_token || '';
+      
+      for (const recipientEmail of subscribers) {
+        try {
+          // First clean up any previous failed attempts for this recipient
+          await this.cleanupFailedEmails(article.id, [recipientEmail]);
+          
+          // Send the email using the Supabase Edge Function
+          const response = await fetch(this.supabaseEdgeFunctionUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              to: recipientEmail,
+              subject: article.title,
+              html: emailContent,
+              articleId: article.id
+            })
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[Email Publication] Failed to send email to ' + recipientEmail + ': ' + errorText);
+            failedEmails.push(recipientEmail);
+          } else {
+            successfulEmails.push(recipientEmail);
+          }
+        } catch (error) {
+          console.error('[Email Publication] Error sending to ' + recipientEmail + ':', error);
+          failedEmails.push(recipientEmail);
+        }
+      }
+      
+      // 8. Log email sending results
+      console.log('[Email Publication] Email sending completed. Successful: ' + successfulEmails.length + ', Failed: ' + failedEmails.length);
+      
+      // 9. Store email logs
+      const logs = [
+        ...successfulEmails.map(email => ({
+          article_id: article.id,
+          email,
+          status: 'sent' as const
+        })),
+        ...failedEmails.map(email => ({
+          article_id: article.id,
+          email,
+          status: 'failed' as const
+        }))
+      ];
+      
+      await this.databaseService.logEmailResults(logs);
+      
+      // 10. Mark the article as published if needed
+      await this.ensureArticleIsPublished(article.id);
+      
+      return successfulEmails.length > 0;
+    } catch (error) {
+      console.error('[Email Publication] Error in sendEmailPublication for article ' + article.id + ':', error);
+      return false;
+    }
+  }
+
+  /**
    * Retry sending emails to failed recipients
    * @param articleId The article ID to retry failed emails for
    * @returns Number of emails that were retried

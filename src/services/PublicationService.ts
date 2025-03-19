@@ -1,4 +1,3 @@
-
 import { supabaseClient } from '@/lib/supabaseClient';
 import { ArticlePublication, ProfessionalContent } from "@/types/article";
 import { EmailPublicationService } from './EmailPublicationService';
@@ -230,13 +229,23 @@ class PublicationService {
    * Publish article to email subscribers
    */
   private async publishToEmail(article: PublishReadyArticle): Promise<void> {
-    // Add diagnostic logging before returning
-    console.log('[Email Diagnostics] Starting email publication for article ' + article.id + ': "' + article.title + '"');
-    console.log('[Email Diagnostics] Article has markdown content of length: ' + article.content_markdown.length + ' characters');
+    console.log('[Email Publication] Starting email publication workflow for article ' + article.id);
     
-    // For now, just log that the feature isn't implemented yet
-    console.log('[Email Diagnostics] Email publication not yet implemented for article ' + article.id);
-    console.log('[Email Diagnostics] Email publication workflow completed for article ' + article.id);
+    try {
+      // Now we call the actual email sending service that handles the email generation and sending
+      const result = await this.emailService.sendEmailPublication(article);
+      
+      if (result) {
+        console.log('[Email Publication] Successfully sent emails for article ' + article.id);
+      } else {
+        console.warn('[Email Publication] Failed to send emails for article ' + article.id);
+      }
+    } catch (error) {
+      console.error('[Email Publication] Error in publishToEmail for article ' + article.id + ':', error);
+      throw error; // Re-throw to be caught by publishArticle
+    }
+    
+    console.log('[Email Publication] Email publication workflow completed for article ' + article.id);
   }
 
   /**
