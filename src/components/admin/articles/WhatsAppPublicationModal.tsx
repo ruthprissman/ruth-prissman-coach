@@ -26,6 +26,38 @@ interface WhatsAppPublicationModalProps {
 
 const SPLIT_DELIMITER = '---split---';
 
+// Helper function to convert HTML to plain text
+const convertHtmlToText = (html: string): string => {
+  if (!html) return '';
+  
+  // Create temporary element to parse HTML
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  
+  // Replace common block elements with newlines
+  const blockElements = temp.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6, li, blockquote');
+  blockElements.forEach(el => {
+    // Add newlines after block elements
+    if (el.textContent) {
+      el.textContent = el.textContent.trim() + '\n';
+    }
+  });
+  
+  // Handle line breaks
+  const brElements = temp.querySelectorAll('br');
+  brElements.forEach(el => {
+    el.replaceWith(document.createTextNode('\n'));
+  });
+
+  // Get text content (which preserves whitespace and newlines)
+  let text = temp.textContent || '';
+  
+  // Clean up excessive newlines
+  text = text.replace(/\n{3,}/g, '\n\n');
+  
+  return text;
+};
+
 const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
   isOpen,
   onClose,
@@ -40,7 +72,8 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
   // Initialize content from article
   useEffect(() => {
     if (article && isOpen) {
-      setContent(article.content_markdown || '');
+      const plainText = convertHtmlToText(article.content_markdown || '');
+      setContent(plainText);
     }
   }, [article, isOpen]);
 
@@ -169,8 +202,9 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
                     <div 
                       className="whitespace-pre-line text-right font-heebo" 
                       dir="rtl"
-                      dangerouslySetInnerHTML={{ __html: split }}
-                    />
+                    >
+                      {split}
+                    </div>
                   </div>
                 ))}
               </div>
