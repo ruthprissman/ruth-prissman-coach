@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -26,27 +25,21 @@ interface WhatsAppPublicationModalProps {
 
 const SPLIT_DELIMITER = '---split---';
 
-// Enhanced function to convert HTML to plain text while preserving formatting
 const convertHtmlToText = (html: string): string => {
   if (!html) return '';
   
-  // Create temporary element to parse HTML
   const temp = document.createElement('div');
   temp.innerHTML = html;
   
-  // Process text nodes to preserve formatting
   const processNode = (node: Node): string => {
-    // Handle text nodes
     if (node.nodeType === Node.TEXT_NODE) {
       return node.textContent || '';
     }
     
-    // Handle element nodes
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as HTMLElement;
       const tagName = element.tagName.toLowerCase();
       
-      // Handle different element types
       switch (tagName) {
         case 'p':
         case 'div':
@@ -56,8 +49,6 @@ const convertHtmlToText = (html: string): string => {
         case 'h4':
         case 'h5':
         case 'h6':
-        case 'blockquote':
-          // Add newlines after block elements
           return Array.from(element.childNodes)
             .map(processNode)
             .join('') + '\n\n';
@@ -65,33 +56,50 @@ const convertHtmlToText = (html: string): string => {
         case 'br':
           return '\n';
         
+        case 'blockquote':
+          return '> ' + Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n\n';
+        
+        case 'ul':
+        case 'ol':
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
+            
         case 'li':
-          return '• ' + Array.from(element.childNodes).map(processNode).join('') + '\n';
+          return '• ' + Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n';
         
         case 'strong':
         case 'b':
-          return Array.from(element.childNodes).map(processNode).join('');
-        
         case 'em':
         case 'i':
-          return Array.from(element.childNodes).map(processNode).join('');
-        
         case 'a':
-          return Array.from(element.childNodes).map(processNode).join('');
+        case 'span':
+        case 'u':
+        case 'code':
+        case 'mark':
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
         
         default:
-          return Array.from(element.childNodes).map(processNode).join('');
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
       }
     }
     
     return '';
   };
   
-  // Process the entire content
   let text = processNode(temp);
   
-  // Clean up excessive newlines
   text = text.replace(/\n{3,}/g, '\n\n');
+  text = text.replace(/[ \t]+\n/g, '\n');
+  text = text.replace(/\n[ \t]+/g, '\n');
   
   return text.trim();
 };
@@ -107,7 +115,6 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
   const [splits, setSplits] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('edit');
 
-  // Initialize content from article
   useEffect(() => {
     if (article && isOpen) {
       const plainText = convertHtmlToText(article.content_markdown || '');
@@ -115,7 +122,6 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
     }
   }, [article, isOpen]);
 
-  // Process splits whenever content changes
   useEffect(() => {
     if (content.includes(SPLIT_DELIMITER)) {
       const contentSplits = content.split(SPLIT_DELIMITER).map(split => split.trim());
@@ -136,14 +142,12 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
       const textBeforeCursor = content.substring(0, cursorPos);
       const textAfterCursor = content.substring(cursorPos);
       
-      // Insert the delimiter with newlines before and after for clarity
       const newContent = `${textBeforeCursor}\n\n${SPLIT_DELIMITER}\n\n${textAfterCursor}`;
       setContent(newContent);
       
-      // Set focus back to textarea and place cursor after the inserted delimiter
       setTimeout(() => {
         textarea.focus();
-        const newCursorPos = cursorPos + SPLIT_DELIMITER.length + 4; // +4 for the newlines
+        const newCursorPos = cursorPos + SPLIT_DELIMITER.length + 4;
         textarea.setSelectionRange(newCursorPos, newCursorPos);
       }, 0);
       
@@ -167,7 +171,6 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
     onContinue(splits);
   };
 
-  // Custom renderer for preview content
   const renderFormattedContent = (content: string) => {
     return (
       <div className="whitespace-pre-line text-right font-heebo" dir="rtl">
