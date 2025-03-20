@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -40,6 +41,18 @@ const convertHtmlToText = (html: string): string => {
       const element = node as HTMLElement;
       const tagName = element.tagName.toLowerCase();
       
+      // Determine if this is a block-level element
+      const isBlockElement = [
+        'p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 
+        'ul', 'ol', 'li'
+      ].includes(tagName);
+      
+      // Process all children first, collecting their text
+      const childText = Array.from(element.childNodes)
+        .map(processNode)
+        .join('');
+      
+      // Now apply formatting based on the tag type
       switch (tagName) {
         case 'p':
         case 'div':
@@ -49,29 +62,22 @@ const convertHtmlToText = (html: string): string => {
         case 'h4':
         case 'h5':
         case 'h6':
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n\n';
+          return childText + '\n\n';
         
         case 'br':
           return '\n';
         
         case 'blockquote':
-          return '> ' + Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n\n';
+          return '> ' + childText + '\n\n';
         
         case 'ul':
         case 'ol':
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('');
+          return childText;
             
         case 'li':
-          return '• ' + Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n';
+          return '• ' + childText + '\n';
         
+        // Inline elements - just return their content without adding any breaks
         case 'strong':
         case 'b':
         case 'em':
@@ -81,14 +87,10 @@ const convertHtmlToText = (html: string): string => {
         case 'u':
         case 'code':
         case 'mark':
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('');
+          return childText;
         
         default:
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('');
+          return childText;
       }
     }
     
