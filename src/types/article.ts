@@ -49,7 +49,7 @@ export interface ArticleFormData {
   publish_locations: PublicationFormData[];
 }
 
-export type PublishLocationType = 'Website' | 'Email' | 'WhatsApp' | 'Other';
+export type PublishLocationType = 'Website' | 'Email' | 'WhatsApp' | 'All' | 'Other';
 
 export interface PublicationFormData {
   id?: number;

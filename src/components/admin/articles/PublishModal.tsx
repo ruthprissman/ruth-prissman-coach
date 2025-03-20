@@ -28,7 +28,7 @@ interface PublishOption {
   errorMessage?: string;
 }
 
-const AVAILABLE_LOCATIONS: PublishLocationType[] = ['Website', 'Email', 'WhatsApp', 'Other'];
+const AVAILABLE_LOCATIONS: PublishLocationType[] = ['Website', 'Email', 'WhatsApp', 'All', 'Other'];
 
 interface PublishModalProps {
   article: Article | null;
@@ -97,7 +97,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
       } catch (error: any) {
         console.error('Error fetching publish options:', error);
         toast({
-          title: "שגיאה בטעינת אפשרויות פרסום",
+          title: "שג��אה בטעינת אפשרויות פרסום",
           description: error.message || "אנא נסה שוב מאוחר יותר",
           variant: "destructive",
         });
