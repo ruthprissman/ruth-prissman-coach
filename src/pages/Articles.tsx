@@ -22,11 +22,20 @@ const Articles = () => {
 
   useEffect(() => {
     const fetchArticles = async () => {
+      console.log("🔍 [Articles] fetchArticles started");
+      console.log("🔍 [Articles] Input parameters:", { 
+        selectedCategory, 
+        dateFilter,
+        searchQuery
+      });
+      
       setIsLoading(true);
       try {
         const now = new Date().toISOString();
+        console.log("🔍 [Articles] Current timestamp for filtering:", now);
         
         // Updated query to join with article_publications and filter by website publications
+        console.log("🔍 [Articles] Executing Supabase query to fetch professional_content with joined tables");
         const { data, error } = await supabase
           .from('professional_content')
           .select(`
@@ -38,27 +47,52 @@ const Articles = () => {
           .order('published_at', { ascending: false });
 
         if (error) {
+          console.error("❌ [Articles] Database query error:", error);
           throw error;
         }
 
+        console.log(`🔍 [Articles] Raw database result: ${data?.length} records returned`);
+        console.log("🔍 [Articles] Sample of first record:", data?.[0] ? JSON.stringify(data[0], null, 2) : "No records");
+        
         // Filter articles to only include those with a Website publication
         // that is scheduled for now or earlier
+        console.log("🔍 [Articles] Starting client-side filtering for Website publications");
         const articlesData = (data as Article[]).filter(article => {
           if (!article.article_publications || article.article_publications.length === 0) {
+            console.log(`🔍 [Articles] Article ID ${article.id} skipped: No article_publications`);
             return false;
           }
           
           // Find any Website publication that is scheduled for now or earlier
-          return article.article_publications.some(pub => 
-            pub.publish_location === 'Website' && 
-            pub.scheduled_date && 
-            pub.scheduled_date <= now
-          );
+          const hasValidWebsitePublication = article.article_publications.some(pub => {
+            const isWebsite = pub.publish_location === 'Website';
+            const hasScheduledDate = !!pub.scheduled_date;
+            const isScheduledForNowOrEarlier = pub.scheduled_date && pub.scheduled_date <= now;
+            
+            if (!isWebsite) {
+              console.log(`🔍 [Articles] Publication for article ID ${article.id} skipped: Not a Website publication (${pub.publish_location})`);
+            } else if (!hasScheduledDate) {
+              console.log(`🔍 [Articles] Website publication for article ID ${article.id} skipped: No scheduled_date`);
+            } else if (!isScheduledForNowOrEarlier) {
+              console.log(`🔍 [Articles] Website publication for article ID ${article.id} skipped: scheduled_date (${pub.scheduled_date}) is in the future`);
+            }
+            
+            return isWebsite && hasScheduledDate && isScheduledForNowOrEarlier;
+          });
+          
+          if (hasValidWebsitePublication) {
+            console.log(`🔍 [Articles] Article ID ${article.id} included: Has valid Website publication`);
+          }
+          
+          return hasValidWebsitePublication;
         });
+        
+        console.log(`🔍 [Articles] After Website publication filtering: ${articlesData.length} articles remain`);
         
         setArticles(articlesData);
         setFilteredArticles(articlesData);
 
+        console.log("🔍 [Articles] Extracting unique categories from filtered articles");
         const uniqueCategories = Array.from(
           new Map(
             articlesData
@@ -67,11 +101,16 @@ const Articles = () => {
           ).values()
         );
 
+        console.log(`🔍 [Articles] Found ${uniqueCategories.length} unique categories: `, 
+          uniqueCategories.map(c => `${c.id}: ${c.name}`).join(', '));
+        
         setCategories(uniqueCategories as { id: number; name: string }[]);
+        console.log("✅ [Articles] fetchArticles completed successfully");
       } catch (error) {
-        console.error('Error fetching articles:', error);
+        console.error("❌ [Articles] Error in fetchArticles:", error);
       } finally {
         setIsLoading(false);
+        console.log("🔍 [Articles] Loading state set to false");
       }
     };
 
@@ -145,6 +184,17 @@ const Articles = () => {
       });
     }
 
+    console.log(`🔍 [Articles] After applying UI filters: ${filtered.length} articles to display`);
+    if (filtered.length > 0) {
+      console.log("🔍 [Articles] First article to be displayed:", {
+        id: filtered[0].id,
+        title: filtered[0].title,
+        category: filtered[0].categories?.name || 'No category'
+      });
+    } else {
+      console.log("🔍 [Articles] No articles found after applying filters");
+    }
+    
     setFilteredArticles(filtered);
   }, [articles, searchQuery, selectedCategory, dateFilter]);
 
