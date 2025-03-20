@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import PublicationService from '@/services/PublicationService';
 import EmailPreviewModal from './EmailPreviewModal';
+import WhatsAppPublicationModal from './WhatsAppPublicationModal';
 import { formatInTimeZone } from 'date-fns-tz';
 import { he } from 'date-fns/locale';
 import { supabaseClient, getFreshSupabaseClient, getTokenInfo } from '@/lib/supabaseClient';
@@ -56,6 +57,8 @@ const PublishModal: React.FC<PublishModalProps> = ({
     isValid: false, 
     lastRefresh: 'unknown' 
   });
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+  const [whatsAppSplits, setWhatsAppSplits] = useState<string[]>([]);
 
   useEffect(() => {
     if (!isOpen || !article) return;
@@ -189,13 +192,24 @@ const PublishModal: React.FC<PublishModalProps> = ({
     }
     
     const hasEmailOption = selectedOptions.some(opt => opt.publish_location === 'Email');
+    const hasWhatsAppOption = selectedOptions.some(opt => opt.publish_location === 'WhatsApp');
+    const hasAllOption = newLocation === 'All' || publishOptions.some(opt => opt.isSelected && opt.publish_location === 'All');
     
     if (hasEmailOption) {
       setSelectedOptionsForPreview(selectedOptions);
       setIsPreviewModalOpen(true);
+    } else if (hasWhatsAppOption || hasAllOption) {
+      setIsWhatsAppModalOpen(true);
     } else {
       handlePublish(selectedOptions);
     }
+  };
+
+  const handleContinueFromWhatsApp = (splits: string[]) => {
+    setWhatsAppSplits(splits);
+    setIsWhatsAppModalOpen(false);
+    
+    handlePublish(publishOptions.filter(opt => opt.isSelected));
   };
 
   const handlePublish = async (optionsToPublish = publishOptions.filter(opt => opt.isSelected)) => {
@@ -504,15 +518,24 @@ const PublishModal: React.FC<PublishModalProps> = ({
       </Dialog>
 
       {article && (
-        <EmailPreviewModal
-          isOpen={isPreviewModalOpen}
-          onClose={() => setIsPreviewModalOpen(false)}
-          onConfirm={() => {
-            setIsPreviewModalOpen(false);
-            handlePublish(selectedOptionsForPreview);
-          }}
-          article={article}
-        />
+        <>
+          <EmailPreviewModal
+            isOpen={isPreviewModalOpen}
+            onClose={() => setIsPreviewModalOpen(false)}
+            onConfirm={() => {
+              setIsPreviewModalOpen(false);
+              handlePublish(selectedOptionsForPreview);
+            }}
+            article={article}
+          />
+          
+          <WhatsAppPublicationModal
+            isOpen={isWhatsAppModalOpen}
+            onClose={() => setIsWhatsAppModalOpen(false)}
+            onContinue={handleContinueFromWhatsApp}
+            article={article}
+          />
+        </>
       )}
     </>
   );
