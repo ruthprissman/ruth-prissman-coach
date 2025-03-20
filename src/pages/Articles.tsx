@@ -34,6 +34,10 @@ const Articles = () => {
         const now = new Date().toISOString();
         console.log("🔍 [Articles] Current timestamp for filtering:", now);
         
+        // Get only the date part of today (in YYYY-MM-DD format)
+        const todayDateOnly = new Date().toISOString().split('T')[0];
+        console.log("🔍 [Articles] Today's date for date-only comparison:", todayDateOnly);
+        
         // Updated query to join with article_publications and filter by website publications
         console.log("🔍 [Articles] Executing Supabase query to fetch professional_content with joined tables");
         const { data, error } = await supabase
@@ -55,7 +59,7 @@ const Articles = () => {
         console.log("🔍 [Articles] Sample of first record:", data?.[0] ? JSON.stringify(data[0], null, 2) : "No records");
         
         // Filter articles to only include those with a Website publication
-        // that is scheduled for now or earlier
+        // that is scheduled for today or earlier (comparing only date parts)
         console.log("🔍 [Articles] Starting client-side filtering for Website publications");
         const articlesData = (data as Article[]).filter(article => {
           if (!article.article_publications || article.article_publications.length === 0) {
@@ -63,21 +67,28 @@ const Articles = () => {
             return false;
           }
           
-          // Find any Website publication that is scheduled for now or earlier
+          // Find any Website publication that is scheduled for today or earlier
           const hasValidWebsitePublication = article.article_publications.some(pub => {
             const isWebsite = pub.publish_location === 'Website';
             const hasScheduledDate = !!pub.scheduled_date;
-            const isScheduledForNowOrEarlier = pub.scheduled_date && pub.scheduled_date <= now;
+            
+            // Extract only the date part (YYYY-MM-DD) from the scheduled_date
+            const scheduledDateOnly = pub.scheduled_date ? pub.scheduled_date.split('T')[0] : null;
+            
+            // Compare only the date parts (YYYY-MM-DD), ignoring time
+            const isScheduledForTodayOrEarlier = scheduledDateOnly && scheduledDateOnly <= todayDateOnly;
             
             if (!isWebsite) {
               console.log(`🔍 [Articles] Publication for article ID ${article.id} skipped: Not a Website publication (${pub.publish_location})`);
             } else if (!hasScheduledDate) {
               console.log(`🔍 [Articles] Website publication for article ID ${article.id} skipped: No scheduled_date`);
-            } else if (!isScheduledForNowOrEarlier) {
-              console.log(`🔍 [Articles] Website publication for article ID ${article.id} skipped: scheduled_date (${pub.scheduled_date}) is in the future`);
+            } else if (!isScheduledForTodayOrEarlier) {
+              console.log(`🔍 [Articles] Website publication for article ID ${article.id} skipped: scheduled_date (${scheduledDateOnly}) is in the future compared to today (${todayDateOnly})`);
+            } else {
+              console.log(`🔍 [Articles] Website publication for article ID ${article.id} INCLUDED: scheduled_date (${scheduledDateOnly}) is today or earlier`);
             }
             
-            return isWebsite && hasScheduledDate && isScheduledForNowOrEarlier;
+            return isWebsite && hasScheduledDate && isScheduledForTodayOrEarlier;
           });
           
           if (hasValidWebsitePublication) {
