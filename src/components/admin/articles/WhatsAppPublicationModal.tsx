@@ -26,7 +26,7 @@ interface WhatsAppPublicationModalProps {
 
 const SPLIT_DELIMITER = '---split---';
 
-// Helper function to convert HTML to plain text
+// Enhanced function to convert HTML to plain text while preserving formatting
 const convertHtmlToText = (html: string): string => {
   if (!html) return '';
   
@@ -34,28 +34,66 @@ const convertHtmlToText = (html: string): string => {
   const temp = document.createElement('div');
   temp.innerHTML = html;
   
-  // Replace common block elements with newlines
-  const blockElements = temp.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6, li, blockquote');
-  blockElements.forEach(el => {
-    // Add newlines after block elements
-    if (el.textContent) {
-      el.textContent = el.textContent.trim() + '\n';
+  // Process text nodes to preserve formatting
+  const processNode = (node: Node): string => {
+    // Handle text nodes
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent || '';
     }
-  });
+    
+    // Handle element nodes
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as HTMLElement;
+      const tagName = element.tagName.toLowerCase();
+      
+      // Handle different element types
+      switch (tagName) {
+        case 'p':
+        case 'div':
+        case 'h1':
+        case 'h2':
+        case 'h3':
+        case 'h4':
+        case 'h5':
+        case 'h6':
+        case 'blockquote':
+          // Add newlines after block elements
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n\n';
+        
+        case 'br':
+          return '\n';
+        
+        case 'li':
+          return '• ' + Array.from(element.childNodes).map(processNode).join('') + '\n';
+        
+        case 'strong':
+        case 'b':
+          return Array.from(element.childNodes).map(processNode).join('');
+        
+        case 'em':
+        case 'i':
+          return Array.from(element.childNodes).map(processNode).join('');
+        
+        case 'a':
+          return Array.from(element.childNodes).map(processNode).join('');
+        
+        default:
+          return Array.from(element.childNodes).map(processNode).join('');
+      }
+    }
+    
+    return '';
+  };
   
-  // Handle line breaks
-  const brElements = temp.querySelectorAll('br');
-  brElements.forEach(el => {
-    el.replaceWith(document.createTextNode('\n'));
-  });
-
-  // Get text content (which preserves whitespace and newlines)
-  let text = temp.textContent || '';
+  // Process the entire content
+  let text = processNode(temp);
   
   // Clean up excessive newlines
   text = text.replace(/\n{3,}/g, '\n\n');
   
-  return text;
+  return text.trim();
 };
 
 const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
@@ -129,6 +167,15 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
     onContinue(splits);
   };
 
+  // Custom renderer for preview content
+  const renderFormattedContent = (content: string) => {
+    return (
+      <div className="whitespace-pre-line text-right font-heebo" dir="rtl">
+        {content}
+      </div>
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl mx-auto font-heebo" dir="rtl">
@@ -199,12 +246,7 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
                     <div className="bg-gray-50 text-gray-600 text-xs px-2 py-1 rounded mb-2 inline-block">
                       חלק {index + 1} מתוך {splits.length}
                     </div>
-                    <div 
-                      className="whitespace-pre-line text-right font-heebo" 
-                      dir="rtl"
-                    >
-                      {split}
-                    </div>
+                    {renderFormattedContent(split)}
                   </div>
                 ))}
               </div>
