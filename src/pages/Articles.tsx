@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -23,6 +24,9 @@ const Articles = () => {
     const fetchArticles = async () => {
       setIsLoading(true);
       try {
+        const now = new Date().toISOString();
+        
+        // Updated query to join with article_publications and filter by website publications
         const { data, error } = await supabase
           .from('professional_content')
           .select(`
@@ -37,7 +41,21 @@ const Articles = () => {
           throw error;
         }
 
-        const articlesData = data as Article[];
+        // Filter articles to only include those with a Website publication
+        // that is scheduled for now or earlier
+        const articlesData = (data as Article[]).filter(article => {
+          if (!article.article_publications || article.article_publications.length === 0) {
+            return false;
+          }
+          
+          // Find any Website publication that is scheduled for now or earlier
+          return article.article_publications.some(pub => 
+            pub.publish_location === 'Website' && 
+            pub.scheduled_date && 
+            pub.scheduled_date <= now
+          );
+        });
+        
         setArticles(articlesData);
         setFilteredArticles(articlesData);
 
