@@ -130,7 +130,7 @@ const convertHtmlToText = (html: string): string => {
       const tagName = element.tagName.toLowerCase();
       console.log('[HtmlToText Debug] Processing ELEMENT_NODE, tag:', tagName);
 
-      // List block-level tags
+      // Block-level tags
       const blockTags = ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'ul', 'ol', 'li'];
       console.log('[HtmlToText Debug] Is block tag?', blockTags.includes(tagName));
 
@@ -139,14 +139,28 @@ const convertHtmlToText = (html: string): string => {
       const childNodes = Array.from(element.childNodes);
       console.log('[HtmlToText Debug] Number of child nodes:', childNodes.length);
       
-      const processedChildren = childNodes.map(child => {
-        const result = processNode(child);
-        console.log('[HtmlToText Debug] Processed child result:', result);
-        return result;
-      });
+      let childText = '';
       
-      const childText = processedChildren.join(' ').replace(/\s+/g, ' ').trim();
-      console.log('[HtmlToText Debug] Combined children text for', tagName, ':', childText);
+      // Process children and preserve structure better
+      if (tagName === 'ul' || tagName === 'ol') {
+        console.log('[HtmlToText Debug] Processing list container:', tagName);
+        // Process list items separately to maintain structure
+        childText = childNodes
+          .map(child => processNode(child))
+          .join('')
+          .trim();
+      } else {
+        // For other elements, process normally but don't add extra spaces between
+        // inline elements that could break sentence flow
+        const processedChildren = childNodes.map(child => {
+          const result = processNode(child);
+          console.log('[HtmlToText Debug] Processed child result:', result);
+          return result;
+        });
+        
+        childText = processedChildren.join(' ').replace(/\s+/g, ' ').trim();
+        console.log('[HtmlToText Debug] Combined children text for', tagName, ':', childText);
+      }
 
       if (blockTags.includes(tagName)) {
         console.log('[HtmlToText Debug] Adding block-level line breaks for tag:', tagName);
@@ -172,7 +186,8 @@ const convertHtmlToText = (html: string): string => {
   console.log('[HtmlToText Debug] Text after processing all nodes:', text);
   
   console.log('[HtmlToText Debug] Applying regex cleanup for consecutive line breaks');
-  text = text.replace(/\n{3,}/g, '\n\n');
+  // Collapse 4+ line breaks into 2, but keep necessary \n\n
+  text = text.replace(/\n{4,}/g, '\n\n');
   
   console.log('[HtmlToText Debug] Cleaning up whitespace before line breaks');
   text = text.replace(/[ \t]+\n/g, '\n');
