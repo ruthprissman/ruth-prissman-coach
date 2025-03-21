@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -26,7 +25,7 @@ interface WhatsAppPublicationModalProps {
 
 const SPLIT_DELIMITER = '---split---';
 
-const convertHtmlToText = (html: string): string => {
+const convertHtmlToText12 = (html: string): string => {
   if (!html) return '';
   
   const temp = document.createElement('div');
@@ -41,18 +40,6 @@ const convertHtmlToText = (html: string): string => {
       const element = node as HTMLElement;
       const tagName = element.tagName.toLowerCase();
       
-      // Determine if this is a block-level element
-      const isBlockElement = [
-        'p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 
-        'ul', 'ol', 'li'
-      ].includes(tagName);
-      
-      // Process all children first, collecting their text
-      const childText = Array.from(element.childNodes)
-        .map(processNode)
-        .join('');
-      
-      // Now apply formatting based on the tag type
       switch (tagName) {
         case 'p':
         case 'div':
@@ -62,22 +49,29 @@ const convertHtmlToText = (html: string): string => {
         case 'h4':
         case 'h5':
         case 'h6':
-          return childText + '\n\n';
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n\n';
         
         case 'br':
           return '\n';
         
         case 'blockquote':
-          return '> ' + childText + '\n\n';
+          return '> ' + Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n\n';
         
         case 'ul':
         case 'ol':
-          return childText;
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
             
         case 'li':
-          return '• ' + childText + '\n';
+          return '• ' + Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n';
         
-        // Inline elements - just return their content without adding any breaks
         case 'strong':
         case 'b':
         case 'em':
@@ -87,10 +81,14 @@ const convertHtmlToText = (html: string): string => {
         case 'u':
         case 'code':
         case 'mark':
-          return childText;
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
         
         default:
-          return childText;
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
       }
     }
     
@@ -105,6 +103,53 @@ const convertHtmlToText = (html: string): string => {
   
   return text.trim();
 };
+const convertHtmlToText = (html: string): string => {
+  if (!html) return '';
+
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+
+  const processNode = (node: Node): string => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return (node.textContent || '').replace(/\s+/g, ' ').trim();
+    }
+
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as HTMLElement;
+      const tagName = element.tagName.toLowerCase();
+
+      // List block-level tags
+      const blockTags = ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'ul', 'ol', 'li'];
+
+      // Process child nodes
+      const childText = Array.from(element.childNodes)
+        .map(processNode)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (blockTags.includes(tagName)) {
+        return childText + '\n\n';
+      }
+
+      if (tagName === 'br') {
+        return '\n';
+      }
+
+      // Inline tags shouldn't break lines
+      return childText;
+    }
+
+    return '';
+  };
+
+  let text = processNode(temp);
+  text = text.replace(/\n{3,}/g, '\n\n');
+  text = text.replace(/[ \t]+\n/g, '\n');
+  text = text.replace(/\n[ \t]+/g, '\n');
+  return text.trim();
+};
+
 
 const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
   isOpen,
