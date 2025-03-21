@@ -25,7 +25,7 @@ interface WhatsAppPublicationModalProps {
 
 const SPLIT_DELIMITER = '---split---';
 
-const convertHtmlToText12 = (html: string): string => {
+const convertHtmlToText555 = (html: string): string => {
   if (!html) return '';
   
   const temp = document.createElement('div');
@@ -149,7 +149,6 @@ const convertHtmlToText = (html: string): string => {
   text = text.replace(/\n[ \t]+/g, '\n');
   return text.trim();
 };
-
 
 const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
   isOpen,
