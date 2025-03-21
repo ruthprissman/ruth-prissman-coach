@@ -103,51 +103,87 @@ const convertHtmlToText555 = (html: string): string => {
   
   return text.trim();
 };
+
 const convertHtmlToText = (html: string): string => {
-  if (!html) return '';
+  console.log('[HtmlToText Debug] Starting conversion for input HTML:', html);
+  
+  if (!html) {
+    console.log('[HtmlToText Debug] Empty HTML input, returning empty string');
+    return '';
+  }
 
   const temp = document.createElement('div');
   temp.innerHTML = html;
+  console.log('[HtmlToText Debug] Created temporary DOM element with HTML content');
 
   const processNode = (node: Node): string => {
+    console.log('[HtmlToText Debug] Processing node type:', node.nodeType);
+    
     if (node.nodeType === Node.TEXT_NODE) {
-      return (node.textContent || '').replace(/\s+/g, ' ').trim();
+      const textContent = (node.textContent || '').replace(/\s+/g, ' ').trim();
+      console.log('[HtmlToText Debug] Processing TEXT_NODE, content:', textContent);
+      return textContent;
     }
 
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as HTMLElement;
       const tagName = element.tagName.toLowerCase();
+      console.log('[HtmlToText Debug] Processing ELEMENT_NODE, tag:', tagName);
 
       // List block-level tags
       const blockTags = ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'ul', 'ol', 'li'];
+      console.log('[HtmlToText Debug] Is block tag?', blockTags.includes(tagName));
 
       // Process child nodes
-      const childText = Array.from(element.childNodes)
-        .map(processNode)
-        .join(' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+      console.log('[HtmlToText Debug] Beginning to process children of', tagName);
+      const childNodes = Array.from(element.childNodes);
+      console.log('[HtmlToText Debug] Number of child nodes:', childNodes.length);
+      
+      const processedChildren = childNodes.map(child => {
+        const result = processNode(child);
+        console.log('[HtmlToText Debug] Processed child result:', result);
+        return result;
+      });
+      
+      const childText = processedChildren.join(' ').replace(/\s+/g, ' ').trim();
+      console.log('[HtmlToText Debug] Combined children text for', tagName, ':', childText);
 
       if (blockTags.includes(tagName)) {
+        console.log('[HtmlToText Debug] Adding block-level line breaks for tag:', tagName);
         return childText + '\n\n';
       }
 
       if (tagName === 'br') {
+        console.log('[HtmlToText Debug] Processing <br> tag, adding line break');
         return '\n';
       }
 
       // Inline tags shouldn't break lines
+      console.log('[HtmlToText Debug] Processing inline tag', tagName, 'no line breaks added');
       return childText;
     }
 
+    console.log('[HtmlToText Debug] Unhandled node type, returning empty string');
     return '';
   };
 
+  console.log('[HtmlToText Debug] Starting to process root node');
   let text = processNode(temp);
+  console.log('[HtmlToText Debug] Text after processing all nodes:', text);
+  
+  console.log('[HtmlToText Debug] Applying regex cleanup for consecutive line breaks');
   text = text.replace(/\n{3,}/g, '\n\n');
+  
+  console.log('[HtmlToText Debug] Cleaning up whitespace before line breaks');
   text = text.replace(/[ \t]+\n/g, '\n');
+  
+  console.log('[HtmlToText Debug] Cleaning up whitespace after line breaks');
   text = text.replace(/\n[ \t]+/g, '\n');
-  return text.trim();
+  
+  const finalText = text.trim();
+  console.log('[HtmlToText Debug] Final cleaned text:', finalText);
+  
+  return finalText;
 };
 
 const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
