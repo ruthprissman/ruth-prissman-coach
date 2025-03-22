@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -172,7 +171,7 @@ export default function Contact() {
                   <MapPin className="text-gold-DEFAULT flex-shrink-0" size={24} />
                   <div className="flex-grow text-right">
                     <p className="text-lg font-medium">פגישות פנים מול פנים</p>
-                    <p className="text-gray-700">זמין במודיעין עילית</p>
+                    <p className="text-gray-700">פגישות פרונטליות במודיעין עילית</p>
                   </div>
                 </div>
                 
@@ -180,7 +179,6 @@ export default function Contact() {
                   <Video className="text-gold-DEFAULT flex-shrink-0" size={24} />
                   <div className="flex-grow text-right">
                     <p className="text-lg font-medium">פגישות זום</p>
-                    <p className="text-gray-700">זמין לפי בקשה</p>
                   </div>
                 </div>
                 
@@ -188,7 +186,6 @@ export default function Contact() {
                   <Phone className="text-gold-DEFAULT flex-shrink-0" size={24} />
                   <div className="flex-grow text-right">
                     <p className="text-lg font-medium">שיחות טלפון</p>
-                    <p className="text-gray-700">זמין להתייעצויות מרחוק</p>
                   </div>
                 </div>
               </div>

@@ -26,83 +26,145 @@ interface WhatsAppPublicationModalProps {
 const SPLIT_DELIMITER = '---split---';
 
 const convertHtmlToText= (html: string): string => {
+  console.log('[HtmlToText Debug] Starting conversion for input HTML:', html ? `Length: ${html.length}` : 'Empty input');
+  
   if (!html) return '';
   
   const temp = document.createElement('div');
   temp.innerHTML = html;
+  console.log('[HtmlToText Debug] Created temp element with parsed HTML');
   
   const processNode = (node: Node): string => {
+    console.log(`[HtmlToText Debug] Processing node: ${node.nodeType === Node.TEXT_NODE ? 'TEXT_NODE' : 'ELEMENT_NODE'}`, 
+      node.nodeType === Node.ELEMENT_NODE ? `tag=<${(node as HTMLElement).tagName.toLowerCase()}>` : '');
+    
     if (node.nodeType === Node.TEXT_NODE) {
-      return node.textContent || '';
+      const textContent = node.textContent || '';
+      console.log(`[HtmlToText Debug] TEXT_NODE content: "${textContent}"`);
+      return textContent;
     }
     
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as HTMLElement;
       const tagName = element.tagName.toLowerCase();
+      console.log(`[HtmlToText Debug] Processing ELEMENT_NODE with tag: <${tagName}>`);
       
       switch (tagName) {
         case 'p':
+          console.log('[HtmlToText Debug] Handling <p> tag');
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n\n';
+        
         case 'div':
+          console.log('[HtmlToText Debug] Handling <div> tag');
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n\n';
+        
         case 'h1':
         case 'h2':
         case 'h3':
         case 'h4':
         case 'h5':
         case 'h6':
+          console.log(`[HtmlToText Debug] Handling <${tagName}> heading tag`);
           return Array.from(element.childNodes)
             .map(processNode)
             .join('') + '\n\n';
         
         case 'br':
+          console.log('[HtmlToText Debug] Handling <br> tag - adding line break');
           return '\n';
         
         case 'blockquote':
+          console.log('[HtmlToText Debug] Handling <blockquote> tag');
           return '> ' + Array.from(element.childNodes)
             .map(processNode)
             .join('') + '\n\n';
         
         case 'ul':
         case 'ol':
+          console.log(`[HtmlToText Debug] Handling <${tagName}> list tag`);
           return Array.from(element.childNodes)
             .map(processNode)
             .join('');
             
         case 'li':
+          console.log('[HtmlToText Debug] Handling <li> tag');
           return '• ' + Array.from(element.childNodes)
             .map(processNode)
             .join('') + '\n';
         
         case 'strong':
         case 'b':
+          console.log(`[HtmlToText Debug] Handling <${tagName}> (bold) tag`);
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
+        
         case 'em':
         case 'i':
+          console.log(`[HtmlToText Debug] Handling <${tagName}> (italic) tag`);
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
+          
         case 'a':
+          console.log('[HtmlToText Debug] Handling <a> tag');
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
+          
         case 'span':
+          console.log('[HtmlToText Debug] Handling <span> tag');
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
+          
         case 'u':
+          console.log('[HtmlToText Debug] Handling <u> (underline) tag');
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
+          
         case 'code':
+          console.log('[HtmlToText Debug] Handling <code> tag');
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
+          
         case 'mark':
+          console.log('[HtmlToText Debug] Handling <mark> tag');
           return Array.from(element.childNodes)
             .map(processNode)
             .join('');
         
         default:
+          console.log(`[HtmlToText Debug] Handling unknown tag <${tagName}>`);
           return Array.from(element.childNodes)
             .map(processNode)
             .join('');
       }
     }
     
+    console.log('[HtmlToText Debug] Node is neither TEXT_NODE nor ELEMENT_NODE');
     return '';
   };
   
   let text = processNode(temp);
+  console.log('[HtmlToText Debug] Combined text before cleanup:', text);
   
   text = text.replace(/\n{3,}/g, '\n\n');
   text = text.replace(/[ \t]+\n/g, '\n');
   text = text.replace(/\n[ \t]+/g, '\n');
   
-  return text.trim();
+  const cleanedText = text.trim();
+  console.log('[HtmlToText Debug] Final cleaned text:', cleanedText);
+  
+  return cleanedText;
 };
+
 const convertHtmlToText55 = (html: string): string => {
   if (!html) return '';
 
@@ -118,10 +180,8 @@ const convertHtmlToText55 = (html: string): string => {
       const element = node as HTMLElement;
       const tagName = element.tagName.toLowerCase();
 
-      // List block-level tags
       const blockTags = ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'ul', 'ol', 'li'];
 
-      // Process child nodes
       const childText = Array.from(element.childNodes)
         .map(processNode)
         .join(' ')
@@ -136,7 +196,6 @@ const convertHtmlToText55 = (html: string): string => {
         return '\n';
       }
 
-      // Inline tags shouldn't break lines
       return childText;
     }
 
