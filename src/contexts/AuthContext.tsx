@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, getSupabaseWithAuth, clearAuthClientCache } from '@/lib/supabase';
@@ -151,8 +152,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPassword = async (email: string) => {
     setIsLoading(true);
     try {
+      // Determine the correct redirect URL based on environment
+      const baseUrl = import.meta.env.DEV 
+        ? 'http://localhost:3000' 
+        : 'https://ruth-prissman-coach.lovable.app';
+      
+      const redirectTo = `${baseUrl}/admin/reset-password`;
+      
+      console.log(`[Auth] Password reset redirect URL: ${redirectTo}`);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/admin/reset-password`,
+        redirectTo: redirectTo,
       });
       
       if (error) throw error;
