@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,7 +33,6 @@ const Login: React.FC = () => {
   console.log('Login page rendered. Current auth state:', { user: !!user, isLoading });
   console.log('Current location state:', location.state);
   
-  // Extract the destination from location state or default to admin dashboard
   const from = (location.state as { from: { pathname: string } })?.from?.pathname || '/admin/dashboard';
   
   useEffect(() => {
@@ -46,7 +44,6 @@ const Login: React.FC = () => {
         console.log('Admin exists check result:', exists);
         setAdminExists(exists);
         
-        // If creating admin and admin already exists, reset to login form
         if (isCreatingAdmin && exists) {
           setIsCreatingAdmin(false);
         }
@@ -69,13 +66,12 @@ const Login: React.FC = () => {
     },
   });
   
-  // Initialize resetForm with proper configuration
   const resetForm = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       email: '',
     },
-    mode: 'onChange' // Enable onChange validation mode
+    mode: 'onChange'
   });
 
   const onSubmit = async (data: FormValues) => {
@@ -119,16 +115,6 @@ const Login: React.FC = () => {
               <KeyRound className="w-12 h-12 text-purple-dark mx-auto mb-4" />
               <h1 className="text-2xl font-bold text-purple-dark">שחזור סיסמה</h1>
               <p className="text-gray-600 mt-2">הזן את כתובת האימייל שלך כדי לקבל קישור לאיפוס הסיסמה</p>
-            </>
-          ) : isCreatingAdmin ? (
-            <>
-              <UserPlus className="w-12 h-12 text-purple-dark mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-purple-dark">יצירת משתמש מנהל</h1>
-              {adminExists && (
-                <p className="text-red-500 mt-2">
-                  קיים כבר מנהל במערכת. אם שכחת את הסיסמה, ניתן לאפס אותה דרך 'שחזור סיסמה'.
-                </p>
-              )}
             </>
           ) : (
             <>
@@ -272,7 +258,6 @@ const Login: React.FC = () => {
                   שכחתי סיסמה
                 </Button>
                 
-                {/* Only show "Create new admin user" button if no admin exists */}
                 {!adminExists && !isCheckingAdmin && (
                   <Button
                     type="button"
@@ -287,7 +272,6 @@ const Login: React.FC = () => {
                   </Button>
                 )}
                 
-                {/* In case we're in admin creation mode but need to go back */}
                 {isCreatingAdmin && (
                   <Button
                     type="button"
