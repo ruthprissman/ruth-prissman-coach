@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -72,7 +71,7 @@ const Login: React.FC = () => {
     defaultValues: {
       email: '',
     },
-    mode: 'onTouched'
+    mode: 'onChange'
   });
 
   const onSubmit = async (data: FormValues) => {
@@ -126,63 +125,56 @@ const Login: React.FC = () => {
         </div>
         
         {isForgotPassword ? (
-          <Form {...resetForm}>
-            <form onSubmit={resetForm.handleSubmit(onResetPasswordSubmit)} className="space-y-6" noValidate>
-              <FormField
-                control={resetForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-right block">אימייל</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          {...field}
-                          type="email"
-                          placeholder="הכנס את האימייל שלך"
-                          className="w-full text-right pr-10"
-                          dir="rtl"
-                          autoComplete="email"
-                          aria-autocomplete="list"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-right" />
-                  </FormItem>
-                )}
-              />
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-[#4A235A] hover:bg-[#7E69AB] text-white"
-                disabled={resetForm.formState.isSubmitting}
-              >
-                {resetForm.formState.isSubmitting ? (
-                  <>
-                    <span className="mr-2">שולח לינק...</span>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  </>
-                ) : (
-                  'שלח לינק לאיפוס סיסמה'
-                )}
-              </Button>
-              
-              <div className="text-center mt-4">
-                <Button
-                  type="button"
-                  variant="link"
-                  className="text-sm text-purple-dark"
-                  onClick={() => {
-                    setIsForgotPassword(false);
-                    resetForm.reset();
-                  }}
-                >
-                  חזרה לדף ההתחברות
-                </Button>
+          <form onSubmit={resetForm.handleSubmit(onResetPasswordSubmit)} className="space-y-6" noValidate>
+            <div className="space-y-2">
+              <label htmlFor="reset-email" className="text-right block">אימייל</label>
+              <div className="relative">
+                <Mail className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                <input
+                  id="reset-email"
+                  type="email"
+                  placeholder="הכנס את האימייל שלך"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-right pr-10"
+                  dir="rtl"
+                  {...resetForm.register("email")}
+                />
               </div>
-            </form>
-          </Form>
+              {resetForm.formState.errors.email && (
+                <p className="text-sm font-medium text-destructive text-right">
+                  {resetForm.formState.errors.email.message}
+                </p>
+              )}
+            </div>
+            
+            <Button 
+              type="submit" 
+              className="w-full bg-[#4A235A] hover:bg-[#7E69AB] text-white"
+              disabled={resetForm.formState.isSubmitting}
+            >
+              {resetForm.formState.isSubmitting ? (
+                <>
+                  <span className="mr-2">שולח לינק...</span>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </>
+              ) : (
+                'שלח לינק לאיפוס סיסמה'
+              )}
+            </Button>
+            
+            <div className="text-center mt-4">
+              <Button
+                type="button"
+                variant="link"
+                className="text-sm text-purple-dark"
+                onClick={() => {
+                  setIsForgotPassword(false);
+                  resetForm.reset();
+                }}
+              >
+                חזרה לדף ההתחברות
+              </Button>
+            </div>
+          </form>
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -254,7 +246,7 @@ const Login: React.FC = () => {
                   className="text-sm text-purple-dark"
                   onClick={() => {
                     setIsForgotPassword(true);
-                    form.reset();
+                    resetForm.reset();
                   }}
                 >
                   שכחתי סיסמה
