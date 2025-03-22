@@ -1,13 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Lock, UserPlus, KeyRound, Mail } from 'lucide-react';
+import { Lock, UserPlus, KeyRound, Mail, Check } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { supabase } from '@/lib/supabase';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const formSchema = z.object({
   email: z.string().email("כתובת אימייל לא תקינה"),
@@ -18,17 +21,30 @@ const resetPasswordSchema = z.object({
   email: z.string().email("כתובת אימייל לא תקינה"),
 });
 
+const passwordRecoverySchema = z.object({
+  password: z.string().min(6, "סיסמה חייבת להיות לפחות 6 תווים"),
+  confirmPassword: z.string().min(6, "סיסמה חייבת להיות לפחות 6 תווים"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "הסיסמאות אינן תואמות",
+  path: ["confirmPassword"],
+});
+
 type FormValues = z.infer<typeof formSchema>;
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+type PasswordRecoveryFormValues = z.infer<typeof passwordRecoverySchema>;
 
 const Login: React.FC = () => {
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [adminExists, setAdminExists] = useState(true); // Default to true - safer to hide creation option
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true); // Add loading state for admin check
+  const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
+  const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
   const { signIn, createAdminUser, resetPassword, checkAdminExists, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const isRecoveryMode = searchParams.get('type') === 'recovery';
   
   console.log('Login page rendered. Current auth state:', { user: !!user, isLoading });
   console.log('Current location state:', location.state);
@@ -74,6 +90,15 @@ const Login: React.FC = () => {
     mode: 'onChange'
   });
 
+  const recoveryForm = useForm<PasswordRecoveryFormValues>({
+    resolver: zodResolver(passwordRecoverySchema),
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
+    },
+    mode: 'onChange'
+  });
+
   const onSubmit = async (data: FormValues) => {
     console.log('Form submitted:', isCreatingAdmin ? 'Creating admin' : 'Signing in');
     
@@ -100,8 +125,36 @@ const Login: React.FC = () => {
       setIsForgotPassword(false);
     }
   };
+
+  const onPasswordRecoverySubmit = async (data: PasswordRecoveryFormValues) => {
+    console.log('Password recovery form submitted');
+    setPasswordResetError(null);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({ 
+        password: data.password 
+      });
+      
+      if (error) {
+        console.error('Error updating password:', error);
+        setPasswordResetError(error.message);
+        return;
+      }
+      
+      setPasswordResetSuccess(true);
+      recoveryForm.reset();
+      
+      // Redirect to dashboard after successful password reset
+      setTimeout(() => {
+        navigate('/admin/dashboard', { replace: true });
+      }, 3000);
+    } catch (error: any) {
+      console.error('Unexpected error during password reset:', error);
+      setPasswordResetError(error.message || 'אירעה שגיאה בעדכון הסיסמה');
+    }
+  };
   
-  if (user) {
+  if (user && !isRecoveryMode) {
     console.log('User already authenticated, redirecting to dashboard');
     return <Navigate to="/admin/dashboard" replace />;
   }
@@ -110,7 +163,13 @@ const Login: React.FC = () => {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
         <div className="text-center mb-8">
-          {isForgotPassword ? (
+          {isRecoveryMode ? (
+            <>
+              <KeyRound className="w-12 h-12 text-purple-dark mx-auto mb-4" />
+              <h1 className="text-2xl font-bold text-purple-dark">עדכון סיסמה</h1>
+              <p className="text-gray-600 mt-2">הזן את הסיסמה החדשה שלך</p>
+            </>
+          ) : isForgotPassword ? (
             <>
               <KeyRound className="w-12 h-12 text-purple-dark mx-auto mb-4" />
               <h1 className="text-2xl font-bold text-purple-dark">שחזור סיסמה</h1>
@@ -124,7 +183,91 @@ const Login: React.FC = () => {
           )}
         </div>
         
-        {isForgotPassword ? (
+        {isRecoveryMode ? (
+          <>
+            {passwordResetSuccess ? (
+              <Alert className="mb-6 bg-green-50 border-green-200">
+                <AlertDescription className="text-center text-green-700 flex items-center justify-center">
+                  <Check className="h-5 w-5 mr-2" />
+                  הסיסמה עודכנה בהצלחה! מועבר/ת לדף הניהול...
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Form {...recoveryForm}>
+                <form onSubmit={recoveryForm.handleSubmit(onPasswordRecoverySubmit)} className="space-y-6">
+                  {passwordResetError && (
+                    <Alert className="mb-4 bg-red-50 border-red-200">
+                      <AlertDescription className="text-center text-red-700">
+                        {passwordResetError}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  <FormField
+                    control={recoveryForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-right block">הזן סיסמה חדשה</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                            <Input
+                              {...field}
+                              type="password"
+                              placeholder="הקלד סיסמה חדשה"
+                              className="w-full text-right pr-10"
+                              dir="rtl"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage className="text-right" />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={recoveryForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="text-right block">אשר סיסמה חדשה</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                            <Input
+                              {...field}
+                              type="password"
+                              placeholder="הקלד שוב את הסיסמה החדשה"
+                              className="w-full text-right pr-10"
+                              dir="rtl"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage className="text-right" />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-[#4A235A] hover:bg-[#7E69AB] text-white"
+                    disabled={recoveryForm.formState.isSubmitting}
+                  >
+                    {recoveryForm.formState.isSubmitting ? (
+                      <>
+                        <span className="mr-2">מעדכן סיסמה...</span>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      </>
+                    ) : (
+                      'שמור סיסמה חדשה'
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            )}
+          </>
+        ) : isForgotPassword ? (
           <form onSubmit={resetForm.handleSubmit(onResetPasswordSubmit)} className="space-y-6" noValidate>
             <div className="space-y-2">
               <label htmlFor="reset-email" className="text-right block">אימייל</label>
