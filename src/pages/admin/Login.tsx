@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -71,7 +72,7 @@ const Login: React.FC = () => {
     defaultValues: {
       email: '',
     },
-    mode: 'onChange'
+    mode: 'onTouched'
   });
 
   const onSubmit = async (data: FormValues) => {
@@ -126,7 +127,7 @@ const Login: React.FC = () => {
         
         {isForgotPassword ? (
           <Form {...resetForm}>
-            <form onSubmit={resetForm.handleSubmit(onResetPasswordSubmit)} className="space-y-6">
+            <form onSubmit={resetForm.handleSubmit(onResetPasswordSubmit)} className="space-y-6" noValidate>
               <FormField
                 control={resetForm.control}
                 name="email"
@@ -143,6 +144,7 @@ const Login: React.FC = () => {
                           className="w-full text-right pr-10"
                           dir="rtl"
                           autoComplete="email"
+                          aria-autocomplete="list"
                         />
                       </div>
                     </FormControl>
