@@ -69,11 +69,13 @@ const Login: React.FC = () => {
     },
   });
   
+  // Initialize resetForm with proper configuration
   const resetForm = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       email: '',
     },
+    mode: 'onChange' // Enable onChange validation mode
   });
 
   const onSubmit = async (data: FormValues) => {
@@ -95,6 +97,7 @@ const Login: React.FC = () => {
   };
   
   const onResetPasswordSubmit = async (data: ResetPasswordFormValues) => {
+    console.log('Reset password form submitted with email:', data.email);
     const { error } = await resetPassword(data.email);
     if (!error) {
       resetForm.reset();
@@ -153,6 +156,7 @@ const Login: React.FC = () => {
                           placeholder="הכנס את האימייל שלך"
                           className="w-full text-right pr-10"
                           dir="rtl"
+                          autoComplete="email"
                         />
                       </div>
                     </FormControl>
@@ -164,9 +168,9 @@ const Login: React.FC = () => {
               <Button 
                 type="submit" 
                 className="w-full bg-[#4A235A] hover:bg-[#7E69AB] text-white"
-                disabled={isLoading}
+                disabled={resetForm.formState.isSubmitting}
               >
-                {isLoading ? (
+                {resetForm.formState.isSubmitting ? (
                   <>
                     <span className="mr-2">שולח לינק...</span>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
