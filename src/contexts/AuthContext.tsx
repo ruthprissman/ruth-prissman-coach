@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, getSupabaseWithAuth, clearAuthClientCache } from '@/lib/supabase';
@@ -24,7 +23,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for active session on mount
     const fetchSession = async () => {
       try {
         setIsLoading(true);
@@ -45,7 +43,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     fetchSession();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.id);
@@ -54,7 +51,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(newSession?.user || null);
         
         if (event === 'SIGNED_OUT') {
-          // Clear cached auth clients on logout
           clearAuthClientCache();
         }
       }
@@ -87,21 +83,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: null };
   };
 
-  // בדיקה האם קיים כבר מנהל במערכת
   const checkAdminExists = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('role', 'admin')
-        .limit(1);
+      const { data, error } = await supabase.auth.admin.listUsers();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error checking if users exist:', error);
+        return true;
+      }
       
-      return data && data.length > 0;
+      return data && data.users && data.users.length > 0;
     } catch (error) {
-      console.error('Error checking if admin exists:', error);
-      return false;
+      console.error('Error checking if users exist:', error);
+      return true;
     }
   };
 
@@ -109,7 +103,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      // בדיקה האם כבר קיים מנהל במערכת
       const adminExists = await checkAdminExists();
       
       if (adminExists) {
@@ -125,7 +118,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
       
-      // יצירת משתמש חדש
       const { error: signUpError, data } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -137,19 +129,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (signUpError) throw signUpError;
-      
-      // יצירת רשומה בטבלת הפרופילים
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([{ 
-            id: data.user.id, 
-            email,
-            role: 'admin'
-          }]);
-          
-        if (profileError) throw profileError;
-      }
       
       setIsLoading(false);
       toast({
@@ -169,7 +148,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // פונקציה לאיפוס סיסמה
   const resetPassword = async (email: string) => {
     setIsLoading(true);
     try {
