@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,7 +25,8 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 const Login: React.FC = () => {
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [adminExists, setAdminExists] = useState(false);
+  const [adminExists, setAdminExists] = useState(true); // Default to true - safer to hide creation option
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true); // Add loading state for admin check
   const { signIn, createAdminUser, resetPassword, checkAdminExists, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,16 +41,25 @@ const Login: React.FC = () => {
     console.log('Login useEffect running, checking admin...');
     const checkAdmin = async () => {
       try {
+        setIsCheckingAdmin(true);
         const exists = await checkAdminExists();
         console.log('Admin exists check result:', exists);
         setAdminExists(exists);
+        
+        // If creating admin and admin already exists, reset to login form
+        if (isCreatingAdmin && exists) {
+          setIsCreatingAdmin(false);
+        }
       } catch (error) {
         console.error('Error checking if admin exists:', error);
+        setAdminExists(true); // Default to true on error for security
+      } finally {
+        setIsCheckingAdmin(false);
       }
     };
     
     checkAdmin();
-  }, [checkAdminExists]);
+  }, [checkAdminExists, isCreatingAdmin]);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -112,7 +123,7 @@ const Login: React.FC = () => {
               <h1 className="text-2xl font-bold text-purple-dark">יצירת משתמש מנהל</h1>
               {adminExists && (
                 <p className="text-red-500 mt-2">
-                  קיים כבר מנ��ל במערכת. אם שכחת את הסיסמה, ניתן לאפס אותה דרך 'שחזור סיסמה'.
+                  קיים כבר מנהל במערכת. אם שכחת את הסיסמה, ניתן לאפס אותה דרך 'שחזור סיסמה'.
                 </p>
               )}
             </>
@@ -257,17 +268,35 @@ const Login: React.FC = () => {
                   שכחתי סיסמה
                 </Button>
                 
-                <Button
-                  type="button"
-                  variant="link"
-                  className="text-sm text-purple-dark"
-                  onClick={() => {
-                    setIsCreatingAdmin(!isCreatingAdmin);
-                    form.reset();
-                  }}
-                >
-                  {isCreatingAdmin ? 'חזרה לדף ההתחברות' : 'יצירת משתמש מנהל חדש'}
-                </Button>
+                {/* Only show "Create new admin user" button if no admin exists */}
+                {!adminExists && !isCheckingAdmin && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-sm text-purple-dark"
+                    onClick={() => {
+                      setIsCreatingAdmin(!isCreatingAdmin);
+                      form.reset();
+                    }}
+                  >
+                    {isCreatingAdmin ? 'חזרה לדף ההתחברות' : 'יצירת משתמש מנהל חדש'}
+                  </Button>
+                )}
+                
+                {/* In case we're in admin creation mode but need to go back */}
+                {isCreatingAdmin && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-sm text-purple-dark"
+                    onClick={() => {
+                      setIsCreatingAdmin(false);
+                      form.reset();
+                    }}
+                  >
+                    חזרה לדף ההתחברות
+                  </Button>
+                )}
               </div>
             </form>
           </Form>
