@@ -154,10 +154,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Determine the correct redirect URL based on environment
       const baseUrl = import.meta.env.DEV 
-        ? 'http://localhost:3000' 
+        ? 'https://preview--ruth-prissman-coach-dev-20032025.lovable.app' 
         : 'https://ruth-prissman-coach.lovable.app';
       
-      const redirectTo = `${baseUrl}/admin/reset-password`;
+      const redirectTo = `${baseUrl}/admin/login`;
       
       console.log(`[Auth] Password reset redirect URL: ${redirectTo}`);
       
