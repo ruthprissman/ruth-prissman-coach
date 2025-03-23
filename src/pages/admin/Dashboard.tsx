@@ -3,16 +3,30 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { 
   Users, Calendar, CreditCard, Mail, LogOut,
-  BarChart, User, Clock, DollarSign, Home
+  BarChart, User, Clock, DollarSign, Home,
+  Globe, Pencil, ArrowUpRight
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
+import { formatDateOnlyInIsrael } from '@/utils/dateUtils';
 
 interface Stats {
   totalPatients: number;
   upcomingAppointments: number;
   pendingPayments: number;
+}
+
+interface ArticlePublication {
+  id: number;
+  content_id: number;
+  publish_location: string;
+  scheduled_date: string;
+  professional_content: {
+    title: string;
+  } | null;
 }
 
 const Dashboard: React.FC = () => {
@@ -23,7 +37,9 @@ const Dashboard: React.FC = () => {
     upcomingAppointments: 0,
     pendingPayments: 0
   });
+  const [upcomingPublications, setUpcomingPublications] = useState<ArticlePublication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPublicationsLoading, setIsPublicationsLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -51,9 +67,80 @@ const Dashboard: React.FC = () => {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    const fetchUpcomingPublications = async () => {
+      try {
+        setIsPublicationsLoading(true);
+        
+        const client = await supabaseClient();
+        const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+        
+        const { data, error } = await client
+          .from('article_publications')
+          .select(`
+            id, 
+            content_id,
+            publish_location,
+            scheduled_date,
+            professional_content (
+              title
+            )
+          `)
+          .gte('scheduled_date', today)
+          .is('published_date', null)
+          .order('scheduled_date', { ascending: true })
+          .limit(5);
+        
+        if (error) {
+          throw error;
+        }
+        
+        setUpcomingPublications(data || []);
+        setIsPublicationsLoading(false);
+      } catch (error) {
+        console.error("Error fetching upcoming publications:", error);
+        setIsPublicationsLoading(false);
+      }
+    };
+
+    fetchUpcomingPublications();
+  }, []);
+
   const handleLogout = async () => {
     await signOut();
     navigate('/admin/login');
+  };
+
+  const getLocationIcon = (location: string) => {
+    switch (location) {
+      case 'Email':
+        return <Mail className="w-5 h-5 text-blue-500" />;
+      case 'Website':
+        return <Globe className="w-5 h-5 text-green-500" />;
+      case 'WhatsApp':
+        return <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-green-600">
+          <path d="M12 2C6.486 2 2 6.486 2 12c0 1.863.505 3.601 1.376 5.097L2 22l4.974-1.301A9.933 9.933 0 0 0 12 22c5.514 0 10-4.486 10-10S17.514 2 12 2m0 18c-1.632 0-3.145-.509-4.392-1.374l-.315-.185-3.27.856.865-3.196-.202-.34A7.944 7.944 0 0 1 4 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8m4.355-5.748c-.162-.08-1.007-.498-1.163-.555-.157-.057-.27-.084-.383.08-.112.164-.435.554-.532.668-.097.114-.194.129-.356.047-.162-.082-2.195-.814-3.1-2.359-.225-.388.225-.362.643-.12.129.77.229.16.294.161.165.005.356-.04.445-.12.106-.014.21-.174.314-.334.105-.16.14-.294.195-.488.056-.194.028-.362-.014-.488-.042-.127-.383-.985-.526-1.348-.14-.36-.283-.31-.382-.316-.099-.005-.213-.005-.326-.005-.113 0-.297.043-.452.207-.155.164-.59.58-.59 1.414 0 .834.608 1.641.693 1.755.084.115 1.182 1.805 2.866 2.53 1.08.471 1.477.509 2.018.431.32-.053 1.007-.412 1.15-.811.14-.4.14-.742.098-.815-.042-.072-.154-.115-.318-.196" />
+        </svg>;
+      case 'All':
+      case 'Other':
+      default:
+        return <Pencil className="w-5 h-5 text-purple-500" />;
+    }
+  };
+
+  const getLocationText = (location: string) => {
+    switch (location) {
+      case 'Email':
+        return 'אימייל';
+      case 'Website':
+        return 'אתר';
+      case 'WhatsApp':
+        return 'וואטסאפ';
+      case 'All':
+      case 'Other':
+      default:
+        return 'אחר';
+    }
   };
 
   const StatCard = ({ 
@@ -94,6 +181,25 @@ const Dashboard: React.FC = () => {
     </Button>
   );
 
+  const PublicationCard = ({ publication }: { publication: ArticlePublication }) => (
+    <Card className="bg-gray-50 rounded-xl p-3 hover:shadow-md transition-shadow duration-200">
+      <CardContent className="p-0">
+        <div className="flex justify-between items-center">
+          <div className="flex flex-col items-center">
+            {getLocationIcon(publication.publish_location)}
+            <span className="text-xs mt-1 font-medium">{getLocationText(publication.publish_location)}</span>
+          </div>
+          <div className="flex items-center text-right">
+            <Calendar className="w-4 h-4 ml-2 text-gray-600" />
+            <span className="text-sm">
+              {formatDateOnlyInIsrael(publication.scheduled_date)}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Return to Homepage Button - Updated with Home icon from lucide-react */}
@@ -120,34 +226,66 @@ const Dashboard: React.FC = () => {
       </header>
 
       <main className="container mx-auto px-6 py-8">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        ) : (
-          <>
-            {/* Stats Section */}
-            <section className="mb-10">
-              <h2 className="text-xl font-bold mb-6 text-right">סטטיסטיקה כללית</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard title="מטופלים" value={stats.totalPatients} icon={User} color="bg-blue-500" />
-                <StatCard title="פגישות מתוכננות" value={stats.upcomingAppointments} icon={Clock} color="bg-green-500" />
-                <StatCard title="תשלומים ממתינים" value={stats.pendingPayments} icon={DollarSign} color="bg-amber-500" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Main Content - 2/3 width on desktop */}
+          <div className="md:col-span-2 space-y-8">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
               </div>
-            </section>
+            ) : (
+              <>
+                {/* Stats Section */}
+                <section className="mb-10">
+                  <h2 className="text-xl font-bold mb-6 text-right">סטטיסטיקה כללית</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <StatCard title="מטופלים" value={stats.totalPatients} icon={User} color="bg-blue-500" />
+                    <StatCard title="פגישות מתוכננות" value={stats.upcomingAppointments} icon={Clock} color="bg-green-500" />
+                    <StatCard title="תשלומים ממתינים" value={stats.pendingPayments} icon={DollarSign} color="bg-amber-500" />
+                  </div>
+                </section>
 
-            {/* Quick Access Section */}
-            <section>
-              <h2 className="text-xl font-bold mb-6 text-right">ניהול מהיר</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <AdminButton title="ניהול מטופלים" icon={Users} onClick={() => navigate('/admin/patients')} />
-                <AdminButton title="ניהול פגישות" icon={Calendar} onClick={() => navigate('/admin/appointments')} />
-                <AdminButton title="ניהול תשלומים" icon={CreditCard} onClick={() => navigate('/admin/payments')} />
-                <AdminButton title="שיווק במייל" icon={Mail} onClick={() => navigate('/admin/marketing')} />
+                {/* Quick Access Section */}
+                <section>
+                  <h2 className="text-xl font-bold mb-6 text-right">ניהול מהיר</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <AdminButton title="ניהול מטופלים" icon={Users} onClick={() => navigate('/admin/patients')} />
+                    <AdminButton title="ניהול פגישות" icon={Calendar} onClick={() => navigate('/admin/appointments')} />
+                    <AdminButton title="ניהול תשלומים" icon={CreditCard} onClick={() => navigate('/admin/payments')} />
+                    <AdminButton title="שיווק במייל" icon={Mail} onClick={() => navigate('/admin/marketing')} />
+                  </div>
+                </section>
+              </>
+            )}
+          </div>
+
+          {/* What's New Section - 1/3 width on desktop */}
+          <div className="md:col-span-1">
+            <section className="bg-white p-4 rounded-lg shadow">
+              <div className="flex justify-between items-center mb-4">
+                <Link to="/admin/articles" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                  <span>לכל הפרסומים</span>
+                  <ArrowUpRight className="w-4 h-4 mr-1" />
+                </Link>
+                <h2 className="text-xl font-bold text-right">מה חדש?</h2>
               </div>
+              
+              {isPublicationsLoading ? (
+                <div className="flex justify-center items-center h-40">
+                  <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : upcomingPublications.length > 0 ? (
+                <div className="space-y-3">
+                  {upcomingPublications.map((publication) => (
+                    <PublicationCard key={publication.id} publication={publication} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-6">אין פרסומים מתוכננים בקרוב</p>
+              )}
             </section>
-          </>
-        )}
+          </div>
+        </div>
       </main>
     </div>
   );
