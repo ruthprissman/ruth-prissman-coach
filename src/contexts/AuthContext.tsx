@@ -152,14 +152,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPassword = async (email: string) => {
     setIsLoading(true);
     try {
+      // Debug environment detection
+      console.log('[Auth Debug] Environment detection:');
+      console.log(`[Auth Debug] import.meta.env.DEV = ${import.meta.env.DEV}`);
+      console.log(`[Auth Debug] import.meta.env.PROD = ${import.meta.env.PROD}`);
+      console.log(`[Auth Debug] import.meta.env.MODE = ${import.meta.env.MODE}`);
+      
+      // Get current URL to help with debugging
+      const currentUrl = window.location.origin;
+      console.log(`[Auth Debug] Current origin: ${currentUrl}`);
+      
       // Determine the correct redirect URL based on environment
-      const baseUrl = import.meta.env.DEV 
-        ? 'https://preview--ruth-prissman-coach-dev-20032025.lovable.app' 
-        : 'https://ruth-prissman-coach.lovable.app';
+      let baseUrl = '';
+      
+      if (import.meta.env.DEV) {
+        baseUrl = 'https://preview--ruth-prissman-coach-dev-20032025.lovable.app';
+        console.log(`[Auth Debug] Using DEV baseUrl: ${baseUrl}`);
+      } else {
+        baseUrl = 'https://ruth-prissman-coach.lovable.app';
+        console.log(`[Auth Debug] Using PROD baseUrl: ${baseUrl}`);
+      }
       
       const redirectTo = `${baseUrl}/admin/login`;
       
-      console.log(`[Auth] Password reset redirect URL: ${redirectTo}`);
+      console.log(`[Auth Debug] Final password reset redirect URL: ${redirectTo}`);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectTo,
@@ -175,6 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return { error: null, message: "נא לבדוק את תיבת האימייל שלך" };
     } catch (error: any) {
+      console.error('[Auth Debug] Reset password error:', error);
       setIsLoading(false);
       toast({
         title: "בקשת איפוס סיסמה נכשלה",
