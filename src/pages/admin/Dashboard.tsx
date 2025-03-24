@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -116,7 +115,7 @@ const Dashboard: React.FC = () => {
         
         console.log("Upcoming sessions data:", data);
         
-        // Transform the data to include patient name
+        // Fix the type error - properly handle the patients object
         const transformedData = data?.map(item => ({
           id: item.id,
           patient_id: item.patient_id,
@@ -124,8 +123,11 @@ const Dashboard: React.FC = () => {
           meeting_type: item.meeting_type,
           status: item.status,
           zoom_link: item.zoom_link,
-          // Fix here - access the name property correctly from patients object
-          patient_name: item.patients?.name || 'לקוח לא מזוהה'
+          // Access the first element's name property if patients is returned as an array
+          // Otherwise, access it directly
+          patient_name: Array.isArray(item.patients) 
+            ? item.patients[0]?.name || 'לקוח לא מזוהה'
+            : item.patients?.name || 'לקוח לא מזוהה'
         })) || [];
         
         setUpcomingSessions(transformedData);
@@ -252,13 +254,11 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Return to Homepage Button */}
       <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 flex items-center">
         <Home className="h-5 w-5 mr-2" />
         <span>חזרה לדף הבית</span>
       </Link>
 
-      {/* Header */}
       <header className="bg-[#4A235A] text-white shadow-md">
         <div className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
@@ -277,7 +277,6 @@ const Dashboard: React.FC = () => {
 
       <main className="container mx-auto px-6 py-8">
         <div className="flex flex-col items-center">
-          {/* "What's New" section */}
           <div className="w-full md:w-96 mb-6">
             <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -305,7 +304,6 @@ const Dashboard: React.FC = () => {
             </Card>
           </div>
 
-          {/* Upcoming Sessions section */}
           <div className="w-full md:w-96">
             <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
