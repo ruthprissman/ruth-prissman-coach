@@ -383,7 +383,7 @@ const Dashboard: React.FC = () => {
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                   </div>
                 ) : upcomingPublications.length > 0 ? (
-                  <div className="space-y-1">
+                  <div className="space-y-1 text-right">
                     {upcomingPublications.map((publication) => (
                       <PublicationItem key={publication.id} publication={publication} />
                     ))}
@@ -408,7 +408,7 @@ const Dashboard: React.FC = () => {
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                   </div>
                 ) : upcomingSessions.length > 0 ? (
-                  <div className="space-y-1">
+                  <div className="space-y-1 text-right">
                     {upcomingSessions.map((session) => (
                       <SessionItem key={session.id} session={session} />
                     ))}
