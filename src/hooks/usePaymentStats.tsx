@@ -60,7 +60,7 @@ export const usePaymentStats = () => {
           } 
           // If patients is a direct object (when returned as a nested object)
           else if (typeof session.patients === 'object') {
-            sessionPrice = session.patients.session_price || 0;
+            sessionPrice = (session.patients as { session_price?: number }).session_price || 0;
           }
           
           return sum + sessionPrice;
