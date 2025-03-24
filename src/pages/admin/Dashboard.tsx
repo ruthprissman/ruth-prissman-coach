@@ -8,7 +8,8 @@ import {
   Calendar, LogOut, Home,
   Mail, Globe, Pencil, ArrowUpRight,
   Phone, Monitor, User,
-  BookOpen, BookText, CreditCard, Users
+  BookOpen, BookText, CreditCard, Users,
+  Banknote, Receipt
 } from 'lucide-react';
 import { usePaymentStats } from '@/hooks/usePaymentStats';
 import { supabaseClient } from '@/lib/supabaseClient';
@@ -376,7 +377,7 @@ const Dashboard: React.FC = () => {
                 </Link>
                 <CardTitle className="text-xl font-bold text-right">מה חדש?</CardTitle>
               </CardHeader>
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 text-right">
                 {isPublicationsLoading ? (
                   <div className="flex justify-center items-center py-8">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -401,7 +402,7 @@ const Dashboard: React.FC = () => {
                 </Link>
                 <CardTitle className="text-xl font-bold text-right">הפגישות הקרובות שלך</CardTitle>
               </CardHeader>
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 text-right">
                 {isSessionsLoading ? (
                   <div className="flex justify-center items-center py-8">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -426,7 +427,7 @@ const Dashboard: React.FC = () => {
                 <div className="w-6"></div>
                 <CardTitle className="text-xl font-bold text-right">סטטיסטיקות מנויים</CardTitle>
               </CardHeader>
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 text-right">
                 {subscriptionStats.contentSubscribers.loading || subscriptionStats.storySubscribers.loading ? (
                   <div className="flex justify-center items-center py-8">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -446,7 +447,7 @@ const Dashboard: React.FC = () => {
                           </p>
                         </div>
                       ) : (
-                        <p className="text-center text-gray-500 py-2">אין מנויים רשומים</p>
+                        <p className="text-right text-gray-500 py-2">אין מנויים רשומים</p>
                       )}
                     </div>
                     
@@ -463,7 +464,7 @@ const Dashboard: React.FC = () => {
                           </p>
                         </div>
                       ) : (
-                        <p className="text-center text-gray-500 py-2">אין מנויים רשומים</p>
+                        <p className="text-right text-gray-500 py-2">אין מנויים רשומים</p>
                       )}
                     </div>
                   </div>
@@ -476,7 +477,7 @@ const Dashboard: React.FC = () => {
                 <div className="w-6"></div>
                 <CardTitle className="text-xl font-bold text-right">סטטיסטיקות תשלומים</CardTitle>
               </CardHeader>
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 text-right">
                 {paymentStats.loading ? (
                   <div className="flex justify-center items-center py-8">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -486,7 +487,7 @@ const Dashboard: React.FC = () => {
                     <div className="flex-1 border-r-0 md:border-r border-gray-200 p-2 md:p-4">
                       <div className="flex items-center justify-end mb-2">
                         <span className="text-lg font-medium mr-2">סה״כ שולם עד היום</span>
-                        <span role="img" aria-label="money bag" className="text-2xl">💰</span>
+                        <Banknote className="w-6 h-6 text-green-600" />
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold">₪{paymentStats.totalReceived.toLocaleString()}</p>
@@ -496,7 +497,7 @@ const Dashboard: React.FC = () => {
                     <div className="flex-1 p-2 md:p-4">
                       <div className="flex items-center justify-end mb-2">
                         <span className="text-lg font-medium mr-2">חוב פתוח לסגירה</span>
-                        <span role="img" aria-label="receipt" className="text-2xl">🧾</span>
+                        <Receipt className="w-6 h-6 text-amber-600" />
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold">₪{paymentStats.outstandingBalance.toLocaleString()}</p>
@@ -504,7 +505,7 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-center text-gray-500 py-4">אין נתוני תשלומים זמינים</p>
+                  <p className="text-right text-gray-500 py-4">אין נתוני תשלומים זמינים</p>
                 )}
               </CardContent>
             </Card>
