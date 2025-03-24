@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { 
   Users, Calendar, CreditCard, Mail, LogOut,
   BarChart, User, Clock, DollarSign, Home,
@@ -11,22 +11,13 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { supabaseClient } from '@/lib/supabaseClient';
-import { formatDateOnlyInIsrael } from '@/utils/dateUtils';
+import { formatDateOnlyInIsrael, formatDateTimeInIsrael } from '@/utils/dateUtils';
+import { ArticlePublication } from '@/types/article';
 
 interface Stats {
   totalPatients: number;
   upcomingAppointments: number;
   pendingPayments: number;
-}
-
-interface ArticlePublication {
-  id: number;
-  content_id: number;
-  publish_location: string;
-  scheduled_date: string;
-  professional_content: {
-    title: string;
-  } | null;
 }
 
 const Dashboard: React.FC = () => {
@@ -73,7 +64,14 @@ const Dashboard: React.FC = () => {
         setIsPublicationsLoading(true);
         
         const client = await supabaseClient();
-        const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+        const today = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(today.getDate() + 7);
+        
+        const todayStr = today.toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+        const nextWeekStr = nextWeek.toISOString().split('T')[0]; // Get next week's date
+        
+        console.log(`Fetching publications from ${todayStr} to ${nextWeekStr}`);
         
         const { data, error } = await client
           .from('article_publications')
@@ -86,7 +84,8 @@ const Dashboard: React.FC = () => {
               title
             )
           `)
-          .gte('scheduled_date', today)
+          .gte('scheduled_date', todayStr)
+          .lte('scheduled_date', nextWeekStr)
           .is('published_date', null)
           .order('scheduled_date', { ascending: true })
           .limit(5);
@@ -95,7 +94,19 @@ const Dashboard: React.FC = () => {
           throw error;
         }
         
-        setUpcomingPublications(data || []);
+        console.log("Upcoming publications data:", data);
+        
+        // Transform the data to match ArticlePublication type
+        const transformedData = data?.map(item => ({
+          id: item.id,
+          content_id: item.content_id,
+          publish_location: item.publish_location,
+          scheduled_date: item.scheduled_date,
+          published_date: null,
+          professional_content: item.professional_content
+        })) || [];
+        
+        setUpcomingPublications(transformedData as ArticlePublication[]);
         setIsPublicationsLoading(false);
       } catch (error) {
         console.error("Error fetching upcoming publications:", error);
@@ -181,28 +192,24 @@ const Dashboard: React.FC = () => {
     </Button>
   );
 
-  const PublicationCard = ({ publication }: { publication: ArticlePublication }) => (
-    <Card className="bg-gray-50 rounded-xl p-3 hover:shadow-md transition-shadow duration-200">
-      <CardContent className="p-0">
-        <div className="flex justify-between items-center">
-          <div className="flex flex-col items-center">
-            {getLocationIcon(publication.publish_location)}
-            <span className="text-xs mt-1 font-medium">{getLocationText(publication.publish_location)}</span>
-          </div>
-          <div className="flex items-center text-right">
-            <Calendar className="w-4 h-4 ml-2 text-gray-600" />
-            <span className="text-sm">
-              {formatDateOnlyInIsrael(publication.scheduled_date)}
-            </span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+  const PublicationItem = ({ publication }: { publication: ArticlePublication }) => (
+    <div className="flex justify-between items-center border-b border-gray-100 py-3 last:border-0">
+      <div className="flex flex-col items-center">
+        {getLocationIcon(publication.publish_location)}
+        <span className="text-xs mt-1 font-medium">{getLocationText(publication.publish_location)}</span>
+      </div>
+      <div className="flex items-center text-right">
+        <Calendar className="w-4 h-4 ml-2 text-gray-600" />
+        <span className="text-sm">
+          {formatDateTimeInIsrael(publication.scheduled_date)}
+        </span>
+      </div>
+    </div>
   );
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Return to Homepage Button - Updated with Home icon from lucide-react */}
+      {/* Return to Homepage Button */}
       <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 flex items-center">
         <Home className="h-5 w-5 mr-2" />
         <span>חזרה לדף הבית</span>
@@ -227,8 +234,36 @@ const Dashboard: React.FC = () => {
 
       <main className="container mx-auto px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Main Content - 2/3 width on desktop */}
-          <div className="md:col-span-2 space-y-8">
+          {/* Right sidebar: What's New Section */}
+          <div className="order-1 md:order-2">
+            <Card className="w-full mb-6">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Link to="/admin/articles" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                  <span>לכל הפרסומים</span>
+                  <ArrowUpRight className="w-4 h-4 mr-1" />
+                </Link>
+                <CardTitle className="text-xl font-bold text-right">מה חדש?</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {isPublicationsLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : upcomingPublications.length > 0 ? (
+                  <div className="space-y-1">
+                    {upcomingPublications.map((publication) => (
+                      <PublicationItem key={publication.id} publication={publication} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-4">אין פרסומים מתוכננים בקרוב</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="md:col-span-2 space-y-8 order-2 md:order-1">
             {isLoading ? (
               <div className="flex justify-center items-center h-64">
                 <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -257,33 +292,6 @@ const Dashboard: React.FC = () => {
                 </section>
               </>
             )}
-          </div>
-
-          {/* What's New Section - 1/3 width on desktop */}
-          <div className="md:col-span-1">
-            <section className="bg-white p-4 rounded-lg shadow">
-              <div className="flex justify-between items-center mb-4">
-                <Link to="/admin/articles" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
-                  <span>לכל הפרסומים</span>
-                  <ArrowUpRight className="w-4 h-4 mr-1" />
-                </Link>
-                <h2 className="text-xl font-bold text-right">מה חדש?</h2>
-              </div>
-              
-              {isPublicationsLoading ? (
-                <div className="flex justify-center items-center h-40">
-                  <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              ) : upcomingPublications.length > 0 ? (
-                <div className="space-y-3">
-                  {upcomingPublications.map((publication) => (
-                    <PublicationCard key={publication.id} publication={publication} />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-gray-500 py-6">אין פרסומים מתוכננים בקרוב</p>
-              )}
-            </section>
           </div>
         </div>
       </main>
