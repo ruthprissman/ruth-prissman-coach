@@ -115,20 +115,32 @@ const Dashboard: React.FC = () => {
         
         console.log("Upcoming sessions data:", data);
         
-        // Fix the type error - properly handle the patients object
-        const transformedData = data?.map(item => ({
-          id: item.id,
-          patient_id: item.patient_id,
-          session_date: item.session_date,
-          meeting_type: item.meeting_type,
-          status: item.status,
-          zoom_link: item.zoom_link,
-          // Access the first element's name property if patients is returned as an array
-          // Otherwise, access it directly
-          patient_name: Array.isArray(item.patients) 
-            ? item.patients[0]?.name || 'לקוח לא מזוהה'
-            : item.patients?.name || 'לקוח לא מזוהה'
-        })) || [];
+        // Fix the type error by properly handling different response formats
+        const transformedData = data?.map(item => {
+          // Define the patient name with proper type narrowing
+          let patientName = 'לקוח לא מזוהה';
+          
+          if (item.patients) {
+            // If patients is an array with at least one element
+            if (Array.isArray(item.patients) && item.patients.length > 0) {
+              patientName = item.patients[0].name || 'לקוח לא מזוהה';
+            } 
+            // If patients is a direct object with name property
+            else if (typeof item.patients === 'object' && item.patients !== null) {
+              patientName = (item.patients as { name?: string }).name || 'לקוח לא מזוהה';
+            }
+          }
+          
+          return {
+            id: item.id,
+            patient_id: item.patient_id,
+            session_date: item.session_date,
+            meeting_type: item.meeting_type,
+            status: item.status,
+            zoom_link: item.zoom_link,
+            patient_name: patientName
+          };
+        }) || [];
         
         setUpcomingSessions(transformedData);
         setIsSessionsLoading(false);
