@@ -7,7 +7,7 @@ import {
   Calendar, LogOut, Home,
   Mail, Globe, Pencil, ArrowUpRight,
   Phone, Monitor, User,
-  BookOpen, BookText
+  BookOpen, BookText, CreditCard, Users
 } from 'lucide-react';
 import { usePaymentStats } from '@/hooks/usePaymentStats';
 import { supabaseClient } from '@/lib/supabaseClient';
@@ -507,6 +507,32 @@ const Dashboard: React.FC = () => {
                 )}
               </CardContent>
             </Card>
+          </div>
+
+          <div className="w-full mt-10">
+            <h2 className="text-2xl font-bold text-right mb-6 text-[#4A235A]">ניהול מהיר</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Link to="/admin/patients">
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col items-center justify-center h-44 cursor-pointer">
+                  <Users className="w-16 h-16 text-[#7E69AB] mb-4" />
+                  <span className="text-xl font-bold text-[#4A235A]">ניהול לקוחות</span>
+                </div>
+              </Link>
+              
+              <Link to="/admin/calendar">
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col items-center justify-center h-44 cursor-pointer">
+                  <Calendar className="w-16 h-16 text-[#7E69AB] mb-4" />
+                  <span className="text-xl font-bold text-[#4A235A]">ניהול פגישות</span>
+                </div>
+              </Link>
+              
+              <Link to="/admin/sessions">
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col items-center justify-center h-44 cursor-pointer">
+                  <CreditCard className="w-16 h-16 text-[#7E69AB] mb-4" />
+                  <span className="text-xl font-bold text-[#4A235A]">ניהול תשלומים</span>
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
       </main>
