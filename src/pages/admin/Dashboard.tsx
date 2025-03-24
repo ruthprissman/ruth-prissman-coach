@@ -124,6 +124,7 @@ const Dashboard: React.FC = () => {
           meeting_type: item.meeting_type,
           status: item.status,
           zoom_link: item.zoom_link,
+          // Fix here - access the name property correctly from patients object
           patient_name: item.patients?.name || 'לקוח לא מזוהה'
         })) || [];
         
