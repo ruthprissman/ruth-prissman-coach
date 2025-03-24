@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,10 +15,12 @@ import { supabaseClient } from '@/lib/supabaseClient';
 import { formatDateTimeInIsrael } from '@/utils/dateUtils';
 import { ArticlePublication } from '@/types/article';
 import { FutureSession } from '@/types/session';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Dashboard: React.FC = () => {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [upcomingPublications, setUpcomingPublications] = useState<ArticlePublication[]>([]);
   const [isPublicationsLoading, setIsPublicationsLoading] = useState(true);
   const [upcomingSessions, setUpcomingSessions] = useState<(FutureSession & { patient_name?: string })[]>([]);
@@ -363,7 +366,8 @@ const Dashboard: React.FC = () => {
 
       <main className="container mx-auto px-6 py-8">
         <div className="flex flex-col items-center">
-          <div className="w-full md:w-96 mb-6">
+          {/* Dashboard cards grid - horizontal on desktop, vertical on mobile */}
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Link to="/admin/articles" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
@@ -388,9 +392,7 @@ const Dashboard: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
 
-          <div className="w-full md:w-96 mb-6">
             <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Link to="/admin/calendar" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
@@ -417,7 +419,8 @@ const Dashboard: React.FC = () => {
             </Card>
           </div>
 
-          <div className="w-full md:w-96">
+          {/* Second row of cards - subscription stats and payment stats */}
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="w-6"></div>
@@ -467,9 +470,7 @@ const Dashboard: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
 
-          <div className="w-full md:w-96 mt-6">
             <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="w-6"></div>
