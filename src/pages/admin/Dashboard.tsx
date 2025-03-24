@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -5,17 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Calendar, LogOut, Home,
-  Mail, Globe, Pencil, ArrowUpRight
+  Mail, Globe, Pencil, ArrowUpRight,
+  Phone, Monitor, User
 } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { formatDateTimeInIsrael } from '@/utils/dateUtils';
 import { ArticlePublication } from '@/types/article';
+import { FutureSession } from '@/types/session';
 
 const Dashboard: React.FC = () => {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const [upcomingPublications, setUpcomingPublications] = useState<ArticlePublication[]>([]);
   const [isPublicationsLoading, setIsPublicationsLoading] = useState(true);
+  const [upcomingSessions, setUpcomingSessions] = useState<(FutureSession & { patient_name?: string })[]>([]);
+  const [isSessionsLoading, setIsSessionsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUpcomingPublications = async () => {
@@ -73,7 +78,65 @@ const Dashboard: React.FC = () => {
       }
     };
 
+    const fetchUpcomingSessions = async () => {
+      try {
+        setIsSessionsLoading(true);
+        
+        const client = await supabaseClient();
+        const today = new Date();
+        const threeDaysLater = new Date();
+        threeDaysLater.setDate(today.getDate() + 3);
+        
+        const todayStr = today.toISOString().split('T')[0]; 
+        const threeDaysLaterStr = threeDaysLater.toISOString().split('T')[0];
+        
+        console.log(`Fetching sessions from ${todayStr} to ${threeDaysLaterStr}`);
+        
+        const { data, error } = await client
+          .from('future_sessions')
+          .select(`
+            id, 
+            patient_id,
+            session_date,
+            meeting_type,
+            status,
+            zoom_link,
+            patients (
+              name
+            )
+          `)
+          .gte('session_date', todayStr)
+          .lte('session_date', threeDaysLaterStr)
+          .eq('status', 'Scheduled')
+          .order('session_date', { ascending: true });
+        
+        if (error) {
+          throw error;
+        }
+        
+        console.log("Upcoming sessions data:", data);
+        
+        // Transform the data to include patient name
+        const transformedData = data?.map(item => ({
+          id: item.id,
+          patient_id: item.patient_id,
+          session_date: item.session_date,
+          meeting_type: item.meeting_type,
+          status: item.status,
+          zoom_link: item.zoom_link,
+          patient_name: item.patients?.name || 'לקוח לא מזוהה'
+        })) || [];
+        
+        setUpcomingSessions(transformedData);
+        setIsSessionsLoading(false);
+      } catch (error) {
+        console.error("Error fetching upcoming sessions:", error);
+        setIsSessionsLoading(false);
+      }
+    };
+
     fetchUpcomingPublications();
+    fetchUpcomingSessions();
   }, []);
 
   const handleLogout = async () => {
@@ -128,6 +191,64 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
+  const getMeetingTypeIcon = (meetingType: string) => {
+    switch (meetingType) {
+      case 'Phone':
+        return <Phone className="w-5 h-5 text-blue-500" />;
+      case 'Zoom':
+        return <Monitor className="w-5 h-5 text-purple-500" />;
+      case 'In-Person':
+        return <User className="w-5 h-5 text-green-500" />;
+      default:
+        return <Calendar className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
+  const getMeetingTypeText = (meetingType: string) => {
+    switch (meetingType) {
+      case 'Phone':
+        return 'טלפוני';
+      case 'Zoom':
+        return 'זום';
+      case 'In-Person':
+        return 'פרונטלי';
+      default:
+        return meetingType;
+    }
+  };
+
+  const SessionItem = ({ session }: { session: FutureSession & { patient_name?: string } }) => (
+    <div className="flex justify-between items-center border-b border-gray-100 py-3 last:border-0">
+      <div className="flex flex-col items-start">
+        {session.zoom_link && (
+          <a 
+            href={session.zoom_link} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-xs mt-1 text-blue-500 hover:underline"
+          >
+            לינק לזום
+          </a>
+        )}
+      </div>
+      <div className="flex flex-col items-end">
+        <div className="flex items-center mb-1">
+          <span className="text-sm font-medium">{session.patient_name}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="text-sm text-gray-600 ml-2">
+            {formatDateTimeInIsrael(session.session_date)}
+          </span>
+          <Calendar className="w-4 h-4 text-gray-600" />
+        </div>
+        <div className="flex items-center mt-1">
+          <span className="text-xs text-gray-500 ml-1">{getMeetingTypeText(session.meeting_type)}</span>
+          {getMeetingTypeIcon(session.meeting_type)}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Return to Homepage Button */}
@@ -154,9 +275,9 @@ const Dashboard: React.FC = () => {
       </header>
 
       <main className="container mx-auto px-6 py-8">
-        <div className="flex justify-center">
-          {/* Only keep the "What's New" section */}
-          <div className="w-full md:w-96">
+        <div className="flex flex-col items-center">
+          {/* "What's New" section */}
+          <div className="w-full md:w-96 mb-6">
             <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Link to="/admin/articles" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
@@ -178,6 +299,34 @@ const Dashboard: React.FC = () => {
                   </div>
                 ) : (
                   <p className="text-center text-gray-500 py-4">אין פרסומים מתוכננים בקרוב</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Upcoming Sessions section */}
+          <div className="w-full md:w-96">
+            <Card className="w-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Link to="/admin/calendar" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                  <span>ללוח הפגישות</span>
+                  <ArrowUpRight className="w-4 h-4 mr-1" />
+                </Link>
+                <CardTitle className="text-xl font-bold text-right">הפגישות הקרובות שלך</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {isSessionsLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : upcomingSessions.length > 0 ? (
+                  <div className="space-y-1">
+                    {upcomingSessions.map((session) => (
+                      <SessionItem key={session.id} session={session} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-4">אין פגישות מתוכננות בימים הקרובים</p>
                 )}
               </CardContent>
             </Card>
