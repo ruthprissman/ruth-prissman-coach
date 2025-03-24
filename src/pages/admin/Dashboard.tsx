@@ -9,6 +9,7 @@ import {
   Phone, Monitor, User,
   BookOpen, BookText
 } from 'lucide-react';
+import { usePaymentStats } from '@/hooks/usePaymentStats';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { formatDateTimeInIsrael } from '@/utils/dateUtils';
 import { ArticlePublication } from '@/types/article';
@@ -25,6 +26,7 @@ const Dashboard: React.FC = () => {
     contentSubscribers: { total: 0, newLast30Days: 0, loading: true },
     storySubscribers: { total: 0, newLast30Days: 0, loading: true }
   });
+  const paymentStats = usePaymentStats();
 
   useEffect(() => {
     const fetchUpcomingPublications = async () => {
@@ -462,6 +464,46 @@ const Dashboard: React.FC = () => {
                       )}
                     </div>
                   </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="w-full md:w-96 mt-6">
+            <Card className="w-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="w-6"></div>
+                <CardTitle className="text-xl font-bold text-right">סטטיסטיקות תשלומים</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {paymentStats.loading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : (paymentStats.totalReceived > 0 || paymentStats.outstandingBalance > 0) ? (
+                  <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
+                    <div className="flex-1 border-r-0 md:border-r border-gray-200 p-2 md:p-4">
+                      <div className="flex items-center justify-end mb-2">
+                        <span className="text-lg font-medium mr-2">סה״כ שולם עד היום</span>
+                        <span role="img" aria-label="money bag" className="text-2xl">💰</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold">₪{paymentStats.totalReceived.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 p-2 md:p-4">
+                      <div className="flex items-center justify-end mb-2">
+                        <span className="text-lg font-medium mr-2">חוב פתוח לסגירה</span>
+                        <span role="img" aria-label="receipt" className="text-2xl">🧾</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold">₪{paymentStats.outstandingBalance.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-500 py-4">אין נתוני תשלומים זמינים</p>
                 )}
               </CardContent>
             </Card>
