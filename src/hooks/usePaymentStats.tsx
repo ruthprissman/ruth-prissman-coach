@@ -45,9 +45,24 @@ export const usePaymentStats = () => {
 
         if (unpaidError) throw unpaidError;
 
-        // Calculate outstanding balance
+        // Calculate outstanding balance with proper type checking
         const outstandingBalance = unpaidSessions?.reduce((sum, session) => {
-          const sessionPrice = session.patients?.session_price || 0;
+          // Check if patients exists and handle different possible data structures
+          if (!session.patients) return sum;
+          
+          let sessionPrice = 0;
+          
+          // If patients is an array (when returned as an array of related records)
+          if (Array.isArray(session.patients)) {
+            if (session.patients.length > 0 && session.patients[0].session_price) {
+              sessionPrice = session.patients[0].session_price;
+            }
+          } 
+          // If patients is a direct object (when returned as a nested object)
+          else if (typeof session.patients === 'object') {
+            sessionPrice = session.patients.session_price || 0;
+          }
+          
           return sum + sessionPrice;
         }, 0) || 0;
 
