@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Calendar, LogOut, Home,
   Mail, Globe, Pencil, ArrowUpRight,
-  Phone, Monitor, User
+  Phone, Monitor, User,
+  BookOpen, BookText
 } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { formatDateTimeInIsrael } from '@/utils/dateUtils';
@@ -20,6 +21,10 @@ const Dashboard: React.FC = () => {
   const [isPublicationsLoading, setIsPublicationsLoading] = useState(true);
   const [upcomingSessions, setUpcomingSessions] = useState<(FutureSession & { patient_name?: string })[]>([]);
   const [isSessionsLoading, setIsSessionsLoading] = useState(true);
+  const [subscriptionStats, setSubscriptionStats] = useState({
+    contentSubscribers: { total: 0, newLast30Days: 0, loading: true },
+    storySubscribers: { total: 0, newLast30Days: 0, loading: true }
+  });
 
   useEffect(() => {
     const fetchUpcomingPublications = async () => {
@@ -150,8 +155,75 @@ const Dashboard: React.FC = () => {
       }
     };
 
+    const fetchSubscriptionStats = async () => {
+      try {
+        const client = await supabaseClient();
+        
+        // Calculate the date 30 days ago
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
+        
+        // Fetch content subscribers statistics
+        const { data: contentSubscribers, error: contentError } = await client
+          .from('content_subscribers')
+          .select('joined_at')
+          .eq('is_subscribed', true);
+          
+        if (contentError) {
+          console.error("Error fetching content subscribers:", contentError);
+          throw contentError;
+        }
+        
+        // Fetch story subscribers statistics
+        const { data: storySubscribers, error: storyError } = await client
+          .from('story_subscribers')
+          .select('joined_at')
+          .eq('is_subscribed', true);
+          
+        if (storyError) {
+          console.error("Error fetching story subscribers:", storyError);
+          throw storyError;
+        }
+        
+        // Calculate total and new subscribers for content
+        const totalContentSubscribers = contentSubscribers?.length || 0;
+        const newContentSubscribers = contentSubscribers?.filter(sub => 
+          sub.joined_at && new Date(sub.joined_at) >= thirtyDaysAgo
+        ).length || 0;
+        
+        // Calculate total and new subscribers for stories
+        const totalStorySubscribers = storySubscribers?.length || 0;
+        const newStorySubscribers = storySubscribers?.filter(sub => 
+          sub.joined_at && new Date(sub.joined_at) >= thirtyDaysAgo
+        ).length || 0;
+        
+        // Update state with the calculated statistics
+        setSubscriptionStats({
+          contentSubscribers: {
+            total: totalContentSubscribers,
+            newLast30Days: newContentSubscribers,
+            loading: false
+          },
+          storySubscribers: {
+            total: totalStorySubscribers,
+            newLast30Days: newStorySubscribers,
+            loading: false
+          }
+        });
+        
+      } catch (error) {
+        console.error("Error fetching subscription statistics:", error);
+        setSubscriptionStats(prev => ({
+          contentSubscribers: { ...prev.contentSubscribers, loading: false },
+          storySubscribers: { ...prev.storySubscribers, loading: false }
+        }));
+      }
+    };
+
     fetchUpcomingPublications();
     fetchUpcomingSessions();
+    fetchSubscriptionStats();
   }, []);
 
   const handleLogout = async () => {
@@ -316,7 +388,7 @@ const Dashboard: React.FC = () => {
             </Card>
           </div>
 
-          <div className="w-full md:w-96">
+          <div className="w-full md:w-96 mb-6">
             <Card className="w-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <Link to="/admin/calendar" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
@@ -338,6 +410,58 @@ const Dashboard: React.FC = () => {
                   </div>
                 ) : (
                   <p className="text-center text-gray-500 py-4">אין פגישות מתוכננות בימים הקרובים</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="w-full md:w-96">
+            <Card className="w-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="w-6"></div>
+                <CardTitle className="text-xl font-bold text-right">סטטיסטיקות מנויים</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                {subscriptionStats.contentSubscribers.loading || subscriptionStats.storySubscribers.loading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
+                    <div className="flex-1 border-r-0 md:border-r border-gray-200 p-2 md:p-4">
+                      <div className="flex items-center justify-end mb-2">
+                        <span className="text-lg font-medium mr-2">מנויים לתוכן מקצועי</span>
+                        <BookOpen className="w-6 h-6 text-purple-600" />
+                      </div>
+                      {subscriptionStats.contentSubscribers.total > 0 ? (
+                        <div className="text-right">
+                          <p className="text-2xl font-bold">{subscriptionStats.contentSubscribers.total}</p>
+                          <p className="text-sm text-gray-600">
+                            {subscriptionStats.contentSubscribers.newLast30Days} חדשים ב-30 ימים האחרונים
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-center text-gray-500 py-2">אין מנויים רשומים</p>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 p-2 md:p-4">
+                      <div className="flex items-center justify-end mb-2">
+                        <span className="text-lg font-medium mr-2">מנויים לסיפורים</span>
+                        <BookText className="w-6 h-6 text-blue-600" />
+                      </div>
+                      {subscriptionStats.storySubscribers.total > 0 ? (
+                        <div className="text-right">
+                          <p className="text-2xl font-bold">{subscriptionStats.storySubscribers.total}</p>
+                          <p className="text-sm text-gray-600">
+                            {subscriptionStats.storySubscribers.newLast30Days} חדשים ב-30 ימים האחרונים
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-center text-gray-500 py-2">אין מנויים רשומים</p>
+                      )}
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
