@@ -2,10 +2,17 @@
 import React from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import { Helmet } from 'react-helmet-async';
 
 export default function Terms() {
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>תנאי שימוש - רות פריסמן | אתר קוד הנפש</title>
+        <meta name="description" content="תנאי השימוש באתר של רות פריסמן. קראי בעיון את ההנחיות, הזכויות וההגבלות בנוגע לשימוש בתכני האתר ובשירותים המוצעים." />
+        <meta name="keywords" content="תנאי שימוש, רות פריסמן, מדיניות האתר, קוד הנפש, זכויות יוצרים, שימוש באתר, תקנון, אחריות משפטית" />
+      </Helmet>
+      
       <div 
         className="min-h-screen bg-cover bg-center bg-fixed relative" 
         style={{ backgroundImage: 'url(https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/clear-background.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzaXRlX2ltZ3MvY2xlYXItYmFja2dyb3VuZC5wbmciLCJpYXQiOjE3NDExMDE0OTMsImV4cCI6MjM3MTgyMTQ5M30.k9JPVqmzmFtfxa8jbYpr1Hi3T4l2ZaHQZdPy2gGpgvk)' }}
