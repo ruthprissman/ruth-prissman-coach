@@ -4,10 +4,16 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 
 export default function About() {
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>רות פריסמן - אודות | מאמנת רגשית בגישת קוד הנפש</title>
+        <meta name="description" content="הכירו את רות פריסמן, מאמנת רגשית לנשים בגישת קוד הנפש. סיפור אישי, ניסיון מקצועי ותשוקה לליווי תהליכי עומק נשיים." />
+        <meta name="keywords" content="רות פריסמן, על רות, קואצ'רית רגשית, מאמנת אישית לנשים, קוד הנפש, ליווי רגשי, אודות רות פריסמן" />
+      </Helmet>
       <Navigation />
       <main className="flex-grow relative z-10">
         <div className="container mx-auto px-4 py-16 md:py-24">
