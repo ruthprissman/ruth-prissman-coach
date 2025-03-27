@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -10,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Helmet } from 'react-helmet-async';
 
 const Articles = () => {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -34,11 +34,9 @@ const Articles = () => {
         const now = new Date().toISOString();
         console.log("🔍 [Articles] Current timestamp for filtering:", now);
         
-        // Get only the date part of today (in YYYY-MM-DD format)
         const todayDateOnly = new Date().toISOString().split('T')[0];
         console.log("🔍 [Articles] Today's date for date-only comparison:", todayDateOnly);
         
-        // Updated query to join with article_publications and filter by website publications
         console.log("🔍 [Articles] Executing Supabase query to fetch professional_content with joined tables");
         const { data, error } = await supabase
           .from('professional_content')
@@ -58,24 +56,18 @@ const Articles = () => {
         console.log(`🔍 [Articles] Raw database result: ${data?.length} records returned`);
         console.log("🔍 [Articles] Sample of first record:", data?.[0] ? JSON.stringify(data[0], null, 2) : "No records");
         
-        // Filter articles to only include those with a Website publication
-        // that is scheduled for today or earlier (comparing only date parts)
-        console.log("🔍 [Articles] Starting client-side filtering for Website publications");
         const articlesData = (data as Article[]).filter(article => {
           if (!article.article_publications || article.article_publications.length === 0) {
             console.log(`🔍 [Articles] Article ID ${article.id} skipped: No article_publications`);
             return false;
           }
           
-          // Find any Website publication that is scheduled for today or earlier
           const hasValidWebsitePublication = article.article_publications.some(pub => {
             const isWebsite = pub.publish_location === 'Website';
             const hasScheduledDate = !!pub.scheduled_date;
             
-            // Extract only the date part (YYYY-MM-DD) from the scheduled_date
             const scheduledDateOnly = pub.scheduled_date ? pub.scheduled_date.split('T')[0] : null;
             
-            // Compare only the date parts (YYYY-MM-DD), ignoring time
             const isScheduledForTodayOrEarlier = scheduledDateOnly && scheduledDateOnly <= todayDateOnly;
             
             if (!isWebsite) {
@@ -163,7 +155,6 @@ const Articles = () => {
         const utcDate = new Date(publicationDateStr);
         console.log("🛠️ [Articles] UTC Date object:", utcDate);
         
-        // For filtering purposes, compare in UTC
         const result = utcDate >= monthAgo && utcDate <= now;
         console.log(`🛠️ [Articles] Article ${article.id} month filter result:`, result);
         
@@ -187,7 +178,6 @@ const Articles = () => {
         const utcDate = new Date(publicationDateStr);
         console.log("🛠️ [Articles] UTC Date object:", utcDate);
         
-        // For filtering purposes, compare in UTC
         const result = utcDate >= weekAgo && utcDate <= now;
         console.log(`🛠️ [Articles] Article ${article.id} week filter result:`, result);
         
@@ -211,6 +201,12 @@ const Articles = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>מאמרים מקצועיים - רות פריסמן | קוד הנפש</title>
+        <meta name="description" content="מאמרים מקצועיים מאת רות פריסמן, העוסקים באימון רגשי, קוד הנפש, תהליכי התפתחות, תובנות מעמיקות וכלים לנשים במסע אישי." />
+        <meta name="keywords" content="מאמרים רגשיים, אימון רגשי, רות פריסמן, כתיבה טיפולית, העצמה נשית, קואצ'ינג, קוד הנפש, רגש, התפתחות, תהליך אישי, גישת קוד הנפש" />
+      </Helmet>
+      
       <Navigation />
       
       <main className="flex-grow pt-24 pb-16">
