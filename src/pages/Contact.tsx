@@ -12,6 +12,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { toast } from 'sonner';
 import { useForm as useFormspreeForm } from '@formspree/react';
 import { FieldValues } from 'react-hook-form';
+import { Helmet } from 'react-helmet-async';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "נא להזין שם מלא" }),
@@ -119,6 +120,12 @@ export default function Contact() {
   return (
     <div className="min-h-screen flex flex-col bg-cover bg-center bg-fixed"
       style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/mn961lxdmrzb3hu61jr8c/clear-background.jpg?rlkey=te75ba634sz277355u5onqvuy&st=qxb55gpi&raw=1)' }}>
+      <Helmet>
+        <title>צור קשר - רות פריסמן | אימון רגשי בגישת קוד הנפש</title>
+        <meta name="description" content="רוצה להתחיל תהליך אישי עם רות פריסמן? כאן תוכלי ליצור קשר, להשאיר פרטים ולקבל ליווי רגשי בגישת קוד הנפש." />
+        <meta name="keywords" content="צור קשר, רות פריסמן, אימון רגשי, קוד הנפש, טופס יצירת קשר, ליווי אישי, התחלת תהליך, אימון לנשים, פנייה לרות פריסמן" />
+      </Helmet>
+      
       <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]"></div>
       
       <Navigation />
