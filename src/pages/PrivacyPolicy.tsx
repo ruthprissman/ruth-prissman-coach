@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Footer } from '@/components/Footer';
 import { Navigation } from '@/components/Navigation';
+import { Helmet } from 'react-helmet-async';
 
 export default function PrivacyPolicy() {
   // Generate the current date in a readable format
@@ -14,6 +15,12 @@ export default function PrivacyPolicy() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>מדיניות פרטיות - רות פריסמן | אתר קוד הנפש</title>
+        <meta name="description" content="מדיניות הפרטיות של רות פריסמן באתר קוד הנפש. כל המידע על איסוף נתונים, שמירת פרטיות המשתמשות, ושימוש בעוגיות (Cookies)." />
+        <meta name="keywords" content="מדיניות פרטיות, רות פריסמן, פרטיות באתר, הגנת מידע, שמירת סודיות, עוגיות, Cookies, הגנת פרטיות, שימוש במידע אישי" />
+      </Helmet>
+      
       <Navigation />
       <main className="flex-grow container mx-auto px-4 py-8 md:py-12 animate-fade-in">
         <div className="max-w-3xl mx-auto">
