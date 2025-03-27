@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { Helmet } from 'react-helmet-async';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -215,6 +216,12 @@ const UnsubscribePage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col unsubscribe-page">
+      <Helmet>
+        <title>הסרה מרשימת תפוצה - רות פריסמן</title>
+        <meta name="description" content="אם ברצונך להסיר את עצמך מרשימת התפוצה של רות פריסמן, תוכלי לעשות זאת כאן במהירות ובקלות." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+      
       <Navigation />
       <main className="flex-grow">
         <div className="container mx-auto px-4 py-16 md:py-24 max-w-md">
