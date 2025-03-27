@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StorySubscriptionForm } from '@/components/StorySubscriptionForm';
 import * as kosherZmanim from 'kosher-zmanim';
+import { Helmet } from 'react-helmet-async';
 
 // Supabase configuration
 const supabaseUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co';
@@ -170,6 +171,12 @@ const Stories = () => {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-white">
+      <Helmet>
+        <title>סיפורים קצרים - רות פריסמן | קוד הנפש</title>
+        <meta name="description" content="סיפורים קצרים שנכתבו על ידי רות פריסמן, המעבירים עומק רגשי, תובנות נשיות ומסע פנימי בגישת קוד הנפש. כתיבה שנוגעת בנפש." />
+        <meta name="keywords" content="סיפורים קצרים, כתיבה רגשית, רות פריסמן, קוד הנפש, כתיבה נשית, סיפור אישי, העצמה רגשית, סיפורים טיפוליים, תהליך רגשי" />
+      </Helmet>
+      
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0 opacity-20" 
         style={{ 
