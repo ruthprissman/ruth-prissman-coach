@@ -79,7 +79,7 @@ const PoemView = () => {
       <div className="flex flex-col min-h-screen">
         <Navigation />
         
-        <main className="flex-grow pt-24 px-4 md:px-8 lg:px-16 max-w-7xl mx-auto w-full">
+        <main className="flex-grow pt-24 px-4 md:px-8 lg:px-16 mx-auto w-full">
           {loading ? (
             <div className="flex justify-center items-center min-h-[200px]">
               <div className="animate-pulse text-purple-dark">טוען את השיר...</div>
@@ -95,11 +95,11 @@ const PoemView = () => {
               </h1>
               
               <div className="flex justify-center">
-                <div className="w-full max-w-4xl">
+                <div className="w-full max-w-3xl mx-auto px-4">
                   <div className="poem-content-columns">
                     <MarkdownPreview 
                       markdown={poem.content_markdown} 
-                      className="text-lg leading-relaxed text-purple-dark poem-content" 
+                      className="text-lg leading-relaxed text-purple-dark poem-content text-center" 
                     />
                   </div>
                 </div>
@@ -122,11 +122,13 @@ const PoemView = () => {
           column-gap: 3rem;
           text-align: center;
           margin: 0 auto;
+          max-width: 90%;
         }
         
         @media (min-width: 768px) {
           .poem-content-columns {
             column-count: 2;
+            max-width: 100%;
           }
         }
         
@@ -134,6 +136,18 @@ const PoemView = () => {
         .poem-content-columns p {
           break-inside: avoid;
           margin-bottom: 1rem;
+          text-align: center;
+          padding: 0 1rem;
+        }
+        
+        /* Additional styling for poem content */
+        .poem-content {
+          display: inline-block;
+          width: 100%;
+        }
+        
+        .poem-content p {
+          text-align: center;
         }
       `}</style>
     </>
