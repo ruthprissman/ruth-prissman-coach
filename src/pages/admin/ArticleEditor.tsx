@@ -67,6 +67,7 @@ const formSchema = z.object({
   category_id: z.string().nullable(),
   scheduled_publish: z.date().nullable(),
   contact_email: z.string().email({ message: "נא להזין אימייל תקין" }).nullable().or(z.literal('')),
+  type: z.string().default('article'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -99,6 +100,7 @@ const ArticleEditor: React.FC = () => {
       category_id: NONE_CATEGORY,
       scheduled_publish: null,
       contact_email: '',
+      type: 'article',
     },
   });
 
@@ -145,6 +147,7 @@ const ArticleEditor: React.FC = () => {
           category_id: data.category_id ? String(data.category_id) : NONE_CATEGORY,
           scheduled_publish: data.scheduled_publish ? new Date(data.scheduled_publish) : null,
           contact_email: data.contact_email || '',
+          type: data.type || 'article',
         });
       }
     } catch (error: any) {
@@ -245,6 +248,7 @@ const ArticleEditor: React.FC = () => {
         category_id: data.category_id === NONE_CATEGORY ? null : parseInt(data.category_id as string),
         scheduled_publish: data.scheduled_publish ? data.scheduled_publish.toISOString() : null,
         contact_email: data.contact_email || null,
+        type: data.type,
       };
       
       if (publishNow || (data.scheduled_publish && new Date(data.scheduled_publish) <= new Date() && !article?.published_at)) {
@@ -612,7 +616,7 @@ const ArticleEditor: React.FC = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="scheduled_publish"
@@ -686,6 +690,35 @@ const ArticleEditor: React.FC = () => {
                       <FormDescription>
                         אימייל ליצירת קשר שיוצג במאמר
                       </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>סוג תוכן</FormLabel>
+                      <Select 
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setHasUnsavedChanges(true);
+                        }}
+                        defaultValue="article"
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="בחר סוג תוכן" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="article">מאמר</SelectItem>
+                          <SelectItem value="poem">שיר</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

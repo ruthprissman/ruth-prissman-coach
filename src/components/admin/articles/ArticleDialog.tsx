@@ -35,6 +35,7 @@ const formSchema = z.object({
   category_id: z.string().nullable(),
   scheduled_publish: z.date().nullable(),
   contact_email: z.string().email({ message: "נא להזין אימייל תקין" }).nullable().or(z.literal('')),
+  type: z.string().default("article"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -60,6 +61,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
     category_id: article?.category_id ? String(article.category_id) : null,
     scheduled_publish: article?.scheduled_publish ? new Date(article.scheduled_publish) : null,
     contact_email: article?.contact_email || '',
+    type: article?.type || 'article',
   };
 
   const form = useForm<FormValues>({
@@ -80,6 +82,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         category_id: data.category_id ? parseInt(data.category_id) : null,
         scheduled_publish: data.scheduled_publish ? data.scheduled_publish.toISOString() : null,
         contact_email: data.contact_email || null,
+        type: data.type,
       };
       
       // Check if scheduled publish date has passed and we should auto-publish
@@ -142,34 +145,63 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
             />
             
             {/* Category */}
-            <FormField
-              control={form.control}
-              name="category_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>קטגוריה</FormLabel>
-                  <Select 
-                    value={field.value || ""}
-                    onValueChange={field.onChange}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="בחר קטגוריה" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">ללא קטגוריה</SelectItem>
-                      {categories.map(category => (
-                        <SelectItem key={category.id} value={String(category.id)}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="category_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>קטגוריה</FormLabel>
+                    <Select 
+                      value={field.value || ""}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="בחר קטגוריה" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">ללא קטגוריה</SelectItem>
+                        {categories.map(category => (
+                          <SelectItem key={category.id} value={String(category.id)}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Content Type */}
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>סוג תוכן</FormLabel>
+                    <Select 
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      defaultValue="article"
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="בחר סוג תוכן" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="article">מאמר</SelectItem>
+                        <SelectItem value="poem">שיר</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             {/* Schedule Publish Date */}
             <FormField
