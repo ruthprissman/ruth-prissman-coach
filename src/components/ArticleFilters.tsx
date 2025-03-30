@@ -9,6 +9,8 @@ interface ArticleFiltersProps {
   onCategoryChange: (categoryId: number | null) => void;
   dateFilter: string;
   onDateFilterChange: (filter: string) => void;
+  contentType: string;
+  onContentTypeChange: (type: string) => void;
 }
 
 const ArticleFilters: React.FC<ArticleFiltersProps> = ({ 
@@ -16,11 +18,30 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
   selectedCategory, 
   onCategoryChange, 
   dateFilter, 
-  onDateFilterChange 
+  onDateFilterChange,
+  contentType,
+  onContentTypeChange
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 w-full">
-      <div className="w-full sm:w-1/2 flex flex-col">
+    <div className="flex flex-col lg:flex-row gap-4 w-full">
+      <div className="w-full lg:w-1/3 flex flex-col">
+        <Label htmlFor="content-type-filter" className="mb-2">סוג תוכן</Label>
+        <Select
+          value={contentType}
+          onValueChange={(value) => onContentTypeChange(value)}
+          dir="rtl"
+        >
+          <SelectTrigger id="content-type-filter" className="text-right h-10 filter-input">
+            <SelectValue placeholder="מאמר" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="article">מאמר</SelectItem>
+            <SelectItem value="poem">שיר</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="w-full lg:w-1/3 flex flex-col">
         <Label htmlFor="category-filter" className="mb-2">סינון לפי קטגוריה</Label>
         <Select
           value={selectedCategory?.toString() || 'all'}
@@ -41,7 +62,7 @@ const ArticleFilters: React.FC<ArticleFiltersProps> = ({
         </Select>
       </div>
       
-      <div className="w-full sm:w-1/2 flex flex-col">
+      <div className="w-full lg:w-1/3 flex flex-col">
         <Label htmlFor="date-filter" className="mb-2">סינון לפי תאריך</Label>
         <Select
           value={dateFilter}

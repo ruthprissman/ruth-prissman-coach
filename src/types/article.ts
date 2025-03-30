@@ -23,6 +23,7 @@ export interface ProfessionalContent {
   published_at: string | null;
   contact_email: string | null;
   created_at?: string;
+  type?: string; // Added type field
 }
 
 export interface Article {
@@ -34,6 +35,7 @@ export interface Article {
   published_at: string | null;
   contact_email: string | null;
   created_at?: string;
+  type?: string; // Added type field
   categories?: Category; // Add the joined category data
   article_publications?: ArticlePublication[];
   staticLinks?: Array<{id: number, fixed_text: string, url: string}>; // Updated to use fixed_text instead of title
@@ -47,6 +49,7 @@ export interface ArticleFormData {
   scheduled_publish: string | null;
   contact_email: string | null;
   publish_locations: PublicationFormData[];
+  type?: string; // Added type field
 }
 
 export type PublishLocationType = 'Website' | 'Email' | 'WhatsApp' | 'All' | 'Other';

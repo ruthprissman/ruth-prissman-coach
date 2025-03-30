@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -19,6 +20,7 @@ const Articles = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [contentType, setContentType] = useState<string>('article');
 
   useEffect(() => {
     const fetchArticles = async () => {
@@ -26,7 +28,8 @@ const Articles = () => {
       console.log("🔍 [Articles] Input parameters:", { 
         selectedCategory, 
         dateFilter,
-        searchQuery
+        searchQuery,
+        contentType
       });
       
       setIsLoading(true);
@@ -46,6 +49,7 @@ const Articles = () => {
             article_publications (*)
           `)
           .not('published_at', 'is', null)
+          .eq('type', contentType)
           .order('published_at', { ascending: false });
 
         if (error) {
@@ -118,7 +122,7 @@ const Articles = () => {
     };
 
     fetchArticles();
-  }, []);
+  }, [contentType]);
 
   useEffect(() => {
     let filtered = [...articles];
@@ -237,6 +241,8 @@ const Articles = () => {
                 onCategoryChange={setSelectedCategory}
                 dateFilter={dateFilter}
                 onDateFilterChange={setDateFilter}
+                contentType={contentType}
+                onContentTypeChange={setContentType}
               />
             </div>
           </div>
