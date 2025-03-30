@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import Index from './pages/Index';
@@ -8,6 +7,7 @@ import Stories from './pages/Stories';
 import Articles from './pages/Articles';
 import Poems from './pages/Poems';
 import ArticleView from './pages/ArticleView';
+import PoemView from './pages/PoemView';
 import Unsubscribe from './pages/Unsubscribe';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import NotFound from './pages/NotFound';
@@ -51,6 +51,7 @@ function App() {
                 <Route path="/articles" element={<Articles />} />
                 <Route path="/poems" element={<Poems />} />
                 <Route path="/articles/:id" element={<ArticleView />} />
+                <Route path="/poems/:id" element={<PoemView />} />
                 <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<Terms />} />
