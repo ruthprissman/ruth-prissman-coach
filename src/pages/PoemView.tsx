@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -118,17 +117,17 @@ const PoemView = () => {
       {/* Add CSS for two-column poem layout */}
       <style>{`
         .poem-content-columns {
-          column-count: 1;
+          column-count: 2;
           column-gap: 3rem;
           text-align: center;
           margin: 0 auto;
           max-width: 90%;
         }
         
-        @media (min-width: 768px) {
+        @media (max-width: 640px) {
           .poem-content-columns {
-            column-count: 2;
-            max-width: 100%;
+            column-count: 1;
+            max-width: 95%;
           }
         }
         
