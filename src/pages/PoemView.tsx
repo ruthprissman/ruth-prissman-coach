@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -94,11 +95,11 @@ const PoemView = () => {
               </h1>
               
               <div className="flex justify-center">
-                <div className="w-full max-w-3xl mx-auto px-4">
+                <div className="w-full max-w-3xl mx-auto px-4 poem-container">
                   <div className="poem-content-columns">
                     <MarkdownPreview 
                       markdown={poem.content_markdown} 
-                      className="text-lg leading-relaxed text-purple-dark poem-content text-center" 
+                      className="text-lg leading-relaxed text-purple-dark poem-content" 
                     />
                   </div>
                 </div>
@@ -116,36 +117,42 @@ const PoemView = () => {
 
       {/* Add CSS for two-column poem layout */}
       <style>{`
+        .poem-container {
+          width: 100%;
+          max-width: 100%;
+          margin: 0 auto;
+        }
+        
         .poem-content-columns {
           column-count: 2;
           column-gap: 3rem;
-          text-align: center;
+          column-rule: 1px solid rgba(128, 0, 128, 0.1);
           margin: 0 auto;
-          max-width: 90%;
+          width: 100%;
+          display: block;
+          text-align: center;
         }
         
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
           .poem-content-columns {
             column-count: 1;
-            max-width: 95%;
+            column-gap: 0;
+            column-rule: none;
           }
         }
         
-        /* Ensure no content breaks across columns */
-        .poem-content-columns p {
+        /* Force break between columns and prevent content from flowing across columns */
+        .poem-content-columns > * {
           break-inside: avoid;
-          margin-bottom: 1rem;
+          page-break-inside: avoid;
+          display: inline-block;
+          width: 100%;
           text-align: center;
-          padding: 0 1rem;
         }
         
         /* Additional styling for poem content */
-        .poem-content {
-          display: inline-block;
-          width: 100%;
-        }
-        
         .poem-content p {
+          margin-bottom: 1rem;
           text-align: center;
         }
       `}</style>
