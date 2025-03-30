@@ -9,11 +9,12 @@ import { he } from 'date-fns/locale';
 
 interface ArticleCardProps {
   article: Article;
+  basePath?: string;
 }
 
 const DEFAULT_IMAGE = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/default.jpg';
 
-const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
+const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/articles" }) => {
   const [isRead, setIsRead] = useState(false);
   const [hebrewDate, setHebrewDate] = useState('');
   
@@ -101,7 +102,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   
   return (
     <Link 
-      to={`/articles/${article.id}`} 
+      to={`${basePath}/${article.id}`}
       onClick={markAsRead}
       className="block bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-[1.02] hover:shadow-lg"
     >
