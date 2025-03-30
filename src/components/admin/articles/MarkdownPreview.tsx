@@ -20,12 +20,8 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
 }) => {
   if (!markdown) return <div className={`prose max-w-none ${className}`}></div>;
   
-  // Add a style to ensure proper column display
-  const processedMarkdown = markdown
-    .split('\n\n')
-    .map(paragraph => `<p>${paragraph.replace(/\n/g, '<br>')}</p>`)
-    .join('');
-  
+  // Process the markdown while preserving paragraphs for column layout
+  const processedMarkdown = markdown;
   const html = mdParser.render(processedMarkdown);
   
   return (

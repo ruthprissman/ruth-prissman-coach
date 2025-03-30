@@ -6,10 +6,12 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import MarkdownPreview from '@/components/admin/articles/MarkdownPreview';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { useToast } from '@/hooks/use-toast';
 
 const PoemView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [poem, setPoemData] = useState<{
     title: string;
     content_markdown: string;
@@ -57,6 +59,11 @@ const PoemView = () => {
       } catch (err: any) {
         console.error('Error fetching poem:', err);
         setError(err.message || 'שגיאה בטעינת השיר');
+        toast({
+          title: "שגיאה",
+          description: "לא ניתן לטעון את השיר המבוקש",
+          variant: "destructive",
+        });
         // Redirect to poems list after short delay on error
         setTimeout(() => navigate('/poems'), 2000);
       } finally {
@@ -67,7 +74,7 @@ const PoemView = () => {
     if (id) {
       fetchPoem();
     }
-  }, [id, navigate]);
+  }, [id, navigate, toast]);
 
   return (
     <>
@@ -94,14 +101,12 @@ const PoemView = () => {
                 {poem.title}
               </h1>
               
-              <div className="flex justify-center">
-                <div className="w-full max-w-3xl mx-auto px-4 poem-container">
-                  <div className="poem-content-columns">
-                    <MarkdownPreview 
-                      markdown={poem.content_markdown} 
-                      className="text-lg leading-relaxed text-purple-dark poem-content" 
-                    />
-                  </div>
+              <div className="poem-container max-w-4xl mx-auto">
+                <div className="poem-content">
+                  <MarkdownPreview 
+                    markdown={poem.content_markdown} 
+                    className="poem-text" 
+                  />
                 </div>
               </div>
             </div>
@@ -118,42 +123,35 @@ const PoemView = () => {
       {/* Add CSS for two-column poem layout */}
       <style>{`
         .poem-container {
-          width: 100%;
-          max-width: 100%;
-          margin: 0 auto;
+          padding: 0 1rem;
         }
         
-        .poem-content-columns {
+        .poem-content {
           column-count: 2;
           column-gap: 3rem;
-          column-rule: 1px solid rgba(128, 0, 128, 0.1);
-          margin: 0 auto;
-          width: 100%;
-          display: block;
+          column-rule: 1px solid rgba(128, 0, 128, 0.2);
           text-align: center;
+        }
+        
+        .poem-text {
+          text-align: center;
+          font-size: 1.125rem;
+          line-height: 1.75;
+          color: #4A235A;
+        }
+        
+        /* Fix for how markdown content is rendered */
+        .poem-text p {
+          margin-bottom: 1.5rem;
+          break-inside: avoid;
+          text-align: center;
+          display: block;
         }
         
         @media (max-width: 768px) {
-          .poem-content-columns {
+          .poem-content {
             column-count: 1;
-            column-gap: 0;
-            column-rule: none;
           }
-        }
-        
-        /* Force break between columns and prevent content from flowing across columns */
-        .poem-content-columns > * {
-          break-inside: avoid;
-          page-break-inside: avoid;
-          display: inline-block;
-          width: 100%;
-          text-align: center;
-        }
-        
-        /* Additional styling for poem content */
-        .poem-content p {
-          margin-bottom: 1rem;
-          text-align: center;
         }
       `}</style>
     </>
