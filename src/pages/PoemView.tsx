@@ -116,7 +116,7 @@ const PoemView = () => {
       </div>
 
       {/* Add CSS for two-column poem layout */}
-      <style jsx="true">{`
+      <style>{`
         .poem-content-columns {
           column-count: 1;
           column-gap: 3rem;
