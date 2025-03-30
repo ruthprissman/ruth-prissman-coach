@@ -35,6 +35,7 @@ export function Footer() {
             <ul className="space-y-2">
               <li><Link to="/about" className="text-purple-dark hover:text-gold transition-colors">אודות</Link></li>
               <li><Link to="/articles" className="text-purple-dark hover:text-gold transition-colors">מאמרים</Link></li>
+              <li><Link to="/poems" className="text-purple-dark hover:text-gold transition-colors">שירים</Link></li>
               <li><Link to="/stories" className="text-purple-dark hover:text-gold transition-colors">סיפורים קצרים</Link></li>
               <li><Link to="/faq" className="text-purple-dark hover:text-gold transition-colors">שאלות ותשובות</Link></li>
               <li><Link to="/unsubscribe" className="text-purple-dark hover:text-gold transition-colors">הסרה מרשימת תפוצה</Link></li>
