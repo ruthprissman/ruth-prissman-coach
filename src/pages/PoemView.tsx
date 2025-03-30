@@ -94,12 +94,14 @@ const PoemView = () => {
                 {poem.title}
               </h1>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-right">
-                <div className="prose max-w-none">
-                  <MarkdownPreview 
-                    markdown={poem.content_markdown} 
-                    className="text-lg leading-relaxed text-purple-dark poem-content" 
-                  />
+              <div className="flex justify-center">
+                <div className="w-full max-w-4xl">
+                  <div className="poem-content-columns">
+                    <MarkdownPreview 
+                      markdown={poem.content_markdown} 
+                      className="text-lg leading-relaxed text-purple-dark poem-content" 
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -112,6 +114,28 @@ const PoemView = () => {
         
         <Footer />
       </div>
+
+      {/* Add CSS for two-column poem layout */}
+      <style jsx="true">{`
+        .poem-content-columns {
+          column-count: 1;
+          column-gap: 3rem;
+          text-align: center;
+          margin: 0 auto;
+        }
+        
+        @media (min-width: 768px) {
+          .poem-content-columns {
+            column-count: 2;
+          }
+        }
+        
+        /* Ensure no content breaks across columns */
+        .poem-content-columns p {
+          break-inside: avoid;
+          margin-bottom: 1rem;
+        }
+      `}</style>
     </>
   );
 };
