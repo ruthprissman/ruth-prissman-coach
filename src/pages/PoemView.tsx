@@ -120,15 +120,15 @@ const PoemView = () => {
         <Footer />
       </div>
 
-      {/* Add CSS for two-column poem layout */}
+      {/* Add CSS for three-column poem layout */}
       <style>{`
         .poem-container {
           padding: 0 1rem;
         }
         
         .poem-content {
-          column-count: 2;
-          column-gap: 3rem;
+          column-count: 3;
+          column-gap: 2.5rem;
           column-rule: 1px solid rgba(128, 0, 128, 0.2);
           text-align: center;
         }
@@ -146,6 +146,12 @@ const PoemView = () => {
           break-inside: avoid;
           text-align: center;
           display: block;
+        }
+        
+        @media (max-width: 1024px) {
+          .poem-content {
+            column-count: 2;
+          }
         }
         
         @media (max-width: 768px) {
