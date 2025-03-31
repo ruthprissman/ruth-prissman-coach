@@ -46,24 +46,24 @@ const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ patient, onPatientUpdat
             <div className="flex items-start">
               <Phone className="h-5 w-5 text-purple-500 mt-0.5 ml-2" />
               <div>
-                <div className="text-sm text-purple-600 font-medium">טלפון</div>
-                <div className="font-medium">{patient.phone || 'לא צוין'}</div>
+                <div className="text-sm text-purple-600 font-medium text-right">טלפון</div>
+                <div className="font-medium text-right">{patient.phone || 'לא צוין'}</div>
               </div>
             </div>
             
             <div className="flex items-start">
               <Mail className="h-5 w-5 text-purple-500 mt-0.5 ml-2" />
               <div>
-                <div className="text-sm text-purple-600 font-medium">אימייל</div>
-                <div className="font-medium">{patient.email || 'לא צוין'}</div>
+                <div className="text-sm text-purple-600 font-medium text-right">אימייל</div>
+                <div className="font-medium text-right">{patient.email || 'לא צוין'}</div>
               </div>
             </div>
             
             <div className="flex items-start">
               <DollarSign className="h-5 w-5 text-purple-500 mt-0.5 ml-2" />
               <div>
-                <div className="text-sm text-purple-600 font-medium">מחיר לפגישה</div>
-                <div className="font-medium">
+                <div className="text-sm text-purple-600 font-medium text-right">מחיר לפגישה</div>
+                <div className="font-medium text-right">
                   {patient.session_price ? `₪${patient.session_price}` : 'לא צוין'}
                 </div>
               </div>
@@ -74,10 +74,10 @@ const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ patient, onPatientUpdat
             <div className="flex items-start">
               <FileText className="h-5 w-5 text-purple-500 mt-0.5 ml-2" />
               <div className="flex-1">
-                <div className="text-sm text-purple-600 font-medium">הערות</div>
+                <div className="text-sm text-purple-600 font-medium text-right">הערות</div>
               </div>
             </div>
-            <div className="bg-gray-50 p-3 rounded-md border border-gray-200 min-h-[100px] text-gray-700">
+            <div className="bg-gray-50 p-3 rounded-md border border-gray-200 min-h-[100px] text-gray-700 text-right">
               {patient.notes || 'אין הערות'}
             </div>
           </div>

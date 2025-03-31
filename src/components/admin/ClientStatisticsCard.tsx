@@ -23,27 +23,27 @@ const ClientStatisticsCard: React.FC<ClientStatisticsCardProps> = ({
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
-                <div className="text-sm text-purple-600">סה״כ פגישות</div>
-                <div className="text-2xl font-bold text-purple-800">{statistics.total_sessions}</div>
+                <div className="text-sm text-purple-600 text-right">סה״כ פגישות</div>
+                <div className="text-2xl font-bold text-purple-800 text-right">{statistics.total_sessions}</div>
               </div>
               <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
-                <div className="text-sm text-purple-600">סה״כ חוב</div>
-                <div className="text-2xl font-bold text-purple-800">₪{statistics.total_debt}</div>
+                <div className="text-sm text-purple-600 text-right">סה״כ חוב</div>
+                <div className="text-2xl font-bold text-purple-800 text-right">₪{statistics.total_debt}</div>
               </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
-                <div className="text-sm text-purple-600">פגישה אחרונה</div>
-                <div className="font-medium">
+                <div className="text-sm text-purple-600 text-right">פגישה אחרונה</div>
+                <div className="font-medium text-right">
                   {statistics.last_session 
                     ? formatDateOnly(statistics.last_session) 
                     : 'אין פגישות'}
                 </div>
               </div>
               <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
-                <div className="text-sm text-purple-600">פגישה הבאה</div>
-                <div className="font-medium">
+                <div className="text-sm text-purple-600 text-right">פגישה הבאה</div>
+                <div className="font-medium text-right">
                   {statistics.next_session 
                     ? formatDateOnly(statistics.next_session) 
                     : 'לא נקבע'}
