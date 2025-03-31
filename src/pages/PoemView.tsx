@@ -148,6 +148,14 @@ const PoemView = () => {
           display: block;
         }
         
+        /* Ensure empty paragraphs create vertical spacing */
+        .poem-text p:empty {
+          min-height: 1.5rem;
+          margin-bottom: 1.5rem;
+          display: block;
+          visibility: visible;
+        }
+        
         @media (max-width: 1024px) {
           .poem-content {
             column-count: 2;

@@ -7,6 +7,7 @@ interface MarkdownPreviewProps {
   className?: string;
 }
 
+// Configure markdown-it to preserve empty paragraphs
 const mdParser = new MarkdownIt({
   html: true,
   linkify: true,
@@ -21,8 +22,7 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
   if (!markdown) return <div className={`prose max-w-none ${className}`}></div>;
   
   // Process the markdown while preserving paragraphs for column layout
-  const processedMarkdown = markdown;
-  const html = mdParser.render(processedMarkdown);
+  const html = mdParser.render(markdown);
   
   return (
     <div 
