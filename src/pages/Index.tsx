@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -58,7 +59,7 @@ const Index = () => {
                 <div className="flex flex-row items-center justify-center gap-4">
                   <img 
                     ref={logoRef}
-                    src="https://www.dropbox.com/scl/fi/azdu7fp5k6yp5m1v72ggn/logo.png?rlkey=uo9zfon43x3mxhqi2xgl813it&st=5sj644gg&raw=1" 
+                    src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/logo.png" 
                     alt="רות פריסמן - מאמנת קוד הנפש" 
                     className="w-20 h-20 md:w-24 md:h-24 object-contain cursor-pointer"
                   />
