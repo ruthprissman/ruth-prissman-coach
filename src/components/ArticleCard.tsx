@@ -100,6 +100,9 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
       ? article.article_publications[0].scheduled_date
       : article.published_at;
   
+  // Use the article's image_url if available, otherwise fall back to the default image
+  const imageUrl = article.image_url || DEFAULT_IMAGE;
+  
   return (
     <Link 
       to={`${basePath}/${article.id}`}
@@ -108,7 +111,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
     >
       <div className="relative aspect-[16/9] overflow-hidden bg-gray-200">
         <img 
-          src={DEFAULT_IMAGE} 
+          src={imageUrl} 
           alt={article.title} 
           className="w-full h-full object-cover transition-transform hover:scale-105"
         />
