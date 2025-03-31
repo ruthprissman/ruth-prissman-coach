@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -269,16 +270,16 @@ const Dashboard: React.FC = () => {
   };
 
   const PublicationItem = ({ publication }: { publication: ArticlePublication }) => (
-    <div className="flex justify-between items-center border-b border-gray-100 py-3 last:border-0">
+    <div className="flex flex-row-reverse justify-between items-center border-b border-gray-100 py-3 last:border-0">
       <div className="flex flex-col items-center">
         {getLocationIcon(publication.publish_location)}
         <span className="text-xs mt-1 font-medium">{getLocationText(publication.publish_location)}</span>
       </div>
-      <div className="flex items-center text-right">
-        <Calendar className="w-4 h-4 ml-2 text-gray-600" />
-        <span className="text-sm">
+      <div className="flex items-center">
+        <span className="text-sm mr-2">
           {formatDateTimeInIsrael(publication.scheduled_date)}
         </span>
+        <Calendar className="w-4 h-4 text-gray-600" />
       </div>
     </div>
   );
@@ -310,7 +311,22 @@ const Dashboard: React.FC = () => {
   };
 
   const SessionItem = ({ session }: { session: FutureSession & { patient_name?: string } }) => (
-    <div className="flex justify-between items-center border-b border-gray-100 py-3 last:border-0">
+    <div className="flex flex-row-reverse justify-between items-center border-b border-gray-100 py-3 last:border-0">
+      <div className="flex flex-col items-end">
+        <div className="flex items-center mb-1">
+          <span className="text-sm font-medium">{session.patient_name}</span>
+        </div>
+        <div className="flex items-center">
+          <Calendar className="w-4 h-4 text-gray-600 ml-2" />
+          <span className="text-sm text-gray-600">
+            {formatDateTimeInIsrael(session.session_date)}
+          </span>
+        </div>
+        <div className="flex items-center mt-1">
+          {getMeetingTypeIcon(session.meeting_type)}
+          <span className="text-xs text-gray-500 mr-1">{getMeetingTypeText(session.meeting_type)}</span>
+        </div>
+      </div>
       <div className="flex flex-col items-start">
         {session.zoom_link && (
           <a 
@@ -323,34 +339,20 @@ const Dashboard: React.FC = () => {
           </a>
         )}
       </div>
-      <div className="flex flex-col items-end">
-        <div className="flex items-center mb-1">
-          <span className="text-sm font-medium">{session.patient_name}</span>
-        </div>
-        <div className="flex items-center">
-          <span className="text-sm text-gray-600 ml-2">
-            {formatDateTimeInIsrael(session.session_date)}
-          </span>
-          <Calendar className="w-4 h-4 text-gray-600" />
-        </div>
-        <div className="flex items-center mt-1">
-          <span className="text-xs text-gray-500 ml-1">{getMeetingTypeText(session.meeting_type)}</span>
-          {getMeetingTypeIcon(session.meeting_type)}
-        </div>
-      </div>
     </div>
   );
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 flex items-center">
-        <Home className="h-5 w-5 mr-2" />
+      <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 flex flex-row-reverse items-center">
+        <Home className="h-5 w-5 ml-2" />
         <span>חזרה לדף הבית</span>
       </Link>
 
       <header className="bg-[#4A235A] text-white shadow-md">
         <div className="container mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-row-reverse justify-between items-center">
+            <h1 className="text-2xl font-bold">לוח ניהול</h1>
             <Button 
               variant="ghost" 
               className="text-white hover:bg-purple-light"
@@ -359,7 +361,6 @@ const Dashboard: React.FC = () => {
               <LogOut className="w-5 h-5 ml-2" />
               התנתקות
             </Button>
-            <h1 className="text-2xl font-bold">לוח ניהול</h1>
           </div>
         </div>
       </header>
@@ -369,12 +370,12 @@ const Dashboard: React.FC = () => {
           {/* Dashboard cards grid - horizontal on desktop, vertical on mobile */}
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <Card className="w-full">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Link to="/admin/articles" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
-                  <span>לכל הפרסומים</span>
-                  <ArrowUpRight className="w-4 h-4 mr-1" />
-                </Link>
+              <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xl font-bold text-right">מה חדש?</CardTitle>
+                <Link to="/admin/articles" className="text-sm text-blue-600 hover:text-blue-800 flex flex-row-reverse items-center">
+                  <ArrowUpRight className="w-4 h-4 ml-1" />
+                  <span>לכל הפרסומים</span>
+                </Link>
               </CardHeader>
               <CardContent className="pt-4 text-right">
                 {isPublicationsLoading ? (
@@ -394,12 +395,12 @@ const Dashboard: React.FC = () => {
             </Card>
 
             <Card className="w-full">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <Link to="/admin/calendar" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
-                  <span>ללוח הפגישות</span>
-                  <ArrowUpRight className="w-4 h-4 mr-1" />
-                </Link>
+              <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xl font-bold text-right">הפגישות הקרובות שלך</CardTitle>
+                <Link to="/admin/calendar" className="text-sm text-blue-600 hover:text-blue-800 flex flex-row-reverse items-center">
+                  <ArrowUpRight className="w-4 h-4 ml-1" />
+                  <span>ללוח הפגישות</span>
+                </Link>
               </CardHeader>
               <CardContent className="pt-4 text-right">
                 {isSessionsLoading ? (
@@ -422,9 +423,9 @@ const Dashboard: React.FC = () => {
           {/* Second row of cards - subscription stats and payment stats */}
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="w-full">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="w-6"></div>
+              <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xl font-bold text-right">סטטיסטיקות מנויים</CardTitle>
+                <div className="w-6"></div>
               </CardHeader>
               <CardContent className="pt-4 text-right">
                 {subscriptionStats.contentSubscribers.loading || subscriptionStats.storySubscribers.loading ? (
@@ -434,9 +435,9 @@ const Dashboard: React.FC = () => {
                 ) : (
                   <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
                     <div className="flex-1 border-r-0 md:border-r border-gray-200 p-2 md:p-4">
-                      <div className="flex items-center justify-end mb-2">
-                        <span className="text-lg font-medium mr-2">מנויים לתוכן מקצועי</span>
-                        <BookOpen className="w-6 h-6 text-purple-600" />
+                      <div className="flex flex-row-reverse items-center justify-start mb-2">
+                        <BookOpen className="w-6 h-6 text-purple-600 ml-2" />
+                        <span className="text-lg font-medium">מנויים לתוכן מקצועי</span>
                       </div>
                       {subscriptionStats.contentSubscribers.total > 0 ? (
                         <div className="text-right">
@@ -451,9 +452,9 @@ const Dashboard: React.FC = () => {
                     </div>
                     
                     <div className="flex-1 p-2 md:p-4">
-                      <div className="flex items-center justify-end mb-2">
-                        <span className="text-lg font-medium mr-2">מנויים לסיפורים</span>
-                        <BookText className="w-6 h-6 text-blue-600" />
+                      <div className="flex flex-row-reverse items-center justify-start mb-2">
+                        <BookText className="w-6 h-6 text-blue-600 ml-2" />
+                        <span className="text-lg font-medium">מנויים לסיפורים</span>
                       </div>
                       {subscriptionStats.storySubscribers.total > 0 ? (
                         <div className="text-right">
@@ -472,9 +473,9 @@ const Dashboard: React.FC = () => {
             </Card>
 
             <Card className="w-full">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="w-6"></div>
+              <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xl font-bold text-right">סטטיסטיקות תשלומים</CardTitle>
+                <div className="w-6"></div>
               </CardHeader>
               <CardContent className="pt-4 text-right">
                 {paymentStats.loading ? (
@@ -484,9 +485,9 @@ const Dashboard: React.FC = () => {
                 ) : (paymentStats.totalReceived > 0 || paymentStats.outstandingBalance > 0) ? (
                   <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
                     <div className="flex-1 border-r-0 md:border-r border-gray-200 p-2 md:p-4">
-                      <div className="flex items-center justify-end mb-2">
-                        <span className="text-lg font-medium mr-2">סה״כ שולם עד היום</span>
-                        <Banknote className="w-6 h-6 text-green-600" />
+                      <div className="flex flex-row-reverse items-center justify-start mb-2">
+                        <Banknote className="w-6 h-6 text-green-600 ml-2" />
+                        <span className="text-lg font-medium">סה״כ שולם עד היום</span>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold">₪{paymentStats.totalReceived.toLocaleString()}</p>
@@ -494,9 +495,9 @@ const Dashboard: React.FC = () => {
                     </div>
                     
                     <div className="flex-1 p-2 md:p-4">
-                      <div className="flex items-center justify-end mb-2">
-                        <span className="text-lg font-medium mr-2">חוב פתוח לסגירה</span>
-                        <Receipt className="w-6 h-6 text-amber-600" />
+                      <div className="flex flex-row-reverse items-center justify-start mb-2">
+                        <Receipt className="w-6 h-6 text-amber-600 ml-2" />
+                        <span className="text-lg font-medium">חוב פתוח לסגירה</span>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold">₪{paymentStats.outstandingBalance.toLocaleString()}</p>

@@ -15,7 +15,7 @@ const ClientStatisticsCard: React.FC<ClientStatisticsCardProps> = ({
 }) => {
   return (
     <Card className="border-purple-200">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex flex-row-reverse justify-between items-center">
         <CardTitle className="text-xl text-purple-700">סטטיסטיקות</CardTitle>
       </CardHeader>
       <CardContent>

@@ -18,7 +18,7 @@ const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ patient, onPatientUpdat
   return (
     <Card className="border-purple-200 overflow-hidden relative">
       <CardHeader className="pb-3 bg-purple-50">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-row-reverse justify-between items-center">
           <CardTitle className="text-2xl text-purple-700">{patient.name}</CardTitle>
           <TooltipProvider delayDuration={300}>
             <Tooltip>
