@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -53,7 +52,7 @@ const Index = () => {
         <Navigation />
         
         <main className="flex-grow">
-          <section className="pt-16 pb-0 px-4 relative">
+          <section className="pt-16 px-4 relative">
             <div className="container mx-auto relative z-10">
               <div className="flex flex-col items-center justify-center">
                 <div className="flex flex-row items-center justify-center gap-4">
@@ -70,29 +69,23 @@ const Index = () => {
                     <p className="text-lg md:text-xl text-purple-light mt-0.5 font-alef gold-text-shadow">
                       מבט חדש על חיים מוכרים
                     </p>
+                    
+                    <div className="backdrop-blur-sm p-5 rounded-lg mb-4 mx-auto w-full mt-6">
+                      <h3 className="text-[#4A235A] text-lg font-heebo mb-3">החיים שלנו הם סיפור מתמשך.</h3>
+                      
+                      <p className="text-[#4A235A] text-lg font-heebo leading-snug">
+                        סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.<br />
+                        סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.<br /><br />
+                        
+                        בשיטת קוד הנפש, שפותחה על ידי שמחה אביטן,<br />
+                        אנחנו לומדים לקרוא מחדש את הסיפור הפנימי שלנו,<br />
+                        עם פחות תלות בסיפור החיצוני.<br /><br />
+                        
+                        ללמוד להבין את עצמנו, למצוא שלווה, בהירות ושמחה,<br />
+                        ופשוט לבחור לחיות טוב.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </section>
-          
-          <section className="pt-1 px-4 relative">
-            <div className="container mx-auto relative z-10">
-              <div className="mx-auto text-center">
-                <div className="backdrop-blur-sm p-5 rounded-lg mb-4 mx-auto w-full md:w-4/5 lg:w-4/5">
-                  <h3 className="text-[#4A235A] text-lg font-heebo mb-3">החיים שלנו הם סיפור מתמשך.</h3>
-                  
-                  <p className="text-[#4A235A] text-lg font-heebo leading-snug">
-                    סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.<br />
-                    סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.<br /><br />
-                    
-                    בשיטת קוד הנפש, שפותחה על ידי שמחה אביטן,<br />
-                    אנחנו לומדים לקרוא מחדש את הסיפור הפנימי שלנו,<br />
-                    עם פחות תלות בסיפור החיצוני.<br /><br />
-                    
-                    ללמוד להבין את עצמנו, למצוא שלווה, בהירות ושמחה,<br />
-                    ופשוט לבחור לחיות טוב.
-                  </p>
                 </div>
               </div>
             </div>
