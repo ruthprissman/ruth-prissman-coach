@@ -67,7 +67,7 @@ const Index = () => {
                     <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-alef text-[#4A235A] gold-text-shadow">
                       רות פריסמן - מאמנת קוד הנפש
                     </h1>
-                    <p className="text-lg md:text-xl text-purple-light mt-2 font-alef gold-text-shadow">
+                    <p className="text-lg md:text-xl text-purple-light mt-1 font-alef gold-text-shadow">
                       מבט חדש על חיים מוכרים
                     </p>
                   </div>
@@ -76,7 +76,7 @@ const Index = () => {
             </div>
           </section>
           
-          <section className="py-4 px-4 relative">
+          <section className="py-8 px-4 relative mt-4">
             <div className="container mx-auto relative z-10">
               <div className="mx-auto text-center">
                 <div className="backdrop-blur-sm p-5 rounded-lg mb-4 mx-auto w-full md:w-4/5 lg:w-4/5">
