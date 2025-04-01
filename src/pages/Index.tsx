@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -60,7 +61,7 @@ const Index = () => {
                     ref={logoRef}
                     src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/logo.png" 
                     alt="רות פריסמן - מאמנת קוד הנפש" 
-                    className="w-52 h-52 md:w-64 md:h-64 object-contain cursor-pointer"
+                    className="w-52 h-52 md:w-64 md:h-64 object-contain cursor-pointer mt-0" 
                   />
                   <div className="text-center">
                     <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-alef text-[#4A235A] gold-text-shadow">
@@ -69,7 +70,7 @@ const Index = () => {
                     <p className="text-lg md:text-xl text-purple-light mt-0.5 font-alef gold-text-shadow">
                       מבט חדש על חיים מוכרים
                     </p>
-                    
+                     
                     <div className="backdrop-blur-sm p-5 rounded-lg mb-4 mx-auto w-full mt-6">
                       <h3 className="text-[#4A235A] text-lg font-heebo mb-3">החיים שלנו הם סיפור מתמשך.</h3>
                       
