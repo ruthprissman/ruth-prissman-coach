@@ -61,7 +61,7 @@ const Index = () => {
                     ref={logoRef}
                     src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/logo.png" 
                     alt="רות פריסמן - מאמנת קוד הנפש" 
-                    className="w-32 h-32 md:w-40 md:h-40 object-contain cursor-pointer"
+                    className="w-52 h-52 md:w-64 md:h-64 object-contain cursor-pointer"
                   />
                   <div className="text-center">
                     <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-alef text-[#4A235A] gold-text-shadow">
