@@ -54,7 +54,7 @@ const Index = () => {
         <main className="flex-grow">
           <section className="pt-16 px-4 relative">
             <div className="container mx-auto relative z-10">
-              <div className="flex flex-col items-center justify-center">
+              <div className="flex flex-col items-top justify-center">
                 <div className="flex flex-row items-center justify-center gap-4">
                   <img 
                     ref={logoRef}
