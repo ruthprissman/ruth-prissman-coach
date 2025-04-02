@@ -34,16 +34,17 @@ export const StoryDescriptionModal: React.FC<StoryDescriptionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md md:max-w-lg bg-white/95 backdrop-blur-sm border border-gold/20 p-0 rounded-lg shadow-lg">
+      <DialogContent className="p-0 rounded-lg shadow-lg bg-white/95 backdrop-blur-sm border border-gold/20 max-w-[450px] w-[95vw] h-auto mx-auto overflow-hidden">
         {/* Custom close button with dark background for better visibility */}
-        <DialogClose className="absolute right-4 top-4 z-10 rounded-full bg-black/50 p-1.5 opacity-80 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+        <DialogClose className="absolute right-3 top-3 z-10 rounded-full bg-black/50 p-1.5 opacity-80 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
           <X className="h-5 w-5 text-white" />
           <span className="sr-only">סגור</span>
         </DialogClose>
         
-        <div className="w-full">
-          {/* Story image */}
-          <div className="w-full h-48 md:h-64 overflow-hidden rounded-t-lg">
+        {/* Square container for the entire modal */}
+        <div className="flex flex-col h-full">
+          {/* Story image - square aspect ratio */}
+          <div className="w-full aspect-square overflow-hidden">
             <img 
               src={getStoryImage(imageUrl)} 
               alt={title} 
@@ -55,20 +56,20 @@ export const StoryDescriptionModal: React.FC<StoryDescriptionModalProps> = ({
             />
           </div>
           
-          {/* Content container */}
-          <div className="p-6">
+          {/* Content container with scrollable area for text */}
+          <div className="p-4 flex flex-col overflow-hidden h-full">
             {/* Title */}
-            <h2 className="text-2xl font-alef font-bold text-[#4A235A] mb-4 text-right">
+            <h2 className="text-xl font-alef font-bold text-[#4A235A] mb-3 text-right">
               {title}
             </h2>
             
-            {/* Description text - now with text-justify for better readability */}
-            <div className="text-gray-700 text-right text-justify whitespace-pre-line overflow-y-auto max-h-[40vh] mb-6">
+            {/* Description text - scrollable with justified text */}
+            <div className="text-gray-700 text-right text-justify whitespace-pre-line overflow-y-auto mb-4 flex-grow max-h-[150px]">
               {description}
             </div>
             
             {/* Download button */}
-            <div className="flex justify-start">
+            <div className="flex justify-start mt-auto">
               <Button
                 variant="outline"
                 className="text-[#4A235A] border-[#4A235A] hover:bg-[#4A235A] hover:text-white"
