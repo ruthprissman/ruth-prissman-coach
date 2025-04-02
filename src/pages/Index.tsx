@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -61,7 +60,7 @@ const Index = () => {
                     ref={logoRef}
                     src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs//logo.jpg" 
                     alt="רות פריסמן - מאמנת קוד הנפש" 
-                    className="w-52 h-52 md:w-64 md:h-64 object-top cursor-pointer mt-0" 
+                    className="w-52 h-52 md:w-64 md:h-64 object-top cursor-pointer mt-0 rounded-2xl" 
                   />
                   <div className="text-center">
                     <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-alef text-[#4A235A] gold-text-shadow">
