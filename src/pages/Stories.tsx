@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -299,6 +300,8 @@ const Stories = () => {
               onClose={handleCloseModal}
               title={selectedStory.title}
               description={selectedStory.description}
+              imageUrl={selectedStory.image_url}
+              pdfUrl={selectedStory.pdf_url}
             />
           )}
           
