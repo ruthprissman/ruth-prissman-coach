@@ -57,7 +57,7 @@ export function Footer() {
             <img 
               src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs//blwlogo.png" 
               alt="לוגו רות פריסמן" 
-              className="h-5 w-auto ml-2"
+              className="h-10 w-auto ml-2"
             />
             © {currentYear} רות פריסמן - קוד הנפש. כל הזכויות שמורות.
             <Link to="/admin/login" className="text-purple-dark hover:text-gold transition-colors ms-3 opacity-50">
