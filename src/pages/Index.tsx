@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -55,15 +56,15 @@ const Index = () => {
           <section className="pt-24 px-4 relative">
             <div className="container mx-auto relative z-10">
               <div className="flex flex-col items-top justify-center">
-                <div className="flex flex-row items-top justify-center gap-4">
+                <div className="flex flex-col md:flex-row items-center md:items-top justify-center md:gap-4">
                   <img 
                     ref={logoRef}
                     src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs//logo.jpg" 
                     alt="רות פריסמן - מאמנת קוד הנפש" 
                     className="w-52 h-52 md:w-64 md:h-64 object-top cursor-pointer mt-0 rounded-2xl" 
                   />
-                  <div className="text-center">
-                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-alef text-[#4A235A] gold-text-shadow">
+                  <div className="text-center md:text-right max-w-full w-full">
+                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-alef text-[#4A235A] gold-text-shadow mt-4 md:mt-0">
                       רות פריסמן - מאמנת קוד הנפש
                     </h1>
                     <p className="text-lg md:text-xl text-purple-light mt-0.5 font-alef gold-text-shadow">
@@ -71,17 +72,19 @@ const Index = () => {
                     </p>
                      
                     <div className="backdrop-blur-sm p-5 rounded-lg mb-4 mx-auto w-full mt-6">
-                      <h3 className="text-[#4A235A] text-lg font-heebo mb-3">החיים שלנו הם סיפור מתמשך.</h3>
+                      <h3 className="text-[#4A235A] text-lg font-heebo mb-3 whitespace-normal">החיים שלנו הם סיפור מתמשך.</h3>
                       
-                      <p className="text-[#4A235A] text-lg font-heebo leading-snug">
-                        סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.<br />
-                        סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.<br /><br />
+                      <p className="text-[#4A235A] text-lg font-heebo leading-relaxed whitespace-normal">
+                        סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.
+                        סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.
+                        <br className="hidden md:block" /><br className="hidden md:block" />
                         
-                        בשיטת קוד הנפש, שפותחה על ידי שמחה אביטן,<br />
-                        אנחנו לומדים לקרוא מחדש את הסיפור הפנימי שלנו,<br />
-                        עם פחות תלות בסיפור החיצוני.<br /><br />
+                        בשיטת קוד הנפש, שפותחה על ידי שמחה אביטן,
+                        אנחנו לומדים לקרוא מחדש את הסיפור הפנימי שלנו,
+                        עם פחות תלות בסיפור החיצוני.
+                        <br className="hidden md:block" /><br className="hidden md:block" />
                         
-                        ללמוד להבין את עצמנו, למצוא שלווה, בהירות ושמחה,<br />
+                        ללמוד להבין את עצמנו, למצוא שלווה, בהירות ושמחה,
                         ופשוט לבחור לחיות טוב.
                       </p>
                     </div>
@@ -107,7 +110,7 @@ const Index = () => {
                       </svg>
                     </div>
                   </div>
-                  <p className="text-[#4A235A] text-center mb-6">
+                  <p className="text-[#4A235A] text-center mb-6 whitespace-normal leading-relaxed">
                     הכירי שיטה עמוקה המבוססת על היהדות, שתוביל אותך לאיזון פנימי של המידות. נגלה יחד איך למצוא בתוכך תשובות אמיתיות, להתחבר ולהנות מכוחות הנפש שלך, וליצור חיים של בהירות, אמונה ושלווה.
                   </p>
                   <div className="text-center space-y-2">
@@ -140,7 +143,7 @@ const Index = () => {
                       </svg>
                     </div>
                   </div>
-                  <p className="text-[#4A235A] text-center mb-6">
+                  <p className="text-[#4A235A] text-center mb-6 whitespace-normal leading-relaxed">
                     את הסיפורים הבאים כתבתי מתוך תהליכים עמוקים שעברתי, עם עצמי ועם אחרים. תמצאי בהם דמויות שנוגעות בלב, מעוררות מחשבה, ומאפשרות לך להתחבר לעצמך ולקבל השראה לחיים מאוזנים ומדויקים יותר.
                   </p>
                   <a 
@@ -165,7 +168,7 @@ const Index = () => {
                       </svg>
                     </div>
                   </div>
-                  <p className="text-[#4A235A] text-center mb-6">
+                  <p className="text-[#4A235A] text-center mb-6 whitespace-normal leading-relaxed">
                     אם את מרגישה מוכנה להביט פנימה, להבין את עצמך טוב יותר ולהבהיר את המציאות שסביבך ואת מקומך בתוכה, את מוזמנת לקבוע פגישה. נעבור יחד את הדרך ברגישות ובבהירות, בדרך לחיים יציבים, מאוזנים ומדויקים.
                   </p>
                   <a 
@@ -187,9 +190,9 @@ const Index = () => {
                 <h2 className="text-3xl font-bold text-[#4A235A] mb-6 gold-text-shadow">
                   בואי להיות חלק מהקהילה
                 </h2>
-                <p className="text-[#4A235A] mb-8 font-heebo leading-relaxed">
+                <p className="text-[#4A235A] mb-8 font-heebo leading-relaxed whitespace-normal">
                   הצטרפי לרשימת התפוצה שלי, וקבלי מאמרים שבועיים בנושאי 'קוד הנפש' - מחשבות, כלים ותובנות שידייקו אותך למצוא בעצמך את הדרך שלך לחיים מודעים יותר.
-                  <br />
+                  <br className="hidden md:block" />
                   לפני חגים ייתכן שיופצו מאמרים מותאמים למהות החג.
                 </p>
                 <SubscriptionForm />
