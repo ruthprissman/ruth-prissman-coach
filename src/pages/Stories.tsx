@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { createClient } from '@supabase/supabase-js';
-import { FileDown, ExternalLink } from 'lucide-react';
+import { FileDown, ExternalLink, ChevronDown } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StorySubscriptionForm } from '@/components/StorySubscriptionForm';
+import { StoryDescriptionModal } from '@/components/StoryDescriptionModal';
 import * as kosherZmanim from 'kosher-zmanim';
 import { Helmet } from 'react-helmet-async';
 
@@ -32,6 +34,8 @@ const Stories = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hebrewDates, setHebrewDates] = useState<Record<number, string>>({});
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Helper function to get story image or use default
   const getStoryImage = (imageUrl: string) => {
@@ -117,6 +121,15 @@ const Stories = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const handleOpenModal = (story: Story) => {
+    setSelectedStory(story);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('he-IL', { 
@@ -177,6 +190,7 @@ const Stories = () => {
         <meta name="keywords" content="סיפורים קצרים, כתיבה רגשית, רות פריסמן, קוד הנפש, כתיבה נשית, סיפור אישי, העצמה רגשית, סיפורים טיפוליים, תהליך רגשי" />
       </Helmet>
       
+      {/* Background image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0 opacity-20" 
         style={{ 
@@ -242,9 +256,18 @@ const Stories = () => {
                     {story.title}
                   </h2>
                   
-                  <p className="text-gray-700 mb-4 text-right line-clamp-3">
+                  <p className="text-gray-700 mb-2 text-right line-clamp-3">
                     {story.description}
                   </p>
+                  
+                  <Button 
+                    variant="ghost" 
+                    className="text-gold hover:text-gold-dark transition-colors duration-300 font-bold w-fit mr-auto mb-4 p-0"
+                    onClick={() => handleOpenModal(story)}
+                  >
+                    קרא עוד
+                    <ChevronDown className="ml-1 h-4 w-4" />
+                  </Button>
                   
                   <div className="text-right mb-4">
                     <p className="text-right text-md text-gray-500">
@@ -276,6 +299,16 @@ const Stories = () => {
                 </div>
               ))}
             </div>
+          )}
+          
+          {/* Modal for story description */}
+          {selectedStory && (
+            <StoryDescriptionModal
+              isOpen={isModalOpen}
+              onClose={handleCloseModal}
+              title={selectedStory.title}
+              description={selectedStory.description}
+            />
           )}
           
           {/* Subscription Form */}
