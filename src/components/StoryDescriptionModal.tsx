@@ -28,7 +28,7 @@ export const StoryDescriptionModal: React.FC<StoryDescriptionModalProps> = ({
           <h2 className="text-2xl font-alef font-bold text-[#4A235A] mb-4 text-right">
             {title}
           </h2>
-          <div className="text-gray-700 text-right whitespace-pre-line">
+          <div className="text-gray-700 text-right whitespace-pre-line overflow-y-auto max-h-[60vh]">
             {description}
           </div>
         </div>

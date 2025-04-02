@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { createClient } from '@supabase/supabase-js';
-import { FileDown, ExternalLink, ChevronDown } from 'lucide-react';
+import { FileDown, ExternalLink } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -190,7 +189,6 @@ const Stories = () => {
         <meta name="keywords" content="סיפורים קצרים, כתיבה רגשית, רות פריסמן, קוד הנפש, כתיבה נשית, סיפור אישי, העצמה רגשית, סיפורים טיפוליים, תהליך רגשי" />
       </Helmet>
       
-      {/* Background image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0 opacity-20" 
         style={{ 
@@ -256,18 +254,12 @@ const Stories = () => {
                     {story.title}
                   </h2>
                   
-                  <p className="text-gray-700 mb-2 text-right line-clamp-3">
-                    {story.description}
-                  </p>
-                  
-                  <Button 
-                    variant="ghost" 
-                    className="text-gold hover:text-gold-dark transition-colors duration-300 font-bold w-fit mr-auto mb-4 p-0"
+                  <div 
+                    className="text-gray-700 mb-4 text-right line-clamp-3 cursor-pointer hover:text-[#4A235A]"
                     onClick={() => handleOpenModal(story)}
                   >
-                    קרא עוד
-                    <ChevronDown className="ml-1 h-4 w-4" />
-                  </Button>
+                    {story.description}
+                  </div>
                   
                   <div className="text-right mb-4">
                     <p className="text-right text-md text-gray-500">
@@ -301,7 +293,6 @@ const Stories = () => {
             </div>
           )}
           
-          {/* Modal for story description */}
           {selectedStory && (
             <StoryDescriptionModal
               isOpen={isModalOpen}
@@ -311,7 +302,6 @@ const Stories = () => {
             />
           )}
           
-          {/* Subscription Form */}
           <div className="mt-20">
             <StorySubscriptionForm />
           </div>
