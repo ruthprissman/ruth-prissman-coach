@@ -35,8 +35,9 @@ export const StoryDescriptionModal: React.FC<StoryDescriptionModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-md md:max-w-lg bg-white/95 backdrop-blur-sm border border-gold/20 p-0 rounded-lg shadow-lg">
-        <DialogClose className="absolute right-4 top-4 z-10 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-          <X className="h-5 w-5 text-[#4A235A]" />
+        {/* Custom close button with dark background for better visibility */}
+        <DialogClose className="absolute right-4 top-4 z-10 rounded-full bg-black/50 p-1.5 opacity-80 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+          <X className="h-5 w-5 text-white" />
           <span className="sr-only">סגור</span>
         </DialogClose>
         
@@ -61,8 +62,8 @@ export const StoryDescriptionModal: React.FC<StoryDescriptionModalProps> = ({
               {title}
             </h2>
             
-            {/* Description text */}
-            <div className="text-gray-700 text-right whitespace-pre-line overflow-y-auto max-h-[40vh] mb-6">
+            {/* Description text - now with text-justify for better readability */}
+            <div className="text-gray-700 text-right text-justify whitespace-pre-line overflow-y-auto max-h-[40vh] mb-6">
               {description}
             </div>
             

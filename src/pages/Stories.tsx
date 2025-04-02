@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -239,7 +238,10 @@ const Stories = () => {
                   key={story.id} 
                   className="bg-white/80 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-6 flex flex-col h-full border border-gray-100"
                 >
-                  <div className="mb-4 aspect-[3/2] overflow-hidden rounded-md">
+                  <div 
+                    className="mb-4 aspect-[3/2] overflow-hidden rounded-md cursor-pointer"
+                    onClick={() => handleOpenModal(story)}
+                  >
                     <img 
                       src={getStoryImage(story.image_url)} 
                       alt={story.title} 
