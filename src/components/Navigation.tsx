@@ -12,7 +12,7 @@ const navItems = [
       <img 
         src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs//blwlogo.png" 
         alt="דף הבית" 
-        className="h-7 w-auto"
+        className="h-14 w-auto"
       />
     )
   },
