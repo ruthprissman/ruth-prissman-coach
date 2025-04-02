@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,9 +9,11 @@ const navItems = [
     path: '/',
     isHome: true,
     icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 10L12 3L21 10V21H14V15H10V21H3V10Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="#D4AF37"/>
-      </svg>
+      <img 
+        src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs//blwlogo.png" 
+        alt="דף הבית" 
+        className="h-7 w-auto"
+      />
     )
   },
   { name: 'אודות', path: '/about' },
