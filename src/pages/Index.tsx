@@ -52,7 +52,7 @@ const Index = () => {
         <Navigation />
         
         <main className="flex-grow">
-          <section className="pt-36 px-4 relative">
+          <section className="pt-8 px-4 relative">
             <div className="container mx-auto relative z-10">
               <div className="flex flex-col items-top justify-center">
                 <div className="flex flex-row items-top justify-center gap-4">
