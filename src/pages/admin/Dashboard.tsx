@@ -328,11 +328,6 @@ const Dashboard: React.FC = () => {
     </div>;
 
   return <div className="min-h-screen bg-gray-100">
-      <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 flex items-center">
-        <span>חזרה לדף הבית</span>
-        <Home className="h-5 w-5 ms-2" />
-      </Link>
-
       <header className="bg-[#4A235A] text-white shadow-md">
         <div dir="rtl" className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
