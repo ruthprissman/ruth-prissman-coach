@@ -33,7 +33,7 @@ import { Input } from '@/components/ui/input';
 interface SessionEditDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  session: Session;
+  session: Session | null;
   onSessionUpdated: () => void;
   sessionPrice?: number | null;
 }
@@ -80,24 +80,26 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
     return 'pending';
   };
 
+  const defaultFormValues: SessionFormValues = {
+    session_date: new Date(),
+    meeting_type: 'Phone',
+    sent_exercises: false,
+    exercise_list: null,
+    summary: null,
+    paid_amount: 0,
+    payment_method: null,
+    payment_status: 'pending',
+    payment_date: null,
+    payment_notes: null,
+  };
+
   const form = useForm<SessionFormValues>({
     resolver: zodResolver(SessionSchema),
-    defaultValues: {
-      session_date: new Date(session.session_date),
-      meeting_type: session.meeting_type,
-      sent_exercises: session.sent_exercises,
-      exercise_list: session.exercise_list,
-      summary: session.summary,
-      paid_amount: session.paid_amount || 0,
-      payment_method: session.payment_method || null,
-      payment_status: mapPaymentStatus(session.payment_status || 'pending'),
-      payment_date: session.payment_date ? new Date(session.payment_date) : null,
-      payment_notes: session.payment_notes || null,
-    },
+    defaultValues: defaultFormValues,
   });
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && session) {
       const initialValues = {
         session_date: new Date(session.session_date),
         meeting_type: session.meeting_type,
@@ -113,6 +115,13 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       setOriginalValues(initialValues);
       form.reset(initialValues);
       setHasChanges(false);
+    } else if (!session && isOpen) {
+      // Handle case when session is null but dialog is open
+      form.reset(defaultFormValues);
+      setOriginalValues(null);
+      setHasChanges(false);
+      // Close the dialog since we can't edit a non-existent session
+      onClose();
     }
   }, [isOpen, session, form]);
 
@@ -189,6 +198,15 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   }, []);
 
   const onSubmit = async (data: SessionFormValues) => {
+    if (!session) {
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן לעדכן פגישה - פרטי הפגישה חסרים",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     try {
       if (data.exercise_list && data.exercise_list.length > 0) {
@@ -230,6 +248,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       
       setHasChanges(false);
       onSessionUpdated();
+      onClose();
     } catch (error: any) {
       console.error('Error updating session:', error);
       toast({
@@ -264,6 +283,10 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       console.error('Error updating patient financial status:', error);
     }
   };
+
+  if (!session && isOpen) {
+    return null; // Don't render anything if session is null
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

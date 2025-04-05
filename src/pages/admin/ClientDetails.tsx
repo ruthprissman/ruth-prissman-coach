@@ -591,13 +591,15 @@ const ClientDetails = () => {
         onSessionCreated={fetchClientData}
       />
 
-      <SessionEditDialog
-        isOpen={editHistoricalSessionDialog.open}
-        onClose={() => setEditHistoricalSessionDialog({ open: false, session: null })}
-        session={editHistoricalSessionDialog.session as Session}
-        onSessionUpdated={fetchClientData}
-        sessionPrice={patient?.session_price || null}
-      />
+      {editHistoricalSessionDialog.session && (
+        <SessionEditDialog
+          isOpen={editHistoricalSessionDialog.open}
+          onClose={() => setEditHistoricalSessionDialog({ open: false, session: null })}
+          session={editHistoricalSessionDialog.session}
+          onSessionUpdated={fetchClientData}
+          sessionPrice={patient?.session_price || null}
+        />
+      )}
     </AdminLayout>
   );
 };
