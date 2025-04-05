@@ -21,6 +21,7 @@ import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog
 import NewFutureSessionDialog from '@/components/admin/sessions/NewFutureSessionDialog';
 import RecurringSessionDialog from '@/components/admin/sessions/RecurringSessionDialog';
 import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistoricalSessionDialog';
+import SessionEditDialog from '@/components/admin/SessionEditDialog';
 
 const ClientDetails = () => {
   const { id } = useParams();
@@ -51,6 +52,10 @@ const ClientDetails = () => {
   const [newFutureSessionDialog, setNewFutureSessionDialog] = useState<boolean>(false);
   const [recurringSessionDialog, setRecurringSessionDialog] = useState<boolean>(false);
   const [newHistoricalSessionDialog, setNewHistoricalSessionDialog] = useState<boolean>(false);
+  const [editHistoricalSessionDialog, setEditHistoricalSessionDialog] = useState<{open: boolean, session: Session | null}>({
+    open: false,
+    session: null
+  });
 
   useEffect(() => {
     if (patientId) {
@@ -170,6 +175,13 @@ const ClientDetails = () => {
 
   const handleDeleteHistoricalSession = (session: Session) => {
     setDeleteSessionDialog({
+      open: true,
+      session
+    });
+  };
+
+  const handleEditHistoricalSession = (session: Session) => {
+    setEditHistoricalSessionDialog({
       open: true,
       session
     });
@@ -499,6 +511,7 @@ const ClientDetails = () => {
                               variant="ghost" 
                               size="sm" 
                               className="text-purple-600 hover:text-purple-800 hover:bg-purple-100"
+                              onClick={() => handleEditHistoricalSession(session)}
                             >
                               עריכה
                             </Button>
@@ -576,6 +589,14 @@ const ClientDetails = () => {
         patientId={patientId}
         patient={patient}
         onSessionCreated={fetchClientData}
+      />
+
+      <SessionEditDialog
+        isOpen={editHistoricalSessionDialog.open}
+        onClose={() => setEditHistoricalSessionDialog({ open: false, session: null })}
+        session={editHistoricalSessionDialog.session as Session}
+        onSessionUpdated={fetchClientData}
+        sessionPrice={patient?.session_price || null}
       />
     </AdminLayout>
   );
