@@ -3,52 +3,55 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Calendar, LogOut, Home,
-  Mail, Globe, Pencil, ArrowUpRight,
-  Phone, Monitor, User,
-  BookOpen, BookText, CreditCard, Users,
-  Banknote, Receipt
-} from 'lucide-react';
+import { Calendar, LogOut, Home, Mail, Globe, Pencil, ArrowUpRight, Phone, Monitor, User, BookOpen, BookText, CreditCard, Users, Banknote, Receipt } from 'lucide-react';
 import { usePaymentStats } from '@/hooks/usePaymentStats';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { formatDateTimeInIsrael } from '@/utils/dateUtils';
 import { ArticlePublication } from '@/types/article';
 import { FutureSession } from '@/types/session';
 import { useIsMobile } from '@/hooks/use-mobile';
-
 const Dashboard: React.FC = () => {
-  const { signOut, user } = useAuth();
+  const {
+    signOut,
+    user
+  } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [upcomingPublications, setUpcomingPublications] = useState<ArticlePublication[]>([]);
   const [isPublicationsLoading, setIsPublicationsLoading] = useState(true);
-  const [upcomingSessions, setUpcomingSessions] = useState<(FutureSession & { patient_name?: string })[]>([]);
+  const [upcomingSessions, setUpcomingSessions] = useState<(FutureSession & {
+    patient_name?: string;
+  })[]>([]);
   const [isSessionsLoading, setIsSessionsLoading] = useState(true);
   const [subscriptionStats, setSubscriptionStats] = useState({
-    contentSubscribers: { total: 0, newLast30Days: 0, loading: true },
-    storySubscribers: { total: 0, newLast30Days: 0, loading: true }
+    contentSubscribers: {
+      total: 0,
+      newLast30Days: 0,
+      loading: true
+    },
+    storySubscribers: {
+      total: 0,
+      newLast30Days: 0,
+      loading: true
+    }
   });
   const paymentStats = usePaymentStats();
-
   useEffect(() => {
     const fetchUpcomingPublications = async () => {
       try {
         setIsPublicationsLoading(true);
-        
         const client = await supabaseClient();
         const today = new Date();
         const nextWeek = new Date();
         nextWeek.setDate(today.getDate() + 7);
-        
         const todayStr = today.toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
         const nextWeekStr = nextWeek.toISOString().split('T')[0]; // Get next week's date
-        
+
         console.log(`Fetching publications from ${todayStr} to ${nextWeekStr}`);
-        
-        const { data, error } = await client
-          .from('article_publications')
-          .select(`
+        const {
+          data,
+          error
+        } = await client.from('article_publications').select(`
             id, 
             content_id,
             publish_location,
@@ -56,19 +59,14 @@ const Dashboard: React.FC = () => {
             professional_content (
               title
             )
-          `)
-          .gte('scheduled_date', todayStr)
-          .lte('scheduled_date', nextWeekStr)
-          .is('published_date', null)
-          .order('scheduled_date', { ascending: true })
-          .limit(5);
-        
+          `).gte('scheduled_date', todayStr).lte('scheduled_date', nextWeekStr).is('published_date', null).order('scheduled_date', {
+          ascending: true
+        }).limit(5);
         if (error) {
           throw error;
         }
-        
         console.log("Upcoming publications data:", data);
-        
+
         // Transform the data to match ArticlePublication type
         const transformedData = data?.map(item => ({
           id: item.id,
@@ -78,7 +76,6 @@ const Dashboard: React.FC = () => {
           published_date: null,
           professional_content: item.professional_content
         })) || [];
-        
         setUpcomingPublications(transformedData as ArticlePublication[]);
         setIsPublicationsLoading(false);
       } catch (error) {
@@ -86,24 +83,20 @@ const Dashboard: React.FC = () => {
         setIsPublicationsLoading(false);
       }
     };
-
     const fetchUpcomingSessions = async () => {
       try {
         setIsSessionsLoading(true);
-        
         const client = await supabaseClient();
         const today = new Date();
         const threeDaysLater = new Date();
         threeDaysLater.setDate(today.getDate() + 3);
-        
-        const todayStr = today.toISOString().split('T')[0]; 
+        const todayStr = today.toISOString().split('T')[0];
         const threeDaysLaterStr = threeDaysLater.toISOString().split('T')[0];
-        
         console.log(`Fetching sessions from ${todayStr} to ${threeDaysLaterStr}`);
-        
-        const { data, error } = await client
-          .from('future_sessions')
-          .select(`
+        const {
+          data,
+          error
+        } = await client.from('future_sessions').select(`
             id, 
             patient_id,
             session_date,
@@ -113,34 +106,30 @@ const Dashboard: React.FC = () => {
             patients (
               name
             )
-          `)
-          .gte('session_date', todayStr)
-          .lte('session_date', threeDaysLaterStr)
-          .eq('status', 'Scheduled')
-          .order('session_date', { ascending: true });
-        
+          `).gte('session_date', todayStr).lte('session_date', threeDaysLaterStr).eq('status', 'Scheduled').order('session_date', {
+          ascending: true
+        });
         if (error) {
           throw error;
         }
-        
         console.log("Upcoming sessions data:", data);
-        
+
         // Fix the type error by properly handling different response formats
         const transformedData = data?.map(item => {
           // Define the patient name with proper type narrowing
           let patientName = 'לקוח לא מזוהה';
-          
           if (item.patients) {
             // If patients is an array with at least one element
             if (Array.isArray(item.patients) && item.patients.length > 0) {
               patientName = item.patients[0].name || 'לקוח לא מזוהה';
-            } 
+            }
             // If patients is a direct object with name property
             else if (typeof item.patients === 'object' && item.patients !== null) {
-              patientName = (item.patients as { name?: string }).name || 'לקוח לא מזוהה';
+              patientName = (item.patients as {
+                name?: string;
+              }).name || 'לקוח לא מזוהה';
             }
           }
-          
           return {
             id: item.id,
             patient_id: item.patient_id,
@@ -151,7 +140,6 @@ const Dashboard: React.FC = () => {
             patient_name: patientName
           };
         }) || [];
-        
         setUpcomingSessions(transformedData);
         setIsSessionsLoading(false);
       } catch (error) {
@@ -159,50 +147,43 @@ const Dashboard: React.FC = () => {
         setIsSessionsLoading(false);
       }
     };
-
     const fetchSubscriptionStats = async () => {
       try {
         const client = await supabaseClient();
-        
+
         // Calculate the date 30 days ago
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
-        
+
         // Fetch content subscribers statistics
-        const { data: contentSubscribers, error: contentError } = await client
-          .from('content_subscribers')
-          .select('joined_at')
-          .eq('is_subscribed', true);
-          
+        const {
+          data: contentSubscribers,
+          error: contentError
+        } = await client.from('content_subscribers').select('joined_at').eq('is_subscribed', true);
         if (contentError) {
           console.error("Error fetching content subscribers:", contentError);
           throw contentError;
         }
-        
+
         // Fetch story subscribers statistics
-        const { data: storySubscribers, error: storyError } = await client
-          .from('story_subscribers')
-          .select('joined_at')
-          .eq('is_subscribed', true);
-          
+        const {
+          data: storySubscribers,
+          error: storyError
+        } = await client.from('story_subscribers').select('joined_at').eq('is_subscribed', true);
         if (storyError) {
           console.error("Error fetching story subscribers:", storyError);
           throw storyError;
         }
-        
+
         // Calculate total and new subscribers for content
         const totalContentSubscribers = contentSubscribers?.length || 0;
-        const newContentSubscribers = contentSubscribers?.filter(sub => 
-          sub.joined_at && new Date(sub.joined_at) >= thirtyDaysAgo
-        ).length || 0;
-        
+        const newContentSubscribers = contentSubscribers?.filter(sub => sub.joined_at && new Date(sub.joined_at) >= thirtyDaysAgo).length || 0;
+
         // Calculate total and new subscribers for stories
         const totalStorySubscribers = storySubscribers?.length || 0;
-        const newStorySubscribers = storySubscribers?.filter(sub => 
-          sub.joined_at && new Date(sub.joined_at) >= thirtyDaysAgo
-        ).length || 0;
-        
+        const newStorySubscribers = storySubscribers?.filter(sub => sub.joined_at && new Date(sub.joined_at) >= thirtyDaysAgo).length || 0;
+
         // Update state with the calculated statistics
         setSubscriptionStats({
           contentSubscribers: {
@@ -216,26 +197,28 @@ const Dashboard: React.FC = () => {
             loading: false
           }
         });
-        
       } catch (error) {
         console.error("Error fetching subscription statistics:", error);
         setSubscriptionStats(prev => ({
-          contentSubscribers: { ...prev.contentSubscribers, loading: false },
-          storySubscribers: { ...prev.storySubscribers, loading: false }
+          contentSubscribers: {
+            ...prev.contentSubscribers,
+            loading: false
+          },
+          storySubscribers: {
+            ...prev.storySubscribers,
+            loading: false
+          }
         }));
       }
     };
-
     fetchUpcomingPublications();
     fetchUpcomingSessions();
     fetchSubscriptionStats();
   }, []);
-
   const handleLogout = async () => {
     await signOut();
     navigate('/admin/login');
   };
-
   const getLocationIcon = (location: string) => {
     switch (location) {
       case 'Email':
@@ -252,7 +235,6 @@ const Dashboard: React.FC = () => {
         return <Pencil className="w-5 h-5 text-purple-500" />;
     }
   };
-
   const getLocationText = (location: string) => {
     switch (location) {
       case 'Email':
@@ -267,9 +249,11 @@ const Dashboard: React.FC = () => {
         return 'אחר';
     }
   };
-
-  const PublicationItem = ({ publication }: { publication: ArticlePublication }) => (
-    <div className="flex flex-row-reverse justify-between items-center border-b border-gray-100 py-3 last:border-0">
+  const PublicationItem = ({
+    publication
+  }: {
+    publication: ArticlePublication;
+  }) => <div className="flex flex-row-reverse justify-between items-center border-b border-gray-100 py-3 last:border-0">
       <div className="flex flex-col items-center">
         {getLocationIcon(publication.publish_location)}
         <span className="text-xs mt-1 font-medium">{getLocationText(publication.publish_location)}</span>
@@ -280,9 +264,7 @@ const Dashboard: React.FC = () => {
         </span>
         <Calendar className="w-4 h-4 text-gray-600" />
       </div>
-    </div>
-  );
-
+    </div>;
   const getMeetingTypeIcon = (meetingType: string) => {
     switch (meetingType) {
       case 'Phone':
@@ -295,7 +277,6 @@ const Dashboard: React.FC = () => {
         return <Calendar className="w-5 h-5 text-gray-500" />;
     }
   };
-
   const getMeetingTypeText = (meetingType: string) => {
     switch (meetingType) {
       case 'Phone':
@@ -308,9 +289,13 @@ const Dashboard: React.FC = () => {
         return meetingType;
     }
   };
-
-  const SessionItem = ({ session }: { session: FutureSession & { patient_name?: string } }) => (
-    <div className="flex flex-row-reverse justify-between items-center border-b border-gray-100 py-3 last:border-0">
+  const SessionItem = ({
+    session
+  }: {
+    session: FutureSession & {
+      patient_name?: string;
+    };
+  }) => <div className="flex flex-row-reverse justify-between items-center border-b border-gray-100 py-3 last:border-0">
       <div className="flex flex-col items-end">
         <div className="flex items-center mb-1">
           <span className="text-sm font-medium">{session.patient_name}</span>
@@ -327,22 +312,12 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       <div className="flex flex-col items-start">
-        {session.zoom_link && (
-          <a 
-            href={session.zoom_link} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-xs mt-1 text-blue-500 hover:underline"
-          >
+        {session.zoom_link && <a href={session.zoom_link} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 text-blue-500 hover:underline">
             לינק לזום
-          </a>
-        )}
+          </a>}
       </div>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-gray-100">
+    </div>;
+  return <div className="min-h-screen bg-gray-100">
       <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 flex flex-row-reverse items-center">
         <Home className="h-5 w-5 ml-2" />
         <span>חזרה לדף הבית</span>
@@ -352,11 +327,7 @@ const Dashboard: React.FC = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-row-reverse justify-between items-center">
             <h1 className="text-2xl font-bold">לוח ניהול</h1>
-            <Button 
-              variant="ghost" 
-              className="text-white hover:bg-purple-light"
-              onClick={handleLogout}
-            >
+            <Button variant="ghost" className="text-white hover:bg-purple-light" onClick={handleLogout}>
               <LogOut className="w-5 h-5 ml-2" />
               התנתקות
             </Button>
@@ -377,23 +348,15 @@ const Dashboard: React.FC = () => {
                 </Link>
               </CardHeader>
               <CardContent className="pt-4 text-right">
-                {isPublicationsLoading ? (
-                  <div className="flex justify-center items-center py-8">
+                {isPublicationsLoading ? <div className="flex justify-center items-center py-8">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                ) : upcomingPublications.length > 0 ? (
-                  <div className="space-y-1 text-right">
-                    {upcomingPublications.map((publication) => (
-                      <PublicationItem key={publication.id} publication={publication} />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-500 py-4">אין פרסומים מתוכננים בקרוב</p>
-                )}
+                  </div> : upcomingPublications.length > 0 ? <div className="space-y-1 text-right">
+                    {upcomingPublications.map(publication => <PublicationItem key={publication.id} publication={publication} />)}
+                  </div> : <p className="text-center text-gray-500 py-4">אין פרסומים מתוכננים בקרוב</p>}
               </CardContent>
             </Card>
 
-            <Card className="w-full">
+            <Card className="w-full ">
               <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xl font-bold text-right">הפגישות הקרובות שלך</CardTitle>
                 <Link to="/admin/calendar" className="text-sm text-blue-600 hover:text-blue-800 flex flex-row-reverse items-center">
@@ -402,19 +365,11 @@ const Dashboard: React.FC = () => {
                 </Link>
               </CardHeader>
               <CardContent className="pt-4 text-right">
-                {isSessionsLoading ? (
-                  <div className="flex justify-center items-center py-8">
+                {isSessionsLoading ? <div className="flex justify-center items-center py-8">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                ) : upcomingSessions.length > 0 ? (
-                  <div className="space-y-1 text-right">
-                    {upcomingSessions.map((session) => (
-                      <SessionItem key={session.id} session={session} />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-500 py-4">אין פגישות מתוכננות בימים הקרובים</p>
-                )}
+                  </div> : upcomingSessions.length > 0 ? <div className="space-y-1 text-right">
+                    {upcomingSessions.map(session => <SessionItem key={session.id} session={session} />)}
+                  </div> : <p className="text-center text-gray-500 py-4">אין פגישות מתוכננות בימים הקרובים</p>}
               </CardContent>
             </Card>
           </div>
@@ -427,27 +382,20 @@ const Dashboard: React.FC = () => {
                 <div className="w-6"></div>
               </CardHeader>
               <CardContent className="pt-4 text-right">
-                {subscriptionStats.contentSubscribers.loading || subscriptionStats.storySubscribers.loading ? (
-                  <div className="flex justify-center items-center py-8">
+                {subscriptionStats.contentSubscribers.loading || subscriptionStats.storySubscribers.loading ? <div className="flex justify-center items-center py-8">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
+                  </div> : <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
                     <div className="flex-1 border-r-0 md:border-r border-gray-200 p-2 md:p-4">
                       <div className="flex flex-row-reverse items-center justify-start mb-2">
                         <BookOpen className="w-6 h-6 text-purple-600 ml-2" />
                         <span className="text-lg font-medium">מנויים לתוכן מקצועי</span>
                       </div>
-                      {subscriptionStats.contentSubscribers.total > 0 ? (
-                        <div className="text-right">
+                      {subscriptionStats.contentSubscribers.total > 0 ? <div className="text-right">
                           <p className="text-2xl font-bold">{subscriptionStats.contentSubscribers.total}</p>
                           <p className="text-sm text-gray-600">
                             {subscriptionStats.contentSubscribers.newLast30Days} חדשים ב-30 ימים האחרונים
                           </p>
-                        </div>
-                      ) : (
-                        <p className="text-right text-gray-500 py-2">אין מנויים רשומים</p>
-                      )}
+                        </div> : <p className="text-right text-gray-500 py-2">אין מנויים רשומים</p>}
                     </div>
                     
                     <div className="flex-1 p-2 md:p-4">
@@ -455,19 +403,14 @@ const Dashboard: React.FC = () => {
                         <BookText className="w-6 h-6 text-blue-600 ml-2" />
                         <span className="text-lg font-medium">מנויים לסיפורים</span>
                       </div>
-                      {subscriptionStats.storySubscribers.total > 0 ? (
-                        <div className="text-right">
+                      {subscriptionStats.storySubscribers.total > 0 ? <div className="text-right">
                           <p className="text-2xl font-bold">{subscriptionStats.storySubscribers.total}</p>
                           <p className="text-sm text-gray-600">
                             {subscriptionStats.storySubscribers.newLast30Days} חדשים ב-30 ימים האחרונים
                           </p>
-                        </div>
-                      ) : (
-                        <p className="text-right text-gray-500 py-2">אין מנויים רשומים</p>
-                      )}
+                        </div> : <p className="text-right text-gray-500 py-2">אין מנויים רשומים</p>}
                     </div>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
             </Card>
 
@@ -477,12 +420,9 @@ const Dashboard: React.FC = () => {
                 <div className="w-6"></div>
               </CardHeader>
               <CardContent className="pt-4 text-right">
-                {paymentStats.loading ? (
-                  <div className="flex justify-center items-center py-8">
+                {paymentStats.loading ? <div className="flex justify-center items-center py-8">
                     <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                ) : (paymentStats.totalReceived > 0 || paymentStats.outstandingBalance > 0) ? (
-                  <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
+                  </div> : paymentStats.totalReceived > 0 || paymentStats.outstandingBalance > 0 ? <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
                     <div className="flex-1 border-r-0 md:border-r border-gray-200 p-2 md:p-4">
                       <div className="flex flex-row-reverse items-center justify-start mb-2">
                         <Banknote className="w-6 h-6 text-green-600 ml-2" />
@@ -502,10 +442,7 @@ const Dashboard: React.FC = () => {
                         <p className="text-2xl font-bold">₪{paymentStats.outstandingBalance.toLocaleString()}</p>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <p className="text-right text-gray-500 py-4">אין נתוני תשלומים זמינים</p>
-                )}
+                  </div> : <p className="text-right text-gray-500 py-4">אין נתוני תשלומים זמינים</p>}
               </CardContent>
             </Card>
           </div>
@@ -537,8 +474,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Dashboard;
