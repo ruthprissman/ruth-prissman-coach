@@ -347,6 +347,15 @@ const Dashboard: React.FC = () => {
 
       <main dir="rtl" className="container mx-auto px-6 py-8">
         <div className="flex flex-col items-center">
+          <div className="w-full flex justify-end mb-4">
+            <Link to="/">
+              <Button variant="outline" className="text-white bg-[#4A235A] hover:bg-[#57346A] border-none">
+                <Home className="h-5 w-5 me-2" />
+                חזרה לדף הבית
+              </Button>
+            </Link>
+          </div>
+          
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div dir="rtl">
               <Card className="w-full">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,7 +32,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
   };
 
   const navItems = [
-    { label: 'דף הבית', icon: <Home className="ml-2 h-5 w-5" />, path: '/admin/dashboard' },
+    { label: 'דף הבית', icon: <Home className="ml-2 h-5 w-5" />, path: '/' }, // Added Home link
+    { label: 'לוח ניהול', icon: <Home className="ml-2 h-5 w-5" />, path: '/admin/dashboard' },
     { label: 'לקוחות', icon: <Users className="ml-2 h-5 w-5" />, path: '/admin/patients' },
     { label: 'כל הפגישות', icon: <Calendar className="ml-2 h-5 w-5" />, path: '/admin/sessions' },
     { label: 'ניהול תרגילים', icon: <FileText className="ml-2 h-5 w-5" />, path: '/admin/exercises' },
