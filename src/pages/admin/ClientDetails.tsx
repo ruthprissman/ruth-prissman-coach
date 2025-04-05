@@ -32,6 +32,7 @@ const ClientDetails = () => {
   const [statistics, setStatistics] = useState<ClientStatistics | null>(null);
   const [futureSessions, setFutureSessions] = useState<FutureSession[]>([]);
   const [historicalSessions, setHistoricalSessions] = useState<Session[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("future_sessions");
 
   const [deleteSessionDialog, setDeleteSessionDialog] = useState<{open: boolean, session: Session | null}>({
     open: false,
@@ -185,6 +186,7 @@ const ClientDetails = () => {
       open: true,
       session
     });
+    setActiveTab("historical_sessions");
   };
 
   const confirmDeleteFutureSession = async () => {
@@ -327,7 +329,11 @@ const ClientDetails = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow">
-        <Tabs defaultValue="future_sessions" dir="rtl">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={setActiveTab} 
+          dir="rtl"
+        >
           <div className="p-4 border-b">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="future_sessions" className="text-base">פגישות עתידיות</TabsTrigger>
@@ -596,7 +602,11 @@ const ClientDetails = () => {
           isOpen={editHistoricalSessionDialog.open}
           onClose={() => setEditHistoricalSessionDialog({ open: false, session: null })}
           session={editHistoricalSessionDialog.session}
-          onSessionUpdated={fetchClientData}
+          onSessionUpdated={() => {
+            fetchClientData();
+            setActiveTab("historical_sessions");
+            setEditHistoricalSessionDialog({ open: false, session: null });
+          }}
           sessionPrice={patient?.session_price || null}
         />
       )}
