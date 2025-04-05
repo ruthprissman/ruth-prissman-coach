@@ -10,6 +10,7 @@ import { formatDateTimeInIsrael } from '@/utils/dateUtils';
 import { ArticlePublication } from '@/types/article';
 import { FutureSession } from '@/types/session';
 import { useIsMobile } from '@/hooks/use-mobile';
+
 const Dashboard: React.FC = () => {
   const {
     signOut,
@@ -36,6 +37,7 @@ const Dashboard: React.FC = () => {
     }
   });
   const paymentStats = usePaymentStats();
+
   useEffect(() => {
     const fetchUpcomingPublications = async () => {
       try {
@@ -215,10 +217,12 @@ const Dashboard: React.FC = () => {
     fetchUpcomingSessions();
     fetchSubscriptionStats();
   }, []);
+
   const handleLogout = async () => {
     await signOut();
     navigate('/admin/login');
   };
+
   const getLocationIcon = (location: string) => {
     switch (location) {
       case 'Email':
@@ -235,6 +239,7 @@ const Dashboard: React.FC = () => {
         return <Pencil className="w-5 h-5 text-purple-500" />;
     }
   };
+
   const getLocationText = (location: string) => {
     switch (location) {
       case 'Email':
@@ -249,22 +254,24 @@ const Dashboard: React.FC = () => {
         return 'אחר';
     }
   };
+
   const PublicationItem = ({
     publication
   }: {
     publication: ArticlePublication;
-  }) => <div className="flex flex-row-reverse justify-between items-center border-b border-gray-100 py-3 last:border-0">
+  }) => <div className="flex justify-between items-center border-b border-gray-100 py-3 last:border-0">
       <div className="flex flex-col items-center">
         {getLocationIcon(publication.publish_location)}
         <span className="text-xs mt-1 font-medium">{getLocationText(publication.publish_location)}</span>
       </div>
       <div className="flex items-center">
-        <span className="text-sm mr-2">
+        <Calendar className="w-4 h-4 text-gray-600 ms-2" />
+        <span className="text-sm">
           {formatDateTimeInIsrael(publication.scheduled_date)}
         </span>
-        <Calendar className="w-4 h-4 text-gray-600" />
       </div>
     </div>;
+
   const getMeetingTypeIcon = (meetingType: string) => {
     switch (meetingType) {
       case 'Phone':
@@ -277,6 +284,7 @@ const Dashboard: React.FC = () => {
         return <Calendar className="w-5 h-5 text-gray-500" />;
     }
   };
+
   const getMeetingTypeText = (meetingType: string) => {
     switch (meetingType) {
       case 'Phone':
@@ -289,26 +297,27 @@ const Dashboard: React.FC = () => {
         return meetingType;
     }
   };
+
   const SessionItem = ({
     session
   }: {
     session: FutureSession & {
       patient_name?: string;
     };
-  }) => <div className="flex flex-row-reverse justify-between items-center border-b border-gray-100 py-3 last:border-0">
+  }) => <div className="flex justify-between items-center border-b border-gray-100 py-3 last:border-0">
       <div className="flex flex-col items-end">
         <div className="flex items-center mb-1">
           <span className="text-sm font-medium">{session.patient_name}</span>
         </div>
         <div className="flex items-center">
-          <Calendar className="w-4 h-4 text-gray-600 ml-2" />
           <span className="text-sm text-gray-600">
             {formatDateTimeInIsrael(session.session_date)}
           </span>
+          <Calendar className="w-4 h-4 text-gray-600 ms-2" />
         </div>
         <div className="flex items-center mt-1">
+          <span className="text-xs text-gray-500 ms-1">{getMeetingTypeText(session.meeting_type)}</span>
           {getMeetingTypeIcon(session.meeting_type)}
-          <span className="text-xs text-gray-500 mr-1">{getMeetingTypeText(session.meeting_type)}</span>
         </div>
       </div>
       <div className="flex flex-col items-start">
@@ -317,134 +326,141 @@ const Dashboard: React.FC = () => {
           </a>}
       </div>
     </div>;
+
   return <div className="min-h-screen bg-gray-100">
-      <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 flex flex-row-reverse items-center">
-        <Home className="h-5 w-5 ml-2" />
+      <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-gray-900 flex items-center">
         <span>חזרה לדף הבית</span>
+        <Home className="h-5 w-5 ms-2" />
       </Link>
 
       <header className="bg-[#4A235A] text-white shadow-md">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex flex-row-reverse justify-between items-center">
-            <h1 className="text-2xl font-bold">לוח ניהול</h1>
+        <div dir="rtl" className="container mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-right">לוח ניהול</h1>
             <Button variant="ghost" className="text-white hover:bg-purple-light" onClick={handleLogout}>
-              <LogOut className="w-5 h-5 ml-2" />
               התנתקות
+              <LogOut className="w-5 h-5 ms-2" />
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
+      <main dir="rtl" className="container mx-auto px-6 py-8">
         <div className="flex flex-col items-center">
-          {/* Dashboard cards grid - horizontal on desktop, vertical on mobile */}
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card className="w-full">
-              <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xl font-bold text-right">מה חדש?</CardTitle>
-                <Link to="/admin/articles" className="text-sm text-blue-600 hover:text-blue-800 flex flex-row-reverse items-center">
-                  <ArrowUpRight className="w-4 h-4 ml-1" />
-                  <span>לכל הפרסומים</span>
-                </Link>
-              </CardHeader>
-              <CardContent className="pt-4 text-right">
-                {isPublicationsLoading ? <div className="flex justify-center items-center py-8">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  </div> : upcomingPublications.length > 0 ? <div className="space-y-1 text-right">
-                    {upcomingPublications.map(publication => <PublicationItem key={publication.id} publication={publication} />)}
-                  </div> : <p className="text-center text-gray-500 py-4">אין פרסומים מתוכננים בקרוב</p>}
-              </CardContent>
-            </Card>
+            <div dir="rtl">
+              <Card className="w-full">
+                <CardHeader className="flex items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-xl font-bold text-right">מה חדש?</CardTitle>
+                  <Link to="/admin/articles" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                    <span>לכל הפרסומים</span>
+                    <ArrowUpRight className="w-4 h-4 ms-1" />
+                  </Link>
+                </CardHeader>
+                <CardContent className="pt-4 text-right">
+                  {isPublicationsLoading ? <div className="flex justify-center items-center py-8">
+                      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div> : upcomingPublications.length > 0 ? <div className="space-y-1 text-right">
+                      {upcomingPublications.map(publication => <PublicationItem key={publication.id} publication={publication} />)}
+                    </div> : <p className="text-center text-gray-500 py-4">אין פרסומים מתוכננים בקרוב</p>}
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card className="w-full ">
-              <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xl font-bold text-right">הפגישות הקרובות שלך</CardTitle>
-                <Link to="/admin/calendar" className="text-sm text-blue-600 hover:text-blue-800 flex flex-row-reverse items-center">
-                  <ArrowUpRight className="w-4 h-4 ml-1" />
-                  <span>ללוח הפגישות</span>
-                </Link>
-              </CardHeader>
-              <CardContent className="pt-4 text-right">
-                {isSessionsLoading ? <div className="flex justify-center items-center py-8">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  </div> : upcomingSessions.length > 0 ? <div className="space-y-1 text-right">
-                    {upcomingSessions.map(session => <SessionItem key={session.id} session={session} />)}
-                  </div> : <p className="text-center text-gray-500 py-4">אין פגישות מתוכננות בימים הקרובים</p>}
-              </CardContent>
-            </Card>
+            <div dir="rtl">
+              <Card className="w-full">
+                <CardHeader className="flex items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-xl font-bold text-right">הפגישות הקרובות שלך</CardTitle>
+                  <Link to="/admin/calendar" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                    <span>ללוח הפגישות</span>
+                    <ArrowUpRight className="w-4 h-4 ms-1" />
+                  </Link>
+                </CardHeader>
+                <CardContent className="pt-4 text-right">
+                  {isSessionsLoading ? <div className="flex justify-center items-center py-8">
+                      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div> : upcomingSessions.length > 0 ? <div className="space-y-1 text-right">
+                      {upcomingSessions.map(session => <SessionItem key={session.id} session={session} />)}
+                    </div> : <p className="text-center text-gray-500 py-4">אין פגישות מתוכננות בימים הקרובים</p>}
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
-          {/* Second row of cards - subscription stats and payment stats */}
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="w-full">
-              <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xl font-bold text-right">סטטיסטיקות מנויים</CardTitle>
-                <div className="w-6"></div>
-              </CardHeader>
-              <CardContent className="pt-4 text-right">
-                {subscriptionStats.contentSubscribers.loading || subscriptionStats.storySubscribers.loading ? <div className="flex justify-center items-center py-8">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  </div> : <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
-                    <div className="flex-1 border-r-0 md:border-r border-gray-200 p-2 md:p-4">
-                      <div className="flex flex-row-reverse items-center justify-start mb-2">
-                        <BookOpen className="w-6 h-6 text-purple-600 ml-2" />
-                        <span className="text-lg font-medium">מנויים לתוכן מקצועי</span>
+            <div dir="rtl">
+              <Card className="w-full">
+                <CardHeader className="flex items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-xl font-bold text-right">סטטיסטיקות מנויים</CardTitle>
+                  <div className="w-6"></div>
+                </CardHeader>
+                <CardContent className="pt-4 text-right">
+                  {subscriptionStats.contentSubscribers.loading || subscriptionStats.storySubscribers.loading ? <div className="flex justify-center items-center py-8">
+                      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div> : <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
+                      <div className="flex-1 border-r-0 md:border-l border-gray-200 p-2 md:p-4">
+                        <div className="flex items-center justify-start mb-2">
+                          <span className="text-lg font-medium">מנויים לתוכן מקצועי</span>
+                          <BookOpen className="w-6 h-6 text-purple-600 ms-2" />
+                        </div>
+                        {subscriptionStats.contentSubscribers.total > 0 ? <div className="text-right">
+                            <p className="text-2xl font-bold">{subscriptionStats.contentSubscribers.total}</p>
+                            <p className="text-sm text-gray-600">
+                              {subscriptionStats.contentSubscribers.newLast30Days} חדשים ב-30 ימים האחרונים
+                            </p>
+                          </div> : <p className="text-right text-gray-500 py-2">אין מנויים רשומים</p>}
                       </div>
-                      {subscriptionStats.contentSubscribers.total > 0 ? <div className="text-right">
-                          <p className="text-2xl font-bold">{subscriptionStats.contentSubscribers.total}</p>
-                          <p className="text-sm text-gray-600">
-                            {subscriptionStats.contentSubscribers.newLast30Days} חדשים ב-30 ימים האחרונים
-                          </p>
-                        </div> : <p className="text-right text-gray-500 py-2">אין מנויים רשומים</p>}
-                    </div>
-                    
-                    <div className="flex-1 p-2 md:p-4">
-                      <div className="flex flex-row-reverse items-center justify-start mb-2">
-                        <BookText className="w-6 h-6 text-blue-600 ml-2" />
-                        <span className="text-lg font-medium">מנויים לסיפורים</span>
+                      
+                      <div className="flex-1 p-2 md:p-4">
+                        <div className="flex items-center justify-start mb-2">
+                          <span className="text-lg font-medium">מנויים לסיפורים</span>
+                          <BookText className="w-6 h-6 text-blue-600 ms-2" />
+                        </div>
+                        {subscriptionStats.storySubscribers.total > 0 ? <div className="text-right">
+                            <p className="text-2xl font-bold">{subscriptionStats.storySubscribers.total}</p>
+                            <p className="text-sm text-gray-600">
+                              {subscriptionStats.storySubscribers.newLast30Days} חדשים ב-30 ימים האחרונים
+                            </p>
+                          </div> : <p className="text-right text-gray-500 py-2">אין מנויים רשומים</p>}
                       </div>
-                      {subscriptionStats.storySubscribers.total > 0 ? <div className="text-right">
-                          <p className="text-2xl font-bold">{subscriptionStats.storySubscribers.total}</p>
-                          <p className="text-sm text-gray-600">
-                            {subscriptionStats.storySubscribers.newLast30Days} חדשים ב-30 ימים האחרונים
-                          </p>
-                        </div> : <p className="text-right text-gray-500 py-2">אין מנויים רשומים</p>}
-                    </div>
-                  </div>}
-              </CardContent>
-            </Card>
+                    </div>}
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card className="w-full">
-              <CardHeader className="flex flex-row-reverse items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xl font-bold text-right">סטטיסטיקות תשלומים</CardTitle>
-                <div className="w-6"></div>
-              </CardHeader>
-              <CardContent className="pt-4 text-right">
-                {paymentStats.loading ? <div className="flex justify-center items-center py-8">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  </div> : paymentStats.totalReceived > 0 || paymentStats.outstandingBalance > 0 ? <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
-                    <div className="flex-1 border-r-0 md:border-r border-gray-200 p-2 md:p-4">
-                      <div className="flex flex-row-reverse items-center justify-start mb-2">
-                        <Banknote className="w-6 h-6 text-green-600 ml-2" />
-                        <span className="text-lg font-medium">סה״כ שולם עד היום</span>
+            <div dir="rtl">
+              <Card className="w-full">
+                <CardHeader className="flex items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-xl font-bold text-right">סטטיסטיקות תשלומים</CardTitle>
+                  <div className="w-6"></div>
+                </CardHeader>
+                <CardContent className="pt-4 text-right">
+                  {paymentStats.loading ? <div className="flex justify-center items-center py-8">
+                      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    </div> : paymentStats.totalReceived > 0 || paymentStats.outstandingBalance > 0 ? <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
+                      <div className="flex-1 border-r-0 md:border-l border-gray-200 p-2 md:p-4">
+                        <div className="flex items-center justify-start mb-2">
+                          <span className="text-lg font-medium">סה״כ שולם עד היום</span>
+                          <Banknote className="w-6 h-6 text-green-600 ms-2" />
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold">₪{paymentStats.totalReceived.toLocaleString()}</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">₪{paymentStats.totalReceived.toLocaleString()}</p>
+                      
+                      <div className="flex-1 p-2 md:p-4">
+                        <div className="flex items-center justify-start mb-2">
+                          <span className="text-lg font-medium">חוב פתוח לסגירה</span>
+                          <Receipt className="w-6 h-6 text-amber-600 ms-2" />
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold">₪{paymentStats.outstandingBalance.toLocaleString()}</p>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex-1 p-2 md:p-4">
-                      <div className="flex flex-row-reverse items-center justify-start mb-2">
-                        <Receipt className="w-6 h-6 text-amber-600 ml-2" />
-                        <span className="text-lg font-medium">חוב פתוח לסגירה</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold">₪{paymentStats.outstandingBalance.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div> : <p className="text-right text-gray-500 py-4">אין נתוני תשלומים זמינים</p>}
-              </CardContent>
-            </Card>
+                    </div> : <p className="text-right text-gray-500 py-4">אין נתוני תשלומים זמינים</p>}
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           <div className="w-full mt-10">
@@ -476,4 +492,5 @@ const Dashboard: React.FC = () => {
       </main>
     </div>;
 };
+
 export default Dashboard;
