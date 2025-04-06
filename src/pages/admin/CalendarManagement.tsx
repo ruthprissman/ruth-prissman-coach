@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { RecurringAvailabilityDialog } from '@/components/admin/calendar/RecurringAvailabilityDialog';
 import { GoogleCalendarSync } from '@/components/admin/calendar/GoogleCalendarSync';
 import { GoogleOAuthButton } from '@/components/admin/calendar/GoogleOAuthButton';
+import { GoogleCalendarEventForm } from '@/components/admin/calendar/GoogleCalendarEventForm';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Calendar as CalendarIcon, AlertCircle, RefreshCw, Settings } from 'lucide-react';
 import DebugLogPanel from '@/components/admin/calendar/DebugLogPanel';
@@ -895,6 +896,16 @@ const CalendarManagement: React.FC = () => {
             </Alert>
           )}
           
+          {!isGoogleAuthenticated && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>לא התקבלה גישה ליומן הגוגל שלך</AlertTitle>
+              <AlertDescription>
+                אנא התחבר לחשבון Google שלך וספק הרשאות גישה ליומן כדי להציג את האירועים שלך.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {!tableExists && !showDebugLogs ? (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
@@ -924,46 +935,54 @@ const CalendarManagement: React.FC = () => {
             </Alert>
           )}
           
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>הגדרת זמני זמינות לפגישות</CardTitle>
-                <Tabs value={selectedView} onValueChange={(value) => setSelectedView(value as 'calendar' | 'list')}>
-                  <TabsList>
-                    <TabsTrigger value="calendar">תצוגת לוח</TabsTrigger>
-                    <TabsTrigger value="list">תצוגת רשימה</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <CalendarToolbar 
-                currentDate={currentDate}
-                onPrevWeek={() => navigateWeek('prev')}
-                onNextWeek={() => navigateWeek('next')}
-                onToday={() => setCurrentDate(new Date())}
-                onAddRecurring={() => setRecurringDialogOpen(true)}
-              />
-              
-              <div className="mt-4">
-                {selectedView === 'calendar' ? (
-                  <CalendarGrid 
-                    days={days}
-                    hours={hours}
-                    calendarData={calendarData}
-                    onUpdateSlot={updateTimeSlot}
-                    isLoading={isLoading}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <Card>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>הגדרת זמני זמינות לפגישות</CardTitle>
+                    <Tabs value={selectedView} onValueChange={(value) => setSelectedView(value as 'calendar' | 'list')}>
+                      <TabsList>
+                        <TabsTrigger value="calendar">תצוגת לוח</TabsTrigger>
+                        <TabsTrigger value="list">תצוגת רשימה</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CalendarToolbar 
+                    currentDate={currentDate}
+                    onPrevWeek={() => navigateWeek('prev')}
+                    onNextWeek={() => navigateWeek('next')}
+                    onToday={() => setCurrentDate(new Date())}
+                    onAddRecurring={() => setRecurringDialogOpen(true)}
                   />
-                ) : (
-                  <CalendarListView 
-                    calendarData={calendarData}
-                    onUpdateSlot={updateTimeSlot}
-                    isLoading={isLoading}
-                  />
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  
+                  <div className="mt-4">
+                    {selectedView === 'calendar' ? (
+                      <CalendarGrid 
+                        days={days}
+                        hours={hours}
+                        calendarData={calendarData}
+                        onUpdateSlot={updateTimeSlot}
+                        isLoading={isLoading}
+                      />
+                    ) : (
+                      <CalendarListView 
+                        calendarData={calendarData}
+                        onUpdateSlot={updateTimeSlot}
+                        isLoading={isLoading}
+                      />
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div>
+              <GoogleCalendarEventForm />
+            </div>
+          </div>
         </div>
         
         <RecurringAvailabilityDialog 

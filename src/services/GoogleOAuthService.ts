@@ -233,7 +233,7 @@ declare global {
   }
 }
 
-// New function to create a Google Calendar event
+// Function to create a Google Calendar event
 export async function createGoogleCalendarEvent(
   summary: string,
   startDateTime: string,
