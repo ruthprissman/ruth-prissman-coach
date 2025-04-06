@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabaseClient, clearSupabaseClientCache } from '@/lib/supabaseClient';
@@ -297,9 +298,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    if (session?.access_token) {
-      clearSupabaseClientCache(session.access_token);
-    }
+    // Remove the access_token argument as clearSupabaseClientCache doesn't take parameters
+    clearSupabaseClientCache();
     
     await supabaseClient().auth.signOut();
     setIsAdmin(false);
