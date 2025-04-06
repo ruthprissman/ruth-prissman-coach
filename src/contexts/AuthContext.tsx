@@ -14,6 +14,8 @@ type AuthContextType = {
   createAdminUser: (email: string, password: string) => Promise<{ error: Error | null, message?: string }>;
   resetPassword: (email: string) => Promise<{ error: Error | null, message?: string }>;
   checkAdminExists: () => Promise<boolean>;
+  isAdmin: boolean;
+  checkIsAdmin: (email: string) => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -36,6 +39,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setSession(data.session);
         setUser(data.session?.user || null);
+        
+        // Check admin status if user exists
+        if (data.session?.user?.email) {
+          const adminStatus = await checkIsAdmin(data.session.user.email);
+          setIsAdmin(adminStatus);
+        }
       } catch (error) {
         console.error('Unexpected error fetching session:', error);
       } finally {
@@ -52,8 +61,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(newSession);
         setUser(newSession?.user || null);
         
+        // Check admin status when auth state changes
+        if (event === 'SIGNED_IN' && newSession?.user?.email) {
+          const adminStatus = await checkIsAdmin(newSession.user.email);
+          setIsAdmin(adminStatus);
+        }
+        
         if (event === 'SIGNED_OUT') {
           clearAuthClientCache();
+          setIsAdmin(false);
         }
       }
     );
@@ -62,6 +78,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       subscription.unsubscribe();
     };
   }, []);
+
+  const checkIsAdmin = async (email: string): Promise<boolean> => {
+    try {
+      console.log(`Checking if ${email} is an admin`);
+      const { data, error } = await supabase
+        .from('admins')
+        .select('email')
+        .eq('email', email)
+        .single();
+      
+      if (error) {
+        console.error('Error checking admin status:', error);
+        return false;
+      }
+      
+      const isUserAdmin = !!data;
+      console.log(`Admin check result for ${email}:`, isUserAdmin);
+      return isUserAdmin;
+    } catch (error) {
+      console.error('Unexpected error checking admin status:', error);
+      return false;
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
@@ -88,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     setIsLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/admin/dashboard`;
+      const redirectTo = `${window.location.origin}/admin/auth-callback`;
       console.log(`[Auth Debug] Google login redirect set to: ${redirectTo}`);
       
       const { error } = await supabase.auth.signInWithOAuth({
@@ -226,6 +265,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     await supabase.auth.signOut();
+    setIsAdmin(false);
     toast({
       title: "התנתקת בהצלחה",
       description: "להתראות בפעם הבאה",
@@ -242,7 +282,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signOut, 
       createAdminUser, 
       resetPassword,
-      checkAdminExists
+      checkAdminExists,
+      isAdmin,
+      checkIsAdmin
     }}>
       {children}
     </AuthContext.Provider>

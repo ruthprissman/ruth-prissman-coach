@@ -5,21 +5,22 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  requireAdmin?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, isLoading, session } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = true }) => {
+  const { user, isLoading, session, isAdmin } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
     // Log authentication status for debugging
     if (user) {
-      console.log('ProtectedRoute: User is authenticated', { userId: user.id });
+      console.log('ProtectedRoute: User is authenticated', { userId: user.id, isAdmin });
     } else if (!isLoading) {
       console.log('ProtectedRoute: User is not authenticated, redirecting to login');
       console.log('Current location:', location.pathname);
     }
-  }, [user, isLoading, location]);
+  }, [user, isLoading, location, isAdmin]);
 
   if (isLoading) {
     // Show loading state while authentication is being checked
@@ -35,6 +36,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     console.log('Redirecting to login with state:', { from: location });
     // Redirect to login page but save the intended destination
     return <Navigate to="/admin/login" replace state={{ from: location }} />;
+  }
+
+  if (requireAdmin && !isAdmin) {
+    console.log('User is not an admin, redirecting to homepage');
+    // User is authenticated but not an admin - redirect to homepage
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

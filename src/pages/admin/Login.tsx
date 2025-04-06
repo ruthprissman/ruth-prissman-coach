@@ -46,7 +46,7 @@ const Login: React.FC = () => {
   const [searchParams] = useSearchParams();
   const isRecoveryMode = searchParams.get('type') === 'recovery';
   
-  console.log('Login page rendered. Current auth state:', { user: !!user, isLoading });
+  console.log('Login page rendered. Current auth state:', { user: !!user, isLoading, isAdmin: useAuth().isAdmin });
   console.log('Current location state:', location.state);
   
   const from = (location.state as { from: { pathname: string } })?.from?.pathname || '/admin/dashboard';
@@ -158,8 +158,12 @@ const Login: React.FC = () => {
   };
   
   if (user && !isRecoveryMode) {
-    console.log('User already authenticated, redirecting to dashboard');
-    return <Navigate to="/admin/dashboard" replace />;
+    console.log('User already authenticated, checking admin status');
+    
+    if (useAuth().isAdmin) {
+      console.log('User is admin, redirecting to dashboard');
+      return <Navigate to="/admin/dashboard" replace />;
+    }
   }
   
   return (
