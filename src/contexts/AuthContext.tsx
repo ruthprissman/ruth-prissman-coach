@@ -156,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     setIsLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/admin/auth-callback`;
+      const redirectTo = `${window.location.origin}/admin/dashboard`;
       console.log(`[Auth Debug] Google login redirect set to: ${redirectTo}`);
       
       const { error } = await supabase.auth.signInWithOAuth({

@@ -1,4 +1,3 @@
-
 import { GoogleCalendarEvent } from '@/types/calendar';
 
 // OAuth2 configuration
@@ -6,8 +5,8 @@ const CLIENT_ID = '216734901779-csrnrl4nmkilae4blbolsip8mmibsk3t.apps.googleuser
 const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
 // Determine the correct redirect URI based on the current environment
 const REDIRECT_URI = window.location.hostname.includes('preview') 
-  ? 'https://preview--ruth-prissman-coach.lovable.app/auth/callback'
-  : 'https://ruth-prissman-coach.lovable.app/auth/callback';
+  ? 'https://preview--ruth-prissman-coach.lovable.app/admin/dashboard'
+  : 'https://ruth-prissman-coach.lovable.app/admin/dashboard';
 
 export interface GoogleOAuthState {
   isAuthenticated: boolean;
