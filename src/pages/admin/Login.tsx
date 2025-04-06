@@ -41,7 +41,9 @@ const Login: React.FC = () => {
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(false);
   const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
   const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
-  const { signIn, signInWithGoogle, createAdminUser, resetPassword, checkAdminExists, user, isLoading } = useAuth();
+  
+  const { signIn, signInWithGoogle, createAdminUser, resetPassword, checkAdminExists } = useAuth();
+  
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -377,9 +379,9 @@ const Login: React.FC = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-[#4A235A] hover:bg-[#7E69AB] text-white"
-                  disabled={isLoading || (isCreatingAdmin && adminExists)}
+                  disabled={form.formState.isSubmitting || (isCreatingAdmin && adminExists)}
                 >
-                  {isLoading ? (
+                  {form.formState.isSubmitting ? (
                     <>
                       <span className="mr-2">{isCreatingAdmin ? 'יוצר משתמש...' : 'מתחבר...'}</span>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -443,10 +445,10 @@ const Login: React.FC = () => {
                 type="button"
                 className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
                 onClick={handleGoogleSignIn}
-                disabled={isLoading}
+                disabled={isCheckingAdmin}
               >
                 <LogIn className="mr-2 h-4 w-4" />
-                {isLoading ? (
+                {isCheckingAdmin ? (
                   <>
                     <span className="mr-2">מתחבר...</span>
                     <div className="w-4 h-4 border-2 border-gray-700 border-t-transparent rounded-full animate-spin"></div>

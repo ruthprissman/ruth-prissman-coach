@@ -46,7 +46,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
         console.error('Error in admin verification:', error);
         setHasAdminAccess(false);
       } finally {
-        setIsVerifying(false); // Fix: Was incorrectly set to true
+        setIsVerifying(false);
         setVerificationComplete(true);
       }
     };

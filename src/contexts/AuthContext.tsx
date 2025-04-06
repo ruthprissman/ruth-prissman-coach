@@ -28,6 +28,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
+    // We still need to subscribe to auth state changes for security and proper app function
+    // but we'll minimize what happens during initial load
     const { data: { subscription } } = supabaseClient().auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.id);
@@ -64,17 +66,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
+    // Modified initialization to be minimal
     const initializeAuth = async () => {
       try {
+        // Only check for current session, don't perform admin checks until needed
         const { data } = await supabaseClient().auth.getSession();
         if (data && data.session) {
           setSession(data.session);
           setUser(data.session.user);
-
-          if (data.session.user.email) {
-            const adminStatus = await checkIsAdmin(data.session.user.email);
-            setIsAdmin(adminStatus);
-          }
+          
+          // Admin check will only happen if user navigates to protected route
+          // not during initial login page load
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
@@ -242,7 +244,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setIsLoading(false);
       toast({
-        title: "משתמש מנהל נוצר בהצ��חה!",
+        title: "משתמש מנהל נוצר בהצלחה!",
         description: "✅ כעת תוכל/י להתחבר עם פרטים אלו",
       });
       
@@ -298,7 +300,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    // Remove the access_token argument as clearSupabaseClientCache doesn't take parameters
     clearSupabaseClientCache();
     
     await supabaseClient().auth.signOut();
