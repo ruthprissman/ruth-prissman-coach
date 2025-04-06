@@ -48,7 +48,7 @@ const Login: React.FC = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const isRecoveryMode = searchParams.get('type') === 'recovery';
-  const [loginMethod, setLoginMethod] = useState<'email' | 'google'>('email');
+  const [loginMethod, setLoginMethod] = useState<'email' | 'google'>('google');
   
   const from = (location.state as { from: { pathname: string } })?.from?.pathname || '/admin/dashboard';
   
@@ -321,7 +321,7 @@ const Login: React.FC = () => {
           <h1 className="text-2xl font-bold text-purple-dark">כניסה לאזור הניהול</h1>
         </div>
 
-        <Tabs defaultValue="email" value={loginMethod} onValueChange={(value) => setLoginMethod(value as 'email' | 'google')}>
+        <Tabs defaultValue="google" value={loginMethod} onValueChange={(value) => setLoginMethod(value as 'email' | 'google')}>
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="email">אימייל וסיסמה</TabsTrigger>
             <TabsTrigger value="google">התחברות עם גוגל</TabsTrigger>
