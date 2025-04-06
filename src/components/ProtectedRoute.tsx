@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -9,18 +9,8 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = true }) => {
-  const { user, isLoading, session, isAdmin } = useAuth();
+  const { user, isLoading, isAdmin } = useAuth();
   const location = useLocation();
-
-  useEffect(() => {
-    // Log authentication status for debugging
-    if (user) {
-      console.log('ProtectedRoute: User is authenticated', { userId: user.id, isAdmin });
-    } else if (!isLoading) {
-      console.log('ProtectedRoute: User is not authenticated, redirecting to login');
-      console.log('Current location:', location.pathname);
-    }
-  }, [user, isLoading, location, isAdmin]);
 
   if (isLoading) {
     // Show loading state while authentication is being checked
@@ -33,7 +23,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
   }
 
   if (!user) {
-    console.log('Redirecting to login with state:', { from: location });
+    console.log('ProtectedRoute: No user, redirecting to login');
     // Redirect to login page but save the intended destination
     return <Navigate to="/admin/login" replace state={{ from: location }} />;
   }

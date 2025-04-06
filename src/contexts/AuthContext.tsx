@@ -23,37 +23,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Initialize to false so it doesn't auto-check on page load
   const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error fetching session:', error);
-        }
-
-        setSession(data.session);
-        setUser(data.session?.user || null);
-        
-        // Check admin status if user exists
-        if (data.session?.user?.email) {
-          const adminStatus = await checkIsAdmin(data.session.user.email);
-          setIsAdmin(adminStatus);
-        }
-      } catch (error) {
-        console.error('Unexpected error fetching session:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSession();
-
+    // Only set up the auth state change listener, don't auto-fetch the session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.id);
@@ -65,6 +40,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'SIGNED_IN' && newSession?.user?.email) {
           const adminStatus = await checkIsAdmin(newSession.user.email);
           setIsAdmin(adminStatus);
+          
+          // If not an admin, sign out and redirect
+          if (!adminStatus) {
+            // Show unauthorized message
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-red-600 text-white p-4 rounded-md shadow-md z-50';
+            toast.innerHTML = 'אין לך הרשאה לגשת לאזור זה';
+            document.body.appendChild(toast);
+            
+            // Remove the toast after 5 seconds
+            setTimeout(() => {
+              if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+              }
+            }, 5000);
+            
+            // Sign out
+            await supabase.auth.signOut();
+            setIsAdmin(false);
+            setUser(null);
+            setSession(null);
+            
+            // Redirect to homepage
+            window.location.href = '/';
+          }
         }
         
         if (event === 'SIGNED_OUT') {
@@ -104,10 +104,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setIsLoading(false);
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
+      setIsLoading(false);
       toast({
         title: "התחברות נכשלה",
         description: "❌ בדוק/י את הפרטים ונסה שוב.",
@@ -115,12 +115,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return { error };
     }
-
-    toast({
-      title: "התחברת בהצלחה!",
-      description: "✅ מועבר/ת ללוח הניהול",
-    });
     
+    // Check if the user is an admin
+    if (data.user) {
+      const isUserAdmin = await checkIsAdmin(data.user.email || '');
+      setIsAdmin(isUserAdmin);
+      
+      if (!isUserAdmin) {
+        // Sign out if not an admin
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        
+        toast({
+          title: "אין הרשאה",
+          description: "❌ אין לך הרשאה לגשת לאזור זה.",
+          variant: "destructive",
+        });
+        
+        setIsLoading(false);
+        
+        // Redirect to homepage
+        window.location.href = '/';
+        return { error: new Error("Not an admin") };
+      }
+      
+      // Redirect to dashboard for admins
+      toast({
+        title: "התחברת בהצלחה!",
+        description: "✅ מועבר/ת ללוח הניהול",
+      });
+      
+      window.location.href = '/admin/dashboard';
+    }
+    
+    setIsLoading(false);
     return { error: null };
   };
 
@@ -157,16 +186,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAdminExists = async () => {
     try {
-      const { data, error } = await supabase.auth.admin.listUsers();
+      const { count, error } = await supabase
+        .from('admins')
+        .select('*', { count: 'exact', head: true });
       
       if (error) {
-        console.error('Error checking if users exist:', error);
+        console.error('Error checking if admin exists:', error);
         return true;
       }
       
-      return data && data.users && data.users.length > 0;
+      return count ? count > 0 : false;
     } catch (error) {
-      console.error('Error checking if users exist:', error);
+      console.error('Error checking if admin exists:', error);
       return true;
     }
   };

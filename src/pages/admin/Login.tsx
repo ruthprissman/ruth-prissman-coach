@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
@@ -39,51 +38,17 @@ const Login: React.FC = () => {
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [adminExists, setAdminExists] = useState(true);
-  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(false);
   const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
   const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
-  const { signIn, signInWithGoogle, createAdminUser, resetPassword, checkAdminExists, user, isLoading, isAdmin } = useAuth();
+  const { signIn, signInWithGoogle, createAdminUser, resetPassword, checkAdminExists, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const isRecoveryMode = searchParams.get('type') === 'recovery';
   const [loginMethod, setLoginMethod] = useState<'email' | 'google'>('email');
   
-  console.log('Login page rendered. Current auth state:', { user: !!user, isLoading, isAdmin });
-  console.log('Current location state:', location.state);
-  
   const from = (location.state as { from: { pathname: string } })?.from?.pathname || '/admin/dashboard';
-  
-  // Auto-redirect authenticated users
-  useEffect(() => {
-    if (user && !isLoading && !isRecoveryMode) {
-      console.log('User already authenticated, redirecting to dashboard');
-      navigate('/admin/dashboard', { replace: true });
-    }
-  }, [user, isLoading, isRecoveryMode, navigate]);
-  
-  useEffect(() => {
-    console.log('Login useEffect running, checking admin...');
-    const checkAdmin = async () => {
-      try {
-        setIsCheckingAdmin(true);
-        const exists = await checkAdminExists();
-        console.log('Admin exists check result:', exists);
-        setAdminExists(exists);
-        
-        if (isCreatingAdmin && exists) {
-          setIsCreatingAdmin(false);
-        }
-      } catch (error) {
-        console.error('Error checking if admin exists:', error);
-        setAdminExists(true); // Default to true on error for security
-      } finally {
-        setIsCheckingAdmin(false);
-      }
-    };
-    
-    checkAdmin();
-  }, [checkAdminExists, isCreatingAdmin]);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -123,7 +88,6 @@ const Login: React.FC = () => {
       const { error } = await signIn(data.email, data.password);
       if (!error) {
         console.log('Sign in successful, navigating to:', from);
-        navigate(from, { replace: true });
       }
     }
   };
@@ -166,6 +130,24 @@ const Login: React.FC = () => {
   
   const handleGoogleSignIn = async () => {
     await signInWithGoogle();
+  };
+  
+  const handleCheckAdminExists = async () => {
+    setIsCheckingAdmin(true);
+    try {
+      const exists = await checkAdminExists();
+      console.log('Admin exists check result:', exists);
+      setAdminExists(exists);
+      
+      if (isCreatingAdmin && exists) {
+        setIsCreatingAdmin(false);
+      }
+    } catch (error) {
+      console.error('Error checking if admin exists:', error);
+      setAdminExists(true); // Default to true on error for security
+    } finally {
+      setIsCheckingAdmin(false);
+    }
   };
   
   if (isRecoveryMode) {
@@ -420,12 +402,13 @@ const Login: React.FC = () => {
                     שכחתי סיסמה
                   </Button>
                   
-                  {!adminExists && !isCheckingAdmin && (
+                  {!isCheckingAdmin && (
                     <Button
                       type="button"
                       variant="link"
                       className="text-sm text-purple-dark"
                       onClick={() => {
+                        handleCheckAdminExists();
                         setIsCreatingAdmin(!isCreatingAdmin);
                         form.reset();
                       }}
