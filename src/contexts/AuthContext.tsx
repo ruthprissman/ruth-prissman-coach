@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase, getSupabaseWithAuth, clearAuthClientCache } from '@/lib/supabase';
+import { supabaseClient, clearSupabaseClientCache } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
 type AuthContextType = {
@@ -23,66 +22,77 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Initialize to false so it doesn't auto-check on page load
+  const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Only set up the auth state change listener, don't auto-fetch the session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabaseClient().auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.id);
         
         setSession(newSession);
         setUser(newSession?.user || null);
         
-        // Check admin status when auth state changes
         if (event === 'SIGNED_IN' && newSession?.user?.email) {
           const adminStatus = await checkIsAdmin(newSession.user.email);
           setIsAdmin(adminStatus);
           
-          // If not an admin, sign out and redirect
           if (!adminStatus) {
-            // Show unauthorized message
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-4 right-4 bg-red-600 text-white p-4 rounded-md shadow-md z-50';
-            toast.innerHTML = 'אין לך הרשאה לגשת לאזור זה';
-            document.body.appendChild(toast);
+            toast({
+              title: "אין הרשאה",
+              description: "אין לך הרשאה לגשת לאזור זה",
+              variant: "destructive",
+            });
             
-            // Remove the toast after 5 seconds
-            setTimeout(() => {
-              if (toast.parentNode) {
-                toast.parentNode.removeChild(toast);
-              }
-            }, 5000);
-            
-            // Sign out
-            await supabase.auth.signOut();
+            await supabaseClient().auth.signOut();
             setIsAdmin(false);
             setUser(null);
             setSession(null);
             
-            // Redirect to homepage
             window.location.href = '/';
           }
         }
         
         if (event === 'SIGNED_OUT') {
-          clearAuthClientCache();
+          clearSupabaseClientCache();
           setIsAdmin(false);
         }
+        
+        setIsLoading(false);
       }
     );
+
+    const initializeAuth = async () => {
+      try {
+        const { data } = await supabaseClient().auth.getSession();
+        if (data && data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+
+          if (data.session.user.email) {
+            const adminStatus = await checkIsAdmin(data.session.user.email);
+            setIsAdmin(adminStatus);
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [toast]);
 
   const checkIsAdmin = async (email: string): Promise<boolean> => {
     try {
       console.log(`Checking if ${email} is an admin`);
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient()
         .from('admins')
         .select('email')
         .eq('email', email)
@@ -104,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
-    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+    const { error, data } = await supabaseClient().auth.signInWithPassword({ email, password });
     
     if (error) {
       setIsLoading(false);
@@ -116,14 +126,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error };
     }
     
-    // Check if the user is an admin
     if (data.user) {
       const isUserAdmin = await checkIsAdmin(data.user.email || '');
       setIsAdmin(isUserAdmin);
       
       if (!isUserAdmin) {
-        // Sign out if not an admin
-        await supabase.auth.signOut();
+        await supabaseClient().auth.signOut();
         setUser(null);
         setSession(null);
         
@@ -135,12 +143,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setIsLoading(false);
         
-        // Redirect to homepage
         window.location.href = '/';
         return { error: new Error("Not an admin") };
       }
       
-      // Redirect to dashboard for admins
       toast({
         title: "התחברת בהצלחה!",
         description: "✅ מועבר/ת ללוח הניהול",
@@ -159,13 +165,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const redirectTo = `${window.location.origin}/admin/dashboard`;
       console.log(`[Auth Debug] Google login redirect set to: ${redirectTo}`);
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabaseClient().auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectTo,
           queryParams: {
             access_type: 'offline',
-            prompt: 'select_account',  // Always show account selection, even if user is signed in
+            prompt: 'select_account',
           }
         }
       });
@@ -186,7 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAdminExists = async () => {
     try {
-      const { count, error } = await supabase
+      const { count, error } = await supabaseClient()
         .from('admins')
         .select('*', { count: 'exact', head: true });
       
@@ -221,7 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
       
-      const { error: signUpError, data } = await supabase.auth.signUp({ 
+      const { error: signUpError, data } = await supabaseClient().auth.signUp({ 
         email, 
         password,
         options: {
@@ -235,7 +241,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setIsLoading(false);
       toast({
-        title: "משתמש מנהל נוצר בהצלחה!",
+        title: "משתמש מנהל נוצר בהצ��חה!",
         description: "✅ כעת תוכל/י להתחבר עם פרטים אלו",
       });
       
@@ -265,7 +271,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const redirectTo = `${window.location.origin}/admin/login`;
       console.log(`[Auth Debug] Final password reset redirect URL: ${redirectTo}`);
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabaseClient().auth.resetPasswordForEmail(email, {
         redirectTo: redirectTo,
       });
       
@@ -292,10 +298,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     if (session?.access_token) {
-      clearAuthClientCache(session.access_token);
+      clearSupabaseClientCache(session.access_token);
     }
     
-    await supabase.auth.signOut();
+    await supabaseClient().auth.signOut();
     setIsAdmin(false);
     toast({
       title: "התנתקת בהצלחה",

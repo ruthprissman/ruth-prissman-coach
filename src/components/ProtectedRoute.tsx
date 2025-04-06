@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
   const [isVerifying, setIsVerifying] = useState(false);
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
   const [verificationComplete, setVerificationComplete] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const verifyAdmin = async () => {
@@ -32,25 +34,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
           if (!adminStatus && requireAdmin) {
             console.log('User is not admin, will redirect to homepage');
             
-            // Show unauthorized message
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-4 right-4 bg-red-600 text-white p-4 rounded-md shadow-md z-50';
-            toast.innerHTML = 'אין לך הרשאה לגשת לאזור זה';
-            document.body.appendChild(toast);
-            
-            // Remove the toast after 5 seconds
-            setTimeout(() => {
-              if (toast.parentNode) {
-                toast.parentNode.removeChild(toast);
-              }
-            }, 5000);
+            // Show unauthorized message using the toast component
+            toast({
+              title: "אין הרשאה",
+              description: "אין לך הרשאה לגשת לאזור זה",
+              variant: "destructive",
+            });
           }
         }
       } catch (error) {
         console.error('Error in admin verification:', error);
         setHasAdminAccess(false);
       } finally {
-        setIsVerifying(true);
+        setIsVerifying(false); // Fix: Was incorrectly set to true
         setVerificationComplete(true);
       }
     };
@@ -60,10 +56,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
     } else if (!isLoading) {
       setVerificationComplete(true);
     }
-  }, [user, isLoading, checkIsAdmin, requireAdmin]);
+  }, [user, isLoading, checkIsAdmin, requireAdmin, toast]);
 
+  // Show loading state while authentication is being checked
   if (isLoading || (user && requireAdmin && !verificationComplete)) {
-    // Show loading state while authentication is being checked
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -72,7 +68,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
     );
   }
 
-  if (!user) {
+  // Only redirect to login if isLoading is false and user is null
+  if (!isLoading && !user) {
     console.log('ProtectedRoute: No user, redirecting to login');
     // Redirect to login page but save the intended destination
     return <Navigate to="/admin/login" replace state={{ from: location }} />;
