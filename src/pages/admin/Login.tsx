@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const formSchema = z.object({
   email: z.string().email("כתובת אימייל לא תקינה"),
@@ -40,16 +42,25 @@ const Login: React.FC = () => {
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
   const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
-  const { signIn, signInWithGoogle, createAdminUser, resetPassword, checkAdminExists, user, isLoading } = useAuth();
+  const { signIn, signInWithGoogle, createAdminUser, resetPassword, checkAdminExists, user, isLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const isRecoveryMode = searchParams.get('type') === 'recovery';
+  const [loginMethod, setLoginMethod] = useState<'email' | 'google'>('email');
   
-  console.log('Login page rendered. Current auth state:', { user: !!user, isLoading, isAdmin: useAuth().isAdmin });
+  console.log('Login page rendered. Current auth state:', { user: !!user, isLoading, isAdmin });
   console.log('Current location state:', location.state);
   
   const from = (location.state as { from: { pathname: string } })?.from?.pathname || '/admin/dashboard';
+  
+  // Auto-redirect authenticated users
+  useEffect(() => {
+    if (user && !isLoading && !isRecoveryMode) {
+      console.log('User already authenticated, redirecting to dashboard');
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [user, isLoading, isRecoveryMode, navigate]);
   
   useEffect(() => {
     console.log('Login useEffect running, checking admin...');
@@ -157,124 +168,112 @@ const Login: React.FC = () => {
     await signInWithGoogle();
   };
   
-  if (user && !isRecoveryMode) {
-    console.log('User already authenticated, checking admin status');
-    
-    if (useAuth().isAdmin) {
-      console.log('User is admin, redirecting to dashboard');
-      return <Navigate to="/admin/dashboard" replace />;
-    }
-  }
-  
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
-        <div className="text-center mb-8">
-          {isRecoveryMode ? (
-            <>
-              <KeyRound className="w-12 h-12 text-purple-dark mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-purple-dark">עדכון סיסמה</h1>
-              <p className="text-gray-600 mt-2">הזן את הסיסמה החדשה שלך</p>
-            </>
-          ) : isForgotPassword ? (
-            <>
-              <KeyRound className="w-12 h-12 text-purple-dark mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-purple-dark">שחזור סיסמה</h1>
-              <p className="text-gray-600 mt-2">הזן את כתובת האימייל שלך כדי לקבל קישור לאיפוס הסיסמה</p>
-            </>
+  if (isRecoveryMode) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
+        <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center mb-8">
+            <KeyRound className="w-12 h-12 text-purple-dark mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-purple-dark">עדכון סיסמה</h1>
+            <p className="text-gray-600 mt-2">הזן את הסיסמה החדשה שלך</p>
+          </div>
+          
+          {passwordResetSuccess ? (
+            <Alert className="mb-6 bg-green-50 border-green-200">
+              <AlertDescription className="text-center text-green-700 flex items-center justify-center">
+                <Check className="h-5 w-5 mr-2" />
+                הסיסמה עודכנה בהצלחה! מועבר/ת לדף הניהול...
+              </AlertDescription>
+            </Alert>
           ) : (
-            <>
-              <Lock className="w-12 h-12 text-purple-dark mx-auto mb-4" />
-              <h1 className="text-2xl font-bold text-purple-dark">כניסה לאזור הניהול</h1>
-            </>
+            <Form {...recoveryForm}>
+              <form onSubmit={recoveryForm.handleSubmit(onPasswordRecoverySubmit)} className="space-y-6">
+                {passwordResetError && (
+                  <Alert className="mb-4 bg-red-50 border-red-200">
+                    <AlertDescription className="text-center text-red-700">
+                      {passwordResetError}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                <FormField
+                  control={recoveryForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-right block">הזן סיסמה חדשה</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            {...field}
+                            type="password"
+                            placeholder="הקלד סיסמה חדשה"
+                            className="w-full text-right pr-10"
+                            dir="rtl"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-right" />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={recoveryForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-right block">אשר סיסמה חדשה</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            {...field}
+                            type="password"
+                            placeholder="הקלד שוב את הסיסמה החדשה"
+                            className="w-full text-right pr-10"
+                            dir="rtl"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-right" />
+                    </FormItem>
+                  )}
+                />
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-[#4A235A] hover:bg-[#7E69AB] text-white"
+                  disabled={recoveryForm.formState.isSubmitting}
+                >
+                  {recoveryForm.formState.isSubmitting ? (
+                    <>
+                      <span className="mr-2">מעדכן סיסמה...</span>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </>
+                  ) : (
+                    'שמור סיסמה חדשה'
+                  )}
+                </Button>
+              </form>
+            </Form>
           )}
         </div>
-        
-        {isRecoveryMode ? (
-          <>
-            {passwordResetSuccess ? (
-              <Alert className="mb-6 bg-green-50 border-green-200">
-                <AlertDescription className="text-center text-green-700 flex items-center justify-center">
-                  <Check className="h-5 w-5 mr-2" />
-                  הסיסמה עודכנה בהצלחה! מועבר/ת לדף הניהול...
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <Form {...recoveryForm}>
-                <form onSubmit={recoveryForm.handleSubmit(onPasswordRecoverySubmit)} className="space-y-6">
-                  {passwordResetError && (
-                    <Alert className="mb-4 bg-red-50 border-red-200">
-                      <AlertDescription className="text-center text-red-700">
-                        {passwordResetError}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <FormField
-                    control={recoveryForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-right block">הזן סיסמה חדשה</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                            <Input
-                              {...field}
-                              type="password"
-                              placeholder="הקלד סיסמה חדשה"
-                              className="w-full text-right pr-10"
-                              dir="rtl"
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage className="text-right" />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={recoveryForm.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-right block">אשר סיסמה חדשה</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                            <Input
-                              {...field}
-                              type="password"
-                              placeholder="הקלד שוב את הסיסמה החדשה"
-                              className="w-full text-right pr-10"
-                              dir="rtl"
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage className="text-right" />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-[#4A235A] hover:bg-[#7E69AB] text-white"
-                    disabled={recoveryForm.formState.isSubmitting}
-                  >
-                    {recoveryForm.formState.isSubmitting ? (
-                      <>
-                        <span className="mr-2">מעדכן סיסמה...</span>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      </>
-                    ) : (
-                      'שמור סיסמה חדשה'
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            )}
-          </>
-        ) : isForgotPassword ? (
+      </div>
+    );
+  }
+  
+  if (isForgotPassword) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
+        <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center mb-8">
+            <KeyRound className="w-12 h-12 text-purple-dark mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-purple-dark">שחזור סיסמה</h1>
+            <p className="text-gray-600 mt-2">הזן את כתובת האימייל שלך כדי לקבל קישור לאיפוס הסיסמה</p>
+          </div>
+          
           <form onSubmit={resetForm.handleSubmit(onResetPasswordSubmit)} className="space-y-6" noValidate>
             <div className="space-y-2">
               <label htmlFor="reset-email" className="text-right block">אימייל</label>
@@ -325,8 +324,26 @@ const Login: React.FC = () => {
               </Button>
             </div>
           </form>
-        ) : (
-          <>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+        <div className="text-center mb-8">
+          <Lock className="w-12 h-12 text-purple-dark mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-purple-dark">כניסה לאזור הניהול</h1>
+        </div>
+
+        <Tabs defaultValue="email" value={loginMethod} onValueChange={(value) => setLoginMethod(value as 'email' | 'google')}>
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="email">אימייל וסיסמה</TabsTrigger>
+            <TabsTrigger value="google">התחברות עם גוגל</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="email">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
@@ -389,69 +406,81 @@ const Login: React.FC = () => {
                     isCreatingAdmin ? 'צור משתמש מנהל' : 'התחברות'
                   )}
                 </Button>
+                
+                <div className="flex justify-between mt-6">
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="text-sm text-purple-dark"
+                    onClick={() => {
+                      setIsForgotPassword(true);
+                      resetForm.reset();
+                    }}
+                  >
+                    שכחתי סיסמה
+                  </Button>
+                  
+                  {!adminExists && !isCheckingAdmin && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-sm text-purple-dark"
+                      onClick={() => {
+                        setIsCreatingAdmin(!isCreatingAdmin);
+                        form.reset();
+                      }}
+                    >
+                      {isCreatingAdmin ? 'חזרה לדף ההתחברות' : 'יצירת משתמש מנהל חדש'}
+                    </Button>
+                  )}
+                  
+                  {isCreatingAdmin && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-sm text-purple-dark"
+                      onClick={() => {
+                        setIsCreatingAdmin(false);
+                        form.reset();
+                      }}
+                    >
+                      חזרה לדף ההתחברות
+                    </Button>
+                  )}
+                </div>
               </form>
             </Form>
-            
-            <div className="relative my-6">
-              <Separator className="my-4" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="bg-white px-2 text-gray-500 text-sm">או</span>
-              </div>
-            </div>
-
-            <Button 
-              type="button"
-              className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-              onClick={handleGoogleSignIn}
-              disabled={isLoading}
-            >
-              <LogIn className="mr-2 h-4 w-4" />
-              התחבר עם גוגל
-            </Button>
-            
-            <div className="flex justify-between mt-6">
-              <Button
+          </TabsContent>
+          
+          <TabsContent value="google">
+            <div className="py-6">
+              <p className="text-center text-gray-600 mb-6">התחברות באמצעות חשבון גוגל שלך</p>
+              
+              <Button 
                 type="button"
-                variant="link"
-                className="text-sm text-purple-dark"
-                onClick={() => {
-                  setIsForgotPassword(true);
-                  resetForm.reset();
-                }}
+                className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
               >
-                שכחתי סיסמה
+                <LogIn className="mr-2 h-4 w-4" />
+                {isLoading ? (
+                  <>
+                    <span className="mr-2">מתחבר...</span>
+                    <div className="w-4 h-4 border-2 border-gray-700 border-t-transparent rounded-full animate-spin"></div>
+                  </>
+                ) : (
+                  'התחבר עם גוגל'
+                )}
               </Button>
               
               {!adminExists && !isCheckingAdmin && (
-                <Button
-                  type="button"
-                  variant="link"
-                  className="text-sm text-purple-dark"
-                  onClick={() => {
-                    setIsCreatingAdmin(!isCreatingAdmin);
-                    form.reset();
-                  }}
-                >
-                  {isCreatingAdmin ? 'חזרה לדף ההתחברות' : 'יצירת משתמש מנהל חדש'}
-                </Button>
-              )}
-              
-              {isCreatingAdmin && (
-                <Button
-                  type="button"
-                  variant="link"
-                  className="text-sm text-purple-dark"
-                  onClick={() => {
-                    setIsCreatingAdmin(false);
-                    form.reset();
-                  }}
-                >
-                  חזרה לדף ההתחברות
-                </Button>
+                <p className="text-center text-sm text-gray-500 mt-4">
+                  עדיין לא קיים משתמש מנהל. עבור לאפשרות אימייל וסיסמה ליצירת משתמש חדש.
+                </p>
               )}
             </div>
-          </>
-        )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
