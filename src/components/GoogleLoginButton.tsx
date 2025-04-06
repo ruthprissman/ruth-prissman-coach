@@ -34,7 +34,7 @@ export function GoogleLoginButton() {
         disabled={isAuthenticating}
       >
         <Calendar className="h-4 w-4 text-blue-600" />
-        <span>{isAuthenticated ? 'התנתק מיומן Google' : 'התחבר עם גוגל'}</span>
+        <span>{isAuthenticated ? 'התנתק מיומן Google' : 'התחבר עם גוגל (כולל הרשאות יומן)'}</span>
         {isAuthenticating && (
           <Loader2 className="ml-2 h-4 w-4 animate-spin" />
         )}

@@ -2,7 +2,7 @@ import { GoogleCalendarEvent } from '@/types/calendar';
 
 // OAuth2 configuration
 const CLIENT_ID = '216734901779-csrnrl4nmkilae4blbolsip8mmibsk3t.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
+const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar';
 // Determine the correct redirect URI based on the current environment
 const REDIRECT_URI = window.location.hostname.includes('preview') 
   ? 'https://preview--ruth-prissman-coach.lovable.app/admin/dashboard'
@@ -34,7 +34,7 @@ export async function initGoogleAuth(): Promise<boolean> {
             access_type: 'offline', // Request offline access
             response_type: 'code'   // Use authorization code flow
           }).then(() => {
-            console.log('Google Auth initialized');
+            console.log('Google Auth initialized with calendar permissions');
             resolve(true);
           }).catch((error: any) => {
             console.error('Google Auth initialization failed', error);
@@ -73,7 +73,8 @@ export async function signInWithGoogle(): Promise<boolean> {
       ux_mode: 'popup',
       locale: 'he', // Hebrew locale
       access_type: 'offline', // Request offline access
-      response_type: 'code'   // Use authorization code flow
+      response_type: 'code',  // Use authorization code flow
+      scope: SCOPES // Ensure calendar scopes are included
     };
     
     // Start the sign-in flow
@@ -84,6 +85,17 @@ export async function signInWithGoogle(): Promise<boolean> {
     const authResponse = googleUser?.getAuthResponse(true);
     if (!authResponse || !authResponse.access_token) {
       throw new Error('ההתחברות בוטלה');
+    }
+    
+    // Check if we got the calendar permission
+    const grantedScopes = authResponse.scope || '';
+    const hasCalendarScope = grantedScopes.includes('calendar');
+    
+    if (hasCalendarScope) {
+      console.log('Successfully obtained calendar permissions');
+    } else {
+      console.warn('Calendar permissions were not granted');
+      // Continue anyway as user might have denied specific permissions
     }
     
     return isSignedIn;
@@ -135,17 +147,17 @@ export async function fetchGoogleCalendarEvents(): Promise<GoogleCalendarEvent[]
       throw new Error('אין הרשאות גישה ליומן Google');
     }
     
-    // Calculate time range (next 7 days as requested)
+    // Updated to fetch 3 months of events instead of 7 days
     const now = new Date();
-    const sevenDaysLater = new Date(now);
-    sevenDaysLater.setDate(now.getDate() + 7);
+    const threeMonthsLater = new Date(now);
+    threeMonthsLater.setMonth(now.getMonth() + 3);
     
     const timeMin = now.toISOString();
-    const timeMax = sevenDaysLater.toISOString();
+    const timeMax = threeMonthsLater.toISOString();
     
     // Make the API request
     const response = await window.gapi.client.calendar.events.list({
-      'calendarId': 'primary', // Use primary calendar as requested
+      'calendarId': 'primary', // Use primary calendar
       'timeMin': timeMin,
       'timeMax': timeMax,
       'singleEvents': true,
@@ -218,5 +230,49 @@ async function loadGapiClient(): Promise<void> {
 declare global {
   interface Window {
     gapi: any;
+  }
+}
+
+// New function to create a Google Calendar event
+export async function createGoogleCalendarEvent(
+  summary: string,
+  startDateTime: string,
+  endDateTime: string,
+  description: string = '',
+): Promise<string | null> {
+  try {
+    // Ensure Google API client is loaded
+    if (!window.gapi || !window.gapi.client) {
+      await loadGapiClient();
+    }
+    
+    const token = await getAccessToken();
+    if (!token) {
+      throw new Error('אין הרשאות גישה ליומן Google');
+    }
+    
+    const event = {
+      'summary': summary,
+      'description': description,
+      'start': {
+        'dateTime': startDateTime,
+        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+      },
+      'end': {
+        'dateTime': endDateTime,
+        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+      }
+    };
+    
+    const response = await window.gapi.client.calendar.events.insert({
+      'calendarId': 'primary',
+      'resource': event
+    });
+    
+    console.log('Event created: %s', response.result.htmlLink);
+    return response.result.id;
+  } catch (error) {
+    console.error('Error creating Google Calendar event:', error);
+    throw error;
   }
 }

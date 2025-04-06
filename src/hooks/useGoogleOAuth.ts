@@ -6,6 +6,7 @@ import {
   signInWithGoogle, 
   signOutFromGoogle,
   fetchGoogleCalendarEvents,
+  createGoogleCalendarEvent,
   GoogleOAuthState
 } from '@/services/GoogleOAuthService';
 import { toast } from '@/components/ui/use-toast';
@@ -84,6 +85,36 @@ export function useGoogleOAuth() {
       return [];
     } finally {
       setIsLoadingEvents(false);
+    }
+  };
+
+  const createEvent = async (
+    summary: string,
+    startDateTime: string,
+    endDateTime: string,
+    description: string = '',
+  ) => {
+    try {
+      const eventId = await createGoogleCalendarEvent(summary, startDateTime, endDateTime, description);
+      if (eventId) {
+        // Refresh events list after creating a new event
+        await fetchEvents();
+        
+        toast({
+          title: 'האירוע נוצר בהצלחה',
+          description: 'האירוע נוסף ליומן Google שלך',
+        });
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      console.error('Error creating calendar event:', error);
+      toast({
+        title: 'שגיאה ביצירת האירוע',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
     }
   };
 
@@ -171,6 +202,7 @@ export function useGoogleOAuth() {
     isLoadingEvents,
     signIn,
     signOut,
-    fetchEvents
+    fetchEvents,
+    createEvent
   };
 }
