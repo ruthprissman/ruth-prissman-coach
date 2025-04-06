@@ -87,7 +87,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     setIsLoading(true);
     try {
-      // Determine the correct redirect URL based on environment
       let baseUrl = '';
       
       if (import.meta.env.DEV) {
@@ -191,17 +190,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPassword = async (email: string) => {
     setIsLoading(true);
     try {
-      // Debug environment detection
       console.log('[Auth Debug] Environment detection:');
       console.log(`[Auth Debug] import.meta.env.DEV = ${import.meta.env.DEV}`);
       console.log(`[Auth Debug] import.meta.env.PROD = ${import.meta.env.PROD}`);
       console.log(`[Auth Debug] import.meta.env.MODE = ${import.meta.env.MODE}`);
       
-      // Get current URL to help with debugging
       const currentUrl = window.location.origin;
       console.log(`[Auth Debug] Current origin: ${currentUrl}`);
       
-      // Determine the correct redirect URL based on environment
       let baseUrl = '';
       
       if (import.meta.env.DEV) {
