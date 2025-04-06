@@ -87,15 +87,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     setIsLoading(true);
     try {
-      let baseUrl = '';
-      
-      if (import.meta.env.DEV) {
-        baseUrl = 'https://preview--ruth-prissman-coach-dev-20032025.lovable.app';
-      } else {
-        baseUrl = 'https://ruth-prissman-coach.lovable.app';
-      }
-      
-      const redirectTo = `${baseUrl}/admin/dashboard`;
+      const redirectTo = `${window.location.origin}/admin/dashboard`;
+      console.log(`[Auth Debug] Google login redirect set to: ${redirectTo}`);
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -198,18 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const currentUrl = window.location.origin;
       console.log(`[Auth Debug] Current origin: ${currentUrl}`);
       
-      let baseUrl = '';
-      
-      if (import.meta.env.DEV) {
-        baseUrl = 'https://preview--ruth-prissman-coach-dev-20032025.lovable.app';
-        console.log(`[Auth Debug] Using DEV baseUrl: ${baseUrl}`);
-      } else {
-        baseUrl = 'https://ruth-prissman-coach.lovable.app';
-        console.log(`[Auth Debug] Using PROD baseUrl: ${baseUrl}`);
-      }
-      
-      const redirectTo = `${baseUrl}/admin/login`;
-      
+      const redirectTo = `${window.location.origin}/admin/login`;
       console.log(`[Auth Debug] Final password reset redirect URL: ${redirectTo}`);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
