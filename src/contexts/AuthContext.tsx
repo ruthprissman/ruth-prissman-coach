@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, getSupabaseWithAuth, clearAuthClientCache } from '@/lib/supabase';
@@ -9,6 +8,7 @@ type AuthContextType = {
   session: Session | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   createAdminUser: (email: string, password: string) => Promise<{ error: Error | null, message?: string }>;
   resetPassword: (email: string) => Promise<{ error: Error | null, message?: string }>;
@@ -82,6 +82,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     
     return { error: null };
+  };
+
+  const signInWithGoogle = async () => {
+    setIsLoading(true);
+    try {
+      // Determine the correct redirect URL based on environment
+      let baseUrl = '';
+      
+      if (import.meta.env.DEV) {
+        baseUrl = 'https://preview--ruth-prissman-coach-dev-20032025.lovable.app';
+      } else {
+        baseUrl = 'https://ruth-prissman-coach.lovable.app';
+      }
+      
+      const redirectTo = `${baseUrl}/admin/dashboard`;
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      return { error: null };
+    } catch (error: any) {
+      setIsLoading(false);
+      toast({
+        title: "התחברות עם גוגל נכשלה",
+        description: `❌ ${error.message}`,
+        variant: "destructive",
+      });
+      return { error };
+    }
   };
 
   const checkAdminExists = async () => {
@@ -219,7 +258,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user, 
       session, 
       isLoading, 
-      signIn, 
+      signIn,
+      signInWithGoogle,
       signOut, 
       createAdminUser, 
       resetPassword,

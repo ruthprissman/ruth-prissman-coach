@@ -1,16 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Lock, UserPlus, KeyRound, Mail, Check } from 'lucide-react';
+import { Lock, UserPlus, KeyRound, Mail, Check, LogIn } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   email: z.string().email("כתובת אימייל לא תקינה"),
@@ -36,11 +36,11 @@ type PasswordRecoveryFormValues = z.infer<typeof passwordRecoverySchema>;
 const Login: React.FC = () => {
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [adminExists, setAdminExists] = useState(true); // Default to true - safer to hide creation option
-  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true); // Add loading state for admin check
+  const [adminExists, setAdminExists] = useState(true);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
   const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
-  const { signIn, createAdminUser, resetPassword, checkAdminExists, user, isLoading } = useAuth();
+  const { signIn, signInWithGoogle, createAdminUser, resetPassword, checkAdminExists, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -144,7 +144,6 @@ const Login: React.FC = () => {
       setPasswordResetSuccess(true);
       recoveryForm.reset();
       
-      // Redirect to dashboard after successful password reset
       setTimeout(() => {
         navigate('/admin/dashboard', { replace: true });
       }, 3000);
@@ -152,6 +151,10 @@ const Login: React.FC = () => {
       console.error('Unexpected error during password reset:', error);
       setPasswordResetError(error.message || 'אירעה שגיאה בעדכון הסיסמה');
     }
+  };
+  
+  const handleGoogleSignIn = async () => {
+    await signInWithGoogle();
   };
   
   if (user && !isRecoveryMode) {
@@ -319,112 +322,131 @@ const Login: React.FC = () => {
             </div>
           </form>
         ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-right block">אימייל</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          {...field}
-                          type="email"
-                          placeholder="admin@example.com"
-                          className="w-full text-right pr-10"
-                          dir="rtl"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-right" />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-right block">סיסמה</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          {...field}
-                          type="password"
-                          placeholder="הקלד סיסמה"
-                          className="w-full text-right pr-10"
-                          dir="rtl"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-right" />
-                  </FormItem>
-                )}
-              />
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-[#4A235A] hover:bg-[#7E69AB] text-white"
-                disabled={isLoading || (isCreatingAdmin && adminExists)}
+          <>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-right block">אימייל</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            {...field}
+                            type="email"
+                            placeholder="admin@example.com"
+                            className="w-full text-right pr-10"
+                            dir="rtl"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-right" />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-right block">סיסמה</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute right-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            {...field}
+                            type="password"
+                            placeholder="הקלד סיסמה"
+                            className="w-full text-right pr-10"
+                            dir="rtl"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-right" />
+                    </FormItem>
+                  )}
+                />
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-[#4A235A] hover:bg-[#7E69AB] text-white"
+                  disabled={isLoading || (isCreatingAdmin && adminExists)}
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="mr-2">{isCreatingAdmin ? 'יוצר משתמש...' : 'מתחבר...'}</span>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </>
+                  ) : (
+                    isCreatingAdmin ? 'צור משתמש מנהל' : 'התחברות'
+                  )}
+                </Button>
+              </form>
+            </Form>
+            
+            <div className="relative my-6">
+              <Separator className="my-4" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="bg-white px-2 text-gray-500 text-sm">או</span>
+              </div>
+            </div>
+
+            <Button 
+              type="button"
+              className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+            >
+              <LogIn className="mr-2 h-4 w-4" />
+              התחבר עם גוגל
+            </Button>
+            
+            <div className="flex justify-between mt-6">
+              <Button
+                type="button"
+                variant="link"
+                className="text-sm text-purple-dark"
+                onClick={() => {
+                  setIsForgotPassword(true);
+                  resetForm.reset();
+                }}
               >
-                {isLoading ? (
-                  <>
-                    <span className="mr-2">{isCreatingAdmin ? 'יוצר משתמש...' : 'מתחבר...'}</span>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  </>
-                ) : (
-                  isCreatingAdmin ? 'צור משתמש מנהל' : 'התחברות'
-                )}
+                שכחתי סיסמה
               </Button>
               
-              <div className="flex justify-between">
+              {!adminExists && !isCheckingAdmin && (
                 <Button
                   type="button"
                   variant="link"
                   className="text-sm text-purple-dark"
                   onClick={() => {
-                    setIsForgotPassword(true);
-                    resetForm.reset();
+                    setIsCreatingAdmin(!isCreatingAdmin);
+                    form.reset();
                   }}
                 >
-                  שכחתי סיסמה
+                  {isCreatingAdmin ? 'חזרה לדף ההתחברות' : 'יצירת משתמש מנהל חדש'}
                 </Button>
-                
-                {!adminExists && !isCheckingAdmin && (
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="text-sm text-purple-dark"
-                    onClick={() => {
-                      setIsCreatingAdmin(!isCreatingAdmin);
-                      form.reset();
-                    }}
-                  >
-                    {isCreatingAdmin ? 'חזרה לדף ההתחברות' : 'יצירת משתמש מנהל חדש'}
-                  </Button>
-                )}
-                
-                {isCreatingAdmin && (
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="text-sm text-purple-dark"
-                    onClick={() => {
-                      setIsCreatingAdmin(false);
-                      form.reset();
-                    }}
-                  >
-                    חזרה לדף ההתחברות
-                  </Button>
-                )}
-              </div>
-            </form>
-          </Form>
+              )}
+              
+              {isCreatingAdmin && (
+                <Button
+                  type="button"
+                  variant="link"
+                  className="text-sm text-purple-dark"
+                  onClick={() => {
+                    setIsCreatingAdmin(false);
+                    form.reset();
+                  }}
+                >
+                  חזרה לדף ההתחברות
+                </Button>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>
