@@ -76,9 +76,10 @@ export function Navigation() {
             ))}
           </div>
 
-          {/* Copyright notice - updated text, smaller size, and right-aligned */}
-          <div className="text-[#4A235A] text-xxs md:text-xs order-3 w-full md:w-auto md:order-3 mt-2 md:mt-0 text-right">
-            © כל הזכויות על השיטה שמורות לשמחה אביטן - מפתחת השיטה קוד הנפש
+          {/* Copyright notice - updated with line break after the dash */}
+          <div className="text-[#4A235A] text-xxs md:text-xxs order-3 w-full md:w-auto md:order-3 mt-2 md:mt-0 text-right">
+            © כל הזכויות על השיטה שמורות לשמחה אביטן - <br className="hidden xs:inline" />
+            מפתחת השיטה קוד הנפש
           </div>
         </div>
 

@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -91,7 +90,6 @@
     position: relative;
   }
   
-  /* Add a pseudo-element for the background with adjusted opacity */
   body::before {
     content: "";
     position: fixed;
@@ -104,12 +102,11 @@
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
-    opacity: 0.4; /* Adjusted opacity to 40% */
+    opacity: 0.4;
     z-index: -1;
     pointer-events: none;
   }
 
-  /* Remove the direct background from body */
   body {
     background-image: none !important;
   }
@@ -125,7 +122,8 @@
 
 @layer utilities {
   .text-xxs {
-    font-size: 0.65rem;
+    font-size: 0.58rem;
+    line-height: 1.2;
   }
 }
 
@@ -160,7 +158,6 @@
     @apply mx-auto;
   }
 
-  /* Update the unsubscribe-page class to use the same background approach with adjusted opacity */
   .unsubscribe-page::before {
     content: "";
     position: fixed;
@@ -173,7 +170,7 @@
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
-    opacity: 0.4; /* Adjusted opacity to 40% */
+    opacity: 0.4;
     z-index: -1;
     pointer-events: none;
   }
