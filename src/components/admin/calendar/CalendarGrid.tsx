@@ -46,12 +46,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const getStatusStyle = (status: string, syncStatus?: string, isGoogleEvent?: boolean) => {
     // Handle Google Calendar events
     if (isGoogleEvent) {
-      return { bg: 'bg-[#FFDEE2]', border: 'border-red-300', text: 'text-red-800' }; // Light red for Google events
+      return { bg: 'bg-[#D3E4FD]', border: 'border-blue-300', text: 'text-blue-800' }; // Light blue for Google events
     }
     
     // Handle sync status first (highest priority)
     if (syncStatus === 'google-only') {
-      return { bg: 'bg-[#FFDEE2]', border: 'border-red-300', text: 'text-red-800' }; // Light red for Google-only events
+      return { bg: 'bg-[#D3E4FD]', border: 'border-blue-300', text: 'text-blue-800' }; // Light blue for Google-only events
     }
     
     if (syncStatus === 'supabase-only') {
@@ -94,6 +94,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       onUpdateSlot(contextMenu.date, contextMenu.hour, status);
       setContextMenu(null);
     }
+  };
+
+  // Format Google event time range
+  const formatTimeRange = (startTime: string, endTime: string) => {
+    const start = startTime.slice(0, 5); // Extract HH:MM
+    const end = endTime.slice(0, 5); // Extract HH:MM
+    return `${start}-${end}`;
   };
 
   if (isLoading) {
@@ -139,25 +146,42 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   
                   const slotContent = (
                     <TableCell 
-                      className={`${bg} ${border} ${text} border text-center transition-colors cursor-pointer hover:opacity-80`}
+                      className={`${bg} ${border} ${text} border text-center transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px]`}
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, status)}
                     >
                       {status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
-                      {status === 'booked' && (
-                        isGoogleEvent ? 
-                          <span className="text-sm font-medium">תפוס</span> : 
-                          <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />
+                      {status === 'booked' && !isGoogleEvent && (
+                        <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />
                       )}
                       {status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
                       {status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
                       {status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
+                      
+                      {/* Google Calendar event display with improved styling */}
+                      {isGoogleEvent && (
+                        <div className="flex flex-col items-center gap-1 p-1">
+                          <span className="text-xs font-semibold block">
+                            {slot?.notes || 'אירוע גוגל'}
+                          </span>
+                          {slot?.description && (
+                            <span className="text-xs block truncate max-w-full">
+                              {slot.description.length > 20 
+                                ? slot.description.substring(0, 20) + '...' 
+                                : slot.description}
+                            </span>
+                          )}
+                        </div>
+                      )}
                       
                       {/* Add warning icon for mismatched slots */}
                       {(syncStatus === 'google-only' || syncStatus === 'supabase-only') && (
                         <AlertTriangle className="h-4 w-4 mx-auto mt-1 text-orange-600" />
                       )}
                       
-                      {slot?.notes && <span className="text-xs mt-1 block truncate">{slot.notes}</span>}
+                      {/* Display notes for non-Google events */}
+                      {!isGoogleEvent && slot?.notes && (
+                        <span className="text-xs mt-1 block truncate">{slot.notes}</span>
+                      )}
                     </TableCell>
                   );
                   
