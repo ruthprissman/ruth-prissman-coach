@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import Index from './pages/Index';
@@ -76,8 +77,8 @@ function App() {
                 {/* 404 route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <Toaster />
             </Router>
-            <Toaster />
           </PublicationProvider>
         </AuthProvider>
       </ThemeProvider>
