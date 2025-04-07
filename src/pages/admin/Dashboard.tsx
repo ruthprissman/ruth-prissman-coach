@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +10,6 @@ import { formatDateTimeInIsrael } from '@/utils/dateUtils';
 import { ArticlePublication } from '@/types/article';
 import { FutureSession } from '@/types/session';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { getCookie, deleteCookie } from '@/utils/cookieUtils';
 
 const Dashboard: React.FC = () => {
   const {
@@ -41,16 +39,14 @@ const Dashboard: React.FC = () => {
   const paymentStats = usePaymentStats();
 
   useEffect(() => {
-    const savedEnv = getCookie('auth_env_cookie');
-    if (savedEnv) {
-      deleteCookie('auth_env_cookie');
-      if (savedEnv === 'preview' && !window.location.hostname.includes('preview')) {
-        const previewUrl = 'https://preview--ruth-prissman-coach.lovable.app/admin/dashboard';
-        const hash = window.location.hash;
-        const fullRedirectUrl = hash ? `${previewUrl}${hash}` : previewUrl;
-        window.location.replace(fullRedirectUrl);
-        return;
-      }
+    const savedEnv = sessionStorage.getItem('auth_env');
+    sessionStorage.removeItem('auth_env');
+    if (savedEnv === 'preview' && !window.location.hostname.includes('preview')) {
+      const previewUrl = 'https://preview--ruth-prissman-coach.lovable.app/admin/dashboard';
+      const hash = window.location.hash;
+      const fullRedirectUrl = hash ? `${previewUrl}${hash}` : previewUrl;
+      window.location.replace(fullRedirectUrl);
+      return;
     }
   }, []);
 

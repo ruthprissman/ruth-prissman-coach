@@ -1,4 +1,3 @@
-
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
@@ -38,7 +37,7 @@ export async function checkIfSignedIn(): Promise<boolean> {
 
 export async function signInWithGoogle(): Promise<boolean> {
   try {
-    // Save the current environment before redirecting - now uses cookies
+    // Save the current environment before redirecting
     saveEnvironmentForAuth();
     
     // Use Supabase OAuth with the exact scopes and configuration
