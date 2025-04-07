@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { supabase } from '@/lib/supabase'
+import { Session } from '@supabase/supabase-js'
 
 // Set up debug logging for authentication flow
 const DEBUG_AUTH = true;
@@ -79,7 +80,7 @@ const handleAuthRedirect = async () => {
       console.log('🔑 Attempting to set Supabase session with extracted tokens');
       
       // Create a timeout promise
-      const timeoutPromise = new Promise((_, reject) => {
+      const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
           reject(new Error('Timeout: Session setting took too long (>10 seconds)'));
         }, 10000);
@@ -100,7 +101,7 @@ const handleAuthRedirect = async () => {
           }
           
           console.log('✅ Supabase session set successfully');
-          return data;
+          return data as { session: Session };
         })(),
         timeoutPromise
       ]);
