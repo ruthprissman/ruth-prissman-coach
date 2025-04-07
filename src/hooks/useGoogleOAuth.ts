@@ -10,8 +10,10 @@ import {
 } from '@/services/GoogleOAuthService';
 import { toast } from '@/components/ui/use-toast';
 import { GoogleCalendarEvent } from '@/types/calendar';
+import { useNavigate } from 'react-router-dom';
 
 export function useGoogleOAuth() {
+  const navigate = useNavigate();
   const [state, setState] = useState<GoogleOAuthState>({
     isAuthenticated: false,
     isAuthenticating: true,
@@ -127,6 +129,9 @@ export function useGoogleOAuth() {
           title: 'התחברת בהצלחה ליומן גוגל',
           description: 'מתחיל בטעינת אירועי יומן...',
         });
+        
+        // Navigate to dashboard on successful login
+        navigate('/admin/dashboard');
       } else {
         toast({
           title: 'ההתחברות ליומן גוגל נכשלה',
