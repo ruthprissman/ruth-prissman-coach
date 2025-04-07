@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -119,6 +120,12 @@
   
   html, body {
     @apply overflow-x-hidden;
+  }
+}
+
+@layer utilities {
+  .text-xxs {
+    font-size: 0.65rem;
   }
 }
 

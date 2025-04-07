@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -75,9 +76,9 @@ export function Navigation() {
             ))}
           </div>
 
-          {/* Copyright notice */}
-          <div className="text-[#4A235A] text-xs md:text-sm order-3 w-full md:w-auto md:order-3 mt-2 md:mt-0 text-center md:text-left">
-            © כל הזכויות שמורות לשמחה אביטן - מפתחת השיטה קוד הנפש
+          {/* Copyright notice - updated text, smaller size, and right-aligned */}
+          <div className="text-[#4A235A] text-xxs md:text-xs order-3 w-full md:w-auto md:order-3 mt-2 md:mt-0 text-right">
+            © כל הזכויות על השיטה שמורות לשמחה אביטן - מפתחת השיטה קוד הנפש
           </div>
         </div>
 
