@@ -1,6 +1,6 @@
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
-import { getDashboardRedirectUrl } from '@/utils/urlUtils';
+import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
 
 // OAuth2 configuration
 const CLIENT_ID = '216734901779-csrnrl4nmkilae4blbolsip8mmibsk3t.apps.googleusercontent.com';
@@ -37,6 +37,9 @@ export async function checkIfSignedIn(): Promise<boolean> {
 
 export async function signInWithGoogle(): Promise<boolean> {
   try {
+    // Save the current environment before redirecting
+    saveEnvironmentForAuth();
+    
     // Use Supabase OAuth with the exact scopes and configuration
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -114,7 +117,7 @@ export async function fetchGoogleCalendarEvents(): Promise<GoogleCalendarEvent[]
     // Transform the response to our GoogleCalendarEvent format
     const events: GoogleCalendarEvent[] = data.items.map((item: any) => ({
       id: item.id,
-      summary: item.summary || 'אירוע ללא כותרת',
+      summary: item.summary || 'אירוע ללא ��ותרת',
       description: item.description || '',
       start: item.start,
       end: item.end,

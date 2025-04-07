@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getDashboardRedirectUrl } from '@/utils/urlUtils';
+import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
 
 const formSchema = z.object({
   email: z.string().email("כתובת אימייל לא תקינה"),
@@ -133,6 +133,8 @@ const Login: React.FC = () => {
   
   const handleGoogleSignIn = async () => {
     try {
+      saveEnvironmentForAuth();
+      
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
