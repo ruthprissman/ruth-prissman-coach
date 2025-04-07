@@ -39,6 +39,18 @@ const Dashboard: React.FC = () => {
   const paymentStats = usePaymentStats();
 
   useEffect(() => {
+    const savedEnv = sessionStorage.getItem('auth_env');
+    sessionStorage.removeItem('auth_env');
+    if (savedEnv === 'preview' && !window.location.hostname.includes('preview')) {
+      const previewUrl = 'https://preview--ruth-prissman-coach.lovable.app/admin/dashboard';
+      const hash = window.location.hash;
+      const fullRedirectUrl = hash ? `${previewUrl}${hash}` : previewUrl;
+      window.location.replace(fullRedirectUrl);
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchUpcomingPublications = async () => {
       try {
         setIsPublicationsLoading(true);
@@ -46,8 +58,8 @@ const Dashboard: React.FC = () => {
         const today = new Date();
         const nextWeek = new Date();
         nextWeek.setDate(today.getDate() + 7);
-        const todayStr = today.toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
-        const nextWeekStr = nextWeek.toISOString().split('T')[0]; // Get next week's date
+        const todayStr = today.toISOString().split('T')[0];
+        const nextWeekStr = nextWeek.toISOString().split('T')[0];
 
         console.log(`Fetching publications from ${todayStr} to ${nextWeekStr}`);
         const {
@@ -69,7 +81,6 @@ const Dashboard: React.FC = () => {
         }
         console.log("Upcoming publications data:", data);
 
-        // Transform the data to match ArticlePublication type
         const transformedData = data?.map(item => ({
           id: item.id,
           content_id: item.content_id,
@@ -116,17 +127,12 @@ const Dashboard: React.FC = () => {
         }
         console.log("Upcoming sessions data:", data);
 
-        // Fix the type error by properly handling different response formats
         const transformedData = data?.map(item => {
-          // Define the patient name with proper type narrowing
           let patientName = 'לקוח לא מזוהה';
           if (item.patients) {
-            // If patients is an array with at least one element
             if (Array.isArray(item.patients) && item.patients.length > 0) {
               patientName = item.patients[0].name || 'לקוח לא מזוהה';
-            }
-            // If patients is a direct object with name property
-            else if (typeof item.patients === 'object' && item.patients !== null) {
+            } else if (typeof item.patients === 'object' && item.patients !== null) {
               patientName = (item.patients as {
                 name?: string;
               }).name || 'לקוח לא מזוהה';
@@ -153,12 +159,10 @@ const Dashboard: React.FC = () => {
       try {
         const client = await supabaseClient();
 
-        // Calculate the date 30 days ago
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
 
-        // Fetch content subscribers statistics
         const {
           data: contentSubscribers,
           error: contentError
@@ -168,7 +172,6 @@ const Dashboard: React.FC = () => {
           throw contentError;
         }
 
-        // Fetch story subscribers statistics
         const {
           data: storySubscribers,
           error: storyError
@@ -178,15 +181,12 @@ const Dashboard: React.FC = () => {
           throw storyError;
         }
 
-        // Calculate total and new subscribers for content
         const totalContentSubscribers = contentSubscribers?.length || 0;
         const newContentSubscribers = contentSubscribers?.filter(sub => sub.joined_at && new Date(sub.joined_at) >= thirtyDaysAgo).length || 0;
 
-        // Calculate total and new subscribers for stories
         const totalStorySubscribers = storySubscribers?.length || 0;
         const newStorySubscribers = storySubscribers?.filter(sub => sub.joined_at && new Date(sub.joined_at) >= thirtyDaysAgo).length || 0;
 
-        // Update state with the calculated statistics
         setSubscriptionStats({
           contentSubscribers: {
             total: totalContentSubscribers,
@@ -461,7 +461,7 @@ const Dashboard: React.FC = () => {
                           <p className="text-2xl font-bold">₪{paymentStats.outstandingBalance.toLocaleString()}</p>
                         </div>
                       </div>
-                    </div> : <p className="text-right text-gray-500 py-4">אין נתוני תשלומים זמינים</p>}
+                    </div> : <p className="text-right text-gray-500 py-4">אין נתוני תשלומים זמיני��</p>}
                 </CardContent>
               </Card>
             </div>
