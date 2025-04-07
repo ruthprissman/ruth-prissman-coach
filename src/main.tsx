@@ -14,6 +14,7 @@ const handleAuthRedirect = async () => {
     
     const access_token = hashParams.get('access_token');
     const refresh_token = hashParams.get('refresh_token');
+    const provider_token = hashParams.get('provider_token');
     
     // If we have both tokens, set the session
     if (access_token && refresh_token) {
@@ -33,6 +34,12 @@ const handleAuthRedirect = async () => {
         
         if (data?.session) {
           console.log('Session set successfully, checking admin status...');
+          
+          // Store provider token in localStorage if available (for Google Calendar API)
+          if (provider_token) {
+            localStorage.setItem('google_provider_token', provider_token);
+            console.log('Google provider token stored for calendar access');
+          }
           
           // Clean up URL by removing the hash
           window.history.replaceState(
@@ -55,12 +62,13 @@ const handleAuthRedirect = async () => {
           // Redirect based on admin status
           if (adminData) {
             console.log('User is admin, redirecting to dashboard...');
-            window.location.href = '/admin/dashboard';
+            // Use location.replace to prevent back button issues
+            window.location.replace('/admin/dashboard');
           } else {
             console.log('User is not admin, redirecting to homepage...');
             // Sign out non-admin users
             await supabase.auth.signOut();
-            window.location.href = '/';
+            window.location.replace('/');
           }
         }
       } catch (error) {

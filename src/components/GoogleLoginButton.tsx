@@ -20,13 +20,13 @@ export function GoogleLoginButton() {
 
   const handleClick = async () => {
     if (isAuthenticated) {
+      console.log('Signing out from Google Calendar');
       signOut();
     } else {
-      // This now uses the updated signIn function with calendar permissions
-      const success = await signIn();
-      if (success) {
-        await fetchEvents();
-      }
+      console.log('Starting Google sign-in process with calendar permissions');
+      // The signIn function now triggers the OAuth flow that will redirect
+      await signIn();
+      // The rest of the flow is handled after redirect in main.tsx
     }
   };
 
@@ -57,9 +57,9 @@ export function GoogleLoginButton() {
       {isAuthenticated && (
         <div className="text-sm text-center mt-1 text-green-600">
           {isLoadingEvents ? (
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-2 justify-center">
               <Loader2 className="h-3 w-3 animate-spin" />
-              טוען אירועים...
+              <span>טוען אירועים...</span>
             </span>
           ) : (
             <span>{events.length > 0 ? `${events.length} אירועים נטענו מיומן Google` : 'אין אירועים ביומן'}</span>

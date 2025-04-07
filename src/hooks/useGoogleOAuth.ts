@@ -28,6 +28,7 @@ export function useGoogleOAuth() {
         setState(prev => ({ ...prev, isAuthenticating: true }));
         
         const isSignedIn = await checkIfSignedIn();
+        console.log('Google OAuth init check - isSignedIn:', isSignedIn);
         
         setState({
           isAuthenticated: isSignedIn,
@@ -36,6 +37,7 @@ export function useGoogleOAuth() {
         });
         
         if (isSignedIn) {
+          console.log('User is signed in to Google, fetching calendar events');
           fetchEvents();
         }
       } catch (error: any) {
@@ -54,15 +56,18 @@ export function useGoogleOAuth() {
   const fetchEvents = async () => {
     try {
       setIsLoadingEvents(true);
+      console.log('Fetching Google Calendar events...');
       const calendarEvents = await fetchGoogleCalendarEvents();
       setEvents(calendarEvents);
       
       if (calendarEvents.length > 0) {
+        console.log(`Fetched ${calendarEvents.length} Google Calendar events`);
         toast({
           title: 'אירועי יומן Google נטענו',
           description: `נטענו ${calendarEvents.length} אירועים מיומן Google`,
         });
       } else {
+        console.log('No Google Calendar events found');
         toast({
           title: 'לא נמצאו אירועים',
           description: 'לא נמצאו אירועים ביומן Google',
@@ -115,30 +120,17 @@ export function useGoogleOAuth() {
   const signIn = async () => {
     try {
       setState(prev => ({ ...prev, isAuthenticating: true, error: null }));
+      console.log('Starting Google sign-in process...');
       
       const success = await signInWithGoogle();
       
+      // This code will only run if the OAuth flow returns directly (not after redirect)
+      console.log('Google sign-in result:', success);
       setState({
         isAuthenticated: success,
         isAuthenticating: false,
         error: success ? null : 'שגיאה בהתחברות ל-Google'
       });
-      
-      if (success) {
-        toast({
-          title: 'התחברת בהצלחה ליומן גוגל',
-          description: 'מתחיל בטעינת אירועי יומן...',
-        });
-        
-        // Navigate to dashboard on successful login
-        navigate('/admin/dashboard');
-      } else {
-        toast({
-          title: 'ההתחברות ליומן גוגל נכשלה',
-          description: 'לא הצלחנו לקבל הרשאות ליומן שלך',
-          variant: 'destructive',
-        });
-      }
       
       return success;
     } catch (error: any) {

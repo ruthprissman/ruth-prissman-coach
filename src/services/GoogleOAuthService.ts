@@ -1,3 +1,4 @@
+
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 
@@ -13,18 +14,30 @@ export interface GoogleOAuthState {
   error: string | null;
 }
 
-// Get access token from Supabase session
+// Get access token - first try from provider_token in localStorage (from redirect),
+// then fall back to the session provider_token
 export async function getAccessToken(): Promise<string | null> {
   try {
+    // First check if we have a fresh token from redirect
+    const storedToken = localStorage.getItem('google_provider_token');
+    if (storedToken) {
+      console.log('Using stored Google provider token from redirect');
+      return storedToken;
+    }
+    
+    // Fall back to session provider_token
     const { data } = await supabase.auth.getSession();
     const session = data.session;
     
     if (session?.provider_token) {
+      console.log('Using provider token from session');
       return session.provider_token;
     }
+    
+    console.log('No Google access token available');
     return null;
   } catch (error) {
-    console.error('Error getting access token:', error);
+    console.error('Error getting Google access token:', error);
     return null;
   }
 }
@@ -41,7 +54,7 @@ export async function signInWithGoogle(): Promise<boolean> {
       provider: 'google',
       options: {
         scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
-        redirectTo: `${window.location.origin}/admin/dashboard`,
+        redirectTo: REDIRECT_URI,
         queryParams: {
           // Force re-authentication even if already authenticated
           prompt: 'consent',
@@ -55,6 +68,7 @@ export async function signInWithGoogle(): Promise<boolean> {
       throw error;
     }
     
+    // The redirect will happen automatically from Supabase
     return true;
   } catch (error: any) {
     console.error('Error signing in with Google:', error);
@@ -70,6 +84,8 @@ export async function signInWithGoogle(): Promise<boolean> {
 
 export async function signOutFromGoogle(): Promise<void> {
   try {
+    // Clear stored provider token
+    localStorage.removeItem('google_provider_token');
     await supabase.auth.signOut();
   } catch (error) {
     console.error('Error signing out from Google:', error);
