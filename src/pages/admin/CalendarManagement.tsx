@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -875,6 +876,14 @@ const CalendarManagement: React.FC = () => {
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold text-gray-900">ניהול זמינות יומן</h1>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={checkGoogleToken} 
+                className="text-xs text-gray-500 border-gray-300 hover:text-gray-700 ml-2"
+              >
+                בדוק טוקן גוגל
+              </Button>
               <GoogleOAuthButton 
                 isAuthenticated={isGoogleAuthenticated}
                 isAuthenticating={isGoogleAuthenticating}
@@ -1015,16 +1024,7 @@ const CalendarManagement: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex justify-center mt-8">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={checkGoogleToken} 
-              className="text-xs text-gray-500 border-gray-300 hover:text-gray-700"
-            >
-              בדוק טוקן גוגל
-            </Button>
-          </div>
+          {/* Removed the button from bottom of page since it's now at the top */}
         </div>
         
         <RecurringAvailabilityDialog 
