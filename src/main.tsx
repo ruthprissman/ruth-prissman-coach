@@ -54,6 +54,7 @@ const handleAuthRedirect = async () => {
     
     try {
       // Extract tokens from URL hash
+      console.log('📜 Parsing URL hash to extract tokens...');
       const hashParams = new URLSearchParams(
         window.location.hash.substring(1) // Remove the # character
       );
@@ -62,6 +63,12 @@ const handleAuthRedirect = async () => {
       const refresh_token = hashParams.get('refresh_token');
       const provider_token = hashParams.get('provider_token');
       
+      // Verify tokens presence and format
+      if (!access_token || !refresh_token) {
+        console.error('❌ Missing required tokens in URL hash');
+        throw new Error('חסרים פרמטרים הכרחיים להתחברות');
+      }
+      
       // Log the extracted tokens (trimmed for security)
       console.log('🔐 Tokens extracted:', { 
         access_token: access_token ? `${access_token.substring(0, 10)}...` : 'missing',
@@ -69,142 +76,100 @@ const handleAuthRedirect = async () => {
         provider_token: provider_token ? 'present' : 'not present'
       });
       
-      // If we have both tokens, set the session
-      if (access_token && refresh_token) {
-        try {
-          // Step 2: Set the session with the tokens
-          console.log('🔑 Setting Supabase session with extracted tokens');
-          
-          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+      console.log('🔑 Attempting to set Supabase session with extracted tokens');
+      
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Timeout: Session setting took too long (>10 seconds)'));
+        }, 10000);
+      });
+      
+      // Race between the session setting and the timeout
+      const sessionData = await Promise.race([
+        (async () => {
+          console.log('🔄 Calling supabase.auth.setSession...');
+          const { data, error } = await supabase.auth.setSession({
             access_token,
             refresh_token
           });
           
-          if (sessionError) {
-            console.error('❌ Failed to set Supabase session:', sessionError);
-            throw new Error(`Failed to set session: ${sessionError.message}`);
-          } 
-          
-          if (!sessionData?.session) {
-            console.error('❌ Session data is missing after setSession');
-            throw new Error('Session data is missing after setSession');
+          if (error) {
+            console.error('❌ Supabase setSession error:', error);
+            throw error;
           }
           
-          console.log('✅ Supabase session set successfully:', {
-            user: sessionData.session.user.email,
-            expires_at: new Date(sessionData.session.expires_at * 1000).toLocaleString()
-          });
+          console.log('✅ Supabase session set successfully');
+          return data;
+        })(),
+        timeoutPromise
+      ]);
+      
+      if (!sessionData?.session) {
+        console.error('❌ Session data is missing after setSession');
+        throw new Error('חסרים נתוני משתמש לאחר התחברות');
+      }
+      
+      console.log('✅ Session established successfully:', {
+        user: sessionData.session.user.email,
+        expires_at: new Date(sessionData.session.expires_at * 1000).toLocaleString()
+      });
+      
+      // Store provider token in localStorage if available (for Google Calendar API)
+      if (provider_token) {
+        localStorage.setItem('google_provider_token', provider_token);
+        console.log('✅ Google provider token stored for calendar access');
+      }
+      
+      // Step 3: Get the current user to ensure session is valid
+      console.log('🔄 Fetching current user details...');
+      
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('❌ Failed to get user details:', userError);
+        throw new Error(`Failed to get user: ${userError.message}`);
+      }
+      
+      if (!userData?.user) {
+        console.error('❌ User data is missing after getUser call');
+        throw new Error('User data is missing after getUser');
+      }
+      
+      console.log('👤 Current user:', {
+        email: userData.user.email,
+        id: userData.user.id,
+      });
+      
+      // Step 4: Check if user is in admins table
+      console.log('🔎 Checking if user is admin');
+      
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('email')
+        .eq('email', userData.user.email)
+        .single();
+      
+      // Clean up URL by removing the hash
+      window.history.replaceState(
+        {}, 
+        document.title, 
+        window.location.pathname
+      );
+      console.log('✅ URL cleaned up, hash fragment removed');
+      
+      if (adminError) {
+        if (adminError.code === 'PGRST116') {
+          // Record not found - user is not an admin
+          console.log('🔴 User is NOT admin - redirecting to /');
           
-          // Store provider token in localStorage if available (for Google Calendar API)
-          if (provider_token) {
-            localStorage.setItem('google_provider_token', provider_token);
-            console.log('✅ Google provider token stored for calendar access');
-          }
+          // Sign out and redirect
+          await supabase.auth.signOut();
+          localStorage.removeItem('google_provider_token'); // Clean up tokens
           
-          // Step 3: Get the current user to ensure session is valid
-          console.log('🔄 Fetching current user details...');
+          // Remove loading indicator and display error before redirect
+          document.body.removeChild(loadingElement);
           
-          const { data: userData, error: userError } = await supabase.auth.getUser();
-          
-          if (userError) {
-            console.error('❌ Failed to get user details:', userError);
-            throw new Error(`Failed to get user: ${userError.message}`);
-          }
-          
-          if (!userData?.user) {
-            console.error('❌ User data is missing after getUser call');
-            throw new Error('User data is missing after getUser');
-          }
-          
-          console.log('👤 Current user:', {
-            email: userData.user.email,
-            id: userData.user.id,
-          });
-          
-          // Step 4: Check if user is in admins table
-          console.log('🔎 Checking if user is admin');
-          
-          const { data: adminData, error: adminError } = await supabase
-            .from('admins')
-            .select('email')
-            .eq('email', userData.user.email)
-            .single();
-          
-          // Clean up URL by removing the hash
-          window.history.replaceState(
-            {}, 
-            document.title, 
-            window.location.pathname
-          );
-          console.log('✅ URL cleaned up, hash fragment removed');
-          
-          if (adminError) {
-            if (adminError.code === 'PGRST116') {
-              // Record not found - user is not an admin
-              console.log('🔴 User is NOT admin - redirecting to /');
-              
-              // Step 6: Not an admin, sign out and redirect
-              await supabase.auth.signOut();
-              localStorage.removeItem('google_provider_token'); // Clean up tokens
-              
-              // Remove loading indicator and display error before redirect
-              document.body.removeChild(loadingElement);
-              
-              const errorElement = document.createElement('div');
-              errorElement.style.position = 'fixed';
-              errorElement.style.top = '20px';
-              errorElement.style.left = '50%';
-              errorElement.style.transform = 'translateX(-50%)';
-              errorElement.style.backgroundColor = '#f8d7da';
-              errorElement.style.color = '#721c24';
-              errorElement.style.padding = '12px 20px';
-              errorElement.style.borderRadius = '4px';
-              errorElement.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-              errorElement.style.zIndex = '10000';
-              errorElement.style.textAlign = 'center';
-              errorElement.style.fontFamily = 'Arial, sans-serif';
-              errorElement.innerHTML = 'אין לך הרשאת גישה למערכת הניהול';
-              
-              document.body.appendChild(errorElement);
-              
-              // Remove error message after 3 seconds
-              setTimeout(() => {
-                if (document.body.contains(errorElement)) {
-                  document.body.removeChild(errorElement);
-                }
-                window.location.href = '/'; // Redirect to home page
-              }, 3000);
-              
-              return;
-            } else {
-              console.error('❌ Error checking admin status:', adminError);
-              throw new Error(`Error checking admin status: ${adminError.message}`);
-            }
-          }
-          
-          // Step 5: Admin found, redirect to dashboard
-          if (adminData) {
-            console.log('🟢 User is admin - redirecting to /admin/dashboard');
-            document.body.removeChild(loadingElement); // Remove loading indicator
-            window.location.href = '/admin/dashboard';
-          } else {
-            // This is a fallback - should be caught by the adminError code above
-            console.log('🔴 User is not admin (no data), signing out...');
-            await supabase.auth.signOut();
-            localStorage.removeItem('google_provider_token');
-            document.body.removeChild(loadingElement);
-            window.location.href = '/';
-          }
-          
-        } catch (error: any) {
-          console.error('❌ OAuth error:', error);
-          
-          // Remove loading indicator and show error
-          if (document.body.contains(loadingElement)) {
-            document.body.removeChild(loadingElement);
-          }
-          
-          // Display error message
           const errorElement = document.createElement('div');
           errorElement.style.position = 'fixed';
           errorElement.style.top = '20px';
@@ -218,62 +183,48 @@ const handleAuthRedirect = async () => {
           errorElement.style.zIndex = '10000';
           errorElement.style.textAlign = 'center';
           errorElement.style.fontFamily = 'Arial, sans-serif';
-          errorElement.innerHTML = `התרחשה שגיאה: ${error.message || 'אנא נסה שוב'}`;
+          errorElement.innerHTML = 'אין לך הרשאת גישה למערכת הניהול';
           
           document.body.appendChild(errorElement);
           
-          // Remove error message after 5 seconds
+          // Remove error message after 3 seconds
           setTimeout(() => {
             if (document.body.contains(errorElement)) {
               document.body.removeChild(errorElement);
             }
             window.location.href = '/'; // Redirect to home page
-          }, 5000);
+          }, 3000);
+          
+          return;
+        } else {
+          console.error('❌ Error checking admin status:', adminError);
+          throw new Error(`Error checking admin status: ${adminError.message}`);
         }
-      } else {
-        console.error('❌ Missing required tokens in URL hash');
-        
-        // Remove loading indicator if it exists
-        if (document.body.contains(loadingElement)) {
-          document.body.removeChild(loadingElement);
-        }
-        
-        // Display error for missing tokens
-        const errorElement = document.createElement('div');
-        errorElement.style.position = 'fixed';
-        errorElement.style.top = '20px';
-        errorElement.style.left = '50%';
-        errorElement.style.transform = 'translateX(-50%)';
-        errorElement.style.backgroundColor = '#f8d7da';
-        errorElement.style.color = '#721c24';
-        errorElement.style.padding = '12px 20px';
-        errorElement.style.borderRadius = '4px';
-        errorElement.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-        errorElement.style.zIndex = '10000';
-        errorElement.style.textAlign = 'center';
-        errorElement.style.fontFamily = 'Arial, sans-serif';
-        errorElement.innerHTML = 'התחברות נכשלה: חסרים פרמטרים נדרשים';
-        
-        document.body.appendChild(errorElement);
-        
-        // Remove error message after 3 seconds
-        setTimeout(() => {
-          if (document.body.contains(errorElement)) {
-            document.body.removeChild(errorElement);
-          }
-          window.location.href = '/'; // Redirect to home page
-        }, 3000);
       }
+      
+      // Step 5: Admin found, redirect to dashboard
+      if (adminData) {
+        console.log('🟢 User is admin - redirecting to /admin/dashboard');
+        document.body.removeChild(loadingElement); // Remove loading indicator
+        window.location.href = '/admin/dashboard';
+      } else {
+        // This is a fallback - should be caught by the adminError code above
+        console.log('🔴 User is not admin (no data), signing out...');
+        await supabase.auth.signOut();
+        localStorage.removeItem('google_provider_token');
+        document.body.removeChild(loadingElement);
+        window.location.href = '/';
+      }
+      
     } catch (error: any) {
       console.error('❌ OAuth error:', error);
       
-      // Remove loading indicator if it exists
-      const loadingEl = document.getElementById('auth-loading');
-      if (loadingEl && loadingEl.parentNode) {
-        loadingEl.parentNode.removeChild(loadingEl);
+      // Remove loading indicator and show error
+      if (document.body.contains(loadingElement)) {
+        document.body.removeChild(loadingElement);
       }
       
-      // Display generic error
+      // Display error message
       const errorElement = document.createElement('div');
       errorElement.style.position = 'fixed';
       errorElement.style.top = '20px';
@@ -287,20 +238,31 @@ const handleAuthRedirect = async () => {
       errorElement.style.zIndex = '10000';
       errorElement.style.textAlign = 'center';
       errorElement.style.fontFamily = 'Arial, sans-serif';
-      errorElement.innerHTML = 'התרחשה שגיאה לא צפויה בתהליך ההתחברות';
       
+      // Determine appropriate error message
+      let errorMessage = 'התרחשה שגיאה בתהליך ההתחברות';
+      if (error.message === 'Timeout: Session setting took too long (>10 seconds)') {
+        errorMessage = 'תהליך ההתחברות נמשך זמן רב מדי, נסה שוב מאוחר יותר';
+      } else if (error.message === 'חסרים פרמטרים הכרחיים להתחברות') {
+        errorMessage = error.message;
+      } else {
+        errorMessage = `שגיאה: ${error.message || 'אנא נסה שוב'}`;
+      }
+      
+      errorElement.innerHTML = errorMessage;
       document.body.appendChild(errorElement);
       
-      // Remove error message after 3 seconds
+      // Remove error message after 5 seconds and redirect to safe fallback
       setTimeout(() => {
         if (document.body.contains(errorElement)) {
           document.body.removeChild(errorElement);
         }
-        window.location.href = '/'; // Redirect to home page
-      }, 3000);
+        console.log('↩️ Redirecting to safe fallback: /admin/login');
+        window.location.href = '/admin/login'; // Redirect to login page as safe fallback
+      }, 5000);
     }
   } else {
-    console.log('ℹ️ No auth tokens in URL, continuing normal app load');
+    console.log('ℹ️ No auth tokens in URL hash, continuing normal app load');
   }
 };
 
