@@ -1,14 +1,12 @@
-
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
+import { getDashboardRedirectUrl } from '@/utils/urlUtils';
 
 // OAuth2 configuration
 const CLIENT_ID = '216734901779-csrnrl4nmkilae4blbolsip8mmibsk3t.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar';
-// Determine the correct redirect URI based on the current environment
-const REDIRECT_URI = window.location.hostname.includes('preview') 
-  ? 'https://preview--ruth-prissman-coach.lovable.app/admin/dashboard'
-  : 'https://ruth-prissman-coach.lovable.app/admin/dashboard';
+// Use the utility to get the correct redirect URL
+const REDIRECT_URI = getDashboardRedirectUrl();
 
 export interface GoogleOAuthState {
   isAuthenticated: boolean;
@@ -44,7 +42,7 @@ export async function signInWithGoogle(): Promise<boolean> {
       provider: 'google',
       options: {
         scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
-        redirectTo: window.location.origin + '/admin/calendar',
+        redirectTo: REDIRECT_URI,
         queryParams: {
           // Force re-authentication even if already authenticated
           prompt: 'consent',

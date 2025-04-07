@@ -1,8 +1,8 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabaseClient, clearSupabaseClientCache } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
+import { getDashboardRedirectUrl } from '@/utils/urlUtils';
 
 type AuthContextType = {
   user: User | null;
@@ -28,8 +28,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    // We still need to subscribe to auth state changes for security and proper app function
-    // but we'll minimize what happens during initial load
     const { data: { subscription } } = supabaseClient().auth.onAuthStateChange(
       async (event, newSession) => {
         console.log('Auth state changed:', event, newSession?.user?.id);
@@ -66,17 +64,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Modified initialization to be minimal
     const initializeAuth = async () => {
       try {
-        // Only check for current session, don't perform admin checks until needed
         const { data } = await supabaseClient().auth.getSession();
         if (data && data.session) {
           setSession(data.session);
           setUser(data.session.user);
-          
-          // Admin check will only happen if user navigates to protected route
-          // not during initial login page load
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
@@ -165,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     setIsLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/admin/dashboard`;
+      const redirectTo = getDashboardRedirectUrl();
       console.log(`[Auth Debug] Google login redirect set to: ${redirectTo}`);
       
       const { error } = await supabaseClient().auth.signInWithOAuth({
