@@ -1,6 +1,6 @@
+
 import { useState, useEffect } from 'react';
 import { 
-  initGoogleAuth, 
   checkIfSignedIn, 
   signInWithGoogle, 
   signOutFromGoogle,
@@ -24,8 +24,6 @@ export function useGoogleOAuth() {
     const initialize = async () => {
       try {
         setState(prev => ({ ...prev, isAuthenticating: true }));
-        
-        await initGoogleAuth();
         
         const isSignedIn = await checkIfSignedIn();
         

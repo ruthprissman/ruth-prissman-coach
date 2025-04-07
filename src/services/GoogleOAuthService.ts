@@ -1,3 +1,4 @@
+
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 
@@ -15,52 +16,25 @@ export interface GoogleOAuthState {
   error: string | null;
 }
 
-export async function initGoogleAuth(): Promise<boolean> {
+// Get access token from Supabase session
+export async function getAccessToken(): Promise<string | null> {
   try {
-    // Load the Google API client library if not already loaded
-    if (!window.gapi) {
-      console.log('Loading Google API client...');
-      await loadGoogleApiScript();
-    }
-
-    // Load the auth2 module
-    if (!window.gapi.auth2) {
-      console.log('Loading auth2 module...');
-      return new Promise((resolve) => {
-        window.gapi.load('auth2', () => {
-          window.gapi.auth2.init({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            redirect_uri: REDIRECT_URI,
-            access_type: 'offline', // Request offline access
-            response_type: 'code'   // Use authorization code flow
-          }).then(() => {
-            console.log('Google Auth initialized with calendar permissions');
-            resolve(true);
-          }).catch((error: any) => {
-            console.error('Google Auth initialization failed', error);
-            resolve(false);
-          });
-        });
-      });
-    }
+    const { data } = await supabase.auth.getSession();
+    const session = data.session;
     
-    return true;
+    if (session?.provider_token) {
+      return session.provider_token;
+    }
+    return null;
   } catch (error) {
-    console.error('Error initializing Google Auth:', error);
-    return false;
+    console.error('Error getting access token:', error);
+    return null;
   }
 }
 
 export async function checkIfSignedIn(): Promise<boolean> {
-  try {
-    await initGoogleAuth();
-    const auth2 = window.gapi.auth2.getAuthInstance();
-    return auth2.isSignedIn.get();
-  } catch (error) {
-    console.error('Error checking sign-in status:', error);
-    return false;
-  }
+  const token = await getAccessToken();
+  return !!token;
 }
 
 export async function signInWithGoogle(): Promise<boolean> {
@@ -100,28 +74,8 @@ export async function signOutFromGoogle(): Promise<void> {
   }
 }
 
-export async function getAccessToken(): Promise<string | null> {
-  try {
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
-    
-    if (session?.provider_token) {
-      return session.provider_token;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error getting access token:', error);
-    return null;
-  }
-}
-
 export async function fetchGoogleCalendarEvents(): Promise<GoogleCalendarEvent[]> {
   try {
-    // Ensure Google API client is loaded
-    if (!window.gapi || !window.gapi.client) {
-      await loadGapiClient();
-    }
-    
     const token = await getAccessToken();
     if (!token) {
       throw new Error('אין הרשאות גישה ליומן Google');
@@ -132,22 +86,30 @@ export async function fetchGoogleCalendarEvents(): Promise<GoogleCalendarEvent[]
     const threeMonthsLater = new Date(now);
     threeMonthsLater.setMonth(now.getMonth() + 3);
     
-    const timeMin = now.toISOString();
-    const timeMax = threeMonthsLater.toISOString();
+    const timeMin = encodeURIComponent(now.toISOString());
+    const timeMax = encodeURIComponent(threeMonthsLater.toISOString());
     
-    // Make the API request
-    const response = await window.gapi.client.calendar.events.list({
-      'calendarId': 'primary', // Use primary calendar
-      'timeMin': timeMin,
-      'timeMax': timeMax,
-      'singleEvents': true,
-      'orderBy': 'startTime'
-    });
+    // Make a direct fetch to Google Calendar API
+    const response = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
     
-    console.log('Google Calendar events fetched:', response.result.items);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Failed to fetch calendar events');
+    }
+    
+    const data = await response.json();
+    console.log('Google Calendar events fetched:', data.items);
     
     // Transform the response to our GoogleCalendarEvent format
-    const events: GoogleCalendarEvent[] = response.result.items.map((item: any) => ({
+    const events: GoogleCalendarEvent[] = data.items.map((item: any) => ({
       id: item.id,
       summary: item.summary || 'אירוע ללא כותרת',
       description: item.description || '',
@@ -164,55 +126,6 @@ export async function fetchGoogleCalendarEvents(): Promise<GoogleCalendarEvent[]
   }
 }
 
-function loadGoogleApiScript(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    // Check if script already exists
-    if (document.getElementById('google-api-script')) {
-      resolve();
-      return;
-    }
-    
-    // Create script element
-    const script = document.createElement('script');
-    script.id = 'google-api-script';
-    script.src = 'https://apis.google.com/js/api.js';
-    script.async = true;
-    script.defer = true;
-    
-    script.onload = () => {
-      console.log('Google API script loaded');
-      resolve();
-    };
-    
-    script.onerror = (error) => {
-      console.error('Error loading Google API script:', error);
-      reject(error);
-    };
-    
-    document.body.appendChild(script);
-  });
-}
-
-async function loadGapiClient(): Promise<void> {
-  await new Promise<void>((resolve) => {
-    window.gapi.load('client', () => resolve());
-  });
-  
-  await window.gapi.client.init({
-    apiKey: null, // We're using OAuth, so no API key needed
-    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
-    clientId: CLIENT_ID,
-    scope: SCOPES
-  });
-}
-
-// Add type declarations for window.gapi
-declare global {
-  interface Window {
-    gapi: any;
-  }
-}
-
 // Function to create a Google Calendar event
 export async function createGoogleCalendarEvent(
   summary: string,
@@ -221,11 +134,6 @@ export async function createGoogleCalendarEvent(
   description: string = '',
 ): Promise<string | null> {
   try {
-    // Ensure Google API client is loaded
-    if (!window.gapi || !window.gapi.client) {
-      await loadGapiClient();
-    }
-    
     const token = await getAccessToken();
     if (!token) {
       throw new Error('אין הרשאות גישה ליומן Google');
@@ -244,15 +152,77 @@ export async function createGoogleCalendarEvent(
       }
     };
     
-    const response = await window.gapi.client.calendar.events.insert({
-      'calendarId': 'primary',
-      'resource': event
+    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(event)
     });
     
-    console.log('Event created: %s', response.result.htmlLink);
-    return response.result.id;
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Failed to create calendar event');
+    }
+    
+    const data = await response.json();
+    console.log('Event created:', data.htmlLink);
+    return data.id;
   } catch (error) {
     console.error('Error creating Google Calendar event:', error);
     throw error;
   }
+}
+
+// Calendar data comparison utilities
+export function compareCalendarData(googleEvents: GoogleCalendarEvent[], supabaseSlots: any[]): {
+  matchingEvents: any[];
+  onlyInGoogle: GoogleCalendarEvent[];
+  onlyInSupabase: any[];
+} {
+  const matchingEvents: any[] = [];
+  const onlyInGoogle: GoogleCalendarEvent[] = [];
+  
+  // Process Google events
+  googleEvents.forEach(googleEvent => {
+    // Check if this event exists in Supabase slots
+    const matchingSlot = supabaseSlots.find(slot => {
+      if (!googleEvent.start?.dateTime) return false;
+      
+      const googleDate = new Date(googleEvent.start.dateTime);
+      const googleDateStr = googleDate.toISOString().split('T')[0];
+      const googleHour = googleDate.getHours().toString().padStart(2, '0') + ':00';
+      
+      return slot.date === googleDateStr && slot.start_time === googleHour;
+    });
+    
+    if (matchingSlot) {
+      matchingEvents.push({
+        google: googleEvent,
+        supabase: matchingSlot
+      });
+    } else {
+      onlyInGoogle.push(googleEvent);
+    }
+  });
+  
+  // Find slots only in Supabase
+  const onlyInSupabase = supabaseSlots.filter(slot => {
+    return !googleEvents.some(googleEvent => {
+      if (!googleEvent.start?.dateTime) return false;
+      
+      const googleDate = new Date(googleEvent.start.dateTime);
+      const googleDateStr = googleDate.toISOString().split('T')[0];
+      const googleHour = googleDate.getHours().toString().padStart(2, '0') + ':00';
+      
+      return slot.date === googleDateStr && slot.start_time === googleHour;
+    });
+  });
+  
+  return {
+    matchingEvents,
+    onlyInGoogle,
+    onlyInSupabase
+  };
 }

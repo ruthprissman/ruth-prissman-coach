@@ -3,6 +3,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar, Loader2 } from 'lucide-react';
 import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export function GoogleLoginButton() {
   const { 
@@ -12,7 +14,8 @@ export function GoogleLoginButton() {
     signOut,
     events,
     isLoadingEvents,
-    fetchEvents 
+    fetchEvents,
+    error 
   } = useGoogleOAuth();
 
   const handleClick = async () => {
@@ -40,6 +43,16 @@ export function GoogleLoginButton() {
           <Loader2 className="ml-2 h-4 w-4 animate-spin" />
         )}
       </Button>
+      
+      {!isAuthenticated && error && (
+        <Alert variant="destructive" className="mt-2">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>לא התקבלה הרשאה ליומן הגוגל שלך</AlertTitle>
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
       
       {isAuthenticated && (
         <div className="text-sm text-center mt-1 text-green-600">
