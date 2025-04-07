@@ -3,6 +3,11 @@
  * Utility functions for URL handling and environment detection
  */
 
+import { setCookie, getCookie, deleteCookie } from './cookieUtils';
+
+// The name of the cookie that stores environment information
+const AUTH_ENV_COOKIE = 'auth_env_cookie';
+
 /**
  * Determines if the app is running in a preview environment
  */
@@ -34,13 +39,30 @@ export const getDashboardRedirectUrl = (): string => {
 };
 
 /**
- * Saves the current environment (preview or production) to sessionStorage
+ * Saves the current environment (preview or production) to a cookie
  * for use after OAuth redirects
  */
 export const saveEnvironmentForAuth = (): void => {
   const isPreview = isPreviewEnvironment();
-  sessionStorage.setItem('auth_env', isPreview ? 'preview' : 'production');
-  console.log(`[Auth Debug] Environment saved to sessionStorage: ${isPreview ? 'preview' : 'production'}`);
+  setCookie(AUTH_ENV_COOKIE, isPreview ? 'preview' : 'production');
+  console.log(`[Auth Debug] Environment saved to cookie: ${isPreview ? 'preview' : 'production'}`);
+};
+
+/**
+ * Gets the saved environment from cookie
+ * 
+ * @returns The saved environment (preview or production) or null if not set
+ */
+export const getSavedEnvironment = (): string | null => {
+  const env = getCookie(AUTH_ENV_COOKIE);
+  return env || null;
+};
+
+/**
+ * Clears the saved environment from cookie
+ */
+export const clearSavedEnvironment = (): void => {
+  deleteCookie(AUTH_ENV_COOKIE);
 };
 
 /**
@@ -51,8 +73,8 @@ export const saveEnvironmentForAuth = (): void => {
  * @returns Full redirect URL for the original environment
  */
 export const getEnvironmentAwareRedirectUrl = (path: string): string => {
-  // Get saved environment from sessionStorage
-  const env = sessionStorage.getItem('auth_env');
+  // Get saved environment from cookie
+  const env = getCookie(AUTH_ENV_COOKIE);
   
   // Ensure path starts with a slash
   const formattedPath = path.startsWith('/') ? path : `/${path}`;
@@ -79,4 +101,3 @@ export const getEnvironmentAwareRedirectUrl = (path: string): string => {
   // Fallback to normal redirect if no environment was saved
   return getRedirectUrl(path);
 };
-

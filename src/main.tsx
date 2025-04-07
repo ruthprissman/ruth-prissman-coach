@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { StrictMode } from 'react'
 import App from './App.tsx'
 import './index.css'
+import { getCookie, deleteCookie } from './utils/cookieUtils';
 
 // Handle OAuth redirect if needed
 function handleOAuthRedirect() {
@@ -15,13 +16,13 @@ function handleOAuthRedirect() {
       const refresh_token = params.get('refresh_token');
       
       // Check if we have a saved environment
-      const env = sessionStorage.getItem('auth_env');
+      const env = getCookie('auth_env_cookie');
       
       if (access_token && env) {
         console.log(`[Auth Debug] Detected OAuth return with saved environment: ${env}`);
         
         // Clean up
-        sessionStorage.removeItem('auth_env');
+        deleteCookie('auth_env_cookie');
         
         // Construct the correct environment URL
         const hostname = window.location.hostname;
@@ -96,4 +97,3 @@ function renderApp() {
 }
 
 renderApp();
-
