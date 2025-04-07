@@ -1,10 +1,9 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar, Loader2 } from 'lucide-react';
+import { Calendar, Loader2, AlertCircle } from 'lucide-react';
 import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 
 export function GoogleLoginButton() {
   const { 
@@ -20,10 +19,10 @@ export function GoogleLoginButton() {
 
   const handleClick = async () => {
     if (isAuthenticated) {
-      console.log('Signing out from Google Calendar');
+      console.log('🚪 GoogleLoginButton: Signing out from Google Calendar');
       signOut();
     } else {
-      console.log('Starting Google sign-in process with calendar permissions');
+      console.log('🔑 GoogleLoginButton: Starting Google sign-in process with calendar permissions');
       // The signIn function now triggers the OAuth flow that will redirect
       await signIn();
       // The rest of the flow is handled after redirect in main.tsx
