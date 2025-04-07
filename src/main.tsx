@@ -12,6 +12,12 @@ const DEBUG_AUTH = true;
 const handleAuthRedirect = async () => {
   console.log('🔁 OAuth redirect handler initialized');
   
+  // Skip all authentication logic for non-admin routes
+  if (!window.location.pathname.startsWith('/admin')) {
+    console.log('📍 Current route is not an admin route, skipping auth handling');
+    return;
+  }
+  
   // Enhanced debug logging
   if (DEBUG_AUTH) {
     console.log('🔍 Auth redirect handler running...');
