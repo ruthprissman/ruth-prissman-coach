@@ -23,6 +23,7 @@ import { useCalendarSettings } from '@/hooks/useCalendarSettings';
 import { fetchGoogleCalendarEvents, compareCalendarData } from '@/services/GoogleCalendarService';
 import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/lib/supabase';
 
 const CalendarManagement: React.FC = () => {
   const { user, session } = useAuth();
@@ -48,6 +49,7 @@ const CalendarManagement: React.FC = () => {
     signOut: signOutFromGoogle,
     fetchEvents: fetchGoogleEvents
   } = useGoogleOAuth();
+  const isAdmin = user?.role === 'admin';
 
   const hours = Array.from({ length: 16 }, (_, i) => {
     const hour = i + 8;
@@ -88,6 +90,35 @@ const CalendarManagement: React.FC = () => {
     } catch (error: any) {
       console.error('Error checking if table exists:', error);
       return false;
+    }
+  };
+
+  const checkGoogleToken = async () => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
+      
+      if (session?.provider_token) {
+        console.log("Google provider_token:", session.provider_token);
+        toast({
+          title: "טוקן גוגל",
+          description: "הטוקן הוצג בקונסול המפתח",
+        });
+      } else {
+        console.log("אין token מגוגל");
+        toast({
+          title: "אין טוקן גוגל",
+          description: "לא נמצא טוקן גוגל בסשן",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("שגיאה בבדיקת טוקן גוגל:", error);
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בבדיקת הטוקן",
+        variant: "destructive",
+      });
     }
   };
 
@@ -982,6 +1013,19 @@ const CalendarManagement: React.FC = () => {
             <div>
               <GoogleCalendarEventForm />
             </div>
+          </div>
+          
+          <div className="flex justify-center mt-8">
+            {isAdmin && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={checkGoogleToken} 
+                className="text-xs text-gray-500 border-gray-300 hover:text-gray-700"
+              >
+                בדיקת טוקן גוגל
+              </Button>
+            )}
           </div>
         </div>
         
