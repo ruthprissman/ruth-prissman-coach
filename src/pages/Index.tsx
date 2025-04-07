@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -72,9 +71,9 @@ const Index = () => {
                     </p>
                      
                     <div className="backdrop-blur-sm p-5 rounded-lg mb-4 mx-auto w-full mt-6">
-                      <h3 className="text-[#4A235A] text-lg font-heebo mb-3 whitespace-normal">החיים שלנו הם סיפור מתמשך.</h3>
+                      <h3 className="text-[#4A235A] text-lg font-heebo mb-3 text-center">החיים שלנו הם סיפור מתמשך.</h3>
                       
-                      <p className="text-[#4A235A] text-lg font-heebo leading-relaxed whitespace-normal">
+                      <p className="text-[#4A235A] text-lg font-heebo leading-relaxed text-center">
                         סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.
                         סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.
                         <br className="hidden md:block" /><br className="hidden md:block" />
