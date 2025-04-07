@@ -5,7 +5,7 @@ import './index.css'
 import { supabase } from '@/lib/supabase'
 
 // Auth redirect handler - Runs on every page load
-const handleAuthRedirect = () => {
+const handleAuthRedirect = async () => {
   // Check if URL contains access_token in the hash
   if (window.location.hash && window.location.hash.includes('access_token')) {
     const hashParams = new URLSearchParams(
@@ -19,15 +19,20 @@ const handleAuthRedirect = () => {
     if (access_token && refresh_token) {
       console.log('Auth tokens found in URL, setting session...');
       
-      // Set the session with the tokens
-      supabase.auth.setSession({
-        access_token,
-        refresh_token
-      }).then(({ data, error }) => {
+      try {
+        // Set the session with the tokens
+        const { data, error } = await supabase.auth.setSession({
+          access_token,
+          refresh_token
+        });
+        
         if (error) {
           console.error('Error setting session:', error);
-        } else if (data?.session) {
-          console.log('Session set successfully, redirecting...');
+          return;
+        } 
+        
+        if (data?.session) {
+          console.log('Session set successfully, checking admin status...');
           
           // Clean up URL by removing the hash
           window.history.replaceState(
@@ -36,16 +41,39 @@ const handleAuthRedirect = () => {
             window.location.pathname + window.location.search
           );
           
-          // Redirect to dashboard
-          window.location.href = '/admin/dashboard';
+          // Check if user is in admins table
+          const { data: adminData, error: adminError } = await supabase
+            .from('admins')
+            .select('email')
+            .eq('email', data.session.user.email)
+            .single();
+          
+          if (adminError && adminError.code !== 'PGRST116') {
+            console.error('Error checking admin status:', adminError);
+          }
+          
+          // Redirect based on admin status
+          if (adminData) {
+            console.log('User is admin, redirecting to dashboard...');
+            window.location.href = '/admin/dashboard';
+          } else {
+            console.log('User is not admin, redirecting to homepage...');
+            // Sign out non-admin users
+            await supabase.auth.signOut();
+            window.location.href = '/';
+          }
         }
-      });
+      } catch (error) {
+        console.error('Unexpected error during auth redirect:', error);
+      }
     }
   }
 };
 
 // Execute the handler when the app loads
-handleAuthRedirect();
+(async function() {
+  await handleAuthRedirect();
+})();
 
 // Render the app normally
 createRoot(document.getElementById("root")!).render(<App />);
