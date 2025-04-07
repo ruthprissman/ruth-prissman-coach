@@ -8,7 +8,7 @@ import {
   createGoogleCalendarEvent,
   GoogleOAuthState
 } from '@/services/GoogleOAuthService';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,6 +17,7 @@ const DEBUG_HOOK = true;
 
 export function useGoogleOAuth() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [state, setState] = useState<GoogleOAuthState>({
     isAuthenticated: false,
     isAuthenticating: true,

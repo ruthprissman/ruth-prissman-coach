@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface CalendarSettings {
   apiKey: string;
@@ -15,6 +15,7 @@ export function useCalendarSettings() {
   const [error, setError] = useState<string | null>(null);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
   const [isSessionChecked, setIsSessionChecked] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // First check if we have a valid session
@@ -36,7 +37,7 @@ export function useCalendarSettings() {
       });
       return;
     }
-  }, [session]);
+  }, [session, toast]);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -122,7 +123,7 @@ export function useCalendarSettings() {
     };
     
     fetchSettings();
-  }, [session, isInitialLoadComplete, isSessionChecked]);
+  }, [session, isInitialLoadComplete, isSessionChecked, toast]);
   
   return { settings, isLoading, error, isInitialLoadComplete };
 }
