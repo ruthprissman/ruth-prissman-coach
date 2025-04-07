@@ -15,12 +15,14 @@ interface DebugLogPanelProps {
   logs: string[];
   onClose: () => void;
   title?: string;
+  forceShow?: boolean;
 }
 
 const DebugLogPanel: React.FC<DebugLogPanelProps> = ({ 
   logs, 
   onClose,
   title = 'יומן שגיאות',
+  forceShow = false
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -31,7 +33,7 @@ const DebugLogPanel: React.FC<DebugLogPanelProps> = ({
     }
   }, [logs]);
 
-  if (logs.length === 0) {
+  if (logs.length === 0 && !forceShow) {
     return null;
   }
 

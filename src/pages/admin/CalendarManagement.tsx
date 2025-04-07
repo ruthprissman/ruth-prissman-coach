@@ -303,7 +303,7 @@ const CalendarManagement: React.FC = () => {
       }
       
       if (!success) {
-        throw new Error('שגיאה בהבאת אירועים מיומן Google');
+        throw new Error('שגיאה בהבאת אירוע��ם מיומן Google');
       }
       
       let slots = supabaseSlots;
@@ -1016,16 +1016,14 @@ const CalendarManagement: React.FC = () => {
           </div>
           
           <div className="flex justify-center mt-8">
-            {isAdmin && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={checkGoogleToken} 
-                className="text-xs text-gray-500 border-gray-300 hover:text-gray-700"
-              >
-                בדיקת טוקן גוגל
-              </Button>
-            )}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={checkGoogleToken} 
+              className="text-xs text-gray-500 border-gray-300 hover:text-gray-700"
+            >
+              בדוק טוקן גוגל
+            </Button>
           </div>
         </div>
         
