@@ -70,10 +70,10 @@ const Index = () => {
                       מבט חדש על חיים מוכרים
                     </p>
                      
-                    <div className="backdrop-blur-sm p-5 rounded-lg mb-4 mx-auto w-full mt-6">
+                    <div className="backdrop-blur-sm p-5 rounded-lg mb-4 mx-auto max-w-3xl mt-6">
                       <h3 className="text-[#4A235A] text-lg font-heebo mb-3 text-center">החיים שלנו הם סיפור מתמשך.</h3>
                       
-                      <p className="text-[#4A235A] text-lg font-heebo leading-relaxed text-center">
+                      <p className="text-[#4A235A] text-lg font-heebo leading-relaxed text-center max-w-3xl mx-auto">
                         סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.
                         סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.
                         <br className="hidden md:block" /><br className="hidden md:block" />
