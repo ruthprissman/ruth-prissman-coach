@@ -136,7 +136,7 @@ const Login: React.FC = () => {
         provider: 'google',
         options: {
           scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
-          redirectTo: `${window.location.origin}/admin/dashboard`,
+          redirectTo: window.location.origin + '/admin/calendar',
           queryParams: {
             prompt: 'consent',
             access_type: 'offline'

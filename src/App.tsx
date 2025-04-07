@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import Index from './pages/Index';
@@ -27,7 +26,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { PublicationProvider } from './contexts/PublicationContext';
 import { Toaster } from './components/ui/toaster';
-import { Toaster as SonnerToaster } from "./components/ui/sonner";
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
 import { ScrollToTop } from './components/ScrollToTop';
@@ -79,7 +77,6 @@ function App() {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Router>
-            <SonnerToaster />
             <Toaster />
           </PublicationProvider>
         </AuthProvider>
