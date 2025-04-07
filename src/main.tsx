@@ -9,6 +9,8 @@ const DEBUG_AUTH = true;
 
 // Auth redirect handler - Runs on every page load
 const handleAuthRedirect = async () => {
+  console.log('🔁 OAuth redirect handler initialized');
+  
   // Enhanced debug logging
   if (DEBUG_AUTH) {
     console.log('🔍 Auth redirect handler running...');
@@ -17,9 +19,7 @@ const handleAuthRedirect = async () => {
   
   // Check if URL contains access_token in the hash
   if (window.location.hash && window.location.hash.includes('access_token')) {
-    if (DEBUG_AUTH) {
-      console.log('🔑 Auth tokens found in URL hash');
-    }
+    console.log('🔑 Auth tokens found in URL hash');
     
     // Display a loading indicator to the user
     const loadingElement = document.createElement('div');
@@ -62,31 +62,35 @@ const handleAuthRedirect = async () => {
       const refresh_token = hashParams.get('refresh_token');
       const provider_token = hashParams.get('provider_token');
       
+      // Log the extracted tokens (trimmed for security)
+      console.log('🔐 Tokens extracted:', { 
+        access_token: access_token ? `${access_token.substring(0, 10)}...` : 'missing',
+        refresh_token: refresh_token ? `${refresh_token.substring(0, 10)}...` : 'missing',
+        provider_token: provider_token ? 'present' : 'not present'
+      });
+      
       // If we have both tokens, set the session
       if (access_token && refresh_token) {
-        console.log('✅ Auth tokens extracted successfully:', { 
-          access_token: access_token?.substring(0, 15) + '...',
-          refresh_token: refresh_token?.substring(0, 15) + '...',
-          provider_token: provider_token ? 'present' : 'not present'
-        });
-        
         try {
           // Step 2: Set the session with the tokens
-          console.log('🔄 Setting Supabase session with tokens...');
+          console.log('🔑 Setting Supabase session with extracted tokens');
+          
           const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
             access_token,
             refresh_token
           });
           
           if (sessionError) {
+            console.error('❌ Failed to set Supabase session:', sessionError);
             throw new Error(`Failed to set session: ${sessionError.message}`);
           } 
           
           if (!sessionData?.session) {
+            console.error('❌ Session data is missing after setSession');
             throw new Error('Session data is missing after setSession');
           }
           
-          console.log('✅ Session set successfully:', {
+          console.log('✅ Supabase session set successfully:', {
             user: sessionData.session.user.email,
             expires_at: new Date(sessionData.session.expires_at * 1000).toLocaleString()
           });
@@ -99,23 +103,27 @@ const handleAuthRedirect = async () => {
           
           // Step 3: Get the current user to ensure session is valid
           console.log('🔄 Fetching current user details...');
+          
           const { data: userData, error: userError } = await supabase.auth.getUser();
           
           if (userError) {
+            console.error('❌ Failed to get user details:', userError);
             throw new Error(`Failed to get user: ${userError.message}`);
           }
           
           if (!userData?.user) {
+            console.error('❌ User data is missing after getUser call');
             throw new Error('User data is missing after getUser');
           }
           
-          console.log('✅ User details retrieved:', {
+          console.log('👤 Current user:', {
             email: userData.user.email,
             id: userData.user.id,
           });
           
           // Step 4: Check if user is in admins table
-          console.log('🔄 Checking if user is an admin...');
+          console.log('🔎 Checking if user is admin');
+          
           const { data: adminData, error: adminError } = await supabase
             .from('admins')
             .select('email')
@@ -133,7 +141,7 @@ const handleAuthRedirect = async () => {
           if (adminError) {
             if (adminError.code === 'PGRST116') {
               // Record not found - user is not an admin
-              console.log('⚠️ User is not an admin, signing out...');
+              console.log('🔴 User is NOT admin - redirecting to /');
               
               // Step 6: Not an admin, sign out and redirect
               await supabase.auth.signOut();
@@ -169,18 +177,19 @@ const handleAuthRedirect = async () => {
               
               return;
             } else {
+              console.error('❌ Error checking admin status:', adminError);
               throw new Error(`Error checking admin status: ${adminError.message}`);
             }
           }
           
           // Step 5: Admin found, redirect to dashboard
           if (adminData) {
-            console.log('✅ User is admin, redirecting to dashboard...');
+            console.log('🟢 User is admin - redirecting to /admin/dashboard');
             document.body.removeChild(loadingElement); // Remove loading indicator
             window.location.href = '/admin/dashboard';
           } else {
             // This is a fallback - should be caught by the adminError code above
-            console.log('⚠️ User is not admin (no data), signing out...');
+            console.log('🔴 User is not admin (no data), signing out...');
             await supabase.auth.signOut();
             localStorage.removeItem('google_provider_token');
             document.body.removeChild(loadingElement);
@@ -188,7 +197,7 @@ const handleAuthRedirect = async () => {
           }
           
         } catch (error: any) {
-          console.error('❌ Error during auth redirect process:', error);
+          console.error('❌ OAuth error:', error);
           
           // Remove loading indicator and show error
           if (document.body.contains(loadingElement)) {
@@ -256,7 +265,7 @@ const handleAuthRedirect = async () => {
         }, 3000);
       }
     } catch (error: any) {
-      console.error('❌ Unexpected error during auth redirect:', error);
+      console.error('❌ OAuth error:', error);
       
       // Remove loading indicator if it exists
       const loadingEl = document.getElementById('auth-loading');
@@ -290,7 +299,7 @@ const handleAuthRedirect = async () => {
         window.location.href = '/'; // Redirect to home page
       }, 3000);
     }
-  } else if (DEBUG_AUTH) {
+  } else {
     console.log('ℹ️ No auth tokens in URL, continuing normal app load');
   }
 };
