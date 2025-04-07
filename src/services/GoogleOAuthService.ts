@@ -1,3 +1,4 @@
+
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 
@@ -38,12 +39,17 @@ export async function checkIfSignedIn(): Promise<boolean> {
 
 export async function signInWithGoogle(): Promise<boolean> {
   try {
-    // Use Supabase OAuth with explicit calendar scope
+    // Use Supabase OAuth with the exact scopes and configuration
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
-        redirectTo: window.location.origin + '/admin/calendar'
+        redirectTo: window.location.origin + '/admin/calendar',
+        queryParams: {
+          // Force re-authentication even if already authenticated
+          prompt: 'consent',
+          access_type: 'offline'
+        }
       }
     });
     
