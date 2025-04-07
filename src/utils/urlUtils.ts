@@ -17,9 +17,8 @@ export const isPreviewEnvironment = (): boolean => {
  * @returns Full redirect URL including domain
  */
 export const getRedirectUrl = (path: string): string => {
-  const baseUrl = isPreviewEnvironment() 
-    ? 'https://preview--ruth-prissman-coach.lovable.app'
-    : 'https://ruth-prissman-coach.lovable.app';
+  // Use window.location.origin to automatically get the correct domain for the current environment
+  const baseUrl = window.location.origin;
   
   // Ensure path starts with a slash
   const formattedPath = path.startsWith('/') ? path : `/${path}`;
