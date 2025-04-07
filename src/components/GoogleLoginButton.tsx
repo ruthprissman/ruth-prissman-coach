@@ -19,6 +19,7 @@ export function GoogleLoginButton() {
     if (isAuthenticated) {
       signOut();
     } else {
+      // This now uses the updated signIn function with calendar permissions
       const success = await signIn();
       if (success) {
         await fetchEvents();

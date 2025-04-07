@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { 
   initGoogleAuth, 
@@ -21,16 +20,13 @@ export function useGoogleOAuth() {
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(false);
 
-  // Initialize and check the sign-in status on mount
   useEffect(() => {
     const initialize = async () => {
       try {
         setState(prev => ({ ...prev, isAuthenticating: true }));
         
-        // Initialize Google Auth
         await initGoogleAuth();
         
-        // Check if already signed in
         const isSignedIn = await checkIfSignedIn();
         
         setState({
@@ -39,7 +35,6 @@ export function useGoogleOAuth() {
           error: null
         });
         
-        // Fetch events if already signed in
         if (isSignedIn) {
           fetchEvents();
         }
@@ -97,7 +92,6 @@ export function useGoogleOAuth() {
     try {
       const eventId = await createGoogleCalendarEvent(summary, startDateTime, endDateTime, description);
       if (eventId) {
-        // Refresh events list after creating a new event
         await fetchEvents();
         
         toast({
@@ -121,6 +115,7 @@ export function useGoogleOAuth() {
   const signIn = async () => {
     try {
       setState(prev => ({ ...prev, isAuthenticating: true, error: null }));
+      
       const success = await signInWithGoogle();
       
       setState({
@@ -153,7 +148,6 @@ export function useGoogleOAuth() {
       
       const errorMessage = error.message || 'שגיאה בהתחברות ל-Google';
       
-      // Handle cancellation specifically
       if (errorMessage.includes('בוטל') || errorMessage === 'ההתחברות בוטלה') {
         toast({
           title: 'ההתחברות בוטלה',

@@ -1,4 +1,5 @@
 import { GoogleCalendarEvent } from '@/types/calendar';
+import { supabase } from '@/lib/supabase';
 
 // OAuth2 configuration
 const CLIENT_ID = '216734901779-csrnrl4nmkilae4blbolsip8mmibsk3t.apps.googleusercontent.com';
@@ -64,41 +65,21 @@ export async function checkIfSignedIn(): Promise<boolean> {
 
 export async function signInWithGoogle(): Promise<boolean> {
   try {
-    await initGoogleAuth();
-    const auth2 = window.gapi.auth2.getAuthInstance();
+    // Use Supabase OAuth with explicit calendar scope
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
+        redirectTo: window.location.origin + '/admin/calendar'
+      }
+    });
     
-    // Always show the account chooser by using these options
-    const options = {
-      prompt: 'select_account', // Always show account selection, even if user is already signed in
-      ux_mode: 'popup',
-      locale: 'he', // Hebrew locale
-      access_type: 'offline', // Request offline access
-      response_type: 'code',  // Use authorization code flow
-      scope: SCOPES // Ensure calendar scopes are included
-    };
-    
-    // Start the sign-in flow
-    const googleUser = await auth2.signIn(options);
-    const isSignedIn = auth2.isSignedIn.get();
-    
-    // Get a detailed authResponse to check for cancellation
-    const authResponse = googleUser?.getAuthResponse(true);
-    if (!authResponse || !authResponse.access_token) {
-      throw new Error('ההתחברות בוטלה');
+    if (error) {
+      console.error('Error signing in with Google via Supabase:', error);
+      throw error;
     }
     
-    // Check if we got the calendar permission
-    const grantedScopes = authResponse.scope || '';
-    const hasCalendarScope = grantedScopes.includes('calendar');
-    
-    if (hasCalendarScope) {
-      console.log('Successfully obtained calendar permissions');
-    } else {
-      console.warn('Calendar permissions were not granted');
-      // Continue anyway as user might have denied specific permissions
-    }
-    
-    return isSignedIn;
+    return true;
   } catch (error: any) {
     console.error('Error signing in with Google:', error);
     // Check if the error is about cancellation
@@ -113,8 +94,7 @@ export async function signInWithGoogle(): Promise<boolean> {
 
 export async function signOutFromGoogle(): Promise<void> {
   try {
-    const auth2 = window.gapi.auth2.getAuthInstance();
-    await auth2.signOut();
+    await supabase.auth.signOut();
   } catch (error) {
     console.error('Error signing out from Google:', error);
   }
@@ -122,11 +102,11 @@ export async function signOutFromGoogle(): Promise<void> {
 
 export async function getAccessToken(): Promise<string | null> {
   try {
-    const auth2 = window.gapi.auth2.getAuthInstance();
-    if (auth2.isSignedIn.get()) {
-      const currentUser = auth2.currentUser.get();
-      const authResponse = currentUser.getAuthResponse();
-      return authResponse.access_token;
+    const { data } = await supabase.auth.getSession();
+    const session = data.session;
+    
+    if (session?.provider_token) {
+      return session.provider_token;
     }
     return null;
   } catch (error) {
