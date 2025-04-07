@@ -8,6 +8,37 @@ import { Session } from '@supabase/supabase-js'
 // Set up debug logging for authentication flow
 const DEBUG_AUTH = true;
 
+// Wrap app rendering in a try/catch to display errors
+const renderApp = () => {
+  try {
+    console.log('⚡ Rendering app component');
+    const appRoot = document.getElementById("root");
+    
+    if (!appRoot) {
+      console.error('❌ Root element not found in DOM');
+      document.body.innerHTML = '<div style="padding: 20px; color: red;">Error: Root element not found</div>';
+      return;
+    }
+    
+    createRoot(appRoot).render(<App />);
+    console.log('✅ App rendered successfully');
+  } catch (error) {
+    console.error('❌ Fatal error rendering app:', error);
+    // Display user-friendly error in the DOM
+    const errorMessage = document.createElement('div');
+    errorMessage.style.padding = '20px';
+    errorMessage.style.color = 'red';
+    errorMessage.style.fontFamily = 'Arial, sans-serif';
+    errorMessage.style.direction = 'rtl';
+    errorMessage.innerHTML = `
+      <h2>שגיאה בטעינת האפליקציה</h2>
+      <p>אירעה שגיאה בטעינת האפליקציה. אנא רענן את הדף או נסה שוב מאוחר יותר.</p>
+      <pre style="background: #f1f1f1; padding: 10px; direction: ltr; text-align: left; overflow: auto;">${error instanceof Error ? error.message : String(error)}</pre>
+    `;
+    document.body.appendChild(errorMessage);
+  }
+};
+
 // Auth redirect handler - Runs on every page load
 const handleAuthRedirect = async () => {
   console.log('🔁 OAuth redirect handler initialized');
@@ -276,9 +307,12 @@ const handleAuthRedirect = async () => {
 // Execute the handler when the app loads
 (async function() {
   console.log('🚀 App initializing...');
-  await handleAuthRedirect();
-  console.log('⚡ Auth handler completed, rendering app');
+  try {
+    await handleAuthRedirect();
+    console.log('⚡ Auth handler completed, rendering app');
+    renderApp();
+  } catch (error) {
+    console.error('❌ Critical error during initialization:', error);
+    renderApp(); // Still try to render the app
+  }
 })();
-
-// Render the app normally
-createRoot(document.getElementById("root")!).render(<App />);
