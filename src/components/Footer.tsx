@@ -4,8 +4,6 @@ import { Link } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
-  
   return (
     <footer className="bg-white/80 backdrop-blur-sm mt-12 py-8 border-t border-gray-200">
       <div className="container mx-auto px-4">
@@ -53,17 +51,24 @@ export function Footer() {
         </div>
         
         <div className="mt-8 pt-4 border-t border-gray-200 text-center">
-          <p className="text-purple-dark text-sm flex items-center justify-center">
-            <img 
-              src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs//blwlogo.png" 
-              alt="לוגו רות פריסמן" 
-              className="h-10 w-auto ml-2"
-            />
-            © {currentYear} כל הזכויות שמורות לרות פריסמן - מפתחת האתר קוד הנפש
-            <Link to="/admin/login" className="text-purple-dark hover:text-gold transition-colors ms-3 opacity-50">
+          <div className="flex flex-col items-center justify-center">
+            <div className="flex items-center mb-3">
+              <img 
+                src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs//blwlogo.png" 
+                alt="לוגו רות פריסמן" 
+                className="h-10 w-auto ml-2"
+              />
+            </div>
+            <p className="text-purple-dark text-sm">
+              © 2025 רות פריסמן - מאמנת קוד הנפש. כל הזכויות שמורות
+            </p>
+            <Link 
+              to="/admin/login" 
+              className="text-purple-dark hover:text-gold transition-colors text-xs opacity-50 mt-2"
+            >
               🔑 כניסת מנהל
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </footer>
