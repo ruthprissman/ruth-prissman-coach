@@ -133,13 +133,14 @@ const Login: React.FC = () => {
   
   const handleGoogleSignIn = async () => {
     try {
+      console.log('[auth] Initiating Google sign-in from Login page');
       saveEnvironmentForAuth();
       
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
-          redirectTo: getDashboardRedirectUrl(),
+          redirectTo: window.location.origin + '/admin/dashboard',
           queryParams: {
             prompt: 'consent',
             access_type: 'offline'
@@ -147,7 +148,7 @@ const Login: React.FC = () => {
         }
       });
     } catch (error) {
-      console.error("Google sign-in error:", error);
+      console.error("[auth] Google sign-in error:", error);
     }
   };
   

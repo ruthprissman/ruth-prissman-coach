@@ -10,6 +10,7 @@ import { formatDateTimeInIsrael } from '@/utils/dateUtils';
 import { ArticlePublication } from '@/types/article';
 import { FutureSession } from '@/types/session';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { getCookie, deleteCookie } from '@/utils/cookieUtils';
 
 const Dashboard: React.FC = () => {
   const {
@@ -39,14 +40,26 @@ const Dashboard: React.FC = () => {
   const paymentStats = usePaymentStats();
 
   useEffect(() => {
-    const savedEnv = sessionStorage.getItem('auth_env');
-    sessionStorage.removeItem('auth_env');
-    if (savedEnv === 'preview' && !window.location.hostname.includes('preview')) {
-      const previewUrl = 'https://preview--ruth-prissman-coach.lovable.app/admin/dashboard';
-      const hash = window.location.hash;
-      const fullRedirectUrl = hash ? `${previewUrl}${hash}` : previewUrl;
-      window.location.replace(fullRedirectUrl);
-      return;
+    const env = getCookie('auth_env');
+    console.log('[auth] Cookie detected in Dashboard:', document.cookie);
+    console.log('[auth] Parsed environment from cookie in Dashboard:', env);
+    
+    if (env) {
+      // Clean up cookie after reading it
+      deleteCookie('auth_env');
+      
+      if (env === 'preview' && !window.location.hostname.includes('preview')) {
+        console.log('[auth] Redirecting from Dashboard to preview environment...');
+        const previewUrl = 'https://preview--ruth-prissman-coach.lovable.app/admin/dashboard';
+        const hash = window.location.hash;
+        const fullRedirectUrl = hash ? `${previewUrl}${hash}` : previewUrl;
+        window.location.replace(fullRedirectUrl);
+        return;
+      } else {
+        console.log('[auth] Staying in current environment from Dashboard');
+      }
+    } else {
+      console.log('[auth] No environment cookie found in Dashboard');
     }
   }, []);
 
@@ -461,7 +474,7 @@ const Dashboard: React.FC = () => {
                           <p className="text-2xl font-bold">₪{paymentStats.outstandingBalance.toLocaleString()}</p>
                         </div>
                       </div>
-                    </div> : <p className="text-right text-gray-500 py-4">אין נתוני תשלומים זמיני��</p>}
+                    </div> : <p className="text-right text-gray-500 py-4">אין נתוני תשלומים זמינים</p>}
                 </CardContent>
               </Card>
             </div>

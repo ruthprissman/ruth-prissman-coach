@@ -2,6 +2,7 @@
 /**
  * Utility functions for URL handling and environment detection
  */
+import { setCookie, getCookie, deleteCookie } from './cookieUtils';
 
 /**
  * Determines if the app is running in a preview environment
@@ -34,13 +35,17 @@ export const getDashboardRedirectUrl = (): string => {
 };
 
 /**
- * Saves the current environment (preview or production) to sessionStorage
+ * Saves the current environment (preview or production) to a cookie
  * for use after OAuth redirects
  */
 export const saveEnvironmentForAuth = (): void => {
   const isPreview = isPreviewEnvironment();
-  sessionStorage.setItem('auth_env', isPreview ? 'preview' : 'production');
-  console.log(`[Auth Debug] Environment saved to sessionStorage: ${isPreview ? 'preview' : 'production'}`);
+  const env = isPreview ? 'preview' : 'production';
+  
+  console.log('[auth] Environment detected before login:', env);
+  
+  // Set cookie with 10 minute expiration
+  setCookie('auth_env', env, { path: '/', 'max-age': 600 });
 };
 
 /**
@@ -51,8 +56,8 @@ export const saveEnvironmentForAuth = (): void => {
  * @returns Full redirect URL for the original environment
  */
 export const getEnvironmentAwareRedirectUrl = (path: string): string => {
-  // Get saved environment from sessionStorage
-  const env = sessionStorage.getItem('auth_env');
+  // Get saved environment from cookie
+  const env = getCookie('auth_env');
   
   // Ensure path starts with a slash
   const formattedPath = path.startsWith('/') ? path : `/${path}`;
@@ -79,4 +84,3 @@ export const getEnvironmentAwareRedirectUrl = (path: string): string => {
   // Fallback to normal redirect if no environment was saved
   return getRedirectUrl(path);
 };
-

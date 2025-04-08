@@ -1,3 +1,4 @@
+
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
@@ -38,6 +39,7 @@ export async function checkIfSignedIn(): Promise<boolean> {
 export async function signInWithGoogle(): Promise<boolean> {
   try {
     // Save the current environment before redirecting
+    console.log('[auth] Starting Google OAuth flow');
     saveEnvironmentForAuth();
     
     // Use Supabase OAuth with the exact scopes and configuration
@@ -45,7 +47,7 @@ export async function signInWithGoogle(): Promise<boolean> {
       provider: 'google',
       options: {
         scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
-        redirectTo: REDIRECT_URI,
+        redirectTo: window.location.origin + '/admin/dashboard',  // Use origin for correct domain
         queryParams: {
           // Force re-authentication even if already authenticated
           prompt: 'consent',
@@ -55,13 +57,13 @@ export async function signInWithGoogle(): Promise<boolean> {
     });
     
     if (error) {
-      console.error('Error signing in with Google via Supabase:', error);
+      console.error('[auth] Error signing in with Google via Supabase:', error);
       throw error;
     }
     
     return true;
   } catch (error: any) {
-    console.error('Error signing in with Google:', error);
+    console.error('[auth] Error signing in with Google:', error);
     // Check if the error is about cancellation
     if (error.error === 'popup_closed_by_user' || 
         error.message?.includes('popup') || 

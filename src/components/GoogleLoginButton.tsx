@@ -22,6 +22,7 @@ export function GoogleLoginButton() {
     if (isAuthenticated) {
       signOut();
     } else {
+      console.log('[auth] Initiating Google sign-in from GoogleLoginButton');
       // This now uses the updated signIn function with calendar permissions
       const success = await signIn();
       if (success) {
