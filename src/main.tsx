@@ -10,18 +10,28 @@ function handleOAuthRedirect() {
   try {
     // Check if we have access_token in the URL hash
     const hash = window.location.hash;
+    console.log('[auth-redirect] Current URL hash:', hash ? 'Present (hidden for security)' : 'Not present');
+    console.log('[auth-redirect] Current pathname:', window.location.pathname);
+    
     if (hash && hash.includes('access_token')) {
+      console.log('[auth-redirect] Access token found in URL hash');
       const params = new URLSearchParams(hash.substring(1));
       const access_token = params.get('access_token');
       const refresh_token = params.get('refresh_token');
       
+      console.log('[auth-redirect] Access token present:', !!access_token);
+      console.log('[auth-redirect] Refresh token present:', !!refresh_token);
+      
       // Check if we have a saved environment in the cookie
       const env = getCookie('auth_env');
       
-      console.log('[auth] Cookie detected on return:', document.cookie);
-      console.log('[auth] Parsed environment from cookie:', env);
+      console.log('[auth-redirect] Environment cookie value:', env);
+      console.log('[auth-redirect] Current hostname:', window.location.hostname);
+      console.log('[auth-redirect] Is preview environment:', window.location.hostname.includes('preview'));
       
       if (access_token && env) {
+        console.log('[auth-redirect] Both access token and environment cookie found');
+        
         // Clean up
         deleteCookie('auth_env');
         
@@ -31,57 +41,69 @@ function handleOAuthRedirect() {
         
         if (env === 'preview' && !hostname.includes('preview')) {
           // We're in production but should be in preview
-          console.log('[auth] Redirecting to preview dashboard...');
-          redirectURL = `https://preview--${hostname.replace('https://', '')}`;
+          console.log('[auth-redirect] Need to redirect: Currently in production but should be in preview');
+          redirectURL = `preview--${hostname}`;
         } else if (env === 'production' && hostname.includes('preview')) {
           // We're in preview but should be in production
-          console.log('[auth] Redirecting to production dashboard...');
-          redirectURL = `https://${hostname.replace('preview--', '')}`;
+          console.log('[auth-redirect] Need to redirect: Currently in preview but should be in production');
+          redirectURL = hostname.replace('preview--', '');
         } else {
           // We're in the correct environment
-          console.log('[auth] Staying in current environment');
+          console.log('[auth-redirect] Already in correct environment, no redirect needed');
           return;
         }
         
         const dashboardPath = '/admin/dashboard';
         const fullRedirectURL = `${window.location.protocol}//${redirectURL}${dashboardPath}`;
         
-        console.log(`[auth] Full redirect URL: ${fullRedirectURL}`);
+        console.log(`[auth-redirect] Redirecting to: ${fullRedirectURL} (tokens hidden)`);
         
         // Preserve the tokens in the URL
         const tokenParams = `#access_token=${access_token}${refresh_token ? `&refresh_token=${refresh_token}` : ''}`;
+        console.log('[auth-redirect] Performing redirect with tokens in URL hash');
         window.location.replace(`${fullRedirectURL}${tokenParams}`);
         return;
-      } else if (env === null) {
-        console.log('[auth] No environment cookie found');
+      } else if (access_token && !env) {
+        console.log('[auth-redirect] Access token found but no environment cookie');
+        console.log('[auth-redirect] Continuing normal app render - environment handling not needed');
+      } else {
+        console.log('[auth-redirect] No access token or missing environment information');
       }
+    } else {
+      console.log('[auth-redirect] No OAuth redirect detected, normal app rendering');
     }
   } catch (error) {
-    console.error('[auth] Error handling OAuth redirect:', error);
+    console.error('[auth-redirect] Error handling OAuth redirect:', error);
     // Continue to normal rendering if there's an error
   }
 }
 
 function renderApp() {
   try {
+    console.log('[app] Starting app render process');
+    
     // First check if we need to handle OAuth redirect
+    console.log('[app] Checking for OAuth redirect');
     handleOAuthRedirect();
+    console.log('[app] OAuth redirect check complete, proceeding with normal render');
     
     const rootElement = document.getElementById("root");
     
     if (!rootElement) {
-      console.error("Root element not found");
+      console.error("[app] Root element not found");
       return;
     }
     
+    console.log('[app] Root element found, creating React root');
     createRoot(rootElement).render(
       <StrictMode>
         <App />
       </StrictMode>
     );
+    console.log('[app] React app successfully rendered');
     
   } catch (error) {
-    console.error("Failed to render application:", error);
+    console.error("[app] Failed to render application:", error);
     
     // Create fallback UI for critical errors
     const rootElement = document.getElementById("root");
@@ -102,4 +124,5 @@ function renderApp() {
   }
 }
 
+console.log('[app] Application script starting');
 renderApp();
