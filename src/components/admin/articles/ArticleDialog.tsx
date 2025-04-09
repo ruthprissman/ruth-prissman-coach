@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/contexts/AuthContext';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
+import FileUploadField from '@/components/admin/FileUploadField';
 
 interface ArticleDialogProps {
   article: Article | null;
@@ -34,7 +35,7 @@ const formSchema = z.object({
   content_markdown: z.string().min(1, { message: "תוכן חובה" }),
   category_id: z.string().nullable(),
   scheduled_publish: z.date().nullable(),
-  contact_email: z.string().email({ message: "נא להזין אימייל תקין" }).nullable().or(z.literal('')),
+  image_url: z.string().nullable(),
   type: z.string().default("article"),
 });
 
@@ -50,6 +51,8 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
   const { toast } = useToast();
   const { session: authSession } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   
   const isEditMode = !!article;
   const dialogTitle = isEditMode ? "עריכת מאמר" : "מאמר חדש";
@@ -60,7 +63,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
     content_markdown: article?.content_markdown || '',
     category_id: article?.category_id ? String(article.category_id) : null,
     scheduled_publish: article?.scheduled_publish ? new Date(article.scheduled_publish) : null,
-    contact_email: article?.contact_email || '',
+    image_url: article?.image_url || null,
     type: article?.type || 'article',
   };
 
@@ -69,25 +72,107 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
     defaultValues,
   });
 
+  const handleFileSelected = (file: File | undefined) => {
+    console.log('File selected:', file?.name);
+    setSelectedFile(file);
+  };
+
+  const uploadImage = async (file: File, articleId: number): Promise<string | null> => {
+    try {
+      const supabase = supabaseClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `article-images/${articleId || new Date().getTime()}.${fileExt}`;
+      
+      console.log(`Uploading image to storage: ${fileName}`);
+      
+      const { data, error } = await supabase
+        .storage
+        .from('stories_img')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+        
+      if (error) {
+        console.error('Error uploading image:', error);
+        throw error;
+      }
+      
+      console.log('Upload successful:', data);
+      
+      // Get the public URL
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('stories_img')
+        .getPublicUrl(data.path);
+        
+      console.log('Public URL:', publicUrlData.publicUrl);
+      
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error('Image upload error:', error);
+      return null;
+    }
+  };
+
   const onSubmit = async (data: FormValues) => {
     setIsSaving(true);
     
     try {
       const supabase = supabaseClient();
       
-      // Prepare data for submission - no transformation needed for HTML content
+      // Prepare data for submission
       const formattedData = {
         title: data.title,
         content_markdown: data.content_markdown,
         category_id: data.category_id ? parseInt(data.category_id) : null,
         scheduled_publish: data.scheduled_publish ? data.scheduled_publish.toISOString() : null,
-        contact_email: data.contact_email || null,
         type: data.type,
       };
       
       // Check if scheduled publish date has passed and we should auto-publish
       if (data.scheduled_publish && new Date(data.scheduled_publish) <= new Date()) {
         formattedData['published_at'] = new Date().toISOString();
+      }
+      
+      let articleId = article?.id;
+      let imageUrl = data.image_url;
+      
+      // Handle image upload if a new file is selected
+      if (selectedFile) {
+        if (isEditMode && article) {
+          // For existing article, upload with article ID
+          imageUrl = await uploadImage(selectedFile, article.id);
+        } else {
+          // For new article, we need to first create the article to get its ID
+          const { data: newArticle, error } = await supabase
+            .from('professional_content')
+            .insert(formattedData)
+            .select('id')
+            .single();
+            
+          if (error) throw error;
+          
+          articleId = newArticle.id;
+          
+          // Now upload image with the new article ID
+          imageUrl = await uploadImage(selectedFile, articleId);
+          
+          // Will update the article with the image URL later
+        }
+        
+        if (!imageUrl) {
+          toast({
+            title: "שגיאה בהעלאת התמונה",
+            description: "לא ניתן היה להעלות את התמונה, אנא נסה שנית",
+            variant: "destructive",
+          });
+        }
+      }
+      
+      // Add image URL to the formatted data
+      if (imageUrl) {
+        formattedData['image_url'] = imageUrl;
       }
       
       if (isEditMode && article) {
@@ -98,11 +183,19 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
           .eq('id', article.id);
           
         if (error) throw error;
-      } else {
-        // Create new article
+      } else if (!articleId) {
+        // Create new article if not already created for image upload
         const { error } = await supabase
           .from('professional_content')
           .insert(formattedData);
+          
+        if (error) throw error;
+      } else {
+        // Update the newly created article with the image URL
+        const { error } = await supabase
+          .from('professional_content')
+          .update({ image_url: imageUrl })
+          .eq('id', articleId);
           
         if (error) throw error;
       }
@@ -244,15 +337,33 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
               )}
             />
             
-            {/* Contact Email */}
+            {/* Image Upload Field - Replacing Contact Email */}
             <FormField
               control={form.control}
-              name="contact_email"
+              name="image_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>איש קשר (אימייל - אופציונלי)</FormLabel>
+                  <FormLabel>תמונה למאמר</FormLabel>
                   <FormControl>
-                    <Input placeholder="example@example.com" {...field} value={field.value || ''} />
+                    <div className="space-y-2">
+                      <FileUploadField 
+                        onFileSelected={handleFileSelected}
+                        id="article-image"
+                        name="article-image"
+                      />
+                      {field.value && !selectedFile && (
+                        <div className="mt-2 p-2 bg-muted rounded flex items-center justify-between">
+                          <div className="flex items-center space-x-2 overflow-hidden">
+                            <img 
+                              src={field.value} 
+                              alt="תמונה קיימת" 
+                              className="h-10 w-10 object-cover rounded"
+                            />
+                            <span className="text-sm truncate max-w-[200px] mr-2">תמונה קיימת</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

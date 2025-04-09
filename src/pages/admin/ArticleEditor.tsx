@@ -60,14 +60,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import FileUploadField from '@/components/admin/FileUploadField';
 
 const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
   content_markdown: z.string().optional(),
   category_id: z.string().nullable(),
   scheduled_publish: z.date().nullable(),
-  contact_email: z.string().email({ message: "נא להזין אימייל תקין" }).nullable().or(z.literal('')),
   type: z.string().default('article'),
+  image_url: z.string().nullable(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -91,6 +92,7 @@ const ArticleEditor: React.FC = () => {
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const editorRef = useRef<{ saveContent: () => Promise<boolean>, hasUnsavedChanges: () => boolean } | null>(null);
   const contentRef = useRef<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -99,8 +101,8 @@ const ArticleEditor: React.FC = () => {
       content_markdown: '',
       category_id: NONE_CATEGORY,
       scheduled_publish: null,
-      contact_email: '',
       type: 'article',
+      image_url: null,
     },
   });
 
@@ -146,8 +148,8 @@ const ArticleEditor: React.FC = () => {
           content_markdown: data.content_markdown,
           category_id: data.category_id ? String(data.category_id) : NONE_CATEGORY,
           scheduled_publish: data.scheduled_publish ? new Date(data.scheduled_publish) : null,
-          contact_email: data.contact_email || '',
           type: data.type || 'article',
+          image_url: data.image_url || null,
         });
       }
     } catch (error: any) {
@@ -212,6 +214,50 @@ const ArticleEditor: React.FC = () => {
     };
   }, [hasUnsavedChanges]);
   
+  const handleFileSelected = (file: File | undefined) => {
+    console.log('File selected:', file?.name);
+    setSelectedFile(file);
+    setHasUnsavedChanges(true);
+  };
+  
+  const uploadImage = async (file: File, articleId: number): Promise<string | null> => {
+    try {
+      const supabase = await getSupabaseClient();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `article-images/${articleId || new Date().getTime()}.${fileExt}`;
+      
+      console.log(`Uploading image to storage: ${fileName}`);
+      
+      const { data, error } = await supabase
+        .storage
+        .from('stories_img')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+        
+      if (error) {
+        console.error('Error uploading image:', error);
+        throw error;
+      }
+      
+      console.log('Upload successful:', data);
+      
+      // Get the public URL
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('stories_img')
+        .getPublicUrl(data.path);
+        
+      console.log('Public URL:', publicUrlData.publicUrl);
+      
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error('Image upload error:', error);
+      return null;
+    }
+  };
+  
   const saveArticle = async (data: FormValues, publishNow = false) => {
     setIsSaving(true);
     
@@ -242,20 +288,61 @@ const ArticleEditor: React.FC = () => {
         category: data.category_id
       });
       
-      const formattedData = {
+      let formattedData: any = {
         title: data.title,
         content_markdown: data.content_markdown || '',
         category_id: data.category_id === NONE_CATEGORY ? null : parseInt(data.category_id as string),
         scheduled_publish: data.scheduled_publish ? data.scheduled_publish.toISOString() : null,
-        contact_email: data.contact_email || null,
         type: data.type,
       };
+      
+      if (selectedFile) {
+        console.log('Processing image upload for:', selectedFile.name);
+        
+        let imageUrl: string | null = null;
+        
+        if (isEditMode && id) {
+          imageUrl = await uploadImage(selectedFile, Number(id));
+        } else {
+          const { data: newArticle, error } = await supabaseInstance
+            .from('professional_content')
+            .insert(formattedData)
+            .select('id')
+            .single();
+            
+          if (error) throw error;
+          
+          imageUrl = await uploadImage(selectedFile, newArticle.id);
+          
+          if (imageUrl) {
+            const { error: updateError } = await supabaseInstance
+              .from('professional_content')
+              .update({ image_url: imageUrl })
+              .eq('id', newArticle.id);
+              
+            if (updateError) throw updateError;
+          }
+          
+          formattedData.id = newArticle.id;
+        }
+        
+        if (imageUrl) {
+          console.log('Image uploaded successfully, URL:', imageUrl);
+          formattedData.image_url = imageUrl;
+        } else {
+          toast({
+            title: "שגיאה בהעלאת התמונה",
+            description: "לא ניתן היה להעלות את התמונה, אנא נסה שנית",
+            variant: "destructive",
+          });
+        }
+      } else if (data.image_url) {
+        formattedData.image_url = data.image_url;
+      }
       
       if (publishNow || (data.scheduled_publish && new Date(data.scheduled_publish) <= new Date() && !article?.published_at)) {
         formattedData['published_at'] = new Date().toISOString();
       }
-      
-      let articleId: number;
       
       if (isEditMode && id) {
         const { error } = await supabaseInstance
@@ -265,8 +352,8 @@ const ArticleEditor: React.FC = () => {
           
         if (error) throw error;
         
-        articleId = Number(id);
-      } else {
+        await savePublications(Number(id), publications);
+      } else if (!formattedData.id) {
         const { data: newArticle, error } = await supabaseInstance
           .from('professional_content')
           .insert(formattedData)
@@ -276,17 +363,15 @@ const ArticleEditor: React.FC = () => {
         if (error) throw error;
         if (!newArticle) throw new Error('No article ID returned');
         
-        articleId = newArticle.id;
+        await savePublications(newArticle.id, publications);
       }
-      
-      await savePublications(articleId, publications);
       
       setLastSaved(new Date());
       setHasUnsavedChanges(false);
       form.reset(data);
       
       if (!isEditMode) {
-        navigate(`/admin/articles/edit/${articleId}`);
+        navigate(`/admin/articles/edit/${formattedData.id || id}`);
         
         toast({
           title: "המאמר נוצר בהצלחה",
@@ -672,58 +757,68 @@ const ArticleEditor: React.FC = () => {
                 
                 <FormField
                   control={form.control}
-                  name="contact_email"
+                  name="image_url"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>איש קשר (אימייל - אופציונלי)</FormLabel>
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>תמונה למאמר</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="example@example.com" 
-                          {...field} 
-                          value={field.value || ''} 
-                          onChange={(e) => {
-                            field.onChange(e);
-                            setHasUnsavedChanges(true);
-                          }}
-                        />
+                        <div className="space-y-2">
+                          <FileUploadField 
+                            onFileSelected={handleFileSelected}
+                            id="article-image"
+                            name="article-image"
+                          />
+                          {field.value && !selectedFile && (
+                            <div className="mt-2 p-2 bg-muted rounded flex items-center justify-between">
+                              <div className="flex items-center space-x-2 overflow-hidden">
+                                <img 
+                                  src={field.value} 
+                                  alt="תמונה קיימת" 
+                                  className="h-10 w-10 object-cover rounded"
+                                />
+                                <span className="text-sm truncate max-w-[200px] mr-2">תמונה קיימת</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </FormControl>
                       <FormDescription>
-                        אימייל ליצירת קשר שיוצג במאמר
+                        תמונה שתופיע במאמר. ניתן להעלות קובץ חדש או להשאיר את התמונה הקיימת.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>סוג תוכן</FormLabel>
-                      <Select 
-                        value={field.value}
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          setHasUnsavedChanges(true);
-                        }}
-                        defaultValue="article"
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="בחר סוג תוכן" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="article">מאמר</SelectItem>
-                          <SelectItem value="poem">שיר</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
+              
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>סוג תוכן</FormLabel>
+                    <Select 
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        setHasUnsavedChanges(true);
+                      }}
+                      defaultValue="article"
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="בחר סוג תוכן" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="article">מאמר</SelectItem>
+                        <SelectItem value="poem">שיר</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <PublicationSettings
                 publications={publications}
