@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -54,19 +55,19 @@ const Index = () => {
         <main className="flex-grow">
           <section className="pt-24 px-4 relative">
             <div className="container mx-auto relative z-10">
-              <div className="flex flex-col items-top justify-center">
-                <div className="flex flex-col md:flex-row items-center md:items-top justify-center md:gap-4">
+              <div className="flex flex-col items-center justify-center">
+                <div className="flex flex-col md:flex-row items-center justify-center md:gap-4">
                   <img 
                     ref={logoRef}
                     src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs//logo.jpg" 
                     alt="רות פריסמן - מאמנת קוד הנפש" 
                     className="w-52 h-52 md:w-64 md:h-64 object-top cursor-pointer mt-0 rounded-2xl" 
                   />
-                  <div className="text-center md:text-right max-w-full w-full">
+                  <div className="text-center w-full max-w-full">
                     <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold font-alef text-[#4A235A] gold-text-shadow mt-4 md:mt-0">
                       רות פריסמן - מאמנת קוד הנפש
                     </h1>
-                    <p className="text-lg md:text-xl text-purple-light mt-0.5 font-alef gold-text-shadow">
+                    <p className="text-lg md:text-xl text-purple-light mt-3 font-alef gold-text-shadow">
                       מבט חדש על חיים מוכרים
                     </p>
                     
