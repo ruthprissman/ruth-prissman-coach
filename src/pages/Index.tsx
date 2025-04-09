@@ -71,13 +71,13 @@ const Index = () => {
                       מבט חדש על חיים מוכרים
                     </p>
                     
-                    {/* Improved text section with better typography and spacing */}
-                    <div className="mt-10 mb-14 max-w-3xl mx-auto animate-fade-in">
-                      <h3 className="text-[#4A235A] text-xl font-alef font-bold mb-6 text-center">
-                        החיים שלנו הם סיפור מתמשך.
-                      </h3>
+                    {/* Enhanced story section with improved typography and spacing */}
+                    <div className="mt-16 mb-20 max-w-3xl mx-auto animate-fade-in px-4">
+                      <h2 className="text-[#4A235A] text-2xl md:text-3xl font-alef font-bold mb-10 text-center">
+                        החיים שלנו הם סיפור מתמשך
+                      </h2>
                       
-                      <div className="text-[#4A235A] font-heebo text-lg leading-relaxed space-y-6 text-center">
+                      <div className="text-[#4A235A] font-heebo text-lg md:text-xl leading-relaxed space-y-8 text-center">
                         <p>
                           סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.
                           סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.
