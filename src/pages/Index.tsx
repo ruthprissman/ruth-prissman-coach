@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -69,23 +70,30 @@ const Index = () => {
                     <p className="text-lg md:text-xl text-purple-light mt-0.5 font-alef gold-text-shadow">
                       מבט חדש על חיים מוכרים
                     </p>
-                     
-                    <div className="backdrop-blur-sm p-5 rounded-lg mb-4 mx-auto max-w-3xl mt-6">
-                      <h3 className="text-[#4A235A] text-lg font-heebo mb-3 text-center">החיים שלנו הם סיפור מתמשך.</h3>
+                    
+                    {/* Improved text section with better typography and spacing */}
+                    <div className="mt-10 mb-14 max-w-3xl mx-auto animate-fade-in">
+                      <h3 className="text-[#4A235A] text-xl font-alef font-bold mb-6 text-center">
+                        החיים שלנו הם סיפור מתמשך.
+                      </h3>
                       
-                      <p className="text-[#4A235A] text-lg font-heebo leading-relaxed text-center max-w-3xl mx-auto">
-                        סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.
-                        סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.
-                        <br className="hidden md:block" /><br className="hidden md:block" />
+                      <div className="text-[#4A235A] font-heebo text-lg leading-relaxed space-y-6 text-center">
+                        <p>
+                          סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.
+                          סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.
+                        </p>
                         
-                        בשיטת קוד הנפש, שפותחה על ידי שמחה אביטן,
-                        אנחנו לומדים לקרוא מחדש את הסיפור הפנימי שלנו,
-                        עם פחות תלות בסיפור החיצוני.
-                        <br className="hidden md:block" /><br className="hidden md:block" />
+                        <p>
+                          בשיטת קוד הנפש, שפותחה על ידי שמחה אביטן,
+                          אנחנו לומדים לקרוא מחדש את הסיפור הפנימי שלנו,
+                          עם פחות תלות בסיפור החיצוני.
+                        </p>
                         
-                        ללמוד להבין את עצמנו, למצוא שלווה, בהירות ושמחה,
-                        ופשוט לבחור לחיות טוב.
-                      </p>
+                        <p>
+                          ללמוד להבין את עצמנו, למצוא שלווה, בהירות ושמחה,
+                          ופשוט לבחור לחיות טוב.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
