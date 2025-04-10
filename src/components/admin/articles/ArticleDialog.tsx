@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -251,7 +252,8 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
               />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Updated layout for image upload and content type fields in one row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="image_url"
@@ -286,47 +288,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
               
               <FormField
                 control={form.control}
-                name="scheduled_publish"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>תאריך פרסום מתוכנן</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy", { locale: he })
-                            ) : (
-                              <span>בחר תאריך</span>
-                            )}
-                            <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value || undefined}
-                          onSelect={field.onChange}
-                          disabled={(date) => date < new Date("1900-01-01")}
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
                 name="type"
                 render={({ field }) => (
                   <FormItem>
@@ -351,6 +312,48 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                 )}
               />
             </div>
+            
+            {/* Date picker in its own row */}
+            <FormField
+              control={form.control}
+              name="scheduled_publish"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>תאריך פרסום מתוכנן</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "dd/MM/yyyy", { locale: he })
+                          ) : (
+                            <span>בחר תאריך</span>
+                          )}
+                          <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value || undefined}
+                        onSelect={field.onChange}
+                        disabled={(date) => date < new Date("1900-01-01")}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <FormField
               control={form.control}
