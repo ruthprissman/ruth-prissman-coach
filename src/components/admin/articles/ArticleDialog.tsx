@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -29,7 +28,6 @@ interface ArticleDialogProps {
   onSave: () => void;
 }
 
-// Define the schema for form validation
 const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
   content_markdown: z.string().min(1, { message: "תוכן חובה" }),
@@ -57,7 +55,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
   const isEditMode = !!article;
   const dialogTitle = isEditMode ? "עריכת מאמר" : "מאמר חדש";
 
-  // Default values for the form
   const defaultValues: FormValues = {
     title: article?.title || '',
     content_markdown: article?.content_markdown || '',
@@ -100,7 +97,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
       
       console.log('Upload successful:', data);
       
-      // Get the public URL
       const { data: publicUrlData } = supabase
         .storage
         .from('stories_img')
@@ -121,7 +117,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
     try {
       const supabase = supabaseClient();
       
-      // Prepare data for submission
       const formattedData = {
         title: data.title,
         content_markdown: data.content_markdown,
@@ -130,7 +125,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         type: data.type,
       };
       
-      // Check if scheduled publish date has passed and we should auto-publish
       if (data.scheduled_publish && new Date(data.scheduled_publish) <= new Date()) {
         formattedData['published_at'] = new Date().toISOString();
       }
@@ -138,13 +132,10 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
       let articleId = article?.id;
       let imageUrl = data.image_url;
       
-      // Handle image upload if a new file is selected
       if (selectedFile) {
         if (isEditMode && article) {
-          // For existing article, upload with article ID
           imageUrl = await uploadImage(selectedFile, article.id);
         } else {
-          // For new article, we need to first create the article to get its ID
           const { data: newArticle, error } = await supabase
             .from('professional_content')
             .insert(formattedData)
@@ -155,10 +146,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
           
           articleId = newArticle.id;
           
-          // Now upload image with the new article ID
           imageUrl = await uploadImage(selectedFile, articleId);
-          
-          // Will update the article with the image URL later
         }
         
         if (!imageUrl) {
@@ -170,13 +158,11 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         }
       }
       
-      // Add image URL to the formatted data
       if (imageUrl) {
         formattedData['image_url'] = imageUrl;
       }
       
       if (isEditMode && article) {
-        // Update existing article
         const { error } = await supabase
           .from('professional_content')
           .update(formattedData)
@@ -184,14 +170,12 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
           
         if (error) throw error;
       } else if (!articleId) {
-        // Create new article if not already created for image upload
         const { error } = await supabase
           .from('professional_content')
           .insert(formattedData);
           
         if (error) throw error;
       } else {
-        // Update the newly created article with the image URL
         const { error } = await supabase
           .from('professional_content')
           .update({ image_url: imageUrl })
@@ -222,7 +206,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Title */}
             <FormField
               control={form.control}
               name="title"
@@ -237,7 +220,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
               )}
             />
             
-            {/* Category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -267,8 +249,82 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                   </FormItem>
                 )}
               />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="image_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>תמונה למאמר</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <FileUploadField 
+                          onFileSelected={handleFileSelected}
+                          id="article-image"
+                          name="article-image"
+                        />
+                        {field.value && !selectedFile && (
+                          <div className="mt-2 p-2 bg-muted rounded flex items-center justify-between">
+                            <div className="flex items-center space-x-2 overflow-hidden">
+                              <img 
+                                src={field.value} 
+                                alt="תמונה קיימת" 
+                                className="h-10 w-10 object-cover rounded"
+                              />
+                              <span className="text-sm truncate max-w-[200px] mr-2">תמונה קיימת</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
-              {/* Content Type */}
+              <FormField
+                control={form.control}
+                name="scheduled_publish"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>תאריך פרסום מתוכנן</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "dd/MM/yyyy", { locale: he })
+                            ) : (
+                              <span>בחר תאריך</span>
+                            )}
+                            <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value || undefined}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date("1900-01-01")}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               <FormField
                 control={form.control}
                 name="type"
@@ -296,81 +352,6 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
               />
             </div>
             
-            {/* Schedule Publish Date */}
-            <FormField
-              control={form.control}
-              name="scheduled_publish"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>תאריך פרסום מתוכנן</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "dd/MM/yyyy", { locale: he })
-                          ) : (
-                            <span>בחר תאריך</span>
-                          )}
-                          <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value || undefined}
-                        onSelect={field.onChange}
-                        disabled={(date) => date < new Date("1900-01-01")}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* Image Upload Field - Replacing Contact Email */}
-            <FormField
-              control={form.control}
-              name="image_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>תמונה למאמר</FormLabel>
-                  <FormControl>
-                    <div className="space-y-2">
-                      <FileUploadField 
-                        onFileSelected={handleFileSelected}
-                        id="article-image"
-                        name="article-image"
-                      />
-                      {field.value && !selectedFile && (
-                        <div className="mt-2 p-2 bg-muted rounded flex items-center justify-between">
-                          <div className="flex items-center space-x-2 overflow-hidden">
-                            <img 
-                              src={field.value} 
-                              alt="תמונה קיימת" 
-                              className="h-10 w-10 object-cover rounded"
-                            />
-                            <span className="text-sm truncate max-w-[200px] mr-2">תמונה קיימת</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {/* Content */}
             <FormField
               control={form.control}
               name="content_markdown"
