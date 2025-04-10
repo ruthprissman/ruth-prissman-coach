@@ -701,20 +701,84 @@ const ArticleEditor: React.FC = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <FormField
+                  control={form.control}
+                  name="image_url"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-6">
+                      <FormLabel>תמונה למאמר</FormLabel>
+                      <FormControl>
+                        <div className="space-y-2">
+                          <FileUploadField 
+                            onFileSelected={handleFileSelected}
+                            id="article-image"
+                            name="article-image"
+                          />
+                          {field.value && !selectedFile && (
+                            <div className="mt-2 p-2 bg-muted rounded flex items-center justify-between">
+                              <div className="flex items-center space-x-2 overflow-hidden">
+                                <img 
+                                  src={field.value} 
+                                  alt="תמונה קיימת" 
+                                  className="h-10 w-10 object-cover rounded"
+                                />
+                                <span className="text-sm truncate max-w-[200px] mr-2">תמונה קיימת</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        תמונה שתופיע במאמר
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-3">
+                      <FormLabel>סוג תוכן</FormLabel>
+                      <Select 
+                        value={field.value}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setHasUnsavedChanges(true);
+                        }}
+                        defaultValue="article"
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder="בחר סוג תוכן" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="article">מאמר</SelectItem>
+                          <SelectItem value="poem">שיר</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <FormField
                   control={form.control}
                   name="scheduled_publish"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>תאריך פרסום מתוכנן כללי</FormLabel>
+                    <FormItem className="md:col-span-3">
+                      <FormLabel>תאריך פרסום מתוכנן</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
                               variant="outline"
                               className={cn(
-                                "pl-3 text-left font-normal",
+                                "w-full h-10 pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground"
                               )}
                               onClick={() => {
@@ -745,7 +809,7 @@ const ArticleEditor: React.FC = () => {
                         </PopoverContent>
                       </Popover>
                       <FormDescription>
-                        תאריך פרסום ראשוני (ניתן לקבוע תאריכי פרסום ספציפיים לכל פלטפורמה)
+                        תאריך פרסום ראשוני
                         {article?.published_at && (
                           <span className="font-semibold text-green-700"> (כבר פורסם)</span>
                         )}
@@ -754,71 +818,7 @@ const ArticleEditor: React.FC = () => {
                     </FormItem>
                   )}
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="image_url"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>תמונה למאמר</FormLabel>
-                      <FormControl>
-                        <div className="space-y-2">
-                          <FileUploadField 
-                            onFileSelected={handleFileSelected}
-                            id="article-image"
-                            name="article-image"
-                          />
-                          {field.value && !selectedFile && (
-                            <div className="mt-2 p-2 bg-muted rounded flex items-center justify-between">
-                              <div className="flex items-center space-x-2 overflow-hidden">
-                                <img 
-                                  src={field.value} 
-                                  alt="תמונה קיימת" 
-                                  className="h-10 w-10 object-cover rounded"
-                                />
-                                <span className="text-sm truncate max-w-[200px] mr-2">תמונה קיימת</span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormDescription>
-                        תמונה שתופיע במאמר. ניתן להעלות קובץ חדש או להשאיר את התמונה הקיימת.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
-              
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>סוג תוכן</FormLabel>
-                    <Select 
-                      value={field.value}
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        setHasUnsavedChanges(true);
-                      }}
-                      defaultValue="article"
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר סוג תוכן" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="article">מאמר</SelectItem>
-                        <SelectItem value="poem">שיר</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               
               <PublicationSettings
                 publications={publications}

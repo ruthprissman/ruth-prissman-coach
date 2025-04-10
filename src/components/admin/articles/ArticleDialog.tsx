@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -225,7 +226,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                 control={form.control}
                 name="image_url"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-5">
+                  <FormItem className="md:col-span-6">
                     <FormLabel>תמונה למאמר</FormLabel>
                     <FormControl>
                       <div className="space-y-2">
@@ -283,7 +284,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                 control={form.control}
                 name="scheduled_publish"
                 render={({ field }) => (
-                  <FormItem className="md:col-span-4">
+                  <FormItem className="md:col-span-3">
                     <FormLabel>תאריך פרסום מתוכנן</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
