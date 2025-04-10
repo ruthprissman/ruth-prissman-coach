@@ -220,43 +220,12 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
               )}
             />
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="category_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>קטגוריה</FormLabel>
-                    <Select 
-                      value={field.value || ""}
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר קטגוריה" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="">ללא קטגוריה</SelectItem>
-                        {categories.map(category => (
-                          <SelectItem key={category.id} value={String(category.id)}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               <FormField
                 control={form.control}
                 name="image_url"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="md:col-span-5">
                     <FormLabel>תמונה למאמר</FormLabel>
                     <FormControl>
                       <div className="space-y-2">
@@ -286,9 +255,35 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
               
               <FormField
                 control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-3">
+                    <FormLabel>סוג תוכן</FormLabel>
+                    <Select 
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      defaultValue="article"
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="בחר סוג תוכן" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="article">מאמר</SelectItem>
+                        <SelectItem value="poem">שיר</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="scheduled_publish"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem className="md:col-span-4">
                     <FormLabel>תאריך פרסום מתוכנן</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -296,7 +291,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                           <Button
                             variant="outline"
                             className={cn(
-                              "w-full pl-3 text-left font-normal",
+                              "w-full h-10 pl-3 text-left font-normal",
                               !field.value && "text-muted-foreground"
                             )}
                           >
@@ -324,33 +319,36 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                   </FormItem>
                 )}
               />
-              
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>סוג תוכן</FormLabel>
-                    <Select 
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      defaultValue="article"
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="בחר סוג תוכן" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="article">מאמר</SelectItem>
-                        <SelectItem value="poem">שיר</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
+            
+            <FormField
+              control={form.control}
+              name="category_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>קטגוריה</FormLabel>
+                  <Select 
+                    value={field.value || ""}
+                    onValueChange={field.onChange}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="בחר קטגוריה" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">ללא קטגוריה</SelectItem>
+                      {categories.map(category => (
+                        <SelectItem key={category.id} value={String(category.id)}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <FormField
               control={form.control}
