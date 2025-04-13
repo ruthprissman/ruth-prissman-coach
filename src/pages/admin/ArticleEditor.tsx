@@ -93,6 +93,7 @@ const ArticleEditor: React.FC = () => {
   const editorRef = useRef<{ saveContent: () => Promise<boolean>, hasUnsavedChanges: () => boolean } | null>(null);
   const contentRef = useRef<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | undefined>(undefined);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -151,6 +152,8 @@ const ArticleEditor: React.FC = () => {
           type: data.type || 'article',
           image_url: data.image_url || null,
         });
+        
+        console.log("Article loaded with image:", data.image_url);
       }
     } catch (error: any) {
       console.error('Error fetching article:', error);
@@ -213,25 +216,28 @@ const ArticleEditor: React.FC = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [hasUnsavedChanges]);
-  
+
   const handleFileSelected = (file: File | undefined) => {
     console.log('File selected:', file?.name);
     setSelectedFile(file);
     setHasUnsavedChanges(true);
   };
-  
-  const uploadImage = async (file: File, articleId: number): Promise<string | null> => {
+
+  const uploadImage = async (file: File): Promise<string | null> => {
     try {
-      const supabase = await getSupabaseClient();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `article-images/${articleId || new Date().getTime()}.${fileExt}`;
+      console.log(`Starting upload for file: ${file.name}`);
+      setUploadProgress(0);
       
-      console.log(`Uploading image to storage: ${fileName}`);
+      const supabase = await getSupabaseClient();
+      const fileName = file.name; // Preserve original filename
+      const filePath = `${fileName}`;
+      
+      console.log(`Uploading image to storage: ${filePath}`);
       
       const { data, error } = await supabase
         .storage
         .from('stories_img')
-        .upload(fileName, file, {
+        .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true
         });
@@ -242,6 +248,7 @@ const ArticleEditor: React.FC = () => {
       }
       
       console.log('Upload successful:', data);
+      setUploadProgress(100);
       
       // Get the public URL
       const { data: publicUrlData } = supabase
@@ -249,15 +256,16 @@ const ArticleEditor: React.FC = () => {
         .from('stories_img')
         .getPublicUrl(data.path);
         
-      console.log('Public URL:', publicUrlData.publicUrl);
+      console.log('Image public URL:', publicUrlData.publicUrl);
       
       return publicUrlData.publicUrl;
     } catch (error) {
       console.error('Image upload error:', error);
+      setUploadProgress(null);
       return null;
     }
   };
-  
+
   const saveArticle = async (data: FormValues, publishNow = false) => {
     setIsSaving(true);
     
@@ -299,32 +307,7 @@ const ArticleEditor: React.FC = () => {
       if (selectedFile) {
         console.log('Processing image upload for:', selectedFile.name);
         
-        let imageUrl: string | null = null;
-        
-        if (isEditMode && id) {
-          imageUrl = await uploadImage(selectedFile, Number(id));
-        } else {
-          const { data: newArticle, error } = await supabaseInstance
-            .from('professional_content')
-            .insert(formattedData)
-            .select('id')
-            .single();
-            
-          if (error) throw error;
-          
-          imageUrl = await uploadImage(selectedFile, newArticle.id);
-          
-          if (imageUrl) {
-            const { error: updateError } = await supabaseInstance
-              .from('professional_content')
-              .update({ image_url: imageUrl })
-              .eq('id', newArticle.id);
-              
-            if (updateError) throw updateError;
-          }
-          
-          formattedData.id = newArticle.id;
-        }
+        const imageUrl = await uploadImage(selectedFile);
         
         if (imageUrl) {
           console.log('Image uploaded successfully, URL:', imageUrl);
@@ -337,6 +320,7 @@ const ArticleEditor: React.FC = () => {
           });
         }
       } else if (data.image_url) {
+        console.log('Using existing image URL:', data.image_url);
         formattedData.image_url = data.image_url;
       }
       
@@ -345,6 +329,7 @@ const ArticleEditor: React.FC = () => {
       }
       
       if (isEditMode && id) {
+        console.log('Updating existing article ID:', id);
         const { error } = await supabaseInstance
           .from('professional_content')
           .update(formattedData)
@@ -353,7 +338,9 @@ const ArticleEditor: React.FC = () => {
         if (error) throw error;
         
         await savePublications(Number(id), publications);
-      } else if (!formattedData.id) {
+        console.log('Article and publications updated successfully');
+      } else {
+        console.log('Creating new article');
         const { data: newArticle, error } = await supabaseInstance
           .from('professional_content')
           .insert(formattedData)
@@ -363,15 +350,17 @@ const ArticleEditor: React.FC = () => {
         if (error) throw error;
         if (!newArticle) throw new Error('No article ID returned');
         
+        console.log('New article created with ID:', newArticle.id);
         await savePublications(newArticle.id, publications);
+        formattedData.id = newArticle.id;
       }
       
       setLastSaved(new Date());
       setHasUnsavedChanges(false);
       form.reset(data);
       
-      if (!isEditMode) {
-        navigate(`/admin/articles/edit/${formattedData.id || id}`);
+      if (!isEditMode && formattedData.id) {
+        navigate(`/admin/articles/edit/${formattedData.id}`);
         
         toast({
           title: "המאמר נוצר בהצלחה",
@@ -392,6 +381,7 @@ const ArticleEditor: React.FC = () => {
       });
     } finally {
       setIsSaving(false);
+      setUploadProgress(null);
     }
   };
 
@@ -727,10 +717,23 @@ const ArticleEditor: React.FC = () => {
                               </div>
                             </div>
                           )}
+                          {uploadProgress !== null && (
+                            <div className="mt-2">
+                              <div className="bg-gray-200 rounded-full h-2.5">
+                                <div 
+                                  className="bg-blue-600 h-2.5 rounded-full" 
+                                  style={{ width: `${uploadProgress}%` }}
+                                ></div>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {uploadProgress < 100 ? `מעלה... ${uploadProgress}%` : 'הועלה בהצלחה'}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </FormControl>
                       <FormDescription>
-                        תמונה שתופיע במאמר
+                        העלה תמונה למאמר (אופציונלי)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

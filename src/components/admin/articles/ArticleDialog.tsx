@@ -75,18 +75,21 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
     setSelectedFile(file);
   };
 
-  const uploadImage = async (file: File, articleId: number): Promise<string | null> => {
+  const uploadImage = async (file: File): Promise<string | null> => {
     try {
-      const supabase = supabaseClient();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `article-images/${articleId || new Date().getTime()}.${fileExt}`;
+      console.log(`Starting upload for file: ${file.name}`);
+      setUploadProgress(0);
       
-      console.log(`Uploading image to storage: ${fileName}`);
+      const supabase = supabaseClient();
+      const fileName = file.name; // Preserve original filename
+      const filePath = `${fileName}`;
+      
+      console.log(`Uploading image to storage: ${filePath}`);
       
       const { data, error } = await supabase
         .storage
         .from('stories_img')
-        .upload(fileName, file, {
+        .upload(filePath, file, {
           cacheControl: '3600',
           upsert: true
         });
@@ -97,17 +100,20 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
       }
       
       console.log('Upload successful:', data);
+      setUploadProgress(100);
       
+      // Get the public URL
       const { data: publicUrlData } = supabase
         .storage
         .from('stories_img')
         .getPublicUrl(data.path);
         
-      console.log('Public URL:', publicUrlData.publicUrl);
+      console.log('Image public URL:', publicUrlData.publicUrl);
       
       return publicUrlData.publicUrl;
     } catch (error) {
       console.error('Image upload error:', error);
+      setUploadProgress(null);
       return null;
     }
   };
@@ -118,7 +124,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
     try {
       const supabase = supabaseClient();
       
-      const formattedData = {
+      const formattedData: any = {
         title: data.title,
         content_markdown: data.content_markdown,
         category_id: data.category_id ? parseInt(data.category_id) : null,
@@ -130,25 +136,11 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         formattedData['published_at'] = new Date().toISOString();
       }
       
-      let articleId = article?.id;
       let imageUrl = data.image_url;
       
       if (selectedFile) {
-        if (isEditMode && article) {
-          imageUrl = await uploadImage(selectedFile, article.id);
-        } else {
-          const { data: newArticle, error } = await supabase
-            .from('professional_content')
-            .insert(formattedData)
-            .select('id')
-            .single();
-            
-          if (error) throw error;
-          
-          articleId = newArticle.id;
-          
-          imageUrl = await uploadImage(selectedFile, articleId);
-        }
+        console.log('Processing image upload for:', selectedFile.name);
+        imageUrl = await uploadImage(selectedFile);
         
         if (!imageUrl) {
           toast({
@@ -156,6 +148,8 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
             description: "לא ניתן היה להעלות את התמונה, אנא נסה שנית",
             variant: "destructive",
           });
+        } else {
+          console.log('Image uploaded successfully, URL:', imageUrl);
         }
       }
       
@@ -164,27 +158,23 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
       }
       
       if (isEditMode && article) {
+        console.log('Updating existing article ID:', article.id);
         const { error } = await supabase
           .from('professional_content')
           .update(formattedData)
           .eq('id', article.id);
           
         if (error) throw error;
-      } else if (!articleId) {
+      } else {
+        console.log('Creating new article');
         const { error } = await supabase
           .from('professional_content')
           .insert(formattedData);
           
         if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('professional_content')
-          .update({ image_url: imageUrl })
-          .eq('id', articleId);
-          
-        if (error) throw error;
       }
       
+      console.log('Article saved successfully');
       onSave();
     } catch (error: any) {
       console.error('Error saving article:', error);
@@ -195,6 +185,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
       });
     } finally {
       setIsSaving(false);
+      setUploadProgress(null);
     }
   };
 
@@ -245,6 +236,19 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                               />
                               <span className="text-sm truncate max-w-[200px] mr-2">תמונה קיימת</span>
                             </div>
+                          </div>
+                        )}
+                        {uploadProgress !== null && (
+                          <div className="mt-2">
+                            <div className="bg-gray-200 rounded-full h-2.5">
+                              <div 
+                                className="bg-blue-600 h-2.5 rounded-full" 
+                                style={{ width: `${uploadProgress}%` }}
+                              ></div>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {uploadProgress < 100 ? `מעלה... ${uploadProgress}%` : 'הועלה בהצלחה'}
+                            </p>
                           </div>
                         )}
                       </div>
