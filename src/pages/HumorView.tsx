@@ -22,6 +22,7 @@ const HumorView = () => {
     const fetchHumorItem = async () => {
       setLoading(true);
       try {
+        console.log(`Fetching humor item with id: ${id}`);
         const supabase = supabaseClient();
         
         const { data, error } = await supabase
@@ -35,6 +36,7 @@ const HumorView = () => {
         
         if (error) throw error;
         
+        console.log('Humor item retrieved:', data);
         setHumorItem(data as Article);
       } catch (err: any) {
         console.error('Error fetching humor item:', err);
