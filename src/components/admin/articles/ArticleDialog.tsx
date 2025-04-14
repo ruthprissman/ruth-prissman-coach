@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -277,6 +276,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                       <SelectContent>
                         <SelectItem value="article">מאמר</SelectItem>
                         <SelectItem value="poem">שיר</SelectItem>
+                        <SelectItem value="humor">לצחוק ברצינות</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

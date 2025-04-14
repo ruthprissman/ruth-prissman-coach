@@ -7,8 +7,10 @@ import Contact from './pages/Contact';
 import Stories from './pages/Stories';
 import Articles from './pages/Articles';
 import Poems from './pages/Poems';
+import Humor from './pages/Humor';
 import ArticleView from './pages/ArticleView';
 import PoemView from './pages/PoemView';
+import HumorView from './pages/HumorView';
 import Unsubscribe from './pages/Unsubscribe';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import NotFound from './pages/NotFound';
@@ -51,8 +53,10 @@ function App() {
                 <Route path="/stories" element={<Stories />} />
                 <Route path="/articles" element={<Articles />} />
                 <Route path="/poems" element={<Poems />} />
+                <Route path="/humor" element={<Humor />} />
                 <Route path="/articles/:id" element={<ArticleView />} />
                 <Route path="/poems/:id" element={<PoemView />} />
+                <Route path="/humor/:id" element={<HumorView />} />
                 <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<Terms />} />

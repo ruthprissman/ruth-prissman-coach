@@ -20,6 +20,7 @@ const navItems = [
   { name: 'אודות', path: '/about' },
   { name: 'מאמרים', path: '/articles' },
   { name: 'שירים', path: '/poems' },
+  { name: 'לצחוק ברצינות', path: '/humor' },
   { name: 'סיפורים קצרים', path: '/stories' },
   { name: 'שאלות ותשובות', path: '/faq' },
   { name: 'צור קשר', path: '/contact' },
