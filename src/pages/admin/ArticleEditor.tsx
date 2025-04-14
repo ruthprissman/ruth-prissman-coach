@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
@@ -168,19 +169,32 @@ const ArticleEditor: React.FC = () => {
   }, [id, isEditMode, form, toast, getSupabaseClient]);
 
   const fetchCategories = useCallback(async () => {
+    console.log('ArticleEditor: Starting fetchCategories function');
     try {
       const supabaseInstance = await getSupabaseClient();
+      console.log('ArticleEditor: Supabase client retrieved for categories fetch');
 
+      console.log('ArticleEditor: Making Supabase query to categories table');
       const { data, error } = await supabaseInstance
         .from('categories')
         .select('*')
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('ArticleEditor: Error fetching categories:', error);
+        throw error;
+      }
+      
+      console.log('ArticleEditor: Categories data received:', data);
+      
+      if (!data || data.length === 0) {
+        console.warn('ArticleEditor: Categories list is empty or undefined');
+      }
       
       setCategories(data || []);
+      console.log('ArticleEditor: Categories state updated with', data?.length || 0, 'items');
     } catch (error: any) {
-      console.error('Error fetching categories:', error);
+      console.error('ArticleEditor: Error in fetchCategories:', error);
       toast({
         title: "שגיאה בטעינת הקטגוריות",
         description: error.message || "אנא נסה שוב מאוחר יותר",
@@ -190,7 +204,18 @@ const ArticleEditor: React.FC = () => {
   }, [getSupabaseClient, toast]);
 
   useEffect(() => {
-    Promise.all([fetchArticleData(), fetchCategories()]);
+    console.log('ArticleEditor: Component mounted - starting data fetching');
+    const fetchAllData = async () => {
+      try {
+        console.log('ArticleEditor: Fetching article data and categories in parallel');
+        await Promise.all([fetchArticleData(), fetchCategories()]);
+        console.log('ArticleEditor: All data fetched successfully');
+      } catch (err) {
+        console.error('ArticleEditor: Error fetching initial data:', err);
+      }
+    };
+    
+    fetchAllData();
   }, [fetchArticleData, fetchCategories]);
 
   useEffect(() => {

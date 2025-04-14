@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -68,6 +68,11 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
+
+  useEffect(() => {
+    console.log('ArticleDialog: Component mounted');
+    console.log('ArticleDialog: Categories received:', categories);
+  }, [categories]);
 
   const handleFileSelected = (file: File | undefined) => {
     console.log('File selected:', file?.name);
@@ -343,11 +348,17 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="">ללא קטגוריה</SelectItem>
-                      {categories.map(category => (
-                        <SelectItem key={category.id} value={String(category.id)}>
-                          {category.name}
+                      {categories && categories.length > 0 ? (
+                        categories.map(category => (
+                          <SelectItem key={category.id} value={String(category.id)}>
+                            {category.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          טוען קטגוריות...
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
