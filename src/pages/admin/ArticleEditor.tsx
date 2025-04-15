@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
@@ -787,6 +786,7 @@ const ArticleEditor: React.FC = () => {
                         <SelectContent>
                           <SelectItem value="article">מאמר</SelectItem>
                           <SelectItem value="poem">שיר</SelectItem>
+                          <SelectItem value="humor">הומור</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

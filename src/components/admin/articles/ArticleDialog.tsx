@@ -281,7 +281,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
                       <SelectContent>
                         <SelectItem value="article">מאמר</SelectItem>
                         <SelectItem value="poem">שיר</SelectItem>
-                        <SelectItem value="humor">לצחוק ברצינות</SelectItem>
+                        <SelectItem value="humor">הומור</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
