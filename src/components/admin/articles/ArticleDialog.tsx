@@ -85,10 +85,37 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
       setUploadProgress(0);
       
       const supabase = supabaseClient();
-      const fileName = file.name; // Preserve original filename
+
+      // Check if article has an existing image
+      if (article?.image_url) {
+        try {
+          const url = new URL(article.image_url);
+          const pathParts = url.pathname.split('/');
+          const filename = pathParts[pathParts.length - 1];
+          
+          console.log(`Previous image found for article. Deleting: ${filename}`);
+          
+          const { error: deleteError } = await supabase
+            .storage
+            .from('stories_img')
+            .remove([filename]);
+            
+          if (deleteError) {
+            console.error('Error deleting previous image:', deleteError);
+            // Continue with upload even if deletion fails
+          } else {
+            console.log('Previous image deleted successfully');
+          }
+        } catch (deleteErr) {
+          console.error('Error deleting previous image:', deleteErr);
+          // Continue with upload even if deletion fails
+        }
+      }
+      
+      const fileName = file.name;
       const filePath = `${fileName}`;
       
-      console.log(`Uploading image to storage: ${filePath}`);
+      console.log(`Uploading new image to storage: ${filePath}`);
       
       const { data, error } = await supabase
         .storage
@@ -106,13 +133,12 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
       console.log('Upload successful:', data);
       setUploadProgress(100);
       
-      // Get the public URL
       const { data: publicUrlData } = supabase
         .storage
         .from('stories_img')
         .getPublicUrl(data.path);
         
-      console.log('Image public URL:', publicUrlData.publicUrl);
+      console.log('New image uploaded successfully:', publicUrlData.publicUrl);
       
       return publicUrlData.publicUrl;
     } catch (error) {
