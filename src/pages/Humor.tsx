@@ -17,7 +17,7 @@ const Humor = () => {
     const fetchHumorContent = async () => {
       setLoading(true);
       try {
-        console.log('Fetching humor content from Supabase');
+        console.log('[humor page] Fetching humor content from Supabase');
         const supabase = supabaseClient();
         const today = new Date().toISOString();
 
@@ -45,10 +45,15 @@ const Humor = () => {
           )
         );
 
-        console.log(`Found ${publishedContent.length} published humor items`);
+        console.log(`[humor page] Found ${publishedContent.length} published humor items`);
+        
+        if (publishedContent.length === 0) {
+          console.log('[humor page] No humor articles found or filtering failed.');
+        }
+
         setHumorContent(publishedContent as Article[]);
       } catch (err: any) {
-        console.error('Error fetching humor content:', err);
+        console.error('[humor page] Error fetching humor content:', err);
         setError(err.message || 'אירעה שגיאה בטעינת התוכן');
       } finally {
         setLoading(false);

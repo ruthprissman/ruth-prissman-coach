@@ -22,7 +22,7 @@ const HumorView = () => {
     const fetchHumorItem = async () => {
       setLoading(true);
       try {
-        console.log(`Fetching humor item with id: ${id}`);
+        console.log(`[humor view] Fetching humor item with id: ${id}`);
         const supabase = supabaseClient();
         
         const { data, error } = await supabase
@@ -32,14 +32,15 @@ const HumorView = () => {
             categories (*)
           `)
           .eq('id', id)
+          .eq('type', 'humor')
           .single();
         
         if (error) throw error;
         
-        console.log('Humor item retrieved:', data);
+        console.log('[humor view] Humor item retrieved:', data);
         setHumorItem(data as Article);
       } catch (err: any) {
-        console.error('Error fetching humor item:', err);
+        console.error('[humor view] Error fetching humor item:', err);
         setError(err.message || 'אירעה שגיאה בטעינת התוכן');
       } finally {
         setLoading(false);
