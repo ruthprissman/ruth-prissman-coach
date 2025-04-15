@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
@@ -16,8 +17,23 @@ const Humor = () => {
     const fetchHumorContent = async () => {
       setLoading(true);
       try {
-        console.log('[humor page] Fetching humor content from Supabase');
+        // Added logging for Supabase client initialization
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[humor page] Initializing Supabase client');
+        }
+
         const supabase = supabaseClient();
+
+        // Added logging for Supabase client details
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[humor page] Supabase client initialized:', supabase);
+        }
+
+        // Added logging before running the query
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[humor page] Running query for humor content');
+        }
+
         const today = new Date().toISOString();
 
         const { data, error } = await supabase
@@ -119,3 +135,4 @@ const Humor = () => {
 };
 
 export default Humor;
+
