@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
@@ -34,6 +33,11 @@ const Humor = () => {
 
         if (error) throw error;
 
+        // Development mode logging for raw Supabase data
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[humor page] Raw Supabase data:', data);
+        }
+
         // Filter out items with no publications or unpublished items
         const publishedContent = data.filter(item => 
           item.article_publications && 
@@ -45,10 +49,13 @@ const Humor = () => {
           )
         );
 
-        console.log(`[humor page] Found ${publishedContent.length} published humor items`);
-        
-        if (publishedContent.length === 0) {
-          console.log('[humor page] No humor articles found or filtering failed.');
+        // Development mode logging for published content
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[humor page] Found ${publishedContent.length} published humor items`);
+          
+          if (publishedContent.length === 0) {
+            console.log('[humor page] No humor articles found or filtering failed.');
+          }
         }
 
         setHumorContent(publishedContent as Article[]);
