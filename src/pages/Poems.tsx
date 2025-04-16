@@ -67,7 +67,7 @@ const Poems = () => {
         <Navigation />
         
         <main className="flex-grow pt-24 px-4 md:px-8 lg:px-16 max-w-7xl mx-auto w-full">
-          <h1 className="text-3xl md:text-4xl font-alef font-bold text-purple-dark text-center mb-8 gold-text-shadow">
+          <h1 className="text-4xl md:text-5xl font-alef text-center text-[#D6BCFA] mb-10 gold-text-shadow">
             שירים
           </h1>
           
