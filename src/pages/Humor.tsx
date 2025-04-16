@@ -97,12 +97,14 @@ const Humor = () => {
         <Navigation />
         
         <main className="flex-grow pt-24 px-4 md:px-8 lg:px-16 max-w-7xl mx-auto w-full">
-          <h1 className="text-3xl md:text-4xl font-alef font-bold text-purple-dark text-center mb-4 gold-text-shadow">
+          <h1 className="text-4xl md:text-5xl font-alef text-center text-[#4A235A] mb-10 gold-text-shadow">
             לצחוק ברצינות
           </h1>
           
-          <p className="text-center text-lg md:text-xl text-purple-dark mb-8 max-w-3xl mx-auto">
-            גם בתוך תהליכים עמוקים – מותר (ואפילו חשוב) לצחוק. כאן תמצאו שירים עם קריצה, שנכתבו מתוך החיים עצמם.
+          <p className="text-center text-lg md:text-xl text-[#4A235A] mb-8 max-w-3xl mx-auto font-alef">
+            גם בתוך תהליכים עמוקים – מותר (ואפילו חשוב) לצחוק. 
+            <br />
+            כאן תמצאו שירים עם קריצה, שנכתבו מתוך החיים עצמם.
           </p>
           
           {loading ? (
