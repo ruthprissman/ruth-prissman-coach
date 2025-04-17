@@ -1,4 +1,12 @@
+
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /Terms
+Disallow: /PrivacyPolicy
+Disallow: /Unsubscribe
+Disallow: /PoemView
+Disallow: /HumorView
+Disallow: /ArticleView
 
 Sitemap: https://ruth-prissman-coach.lovable.app/sitemap.xml
