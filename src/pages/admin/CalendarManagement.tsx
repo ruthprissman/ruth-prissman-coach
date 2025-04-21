@@ -24,6 +24,7 @@ import { fetchGoogleCalendarEvents, compareCalendarData } from '@/services/Googl
 import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
+import { GoogleEventsModal } from '@/components/admin/calendar/GoogleEventsModal';
 
 const CalendarManagement: React.FC = () => {
   const { user, session } = useAuth();
@@ -38,6 +39,8 @@ const CalendarManagement: React.FC = () => {
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [showDebugLogs, setShowDebugLogs] = useState<boolean>(false);
   const [syncComparison, setSyncComparison] = useState<CalendarSyncComparison | null>(null);
+  const [showEventsModal, setShowEventsModal] = useState<boolean>(false);
+  const [initialSyncComplete, setInitialSyncComplete] = useState<boolean>(false);
   const { settings, isLoading: isLoadingSettings, error: settingsError, isInitialLoadComplete } = useCalendarSettings();
   const { 
     isAuthenticated: isGoogleAuthenticated,
@@ -303,7 +306,7 @@ const CalendarManagement: React.FC = () => {
       }
       
       if (!success) {
-        throw new Error('שגיאה בהבאת אירוע��ם מיומן Google');
+        throw new Error('שגיא�� בהבאת אירוע��ם מיומן Google');
       }
       
       let slots = supabaseSlots;
@@ -711,24 +714,26 @@ const CalendarManagement: React.FC = () => {
       try {
         setIsSyncing(true);
         const events = await fetchGoogleEvents();
-        const supabase = await supabaseClient();
+        console.log('✅ Events fetched from Google Calendar:', events);
         
-        const today = startOfDay(new Date());
-        const thirtyDaysLater = addDays(today, 30);
-        
+        if (!initialSyncComplete) {
+          setShowEventsModal(true);
+          setInitialSyncComplete(true);
+        }
+
         const { data: availableSlots, error: availableSlotsError } = await supabase
           .from('calendar_slots')
           .select('*')
-          .gte('date', format(today, 'yyyy-MM-dd'))
-          .lte('date', format(thirtyDaysLater, 'yyyy-MM-dd'));
+          .gte('date', format(currentDate, 'yyyy-MM-dd'))
+          .lte('date', format(addDays(currentDate, 30), 'yyyy-MM-dd'));
         
         if (availableSlotsError) throw new Error(availableSlotsError.message);
         
         const { data: bookedSlots, error: bookedSlotsError } = await supabase
           .from('future_sessions')
           .select('*, patients(name)')
-          .gte('session_date', format(today, 'yyyy-MM-dd'))
-          .lte('session_date', format(thirtyDaysLater, 'yyyy-MM-dd'));
+          .gte('session_date', format(currentDate, 'yyyy-MM-dd'))
+          .lte('session_date', format(addDays(currentDate, 30), 'yyyy-MM-dd'));
         
         if (bookedSlotsError) throw new Error(bookedSlotsError.message);
         
@@ -739,7 +744,7 @@ const CalendarManagement: React.FC = () => {
           description: `סונכרנו ${events.length} אירועים מיומן Google`,
         });
       } catch (error: any) {
-        console.error('Error syncing with Google Calendar:', error);
+        console.error('❌ Error syncing with Google Calendar:', error);
         toast({
           title: 'שגיאה בסנכרון יומן Google',
           description: error.message,
@@ -1020,6 +1025,12 @@ const CalendarManagement: React.FC = () => {
           open={recurringDialogOpen} 
           onOpenChange={setRecurringDialogOpen}
           onSubmit={handleAddRecurringAvailability}
+        />
+        
+        <GoogleEventsModal 
+          events={googleEvents}
+          open={showEventsModal}
+          onOpenChange={setShowEventsModal}
         />
       </div>
     </AdminLayout>
