@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Table, 
@@ -42,23 +41,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 }) => {
   const [contextMenu, setContextMenu] = useState<ContextMenuOptions | null>(null);
 
-  // Get status color and label (updated to match the requested design)
-  const getStatusStyle = (status: string, syncStatus?: string, isGoogleEvent?: boolean) => {
-    // Handle Google Calendar events
+  // Get status color and label (updated with Google Calendar event styling)
+  const getStatusStyle = (status: string, syncStatus?: string, isGoogleEvent?: boolean, isMeeting?: boolean) => {
+    // Handle Google Calendar events first
     if (isGoogleEvent) {
-      return { bg: 'bg-[#D3E4FD]', border: 'border-blue-300', text: 'text-blue-800' }; // Light blue for Google events
+      if (isMeeting) {
+        return { bg: 'bg-[#5B2C6F]', border: 'border-[#5B2C6F]', text: 'text-white' }; // Dark purple for meetings
+      }
+      return { bg: 'bg-[#3498DB]', border: 'border-[#3498DB]', text: 'text-white' }; // Clean blue for other events
     }
     
-    // Handle sync status first (highest priority)
-    if (syncStatus === 'google-only') {
-      return { bg: 'bg-[#D3E4FD]', border: 'border-blue-300', text: 'text-blue-800' }; // Light blue for Google-only events
-    }
-    
-    if (syncStatus === 'supabase-only') {
-      return { bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-800' };
-    }
-    
-    // Then handle regular status
+    // Then handle regular statuses
     switch (status) {
       case 'available':
         return { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-800' };
@@ -94,13 +87,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       onUpdateSlot(contextMenu.date, contextMenu.hour, status);
       setContextMenu(null);
     }
-  };
-
-  // Format Google event time range
-  const formatTimeRange = (startTime: string, endTime: string) => {
-    const start = startTime.slice(0, 5); // Extract HH:MM
-    const end = endTime.slice(0, 5); // Extract HH:MM
-    return `${start}-${end}`;
   };
 
   if (isLoading) {
@@ -142,7 +128,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const status = slot?.status || 'unspecified';
                   const syncStatus = slot?.syncStatus;
                   const isGoogleEvent = syncStatus === 'google-only' || slot?.fromGoogle;
-                  const { bg, border, text } = getStatusStyle(status, syncStatus, isGoogleEvent);
+                  const isMeeting = isGoogleEvent && slot?.notes?.startsWith('פגישה עם');
+                  const { bg, border, text } = getStatusStyle(status, syncStatus, isGoogleEvent, isMeeting);
                   
                   const slotContent = (
                     <TableCell 
@@ -159,8 +146,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       
                       {/* Google Calendar event display with improved styling */}
                       {isGoogleEvent && (
-                        <div className="flex flex-col items-center gap-1 p-1">
-                          <span className="text-xs font-semibold block">
+                        <div className={`flex flex-col items-center gap-1 p-1 ${isMeeting ? 'font-semibold' : ''}`}>
+                          <span className="text-xs block">
                             {slot?.notes || 'אירוע גוגל'}
                           </span>
                           {slot?.description && (
@@ -175,12 +162,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       
                       {/* Add warning icon for mismatched slots */}
                       {(syncStatus === 'google-only' || syncStatus === 'supabase-only') && (
-                        <AlertTriangle className="h-4 w-4 mx-auto mt-1 text-orange-600" />
-                      )}
-                      
-                      {/* Display notes for non-Google events */}
-                      {!isGoogleEvent && slot?.notes && (
-                        <span className="text-xs mt-1 block truncate">{slot.notes}</span>
+                        <AlertTriangle className="h-4 w-4 absolute top-1 right-1 text-orange-600" />
                       )}
                     </TableCell>
                   );
