@@ -41,7 +41,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   isLoading 
 }) => {
   const [contextMenu, setContextMenu] = useState<ContextMenuOptions | null>(null);
-  const [debugMode, setDebugMode] = useState(false);
+  const [debugMode, setDebugMode] = useState(true); // הגדרת מצב דיבאג כברירת מחדל
 
   // הוספת useEffect שמציג מידע על הסלוטים בקונסול
   useEffect(() => {
@@ -190,8 +190,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   {hour}
                 </TableCell>
                 {days.map((day) => {
-                  const dayData = calendarData.get(day.date);
-                  const slot = dayData?.get(hour);
+                  const dayMap = calendarData.get(day.date);
+                  const slot = dayMap?.get(hour);
                   
                   // Debugging - log slot data to console
                   const hasGoogleEvent = slot?.fromGoogle || slot?.syncStatus === 'google-only';
@@ -213,13 +213,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       className={`${bg} ${border} ${text} border text-center transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px]`}
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, status)}
                     >
-                      {status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
+                      {status === 'available' && !isGoogleEvent && <Check className="h-4 w-4 mx-auto text-purple-600" />}
                       {status === 'booked' && !isGoogleEvent && (
                         <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />
                       )}
-                      {status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
-                      {status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
-                      {status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
+                      {status === 'completed' && !isGoogleEvent && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
+                      {status === 'canceled' && !isGoogleEvent && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
+                      {status === 'private' && !isGoogleEvent && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
                       
                       {/* Google Calendar event display with improved styling */}
                       {isGoogleEvent && (

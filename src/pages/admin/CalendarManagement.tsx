@@ -251,7 +251,7 @@ const CalendarManagement: React.FC = () => {
       
       try {
         const sessionDateTime = new Date(session.session_date);
-        const israelTime = format(new Date(sessionDateTime), 'yyyy-MM-dd HH:mm:ss');
+        const israelTime = format(sessionDateTime, 'yyyy-MM-dd HH:mm:ss');
         
         const sessionDate = israelTime.split(' ')[0];
         const timeParts = israelTime.split(' ')[1].split(':');
@@ -260,7 +260,7 @@ const CalendarManagement: React.FC = () => {
         const dayMap = calendarData.get(sessionDate);
         if (dayMap && dayMap.has(sessionTime)) {
           const endTime = addMinutes(sessionDateTime, 90);
-          const formattedEndTime = format(new Date(endTime), 'HH:mm');
+          const formattedEndTime = format(endTime, 'HH:mm');
           
           let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
           if (session.status === 'completed') status = 'completed';
@@ -281,11 +281,29 @@ const CalendarManagement: React.FC = () => {
       if (event.start?.dateTime) {
         try {
           console.log(`Processing Google event ${index}:`, event.summary, event.start.dateTime);
-          const startDate = new Date(event.start.dateTime);
+          
+          const dateTimeStr = event.start.dateTime;
+          let startDate: Date;
+          
+          if (dateTimeStr.includes('+')) {
+            startDate = new Date(dateTimeStr); 
+          } else {
+            startDate = new Date(dateTimeStr);
+          }
+          
           const googleDate = format(startDate, 'yyyy-MM-dd');
           const googleTime = format(startDate, 'HH:00');
           
-          console.log(`Event ${index} parsed date/time:`, {googleDate, googleTime});
+          console.log(`Event ${index} parsed date/time:`, {googleDate, googleTime, 
+            originalTimezone: dateTimeStr.includes('+') ? dateTimeStr.split('+')[1] : 'no timezone'});
+          
+          const isDayVisible = days.some(day => day.date === googleDate);
+          console.log(`Is day ${googleDate} visible in calendar:`, isDayVisible);
+          
+          if (!isDayVisible) {
+            console.log(`Skipping event ${index}: day is not in current calendar view range`);
+            return;
+          }
           
           const dayMap = calendarData.get(googleDate);
           if (dayMap && dayMap.has(googleTime)) {
@@ -296,7 +314,9 @@ const CalendarManagement: React.FC = () => {
               const formattedEndTime = format(endTime, 'HH:mm');
               
               const isGoogleMeeting = event.summary?.includes('פגישה עם') || 
-                                      event.description?.includes('פגישה עם');
+                                    event.description?.includes('פגישה עם');
+              
+              console.log(`Updating slot for event ${index} ${event.summary}, isGoogleMeeting:`, isGoogleMeeting);
               
               dayMap.set(googleTime, {
                 ...existingSlot!,
@@ -305,14 +325,18 @@ const CalendarManagement: React.FC = () => {
                 description: event.description,
                 fromGoogle: true,
                 syncStatus: 'google-only',
-                googleEvent: event // שמירת האירוע המקורי לשימוש עתידי
+                googleEvent: event
               });
-              console.log(`Updated slot for event ${index}: ${event.summary}`);
             } else {
               console.log(`Slot for event ${index} already booked or completed, not overriding`);
             }
           } else {
             console.log(`No matching slot found for event ${index} at ${googleDate} ${googleTime}`);
+            if (!dayMap) {
+              console.log(`No day map for ${googleDate}`);
+            } else {
+              console.log(`Available hours for ${googleDate}:`, Array.from(dayMap.keys()));
+            }
           }
         } catch (error) {
           console.error(`Error processing Google event ${index}:`, error);
@@ -321,6 +345,17 @@ const CalendarManagement: React.FC = () => {
         console.log(`Skipping event ${index} - no start.dateTime:`, event);
       }
     });
+    
+    let googleEventsFound = 0;
+    calendarData.forEach((dayMap, date) => {
+      dayMap.forEach((slot, hour) => {
+        if (slot.fromGoogle || slot.syncStatus === 'google-only') {
+          googleEventsFound++;
+          console.log(`Found Google event in final data at ${date} ${hour}:`, slot.notes);
+        }
+      });
+    });
+    console.log(`Total Google events added to calendar: ${googleEventsFound}`);
     
     console.log('Final calendar data:', Array.from(calendarData.entries()).map(([date, slots]) => ({
       date,
@@ -867,7 +902,7 @@ const CalendarManagement: React.FC = () => {
     } catch (error: any) {
       console.error('Error setting recurring availability:', error);
       toast({
-        title: 'שגיאה בהגדרת זמינות חוזרת',
+        title: 'שגיאה ב��גדרת זמינות חוזרת',
         description: error.message,
         variant: 'destructive',
       });
