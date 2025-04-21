@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -877,8 +878,10 @@ const CalendarManagement: React.FC = () => {
           
           <CalendarToolbar 
             currentDate={currentDate}
-            onDateChange={setCurrentDate}
-            onNavigate={navigateWeek}
+            onPrevWeek={() => navigateWeek('prev')}
+            onNextWeek={() => navigateWeek('next')}
+            onToday={() => setCurrentDate(new Date())}
+            onAddRecurring={() => setRecurringDialogOpen(true)}
           />
         </div>
         
@@ -931,8 +934,8 @@ const CalendarManagement: React.FC = () => {
                   <GoogleOAuthButton 
                     isAuthenticated={isGoogleAuthenticated}
                     isAuthenticating={isGoogleAuthenticating}
-                    signIn={signInWithGoogle}
-                    signOut={signOutFromGoogle}
+                    onSignIn={signInWithGoogle}
+                    onSignOut={signOutFromGoogle}
                   />
                   
                   {isGoogleAuthenticated && (
@@ -989,14 +992,14 @@ const CalendarManagement: React.FC = () => {
               days={days}
               hours={hours}
               isLoading={isLoading}
-              updateTimeSlot={updateTimeSlot}
+              onUpdateSlot={updateTimeSlot}
             />
           </TabsContent>
           
           <TabsContent value="list" className="mt-0">
             <CalendarListView 
               calendarData={calendarData}
-              days={days}
+              onUpdateSlot={updateTimeSlot}
               isLoading={isLoading}
             />
           </TabsContent>
@@ -1005,11 +1008,14 @@ const CalendarManagement: React.FC = () => {
         <RecurringAvailabilityDialog 
           open={recurringDialogOpen} 
           onOpenChange={setRecurringDialogOpen}
-          onAddRecurringAvailability={handleAddRecurringAvailability}
+          onSubmit={handleAddRecurringAvailability}
         />
         
         {showDebugLogs && (
-          <DebugLogPanel logs={debugLogs} />
+          <DebugLogPanel 
+            logs={debugLogs} 
+            onClose={() => setShowDebugLogs(false)}
+          />
         )}
         
         <div>{console.log("🚫 GoogleEventsModal temporarily disabled")}</div>
