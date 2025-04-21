@@ -18,7 +18,8 @@ interface GoogleEventsModalProps {
 }
 
 export function GoogleEventsModal({ events, open, onOpenChange }: GoogleEventsModalProps) {
-  if (events.length > 0) {
+  // Only log when the modal is actually opened and has events
+  if (open && events.length > 0) {
     console.log('🟣 Modal opened with', events.length, 'events');
   }
 
