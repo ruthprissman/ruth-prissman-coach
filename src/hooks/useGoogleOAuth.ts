@@ -26,6 +26,7 @@ export function useGoogleOAuth() {
         setState(prev => ({ ...prev, isAuthenticating: true }));
         
         const isSignedIn = await checkIfSignedIn();
+        console.log('Google OAuth initialized, signed in:', isSignedIn);
         
         setState({
           isAuthenticated: isSignedIn,
@@ -34,6 +35,7 @@ export function useGoogleOAuth() {
         });
         
         if (isSignedIn) {
+          console.log('User is signed in to Google, fetching events');
           fetchEvents();
         }
       } catch (error: any) {
@@ -52,15 +54,30 @@ export function useGoogleOAuth() {
   const fetchEvents = async () => {
     try {
       setIsLoadingEvents(true);
+      console.log('Starting to fetch Google Calendar events');
+      
       const calendarEvents = await fetchGoogleCalendarEvents();
       setEvents(calendarEvents);
       
+      console.log(`Fetched ${calendarEvents.length} Google Calendar events`);
+      
       if (calendarEvents.length > 0) {
+        // לוג מפורט של האירועים הראשונים
+        calendarEvents.slice(0, 3).forEach((event, idx) => {
+          console.log(`Event ${idx + 1}:`, {
+            summary: event.summary,
+            start: event.start?.dateTime,
+            end: event.end?.dateTime,
+            description: event.description?.substring(0, 30) + '...' || 'No description'
+          });
+        });
+        
         toast({
           title: 'אירועי יומן Google נטענו',
           description: `נטענו ${calendarEvents.length} אירועים מיומן Google`,
         });
       } else {
+        console.log('No Google Calendar events found');
         toast({
           title: 'לא נמצאו אירועים',
           description: 'לא נמצאו אירועים ביומן Google',

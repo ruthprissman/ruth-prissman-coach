@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Table, 
   TableHeader, 
@@ -41,6 +41,33 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   isLoading 
 }) => {
   const [contextMenu, setContextMenu] = useState<ContextMenuOptions | null>(null);
+  const [debugMode, setDebugMode] = useState(false);
+
+  // הוספת useEffect שמציג מידע על הסלוטים בקונסול
+  useEffect(() => {
+    console.log('CalendarGrid rendered with data:', {
+      daysCount: days.length,
+      hoursCount: hours.length,
+      datesWithData: calendarData.size
+    });
+
+    // חיפוש אירועי גוגל בתוך הנתונים
+    let googleEventsFound = 0;
+    calendarData.forEach((dayMap, date) => {
+      dayMap.forEach((slot, hour) => {
+        if (slot.fromGoogle || slot.syncStatus === 'google-only') {
+          googleEventsFound++;
+          console.log(`Found Google event at ${date} ${hour}:`, {
+            summary: slot.notes,
+            description: slot.description,
+            fromGoogle: slot.fromGoogle,
+            syncStatus: slot.syncStatus
+          });
+        }
+      });
+    });
+    console.log(`Total Google events found in calendar data: ${googleEventsFound}`);
+  }, [calendarData, days, hours]);
 
   // Get status color and label (updated with Google Calendar event styling)
   const getStatusStyle = (status: string, syncStatus?: string, isGoogleEvent?: boolean, isMeeting?: boolean) => {
@@ -98,8 +125,27 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       syncStatus: slot?.syncStatus,
       fromGoogle: slot?.fromGoogle,
       notes: slot?.notes,
-      isGoogleEvent: slot?.syncStatus === 'google-only' || slot?.fromGoogle
+      description: slot?.description,
+      isGoogleEvent: slot?.syncStatus === 'google-only' || slot?.fromGoogle,
+      googleEvent: slot?.googleEvent
     });
+    return true; // החזרת ערך כדי לאפשר שימוש בפונקציה בתוך JSX
+  };
+
+  // Toggle debug mode
+  const toggleDebugMode = () => {
+    setDebugMode(!debugMode);
+    console.log(`Debug mode ${!debugMode ? 'enabled' : 'disabled'}`);
+    if (!debugMode) {
+      // Log all Google events when debug mode is enabled
+      calendarData.forEach((dayMap, date) => {
+        dayMap.forEach((slot, hour) => {
+          if (slot.fromGoogle || slot.syncStatus === 'google-only') {
+            logSlotInfo(date, hour, slot);
+          }
+        });
+      });
+    }
   };
 
   if (isLoading) {
@@ -115,6 +161,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   return (
     <TooltipProvider>
       <div className="overflow-x-auto">
+        <div className="mb-2 flex justify-end">
+          <button 
+            onClick={toggleDebugMode}
+            className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-100 rounded"
+          >
+            {debugMode ? 'הסתר מידע דיבאג' : 'הצג מידע דיבאג'}
+          </button>
+        </div>
         <Table className="border rounded-md">
           <TableHeader className="bg-purple-50">
             <TableRow>
@@ -140,14 +194,18 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const slot = dayData?.get(hour);
                   
                   // Debugging - log slot data to console
-                  if (slot?.fromGoogle || slot?.syncStatus === 'google-only') {
+                  const hasGoogleEvent = slot?.fromGoogle || slot?.syncStatus === 'google-only';
+                  if (hasGoogleEvent && debugMode) {
                     logSlotInfo(day.date, hour, slot);
                   }
                   
                   const status = slot?.status || 'unspecified';
                   const syncStatus = slot?.syncStatus;
                   const isGoogleEvent = syncStatus === 'google-only' || slot?.fromGoogle;
-                  const isMeeting = isGoogleEvent && slot?.notes?.includes('פגישה עם');
+                  const isMeeting = isGoogleEvent && (
+                    (slot?.notes && slot.notes.includes('פגישה עם')) || 
+                    (slot?.description && slot.description.includes('פגישה עם'))
+                  );
                   const { bg, border, text } = getStatusStyle(status, syncStatus, isGoogleEvent, isMeeting);
                   
                   const slotContent = (
@@ -176,6 +234,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                                 : slot.description}
                             </span>
                           )}
+                          {debugMode && (
+                            <span className="text-[9px] text-gray-300 mt-1">
+                              [Google Event]
+                            </span>
+                          )}
                         </div>
                       )}
                       
@@ -189,7 +252,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   return (
                     <ContextMenu key={`${day.date}-${hour}`}>
                       <ContextMenuTrigger asChild>
-                        {slot?.description ? (
+                        {(slot?.description || hasGoogleEvent) ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               {slotContent}
@@ -198,7 +261,20 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                               side="bottom"
                               className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded"
                             >
-                              {slot.description}
+                              {hasGoogleEvent ? (
+                                <div>
+                                  <p className="font-bold">{slot?.notes || 'אירוע גוגל'}</p>
+                                  {slot?.description && <p>{slot.description}</p>}
+                                  {slot?.googleEvent && (
+                                    <div className="mt-1 text-[10px] text-gray-400">
+                                      <p>התחלה: {new Date(slot.googleEvent.start.dateTime).toLocaleString()}</p>
+                                      <p>סיום: {new Date(slot.googleEvent.end.dateTime).toLocaleString()}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                slot?.description
+                              )}
                             </TooltipContent>
                           </Tooltip>
                         ) : (

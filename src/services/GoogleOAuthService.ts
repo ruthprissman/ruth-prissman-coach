@@ -1,4 +1,3 @@
-
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
@@ -97,6 +96,11 @@ export async function fetchGoogleCalendarEvents(): Promise<GoogleCalendarEvent[]
     const timeMin = encodeURIComponent(now.toISOString());
     const timeMax = encodeURIComponent(threeMonthsLater.toISOString());
     
+    console.log('Fetching Google Calendar events from API, time range:', {
+      from: now.toISOString(),
+      to: threeMonthsLater.toISOString()
+    });
+    
     // Make a direct fetch to Google Calendar API
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
@@ -114,18 +118,31 @@ export async function fetchGoogleCalendarEvents(): Promise<GoogleCalendarEvent[]
     }
     
     const data = await response.json();
-    console.log('Google Calendar events fetched:', data.items);
+    console.log('Google Calendar API response - events count:', data.items.length);
     
-    // Transform the response to our GoogleCalendarEvent format
-    const events: GoogleCalendarEvent[] = data.items.map((item: any) => ({
-      id: item.id,
-      summary: item.summary || 'אירוע ללא ��ותרת',
-      description: item.description || '',
-      start: item.start,
-      end: item.end,
-      status: item.status || 'confirmed',
-      syncStatus: 'google-only'
-    }));
+    // Transform the response to our GoogleCalendarEvent format and add logging
+    const events: GoogleCalendarEvent[] = data.items.map((item: any, index: number) => {
+      // הוספת לוג לפריט כדי לבדוק את הפורמט
+      console.log(`Google Calendar event ${index}:`, {
+        id: item.id,
+        summary: item.summary,
+        start: item.start,
+        end: item.end
+      });
+      
+      return {
+        id: item.id,
+        summary: item.summary || 'אירוע ללא כותרת',
+        description: item.description || '',
+        start: item.start,
+        end: item.end,
+        status: item.status || 'confirmed',
+        syncStatus: 'google-only'
+      };
+    });
+    
+    // לוג מסכם והחזרת האירועים
+    console.log(`Processed ${events.length} Google Calendar events`);
     
     return events;
   } catch (error) {

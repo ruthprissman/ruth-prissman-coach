@@ -163,9 +163,17 @@ const CalendarManagement: React.FC = () => {
         throw new Error(bookedSlotsError.message);
       }
 
+      console.log('fetchAvailabilityData: Google authentication status:', {
+        isAuthenticated: isGoogleAuthenticated,
+        eventsCount: googleEvents.length,
+        firstEventIfAny: googleEvents.length > 0 ? googleEvents[0] : null
+      });
+
       if (isGoogleAuthenticated && googleEvents.length > 0) {
+        console.log('Processing calendar data with Google events:', googleEvents);
         processCalendarDataWithGoogleEvents(availableSlots || [], bookedSlots || [], googleEvents);
       } else {
+        console.log('Using regular calendar data processing (no Google events)');
         const newCalendarData = processCalendarData(availableSlots || [], bookedSlots || []);
         setCalendarData(newCalendarData);
       }
@@ -185,26 +193,33 @@ const CalendarManagement: React.FC = () => {
   };
 
   useEffect(() => {
-    if (isGoogleAuthenticated && googleEvents.length > 0) {
-      console.log("📅 Google Calendar events fetched:", googleEvents);
+    console.log('useEffect triggered - currentDate or googleEvents changed', {
+      currentDateStr: format(currentDate, 'yyyy-MM-dd'),
+      googleEventsCount: googleEvents.length
+    });
+    fetchAvailabilityData();
+  }, [currentDate, googleEvents.length]);
 
-      googleEvents.forEach((event, index) => {
-        console.log(`📌 Event ${index + 1}:`, {
-          title: event.summary,
-          startTime: event.start?.dateTime,
-          endTime: event.end?.dateTime,
-          description: event.description || 'No description',
-          status: event.status
-        });
+  useEffect(() => {
+    if (isGoogleAuthenticated) {
+      console.log('Google authenticated, fetching events');
+      fetchGoogleEvents().then(events => {
+        console.log(`Fetched ${events.length} Google events`);
       });
     }
-  }, [isGoogleAuthenticated, googleEvents]);
+  }, [isGoogleAuthenticated]);
 
   const processCalendarDataWithGoogleEvents = (
     availableSlots: any[], 
     bookedSlots: any[],
     googleCalendarEvents: GoogleCalendarEvent[]
   ) => {
+    console.log('processCalendarDataWithGoogleEvents called with', {
+      availableSlotsCount: availableSlots.length,
+      bookedSlotsCount: bookedSlots.length,
+      googleEventsCount: googleCalendarEvents.length
+    });
+    
     const calendarData = new Map<string, Map<string, CalendarSlot>>();
     
     days.forEach(day => {
@@ -236,7 +251,7 @@ const CalendarManagement: React.FC = () => {
       
       try {
         const sessionDateTime = new Date(session.session_date);
-        const israelTime = formatInTimeZone(sessionDateTime, 'Asia/Jerusalem', 'yyyy-MM-dd HH:mm:ss');
+        const israelTime = format(new Date(sessionDateTime), 'yyyy-MM-dd HH:mm:ss');
         
         const sessionDate = israelTime.split(' ')[0];
         const timeParts = israelTime.split(' ')[1].split(':');
@@ -245,7 +260,7 @@ const CalendarManagement: React.FC = () => {
         const dayMap = calendarData.get(sessionDate);
         if (dayMap && dayMap.has(sessionTime)) {
           const endTime = addMinutes(sessionDateTime, 90);
-          const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
+          const formattedEndTime = format(new Date(endTime), 'HH:mm');
           
           let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
           if (session.status === 'completed') status = 'completed';
@@ -262,32 +277,56 @@ const CalendarManagement: React.FC = () => {
       }
     });
     
-    googleCalendarEvents.forEach(event => {
+    googleCalendarEvents.forEach((event, index) => {
       if (event.start?.dateTime) {
-        const startDate = new Date(event.start.dateTime);
-        const googleDate = format(startDate, 'yyyy-MM-dd');
-        const googleTime = format(startDate, 'HH:00');
-        
-        const dayMap = calendarData.get(googleDate);
-        if (dayMap && dayMap.has(googleTime)) {
-          const existingSlot = dayMap.get(googleTime);
-          if (existingSlot?.status !== 'booked' && existingSlot?.status !== 'completed') {
-            const endTime = new Date(startDate);
-            endTime.setMinutes(endTime.getMinutes() + 90);
-            const formattedEndTime = format(endTime, 'HH:mm');
-            
-            dayMap.set(googleTime, {
-              ...existingSlot!,
-              status: 'booked',
-              notes: event.summary || 'אירוע Google',
-              description: event.description,
-              fromGoogle: true,
-              syncStatus: 'google-only'
-            });
+        try {
+          console.log(`Processing Google event ${index}:`, event.summary, event.start.dateTime);
+          const startDate = new Date(event.start.dateTime);
+          const googleDate = format(startDate, 'yyyy-MM-dd');
+          const googleTime = format(startDate, 'HH:00');
+          
+          console.log(`Event ${index} parsed date/time:`, {googleDate, googleTime});
+          
+          const dayMap = calendarData.get(googleDate);
+          if (dayMap && dayMap.has(googleTime)) {
+            console.log(`Found matching slot for event ${index} at ${googleDate} ${googleTime}`);
+            const existingSlot = dayMap.get(googleTime);
+            if (existingSlot?.status !== 'booked' && existingSlot?.status !== 'completed') {
+              const endTime = new Date(event.end.dateTime);
+              const formattedEndTime = format(endTime, 'HH:mm');
+              
+              const isGoogleMeeting = event.summary?.includes('פגישה עם') || 
+                                      event.description?.includes('פגישה עם');
+              
+              dayMap.set(googleTime, {
+                ...existingSlot!,
+                status: 'booked',
+                notes: event.summary || 'אירוע Google',
+                description: event.description,
+                fromGoogle: true,
+                syncStatus: 'google-only',
+                googleEvent: event // שמירת האירוע המקורי לשימוש עתידי
+              });
+              console.log(`Updated slot for event ${index}: ${event.summary}`);
+            } else {
+              console.log(`Slot for event ${index} already booked or completed, not overriding`);
+            }
+          } else {
+            console.log(`No matching slot found for event ${index} at ${googleDate} ${googleTime}`);
           }
+        } catch (error) {
+          console.error(`Error processing Google event ${index}:`, error);
         }
+      } else {
+        console.log(`Skipping event ${index} - no start.dateTime:`, event);
       }
     });
+    
+    console.log('Final calendar data:', Array.from(calendarData.entries()).map(([date, slots]) => ({
+      date,
+      slotsCount: slots.size,
+      googleEvents: Array.from(slots.values()).filter(slot => slot.fromGoogle).length
+    })));
     
     setCalendarData(calendarData);
   };
@@ -296,7 +335,7 @@ const CalendarManagement: React.FC = () => {
     if (!settings?.apiKey || !settings?.calendarId) {
       toast({
         title: 'הגדרות יומן חסרות',
-        description: 'לא ניתן לבצע סנכרון ללא מפתח API ומזהה יומן',
+        description: 'לא ניתן לבצע סנכ��ון ללא מפתח API ומזהה יומן',
         variant: 'destructive',
       });
       return;
@@ -766,7 +805,7 @@ const CalendarManagement: React.FC = () => {
       }
     } else {
       toast({
-        title: 'אינך מחובר/ת ליומן Google',
+        title: '��ינך מחובר/ת ליומן Google',
         description: 'יש להתחבר תחילה כדי לסנכרן את היומן',
         variant: 'destructive',
       });
