@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -25,7 +24,6 @@ import { fetchGoogleCalendarEvents, compareCalendarData } from '@/services/Googl
 import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
-import { GoogleEventsModal } from '@/components/admin/calendar/GoogleEventsModal';
 
 const CalendarManagement: React.FC = () => {
   const { user, session } = useAuth();
@@ -40,8 +38,6 @@ const CalendarManagement: React.FC = () => {
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [showDebugLogs, setShowDebugLogs] = useState<boolean>(false);
   const [syncComparison, setSyncComparison] = useState<CalendarSyncComparison | null>(null);
-  const [showEventsModal, setShowEventsModal] = useState<boolean>(false);
-  const [initialSyncComplete, setInitialSyncComplete] = useState<boolean>(false);
   const { settings, isLoading: isLoadingSettings, error: settingsError, isInitialLoadComplete } = useCalendarSettings();
   const { 
     isAuthenticated: isGoogleAuthenticated,
@@ -188,16 +184,6 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (isGoogleAuthenticated && googleEvents.length > 0 && !initialSyncComplete) {
-      console.log(`✅ Modal opened with ${googleEvents.length} events`);
-      setShowEventsModal(true);
-      setInitialSyncComplete(true);
-    } else if (initialSyncComplete) {
-      console.log("⛔ Modal already shown — skipping");
-    }
-  }, [isGoogleAuthenticated, googleEvents.length, initialSyncComplete]);
-
   const processCalendarDataWithGoogleEvents = (
     availableSlots: any[], 
     bookedSlots: any[],
@@ -317,7 +303,7 @@ const CalendarManagement: React.FC = () => {
       }
       
       if (!success) {
-        throw new Error('שגיאה בהבאת אירועים מיומן Google');
+        throw new Error('שגיאה בהבאת אירוע��ם מיומן Google');
       }
       
       let slots = supabaseSlots;
@@ -706,7 +692,7 @@ const CalendarManagement: React.FC = () => {
     } catch (error: any) {
       console.error('Error updating time slot:', error);
       toast({
-        title: 'שגיאה בעדכון משבצת הזמן',
+        title: 'שגיאה בעדכון מש��צת הזמן',
         description: error.message,
         variant: 'destructive',
       });
@@ -725,21 +711,24 @@ const CalendarManagement: React.FC = () => {
       try {
         setIsSyncing(true);
         const events = await fetchGoogleEvents();
-        console.log('✅ Events fetched from Google Calendar:', events);
+        const supabase = await supabaseClient();
+        
+        const today = startOfDay(new Date());
+        const thirtyDaysLater = addDays(today, 30);
         
         const { data: availableSlots, error: availableSlotsError } = await supabase
           .from('calendar_slots')
           .select('*')
-          .gte('date', format(currentDate, 'yyyy-MM-dd'))
-          .lte('date', format(addDays(currentDate, 30), 'yyyy-MM-dd'));
+          .gte('date', format(today, 'yyyy-MM-dd'))
+          .lte('date', format(thirtyDaysLater, 'yyyy-MM-dd'));
         
         if (availableSlotsError) throw new Error(availableSlotsError.message);
         
         const { data: bookedSlots, error: bookedSlotsError } = await supabase
           .from('future_sessions')
           .select('*, patients(name)')
-          .gte('session_date', format(currentDate, 'yyyy-MM-dd'))
-          .lte('session_date', format(addDays(currentDate, 30), 'yyyy-MM-dd'));
+          .gte('session_date', format(today, 'yyyy-MM-dd'))
+          .lte('session_date', format(thirtyDaysLater, 'yyyy-MM-dd'));
         
         if (bookedSlotsError) throw new Error(bookedSlotsError.message);
         
@@ -750,7 +739,7 @@ const CalendarManagement: React.FC = () => {
           description: `סונכרנו ${events.length} אירועים מיומן Google`,
         });
       } catch (error: any) {
-        console.error('❌ Error syncing with Google Calendar:', error);
+        console.error('Error syncing with Google Calendar:', error);
         toast({
           title: 'שגיאה בסנכרון יומן Google',
           description: error.message,
@@ -865,144 +854,166 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    fetchAvailabilityData();
+  }, [currentDate, googleEvents]);
+
+  useEffect(() => {
+    if (isGoogleAuthenticated && googleEvents.length > 0) {
+      fetchAvailabilityData();
+    }
+  }, [isGoogleAuthenticated, googleEvents.length]);
+
+  useEffect(() => {
+    setIsLoading(isSyncing || isLoadingSettings || isLoadingGoogleEvents);
+  }, [isSyncing, isLoadingSettings, isLoadingGoogleEvents]);
+
   return (
-    <AdminLayout title="ניהול יומן">
-      <Tabs defaultValue={selectedView} onValueChange={(value) => setSelectedView(value as 'calendar' | 'list')}>
-        <div className="flex flex-col md:flex-row md:justify-between mb-6">
-          <div className="mb-4 md:mb-0">
-            <TabsList>
-              <TabsTrigger value="calendar">תצוגת רשת</TabsTrigger>
-              <TabsTrigger value="list">תצוגת רשימה</TabsTrigger>
-            </TabsList>
+    <AdminLayout title="ניהול זמינות יומן">
+      <div className="container mx-auto py-6" dir="rtl">
+        <div className="flex flex-col space-y-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-gray-900">ניהול זמינות יומן</h1>
+            <div className="flex items-center gap-2">
+              <GoogleOAuthButton 
+                isAuthenticated={isGoogleAuthenticated}
+                isAuthenticating={isGoogleAuthenticating}
+                onSignIn={signInWithGoogle}
+                onSignOut={signOutFromGoogle}
+              />
+              {isGoogleAuthenticated && (
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={handleGoogleSync}
+                  disabled={isSyncing || isLoadingGoogleEvents}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span>סנכרון ידני</span>
+                </Button>
+              )}
+            </div>
           </div>
           
-          <CalendarToolbar 
-            currentDate={currentDate}
-            onPrevWeek={() => navigateWeek('prev')}
-            onNextWeek={() => navigateWeek('next')}
-            onToday={() => setCurrentDate(new Date())}
-            onAddRecurring={() => setRecurringDialogOpen(true)}
-          />
-        </div>
-        
-        {!tableExists && (
-          <Alert className="mb-4" variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>טבלת משבצות זמן ביומן לא קיימת</AlertTitle>
-            <AlertDescription>
-              לא ניתן להשתמש ביומן עד ליצירת הטבלה הנדרשת במסד הנתונים.
-              
-              <div className="mt-2">
-                <Button onClick={createCalendarSlotsTable}>
-                  צור טבלת יומן
-                </Button>
+          <Separator className="my-4" />
+          
+          {showDebugLogs && (
+            <DebugLogPanel 
+              logs={debugLogs} 
+              onClose={() => setShowDebugLogs(false)}
+              title="יומן סנכרון Google Calendar" 
+            />
+          )}
+          
+          {googleAuthError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>שגיאה בהתחברות ליומן Google</AlertTitle>
+              <AlertDescription>
+                {googleAuthError}
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {isGoogleAuthenticated && googleEvents.length > 0 && (
+            <Alert className="mb-4 bg-blue-50 border-blue-200">
+              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                <CalendarIcon className="h-4 w-4 text-blue-600" />
+                <AlertTitle className="text-blue-600">מצב יומן Google</AlertTitle>
               </div>
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <div className="space-y-6">
-          {isAdmin && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <AlertDescription className="mt-2 text-sm">
+                <p>מחובר ליומן Google. נטענו {googleEvents.length} אירועים.</p>
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {!isGoogleAuthenticated && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>לא התקבלה גישה ליומן הגוגל שלך</AlertTitle>
+              <AlertDescription>
+                אנא התחבר לחשבון Google שלך וספק הרשאות גישה ליומן כדי להציג את האירועים שלך.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {!tableExists && !showDebugLogs ? (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>טבלת היומן חסרה</AlertTitle>
+              <AlertDescription>
+                לא קיימים נתוני זמינות ביומן. הטבלה המתאימה לא קיימת במערכת.
+                <Button 
+                  onClick={createCalendarSlotsTable} 
+                  variant="outline" 
+                  className="mt-2 ml-auto"
+                >
+                  יצירת טבלת יומן
+                </Button>
+              </AlertDescription>
+            </Alert>
+          ) : null}
+          
+          {isLoadingSettings && !isLoading && (
+            <Alert className="mb-4">
+              <div className="flex items-center">
+                <Settings className="h-4 w-4 mr-2 animate-spin" />
+                <AlertTitle>טוען הגדרות יומן</AlertTitle>
+              </div>
+              <AlertDescription>
+                מתחבר ליומן Google, אנא המתן...
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle>הגדרות זמינות</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Button 
-                    onClick={() => setRecurringDialogOpen(true)}
-                    className="w-full"
-                  >
-                    הגדר זמינות חוזרת
-                  </Button>
-                  
-                  <Button 
-                    variant="outline"
-                    onClick={applyDefaultAvailability}
-                    className="w-full"
-                  >
-                    הגדר זמינות ברירת מחדל
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle>סנכרון גוגל</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <GoogleOAuthButton 
-                    isAuthenticated={isGoogleAuthenticated}
-                    isAuthenticating={isGoogleAuthenticating}
-                    onSignIn={signInWithGoogle}
-                    onSignOut={signOutFromGoogle}
-                  />
-                  
-                  {isGoogleAuthenticated && (
-                    <Button 
-                      onClick={handleGoogleSync}
-                      disabled={isSyncing}
-                      className="w-full"
-                    >
-                      {isSyncing ? (
-                        <>
-                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                          מסנכרן...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          סנכרן יומן Google
-                        </>
-                      )}
-                    </Button>
-                  )}
-                  
-                  <Button 
-                    variant="outline" 
-                    onClick={checkGoogleToken}
-                    size="sm"
-                    className="w-full text-xs"
-                  >
-                    בדוק טוקן גוגל
-                  </Button>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle>הגדרות יומן</CardTitle>
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <CardTitle>הגדרת זמני זמינות לפגישות</CardTitle>
+                    <Tabs value={selectedView} onValueChange={(value) => setSelectedView(value as 'calendar' | 'list')}>
+                      <TabsList>
+                        <TabsTrigger value="calendar">תצוגת לוח</TabsTrigger>
+                        <TabsTrigger value="list">תצוגת רשימה</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <Button
-                    onClick={() => window.location.href = '/admin/settings?tab=calendar'} 
-                    className="w-full"
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    ערוך הגדרות
-                  </Button>
+                  <CalendarToolbar 
+                    currentDate={currentDate}
+                    onPrevWeek={() => navigateWeek('prev')}
+                    onNextWeek={() => navigateWeek('next')}
+                    onToday={() => setCurrentDate(new Date())}
+                    onAddRecurring={() => setRecurringDialogOpen(true)}
+                  />
+                  
+                  <div className="mt-4">
+                    {selectedView === 'calendar' ? (
+                      <CalendarGrid 
+                        days={days}
+                        hours={hours}
+                        calendarData={calendarData}
+                        onUpdateSlot={updateTimeSlot}
+                        isLoading={isLoading}
+                      />
+                    ) : (
+                      <CalendarListView 
+                        calendarData={calendarData}
+                        onUpdateSlot={updateTimeSlot}
+                        isLoading={isLoading}
+                      />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
-          )}
-          
-          <TabsContent value="calendar" className="mt-0">
-            <CalendarGrid 
-              calendarData={calendarData}
-              days={days}
-              hours={hours}
-              isLoading={isLoading}
-              onUpdateSlot={updateTimeSlot}
-            />
-          </TabsContent>
-          
-          <TabsContent value="list" className="mt-0">
-            <CalendarListView 
-              calendarData={calendarData}
-              onUpdateSlot={updateTimeSlot}
-              isLoading={isLoading}
-            />
-          </TabsContent>
+            
+            <div>
+              <GoogleCalendarEventForm />
+            </div>
+          </div>
         </div>
         
         <RecurringAvailabilityDialog 
@@ -1010,16 +1021,7 @@ const CalendarManagement: React.FC = () => {
           onOpenChange={setRecurringDialogOpen}
           onSubmit={handleAddRecurringAvailability}
         />
-        
-        {showDebugLogs && (
-          <DebugLogPanel 
-            logs={debugLogs} 
-            onClose={() => setShowDebugLogs(false)}
-          />
-        )}
-        
-        <div>{console.log("🚫 GoogleEventsModal temporarily disabled")}</div>
-      </Tabs>
+      </div>
     </AdminLayout>
   );
 };

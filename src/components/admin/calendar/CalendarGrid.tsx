@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Table, 
@@ -41,19 +42,23 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 }) => {
   const [contextMenu, setContextMenu] = useState<ContextMenuOptions | null>(null);
 
+  // Get status color and label (updated to match the requested design)
   const getStatusStyle = (status: string, syncStatus?: string, isGoogleEvent?: boolean) => {
+    // Handle Google Calendar events
     if (isGoogleEvent) {
-      return { bg: 'bg-[#D3E4FD]', border: 'border-blue-300', text: 'text-blue-800' };
+      return { bg: 'bg-[#D3E4FD]', border: 'border-blue-300', text: 'text-blue-800' }; // Light blue for Google events
     }
     
+    // Handle sync status first (highest priority)
     if (syncStatus === 'google-only') {
-      return { bg: 'bg-[#D3E4FD]', border: 'border-blue-300', text: 'text-blue-800' };
+      return { bg: 'bg-[#D3E4FD]', border: 'border-blue-300', text: 'text-blue-800' }; // Light blue for Google-only events
     }
     
     if (syncStatus === 'supabase-only') {
       return { bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-800' };
     }
     
+    // Then handle regular status
     switch (status) {
       case 'available':
         return { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-800' };
@@ -70,6 +75,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   };
 
+  // Handle right-click on a cell
   const handleContextMenu = (e: React.MouseEvent, date: string, hour: string, status: any) => {
     e.preventDefault();
     setContextMenu({
@@ -82,6 +88,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     });
   };
 
+  // Handle selecting an option from the context menu
   const handleSelectOption = (status: 'available' | 'private' | 'unspecified') => {
     if (contextMenu) {
       onUpdateSlot(contextMenu.date, contextMenu.hour, status);
@@ -89,9 +96,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   };
 
+  // Format Google event time range
   const formatTimeRange = (startTime: string, endTime: string) => {
-    const start = startTime.slice(0, 5);
-    const end = endTime.slice(0, 5);
+    const start = startTime.slice(0, 5); // Extract HH:MM
+    const end = endTime.slice(0, 5); // Extract HH:MM
     return `${start}-${end}`;
   };
 
@@ -149,6 +157,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       {status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
                       {status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
                       
+                      {/* Google Calendar event display with improved styling */}
                       {isGoogleEvent && (
                         <div className="flex flex-col items-center gap-1 p-1">
                           <span className="text-xs font-semibold block">
@@ -164,10 +173,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         </div>
                       )}
                       
+                      {/* Add warning icon for mismatched slots */}
                       {(syncStatus === 'google-only' || syncStatus === 'supabase-only') && (
                         <AlertTriangle className="h-4 w-4 mx-auto mt-1 text-orange-600" />
                       )}
                       
+                      {/* Display notes for non-Google events */}
                       {!isGoogleEvent && slot?.notes && (
                         <span className="text-xs mt-1 block truncate">{slot.notes}</span>
                       )}
