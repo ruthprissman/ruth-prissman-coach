@@ -187,7 +187,6 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  // Add useEffect to monitor Google events and control modal display
   useEffect(() => {
     if (isGoogleAuthenticated && googleEvents.length > 0 && !initialSyncComplete) {
       console.log(`✅ Modal opened with ${googleEvents.length} events`);
@@ -727,8 +726,6 @@ const CalendarManagement: React.FC = () => {
         const events = await fetchGoogleEvents();
         console.log('✅ Events fetched from Google Calendar:', events);
         
-        // Remove the modal trigger logic from here since it's now in the useEffect
-
         const { data: availableSlots, error: availableSlotsError } = await supabase
           .from('calendar_slots')
           .select('*')
@@ -863,3 +860,15 @@ const CalendarManagement: React.FC = () => {
         description: error.message,
         variant: 'destructive',
       });
+      return false;
+    }
+  };
+
+  return (
+    <AdminLayout>
+      {/* Add your component JSX here */}
+    </AdminLayout>
+  );
+};
+
+export default CalendarManagement;
