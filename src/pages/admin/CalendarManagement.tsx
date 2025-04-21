@@ -184,6 +184,22 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (isGoogleAuthenticated && googleEvents.length > 0) {
+      console.log("📅 Google Calendar events fetched:", googleEvents);
+
+      googleEvents.forEach((event, index) => {
+        console.log(`📌 Event ${index + 1}:`, {
+          title: event.summary,
+          startTime: event.start?.dateTime,
+          endTime: event.end?.dateTime,
+          description: event.description || 'No description',
+          status: event.status
+        });
+      });
+    }
+  }, [isGoogleAuthenticated, googleEvents]);
+
   const processCalendarDataWithGoogleEvents = (
     availableSlots: any[], 
     bookedSlots: any[],
@@ -303,7 +319,7 @@ const CalendarManagement: React.FC = () => {
       }
       
       if (!success) {
-        throw new Error('שגיאה בהבאת אירוע��ם מיומן Google');
+        throw new Error('שגיאה בהבאת אירוע���ם מיומן Google');
       }
       
       let slots = supabaseSlots;
@@ -647,7 +663,7 @@ const CalendarManagement: React.FC = () => {
       if (currentSlot.status === 'booked') {
         toast({
           title: 'לא ניתן לשנות סטטוס',
-          description: 'לא ניתן לשנות משבצת זמן שכבר הוזמנה. יש לבטל את הפגישה תחילה.',
+          description: 'לא ניתן לשנות משבצת זמן שכבר הוזמנה. יש לבטל את הפ��ישה תחילה.',
           variant: 'destructive',
         });
         return;
