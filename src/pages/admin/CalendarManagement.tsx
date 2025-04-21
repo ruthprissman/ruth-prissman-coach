@@ -866,4 +866,156 @@ const CalendarManagement: React.FC = () => {
 
   return (
     <AdminLayout title="ניהול יומן">
-      <Tabs
+      <Tabs defaultValue={selectedView} onValueChange={(value) => setSelectedView(value as 'calendar' | 'list')}>
+        <div className="flex flex-col md:flex-row md:justify-between mb-6">
+          <div className="mb-4 md:mb-0">
+            <TabsList>
+              <TabsTrigger value="calendar">תצוגת רשת</TabsTrigger>
+              <TabsTrigger value="list">תצוגת רשימה</TabsTrigger>
+            </TabsList>
+          </div>
+          
+          <CalendarToolbar 
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+            onNavigate={navigateWeek}
+          />
+        </div>
+        
+        {!tableExists && (
+          <Alert className="mb-4" variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>טבלת משבצות זמן ביומן לא קיימת</AlertTitle>
+            <AlertDescription>
+              לא ניתן להשתמש ביומן עד ליצירת הטבלה הנדרשת במסד הנתונים.
+              
+              <div className="mt-2">
+                <Button onClick={createCalendarSlotsTable}>
+                  צור טבלת יומן
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <div className="space-y-6">
+          {isAdmin && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>הגדרות זמינות</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button 
+                    onClick={() => setRecurringDialogOpen(true)}
+                    className="w-full"
+                  >
+                    הגדר זמינות חוזרת
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={applyDefaultAvailability}
+                    className="w-full"
+                  >
+                    הגדר זמינות ברירת מחדל
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>סנכרון גוגל</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <GoogleOAuthButton 
+                    isAuthenticated={isGoogleAuthenticated}
+                    isAuthenticating={isGoogleAuthenticating}
+                    signIn={signInWithGoogle}
+                    signOut={signOutFromGoogle}
+                  />
+                  
+                  {isGoogleAuthenticated && (
+                    <Button 
+                      onClick={handleGoogleSync}
+                      disabled={isSyncing}
+                      className="w-full"
+                    >
+                      {isSyncing ? (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          מסנכרן...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          סנכרן יומן Google
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={checkGoogleToken}
+                    size="sm"
+                    className="w-full text-xs"
+                  >
+                    בדוק טוקן גוגל
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>הגדרות יומן</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    onClick={() => window.location.href = '/admin/settings?tab=calendar'} 
+                    className="w-full"
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    ערוך הגדרות
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          
+          <TabsContent value="calendar" className="mt-0">
+            <CalendarGrid 
+              calendarData={calendarData}
+              days={days}
+              hours={hours}
+              isLoading={isLoading}
+              updateTimeSlot={updateTimeSlot}
+            />
+          </TabsContent>
+          
+          <TabsContent value="list" className="mt-0">
+            <CalendarListView 
+              calendarData={calendarData}
+              days={days}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+        </div>
+        
+        <RecurringAvailabilityDialog 
+          open={recurringDialogOpen} 
+          onOpenChange={setRecurringDialogOpen}
+          onAddRecurringAvailability={handleAddRecurringAvailability}
+        />
+        
+        {showDebugLogs && (
+          <DebugLogPanel logs={debugLogs} />
+        )}
+        
+        <div>{console.log("🚫 GoogleEventsModal temporarily disabled")}</div>
+      </Tabs>
+    </AdminLayout>
+  );
+};
+
+export default CalendarManagement;
