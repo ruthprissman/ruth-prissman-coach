@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -876,4 +877,140 @@ const CalendarManagement: React.FC = () => {
   }, [isGoogleAuthenticated, googleEvents.length]);
 
   useEffect(() => {
-    setIsLoading(is
+    setIsLoading(isLoadingSettings);
+  }, [isLoadingSettings]);
+
+  return (
+    <AdminLayout>
+      <div className="p-4 md:p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">ניהול יומן פגישות</h1>
+            <p className="text-gray-500">הגדרת זמינות וניהול לוח זמנים</p>
+          </div>
+          
+          <div className="mt-4 md:mt-0 flex flex-col md:flex-row gap-2">
+            {isGoogleAuthenticated ? (
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={handleGoogleSync} 
+                  disabled={isSyncing}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                  סנכרן עם יומן Google
+                </Button>
+                <Button 
+                  onClick={() => signOutFromGoogle()} 
+                  variant="outline"
+                  className="text-red-500 border-red-200 hover:bg-red-50"
+                >
+                  התנתק מיומן Google
+                </Button>
+              </div>
+            ) : (
+              <GoogleOAuthButton onAuthSuccess={handleGoogleSync} />
+            )}
+          </div>
+        </div>
+        
+        {!tableExists && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>טבלת יומן לא קיימת</AlertTitle>
+            <AlertDescription>
+              לא נמצאה טבלת יומן במסד הנתונים. יש ליצור את הטבלה לפני שניתן להשתמש בלוח השנה.
+              <Button 
+                onClick={createCalendarSlotsTable} 
+                className="mt-2" 
+                size="sm"
+              >
+                צור טבלת יומן
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <div className="mb-4">
+          <Tabs defaultValue="calendar">
+            <div className="flex justify-between items-center">
+              <TabsList>
+                <TabsTrigger value="calendar">תצוגת יומן</TabsTrigger>
+                <TabsTrigger value="list">תצוגת רשימה</TabsTrigger>
+              </TabsList>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-1"
+                  onClick={() => setRecurringDialogOpen(true)}
+                >
+                  <CalendarIcon className="h-4 w-4" />
+                  <span>זמינות חוזרת</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-1"
+                  onClick={applyDefaultAvailability}
+                  disabled={!tableExists}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>הגדר זמינות ברירת מחדל</span>
+                </Button>
+              </div>
+            </div>
+            
+            <TabsContent value="calendar" className="mt-4">
+              <CalendarToolbar 
+                currentDate={currentDate}
+                onPreviousWeek={() => navigateWeek('prev')}
+                onNextWeek={() => navigateWeek('next')}
+                onToday={() => setCurrentDate(new Date())}
+              />
+              
+              <div className="mt-2">
+                <CalendarGrid 
+                  days={days}
+                  hours={hours}
+                  calendarData={calendarData}
+                  onUpdateTimeSlot={updateTimeSlot}
+                  isLoading={isLoading}
+                />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="list" className="mt-4">
+              <CalendarListView 
+                days={days}
+                hours={hours}
+                calendarData={calendarData}
+                onUpdateTimeSlot={updateTimeSlot}
+                isLoading={isLoading}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+        
+        {debugLogs.length > 0 && showDebugLogs && (
+          <DebugLogPanel logs={debugLogs} />
+        )}
+      </div>
+      
+      <RecurringAvailabilityDialog 
+        open={recurringDialogOpen}
+        onOpenChange={setRecurringDialogOpen}
+        onSubmit={handleAddRecurringAvailability}
+      />
+      
+      <GoogleEventsModal 
+        events={googleEvents}
+        open={showEventsModal}
+        onOpenChange={setShowEventsModal}
+      />
+    </AdminLayout>
+  );
+};
+
+export default CalendarManagement;
