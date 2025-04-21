@@ -865,10 +865,5 @@ const CalendarManagement: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
-      {/* Add your component JSX here */}
-    </AdminLayout>
-  );
-};
-
-export default CalendarManagement;
+    <AdminLayout title="ניהול יומן">
+      <Tabs
