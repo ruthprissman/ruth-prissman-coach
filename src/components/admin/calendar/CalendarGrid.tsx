@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Table, 
@@ -43,7 +44,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Get status color and label (updated with Google Calendar event styling)
   const getStatusStyle = (status: string, syncStatus?: string, isGoogleEvent?: boolean, isMeeting?: boolean) => {
-    // Handle Google Calendar events first
+    // Handle Google Calendar events first with higher priority
     if (isGoogleEvent) {
       if (isMeeting) {
         return { bg: 'bg-[#5B2C6F]', border: 'border-[#5B2C6F]', text: 'text-white' }; // Dark purple for meetings
@@ -89,6 +90,18 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   };
 
+  // Debug function to log slot information
+  const logSlotInfo = (date: string, hour: string, slot?: CalendarSlot) => {
+    console.log(`CalendarGrid: Slot at ${date} ${hour}:`, {
+      slot,
+      status: slot?.status,
+      syncStatus: slot?.syncStatus,
+      fromGoogle: slot?.fromGoogle,
+      notes: slot?.notes,
+      isGoogleEvent: slot?.syncStatus === 'google-only' || slot?.fromGoogle
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -125,10 +138,16 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 {days.map((day) => {
                   const dayData = calendarData.get(day.date);
                   const slot = dayData?.get(hour);
+                  
+                  // Debugging - log slot data to console
+                  if (slot?.fromGoogle || slot?.syncStatus === 'google-only') {
+                    logSlotInfo(day.date, hour, slot);
+                  }
+                  
                   const status = slot?.status || 'unspecified';
                   const syncStatus = slot?.syncStatus;
                   const isGoogleEvent = syncStatus === 'google-only' || slot?.fromGoogle;
-                  const isMeeting = isGoogleEvent && slot?.notes?.startsWith('פגישה עם');
+                  const isMeeting = isGoogleEvent && slot?.notes?.includes('פגישה עם');
                   const { bg, border, text } = getStatusStyle(status, syncStatus, isGoogleEvent, isMeeting);
                   
                   const slotContent = (

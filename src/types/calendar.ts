@@ -1,4 +1,3 @@
-
 export interface TimeSlot {
   day: number;
   date: string;
@@ -18,6 +17,7 @@ export interface CalendarSlot {
   description?: string; // For Google Calendar event description
   fromGoogle?: boolean; // Flag to indicate if this came from Google Calendar
   syncStatus?: 'synced' | 'google-only' | 'supabase-only';
+  googleEvent?: GoogleCalendarEvent; // מאחסן את האירוע המקורי מגוגל
 }
 
 export interface ContextMenuOptions {
