@@ -881,7 +881,7 @@ const CalendarManagement: React.FC = () => {
   }, [isLoadingSettings]);
 
   return (
-    <AdminLayout>
+    <AdminLayout title="ניהול יומן פגישות">
       <div className="p-4 md:p-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
@@ -910,7 +910,12 @@ const CalendarManagement: React.FC = () => {
                 </Button>
               </div>
             ) : (
-              <GoogleOAuthButton onAuthSuccess={handleGoogleSync} />
+              <GoogleOAuthButton 
+                isAuthenticated={isGoogleAuthenticated}
+                isAuthenticating={isGoogleAuthenticating}
+                onSignIn={signInWithGoogle}
+                onSignOut={signOutFromGoogle}
+              />
             )}
           </div>
         </div>
@@ -965,9 +970,10 @@ const CalendarManagement: React.FC = () => {
             <TabsContent value="calendar" className="mt-4">
               <CalendarToolbar 
                 currentDate={currentDate}
-                onPreviousWeek={() => navigateWeek('prev')}
+                onPrevWeek={() => navigateWeek('prev')}
                 onNextWeek={() => navigateWeek('next')}
                 onToday={() => setCurrentDate(new Date())}
+                onAddRecurring={() => setRecurringDialogOpen(true)}
               />
               
               <div className="mt-2">
@@ -975,7 +981,7 @@ const CalendarManagement: React.FC = () => {
                   days={days}
                   hours={hours}
                   calendarData={calendarData}
-                  onUpdateTimeSlot={updateTimeSlot}
+                  onUpdateSlot={updateTimeSlot}
                   isLoading={isLoading}
                 />
               </div>
@@ -983,10 +989,8 @@ const CalendarManagement: React.FC = () => {
             
             <TabsContent value="list" className="mt-4">
               <CalendarListView 
-                days={days}
-                hours={hours}
                 calendarData={calendarData}
-                onUpdateTimeSlot={updateTimeSlot}
+                onUpdateSlot={updateTimeSlot}
                 isLoading={isLoading}
               />
             </TabsContent>
@@ -994,7 +998,10 @@ const CalendarManagement: React.FC = () => {
         </div>
         
         {debugLogs.length > 0 && showDebugLogs && (
-          <DebugLogPanel logs={debugLogs} />
+          <DebugLogPanel 
+            logs={debugLogs} 
+            onClose={() => setShowDebugLogs(false)}
+          />
         )}
       </div>
       
