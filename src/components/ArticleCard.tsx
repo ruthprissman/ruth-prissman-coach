@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Article } from '@/types/article';
 import { Check } from 'lucide-react';
@@ -12,6 +11,7 @@ interface ArticleCardProps {
   basePath?: string;
 }
 
+const ARTICLE_DEFAULT_IMAGE = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/stories_img//content-tree.PNG';
 const DEFAULT_IMAGE = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/default.jpg';
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/articles" }) => {
@@ -30,7 +30,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
         ? article.article_publications[0].scheduled_date
         : article.published_at;
     
-    // Add debug logs for date processing
     console.log(`🛠️ [ArticleCard] Article ID: ${article.id}, Title: ${article.title}`);
     console.log("🛠️ [ArticleCard] Raw publication date from Supabase:", publicationDate);
     
@@ -41,7 +40,6 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
       console.log("🛠️ [ArticleCard] Date toISOString():", date.toISOString());
       console.log("🛠️ [ArticleCard] Date timezone offset (minutes):", date.getTimezoneOffset());
       
-      // Convert to Israel Time (UTC+2)
       const israelDate = new Date(date.getTime() + (2 * 60 * 60 * 1000));
       console.log("🛠️ [ArticleCard] Adjusted to Israel Time (UTC+2):", israelDate);
       console.log("🛠️ [ArticleCard] Israel Date toString():", israelDate.toString());
@@ -79,29 +77,31 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
     
     console.log("🛠️ [ArticleCard] formatDate input:", dateString);
     
-    // Parse the UTC date
     const utcDate = new Date(dateString);
     console.log("🛠️ [ArticleCard] UTC Date object:", utcDate);
     
-    // Adjust to Israel Time (UTC+2)
     const israelDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
     console.log("🛠️ [ArticleCard] Adjusted to Israel Time:", israelDate);
     
-    // Format the date
     const formattedDate = format(israelDate, 'dd/MM/yyyy', { locale: he });
     console.log("🛠️ [ArticleCard] Final formatted date:", formattedDate);
     
     return formattedDate;
   };
   
+  const getArticleImage = () => {
+    if (article.image_url) return article.image_url;
+    if (article.type === 'article') return ARTICLE_DEFAULT_IMAGE;
+    return DEFAULT_IMAGE;
+  };
+  
+  const imageUrl = getArticleImage();
+  
   const publicationDate = article.article_publications && 
     article.article_publications.length > 0 && 
     article.article_publications[0].scheduled_date
       ? article.article_publications[0].scheduled_date
       : article.published_at;
-  
-  // Use the article's image_url if available, otherwise fall back to the default image
-  const imageUrl = article.image_url || DEFAULT_IMAGE;
   
   return (
     <Link 

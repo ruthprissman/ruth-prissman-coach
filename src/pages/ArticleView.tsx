@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
@@ -13,13 +12,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { format, parseISO } from 'date-fns';
 import { he } from 'date-fns/locale';
 
-interface SiteLink {
-  id: number;
-  name: string;
-  fixed_text: string;
-  url: string | null;
-  list_type: string | null;
-}
+const ARTICLE_DEFAULT_IMAGE = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/stories_img//content-tree.PNG';
 
 const ArticleView = () => {
   const { id } = useParams<{ id: string }>();
@@ -162,6 +155,14 @@ const ArticleView = () => {
     return { __html: `<p>${htmlContent}</p>` };
   };
   
+  const getArticleImage = (article: Article | null) => {
+    if (article?.image_url) return article.image_url;
+    
+    if (article?.type === 'article') return ARTICLE_DEFAULT_IMAGE;
+    
+    return null;
+  };
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -185,6 +186,16 @@ const ArticleView = () => {
             </div>
           ) : article ? (
             <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6 md:p-8 animate-fade-in">
+              {getArticleImage(article) && (
+                <div className="mb-8 w-full aspect-[16/9] overflow-hidden rounded-lg">
+                  <img 
+                    src={getArticleImage(article)} 
+                    alt={article.title} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              
               <h1 className="text-3xl md:text-4xl font-alef font-bold text-purple-darkest mb-4 text-center">
                 {article.title}
               </h1>
@@ -225,7 +236,6 @@ const ArticleView = () => {
               
               {siteLinks.length > 0 && (
                 <div className="mt-8 pt-6 border-t border-gray-200">
-                  {/* Removed the title "קישורים נוספים" as requested */}
                   <div className="article-links">
                     {siteLinks.map(link => {
                       const url = formatUrl(link.url);
