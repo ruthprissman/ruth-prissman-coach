@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
@@ -34,6 +34,12 @@ const DEFAULT_INITIAL_DATA = {
     },
   ]
 };
+
+// הזמן המקסימלי (במילישניות) שהעורך יכול להיות פעיל ללא חידוש
+const EDITOR_SESSION_TIMEOUT = 10 * 60 * 1000; // 10 דקות
+
+// התדירות (במילישניות) בה נבדוק אם העורך פעיל
+const CONNECTION_CHECK_INTERVAL = 30 * 1000; // 30 שניות
 
 // Convert HTML to EditorJS blocks
 const htmlToEditorJS = (html: string): any => {
@@ -145,8 +151,77 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
   const hasUnsavedChangesRef = useRef(false);
   const [showUnsavedIndicator, setShowUnsavedIndicator] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [editorStatus, setEditorStatus] = useState<'ready' | 'initializing' | 'refreshing' | 'timeout'>('initializing');
   
   const contentRef = useRef(defaultValue || '');
+  const lastActivityTimestamp = useRef(Date.now());
+  const connectionCheckInterval = useRef<number | null>(null);
+  const localBackupKey = useRef(`article_editor_backup_${Date.now()}`);
+  const initializationAttempts = useRef(0);
+  
+  // שמירת טיוטה מקומית למקרי חירום
+  const saveLocalBackup = useCallback(() => {
+    if (!contentRef.current) return;
+    
+    try {
+      localStorage.setItem(localBackupKey.current, contentRef.current);
+      console.log('Editor: Local backup saved, length:', contentRef.current.length);
+    } catch (err) {
+      console.error('Editor: Failed to save local backup', err);
+    }
+  }, []);
+  
+  // טעינת טיוטה מקומית במקרה שיש
+  const loadLocalBackup = useCallback((): string | null => {
+    try {
+      const backup = localStorage.getItem(localBackupKey.current);
+      
+      if (backup) {
+        console.log('Editor: Found local backup, length:', backup.length);
+      }
+      
+      return backup;
+    } catch (err) {
+      console.error('Editor: Failed to load local backup', err);
+      return null;
+    }
+  }, []);
+
+  // בדיקת מצב החיבור והחידוש במידת הצורך
+  const checkConnection = useCallback(() => {
+    const currentTime = Date.now();
+    const timeSinceLastActivity = currentTime - lastActivityTimestamp.current;
+    
+    console.log('Editor: Connection check, time since last activity:', Math.round(timeSinceLastActivity / 1000), 'seconds');
+    
+    // אם עבר יותר מדי זמן מהפעולה האחרונה, נחדש את החיבור
+    if (timeSinceLastActivity > EDITOR_SESSION_TIMEOUT) {
+      console.log('Editor: Session timeout detected, refreshing editor connection');
+      setEditorStatus('timeout');
+      
+      // שמירת טיוטה לפני חידוש החיבור
+      if (editorInstance.current) {
+        editorInstance.current.save().then(data => {
+          if (data) {
+            const newHTML = convertToHTML(data);
+            contentRef.current = newHTML;
+            saveLocalBackup();
+          }
+          
+          // חידוש החיבור
+          refreshEditor();
+        }).catch(() => {
+          // אם השמירה נכשלה, פשוט נחדש
+          refreshEditor();
+        });
+      } else {
+        refreshEditor();
+      }
+    } else {
+      // עדכון זמן הפעילות האחרונה כדי למנוע חידושים מיותרים
+      lastActivityTimestamp.current = currentTime;
+    }
+  }, [saveLocalBackup]);
 
   // Process email links to convert "כתבי לי" into clickable mailto links
   const processEmailLinks = (content: string, title: string): string => {
@@ -206,16 +281,23 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     
     try {
       setIsSaving(true);
-      console.log('Explicitly saving editor content');
+      console.log('Editor: Explicitly saving editor content');
       const data = await editorInstance.current.save();
       
       if (data) {
         const newHTML = convertToHTML(data);
         contentRef.current = newHTML;
         
+        // עדכון הרכיב ההורה עם התוכן העדכני
         onChange(newHTML);
         
-        console.log('Content saved as HTML and passed to parent form:', newHTML.substring(0, 100) + '...');
+        console.log('Editor: Content saved as HTML and passed to parent form, length:', newHTML.length);
+        
+        // שמירת גיבוי מקומי
+        saveLocalBackup();
+        
+        // איפוס מצב החיבור והפעילות האחרונה
+        lastActivityTimestamp.current = Date.now();
         
         hasUnsavedChangesRef.current = false;
         setShowUnsavedIndicator(false);
@@ -225,8 +307,20 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
       setIsSaving(false);
       return false;
     } catch (error) {
-      console.error('Error saving editor data:', error);
+      console.error('Editor: Error saving editor data:', error);
       setIsSaving(false);
+      
+      // ניסיון נוסף לשמור את התוכן הגולמי
+      try {
+        const backup = await editorInstance.current?.save();
+        if (backup) {
+          console.log('Editor: Created emergency backup of content');
+          localStorage.setItem(`article_emergency_backup_${Date.now()}`, JSON.stringify(backup));
+        }
+      } catch (e) {
+        console.error('Editor: Failed to create emergency backup', e);
+      }
+      
       return false;
     }
   };
@@ -236,16 +330,54 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
       setShowUnsavedIndicator(true);
     }
     
+    // עדכון זמן הפעילות האחרונה
+    lastActivityTimestamp.current = Date.now();
+    
     hasUnsavedChangesRef.current = true;
   };
 
-  const initializeEditor = () => {
+  const refreshEditor = useCallback(() => {
+    console.log('Editor: Refreshing editor connection');
+    setEditorStatus('refreshing');
+    
+    // שמירת התוכן הנוכחי אם יש
+    const currentContent = contentRef.current;
+    
+    // השמדת מופע קודם אם קיים
+    if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
+      try {
+        editorInstance.current.destroy();
+      } catch (e) {
+        console.error('Editor: Error destroying editor instance during refresh:', e);
+      }
+    }
+    
+    editorInstance.current = null;
+    isEditorReady.current = false;
+    
+    // איתחול מחדש
+    setTimeout(() => {
+      initializeEditor(currentContent);
+    }, 100);
+  }, []);
+
+  const initializeEditor = useCallback((contentToLoad: string = '') => {
     if (!containerRef.current || isEditorReady.current || editorInstance.current) return;
     
+    initializationAttempts.current++;
+    console.log(`Editor: Initializing editor (attempt ${initializationAttempts.current})...`);
+    
     isLoading.current = true;
+    setEditorStatus('initializing');
+    
+    // בדיקה אם יש גיבוי מקומי
+    const localBackup = loadLocalBackup();
+    
+    // תעדיפות: תוכן שהועבר > גיבוי מקומי > ערך ברירת מחדל
+    const contentToUse = contentToLoad || localBackup || defaultValue || '';
     
     try {
-      console.log('Initializing editor...');
+      console.log('Editor: Creating EditorJS instance with content length:', contentToUse.length);
       editorInstance.current = new EditorJS({
         holder: containerRef.current,
         tools: {
@@ -285,19 +417,26 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
             shortcut: 'CMD+SHIFT+M',
           }
         },
-        data: htmlToEditorJS(defaultValue),
+        data: htmlToEditorJS(contentToUse),
         placeholder: placeholder,
         logLevel: 'ERROR',
         autofocus: true,
         autosave: false,
         onReady: () => {
-          console.log('Editor is ready');
+          console.log('Editor: Instance is ready');
           isLoading.current = false;
           isEditorReady.current = true;
+          setEditorStatus('ready');
+          
+          // עדכון זמן הפעילות האחרונה
+          lastActivityTimestamp.current = Date.now();
           
           if (containerRef.current) {
             containerRef.current.addEventListener('input', () => {
               hasUnsavedChangesRef.current = true;
+              
+              // עדכון זמן הפעילות האחרונה
+              lastActivityTimestamp.current = Date.now();
               
               if (!showUnsavedIndicator) {
                 setTimeout(() => {
@@ -305,51 +444,141 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
                 }, 100);
               }
             }, false);
+            
+            // האזנה לאירועי עכבר ומקלדת לעדכון זמן הפעילות
+            const updateActivity = () => {
+              lastActivityTimestamp.current = Date.now();
+            };
+            
+            containerRef.current.addEventListener('click', updateActivity);
+            containerRef.current.addEventListener('keydown', updateActivity);
           }
         }
       });
     } catch (error) {
-      console.error('EditorJS initialization error:', error);
+      console.error('Editor: EditorJS initialization error:', error);
       isLoading.current = false;
+      setEditorStatus('timeout');
     }
-  };
+  }, [defaultValue, loadLocalBackup, placeholder]);
 
+  // התחלת הבדיקה התקופתית של מצב החיבור
+  useEffect(() => {
+    if (connectionCheckInterval.current === null) {
+      connectionCheckInterval.current = window.setInterval(() => {
+        checkConnection();
+      }, CONNECTION_CHECK_INTERVAL) as unknown as number;
+    }
+    
+    return () => {
+      if (connectionCheckInterval.current !== null) {
+        window.clearInterval(connectionCheckInterval.current);
+        connectionCheckInterval.current = null;
+      }
+    };
+  }, [checkConnection]);
+
+  // איתחול העורך כשהרכיב נטען לראשונה
   useEffect(() => {
     initializeEditor();
-
+    
+    // ניקוי כשהרכיב מוסר
     return () => {
-      if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
+      console.log('Editor: Cleaning up editor instance');
+      
+      // שחרור משאבים
+      if (connectionCheckInterval.current !== null) {
+        window.clearInterval(connectionCheckInterval.current);
+      }
+      
+      // ניסיון לשמור את התוכן לפני הסגירה
+      if (editorInstance.current && isEditorReady.current) {
         try {
-          console.log('Destroying editor...');
+          editorInstance.current.save().then(data => {
+            if (data) {
+              const finalHTML = convertToHTML(data);
+              contentRef.current = finalHTML;
+              saveLocalBackup();
+              onChange(finalHTML);
+            }
+            
+            // השמדת המופע
+            if (editorInstance.current) {
+              editorInstance.current.destroy();
+            }
+          }).catch(e => {
+            console.error('Editor: Error saving content during cleanup:', e);
+            
+            // השמדת המופע גם במקרה של שגיאה
+            if (editorInstance.current) {
+              editorInstance.current.destroy();
+            }
+          });
+        } catch (error) {
+          console.error('Editor: Error destroying editor:', error);
+          
+          // ניסיון אחרון להשמדה
+          if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
+            try {
+              editorInstance.current.destroy();
+            } catch {}
+          }
+        }
+      } else if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
+        try {
           editorInstance.current.destroy();
         } catch (error) {
-          console.error('Error destroying editor:', error);
+          console.error('Editor: Error destroying editor during cleanup:', error);
         }
-        editorInstance.current = null;
-        isEditorReady.current = false;
       }
+      
+      editorInstance.current = null;
+      isEditorReady.current = false;
     };
   }, []);
 
+  // חשיפת הפונקציות לרכיב ההורה
   React.useImperativeHandle(ref, () => ({
     saveContent,
     hasUnsavedChanges: () => hasUnsavedChangesRef.current
   }));
 
+  // טיפול בשמירה ידנית
   const handleManualSave = async () => {
     const saved = await saveContent();
     if (saved) {
-      console.log('Manual save completed successfully');
+      console.log('Editor: Manual save completed successfully');
     } else {
-      console.warn('Manual save failed');
+      console.warn('Editor: Manual save failed');
+    }
+  };
+
+  // טיפול בחידוש ידני
+  const handleManualRefresh = () => {
+    // שמירה לפני חידוש
+    if (editorInstance.current && isEditorReady.current) {
+      editorInstance.current.save().then(data => {
+        if (data) {
+          const currentHTML = convertToHTML(data);
+          contentRef.current = currentHTML;
+          onChange(currentHTML);
+          saveLocalBackup();
+        }
+        refreshEditor();
+      }).catch(() => {
+        refreshEditor();
+      });
+    } else {
+      refreshEditor();
     }
   };
 
   return (
     <div className={`border rounded-md overflow-hidden bg-white ${className}`}>
-      {isLoading.current && (
+      {(isLoading.current || editorStatus === 'initializing' || editorStatus === 'refreshing') && (
         <div className="flex justify-center items-center p-4">
           <RefreshCw className="animate-spin h-6 w-6 text-primary" />
+          <span className="mr-2">{editorStatus === 'initializing' ? 'מאתחל עורך...' : 'מחדש חיבור...'}</span>
         </div>
       )}
       <div 
@@ -365,12 +594,21 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
               <span className="text-amber-800">יש שינויים שלא נשמרו</span>
             </>
           )}
+          {editorStatus === 'timeout' && (
+            <button
+              onClick={handleManualRefresh}
+              className="text-blue-600 flex items-center gap-1 text-sm hover:underline"
+            >
+              <RefreshCw className="h-3 w-3" />
+              חדש חיבור
+            </button>
+          )}
         </div>
         <button
           onClick={handleManualSave}
-          disabled={!hasUnsavedChangesRef.current || isSaving}
+          disabled={!hasUnsavedChangesRef.current || isSaving || editorStatus === 'timeout'}
           className={`flex items-center gap-2 px-3 py-1.5 rounded text-sm ${
-            hasUnsavedChangesRef.current 
+            hasUnsavedChangesRef.current && editorStatus !== 'timeout'
               ? 'bg-primary text-primary-foreground hover:bg-primary/90'
               : 'bg-gray-200 text-gray-500 cursor-not-allowed'
           }`}

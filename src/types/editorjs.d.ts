@@ -26,7 +26,7 @@ declare module '@editorjs/editorjs' {
     onChange?: (api: API, event: CustomEvent) => void;
     onReady?: () => void;
     logLevel?: 'ERROR' | 'WARN' | 'INFO';
-    autofocus?: boolean;  // Added this line to support autofocus property
+    autofocus?: boolean;  
     autosave?: boolean | {
       delay?: number;
       enable?: boolean;
