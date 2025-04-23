@@ -37,6 +37,7 @@ declare module '@editorjs/editorjs' {
     blocks: {
       render: (data: OutputData) => Promise<void>;
       renderFromHTML: (data: string) => Promise<void>;
+      getBlocks: () => Promise<OutputBlockData[]>;
     };
     saver: {
       save: () => Promise<OutputData>;
@@ -48,6 +49,9 @@ declare module '@editorjs/editorjs' {
     render(data: { blocks: OutputBlockData[] }): Promise<void>;
     save(): Promise<OutputData>;
     destroy(): void;
+    blocks: {
+      getBlocks: () => Promise<OutputBlockData[]>;
+    };
   }
 }
 
