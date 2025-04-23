@@ -9,6 +9,7 @@ import Link from '@editorjs/link';
 import Marker from '@editorjs/marker';
 import { RefreshCw, Save, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';  // Add this import
 
 export interface RichTextEditorRef {
   saveContent: () => Promise<boolean>;
