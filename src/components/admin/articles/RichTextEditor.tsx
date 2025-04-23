@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import EditorJS from '@editorjs/editorjs';
 import Header from '@editorjs/header';
@@ -9,6 +8,7 @@ import Code from '@editorjs/code';
 import Link from '@editorjs/link';
 import Marker from '@editorjs/marker';
 import { RefreshCw, Save, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export interface RichTextEditorRef {
   saveContent: () => Promise<boolean>;
@@ -36,10 +36,18 @@ const DEFAULT_INITIAL_DATA = {
 };
 
 // הזמן המקסימלי (במילישניות) שהעורך יכול להיות פעיל ללא חידוש
-const EDITOR_SESSION_TIMEOUT = 10 * 60 * 1000; // 10 דקות
+// Extending session timeout to 30 minutes
+const EDITOR_SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 // התדירות (במילישניות) בה נבדוק אם העורך פעיל
-const CONNECTION_CHECK_INTERVAL = 30 * 1000; // 30 שניות
+// Check connection every minute
+const CONNECTION_CHECK_INTERVAL = 60 * 1000; // 1 minute
+
+// Autosave interval (5 minutes)
+const AUTOSAVE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+// Warning threshold before timeout (5 minutes before)
+const WARNING_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 
 // Convert HTML to EditorJS blocks
 const htmlToEditorJS = (html: string): any => {
@@ -158,6 +166,9 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
   const connectionCheckInterval = useRef<number | null>(null);
   const localBackupKey = useRef(`article_editor_backup_${Date.now()}`);
   const initializationAttempts = useRef(0);
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  const autosaveInterval = useRef<number | null>(null);
+  const { toast } = useToast();
   
   // שמירת טיוטה מקומית למקרי חירום
   const saveLocalBackup = useCallback(() => {
@@ -188,40 +199,29 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
   }, []);
 
   // בדיקת מצב החיבור והחידוש במידת הצורך
+  // Enhanced connection check with warning
   const checkConnection = useCallback(() => {
     const currentTime = Date.now();
     const timeSinceLastActivity = currentTime - lastActivityTimestamp.current;
     
-    console.log('Editor: Connection check, time since last activity:', Math.round(timeSinceLastActivity / 1000), 'seconds');
-    
-    // אם עבר יותר מדי זמן מהפעולה האחרונה, נחדש את החיבור
-    if (timeSinceLastActivity > EDITOR_SESSION_TIMEOUT) {
-      console.log('Editor: Session timeout detected, refreshing editor connection');
-      setEditorStatus('timeout');
-      
-      // שמירת טיוטה לפני חידוש החיבור
-      if (editorInstance.current) {
-        editorInstance.current.save().then(data => {
-          if (data) {
-            const newHTML = convertToHTML(data);
-            contentRef.current = newHTML;
-            saveLocalBackup();
-          }
-          
-          // חידוש החיבור
-          refreshEditor();
-        }).catch(() => {
-          // אם השמירה נכשלה, פשוט נחדש
-          refreshEditor();
-        });
-      } else {
-        refreshEditor();
-      }
-    } else {
-      // עדכון זמן הפעילות האחרונה כדי למנוע חידושים מיותרים
-      lastActivityTimestamp.current = currentTime;
+    // Show warning 5 minutes before timeout
+    if (timeSinceLastActivity > (EDITOR_SESSION_TIMEOUT - WARNING_THRESHOLD)) {
+      setShowTimeoutWarning(true);
     }
-  }, [saveLocalBackup]);
+    
+    // If timeout reached, update status
+    if (timeSinceLastActivity > EDITOR_SESSION_TIMEOUT) {
+      console.log('Editor: Session timeout detected, editor needs refresh');
+      setEditorStatus('timeout');
+      return;
+    }
+    
+    // Reset warning if we're back in safe territory
+    setShowTimeoutWarning(false);
+    
+    // Update last activity timestamp
+    lastActivityTimestamp.current = currentTime;
+  }, []);
 
   // Process email links to convert "כתבי לי" into clickable mailto links
   const processEmailLinks = (content: string, title: string): string => {
@@ -276,27 +276,42 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     return processedHTML;
   };
 
+  // Enhanced save content function
   const saveContent = async () => {
     if (!isEditorReady.current || !editorInstance.current) return false;
     
     try {
       setIsSaving(true);
-      console.log('Editor: Explicitly saving editor content');
+      
+      // Check connection status before saving
+      if (editorStatus === 'timeout') {
+        // Try to refresh editor first
+        await refreshEditor();
+        
+        // If still in timeout, can't save
+        if (editorStatus === 'timeout') {
+          toast({
+            title: "לא ניתן לשמור",
+            description: "נדרש לרענן את העורך לפני השמירה",
+            variant: "destructive"
+          });
+          return false;
+        }
+      }
+      
+      console.log('Editor: Saving editor content');
       const data = await editorInstance.current.save();
       
       if (data) {
         const newHTML = convertToHTML(data);
         contentRef.current = newHTML;
-        
-        // עדכון הרכיב ההורה עם התוכן העדכני
         onChange(newHTML);
+        console.log('Editor: Content saved successfully');
         
-        console.log('Editor: Content saved as HTML and passed to parent form, length:', newHTML.length);
-        
-        // שמירת גיבוי מקומי
+        // Save local backup
         saveLocalBackup();
         
-        // איפוס מצב החיבור והפעילות האחרונה
+        // Reset activity timestamp after successful save
         lastActivityTimestamp.current = Date.now();
         
         hasUnsavedChangesRef.current = false;
@@ -304,6 +319,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
         setIsSaving(false);
         return true;
       }
+      
       setIsSaving(false);
       return false;
     } catch (error) {
@@ -478,6 +494,25 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     };
   }, [checkConnection]);
 
+  // Setup autosave
+  useEffect(() => {
+    if (autosaveInterval.current === null) {
+      autosaveInterval.current = window.setInterval(async () => {
+        if (hasUnsavedChangesRef.current) {
+          console.log('Editor: Attempting autosave');
+          await saveContent();
+        }
+      }, AUTOSAVE_INTERVAL) as unknown as number;
+    }
+    
+    return () => {
+      if (autosaveInterval.current !== null) {
+        window.clearInterval(autosaveInterval.current);
+        autosaveInterval.current = null;
+      }
+    };
+  }, [saveContent]);
+
   // איתחול העורך כשהרכיב נטען לראשונה
   useEffect(() => {
     initializeEditor();
@@ -581,11 +616,29 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
           <span className="mr-2">{editorStatus === 'initializing' ? 'מאתחל עורך...' : 'מחדש חיבור...'}</span>
         </div>
       )}
+      
+      {showTimeoutWarning && editorStatus !== 'timeout' && (
+        <div className="bg-yellow-50 p-2 text-sm text-yellow-800 flex items-center justify-between">
+          <span>העורך יתנתק בקרוב, מומלץ לשמור את השינויים</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              lastActivityTimestamp.current = Date.now();
+              setShowTimeoutWarning(false);
+            }}
+          >
+            המשך עריכה
+          </Button>
+        </div>
+      )}
+      
       <div 
         ref={containerRef} 
         className="min-h-[400px] p-4"
         style={{ display: isLoading.current ? 'none' : 'block' }}
       />
+      
       <div className="border-t p-2 flex justify-between items-center bg-gray-50">
         <div className="text-sm text-muted-foreground flex items-center gap-2">
           {showUnsavedIndicator && (
