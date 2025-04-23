@@ -7,12 +7,14 @@ import { useToast } from '@/hooks/use-toast';
 interface PublicationContextType {
   retryPublication: (publicationId: number) => Promise<void>;
   isInitialized: boolean;
+  manualCheckPublications: () => Promise<void>;
 }
 
 // Create context with default values
 const PublicationContext = createContext<PublicationContextType>({
   retryPublication: async () => {},
-  isInitialized: false
+  isInitialized: false,
+  manualCheckPublications: async () => {}
 });
 
 export const usePublication = () => useContext(PublicationContext);
@@ -62,10 +64,20 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
       throw error;
     }
   };
+
+  const manualCheckPublications = async () => {
+    try {
+      await PublicationService.manualCheckPublications();
+    } catch (error: any) {
+      console.error('Error manually checking publications:', error);
+      // Don't show toast here to avoid spamming the user
+    }
+  };
   
   const value = {
     retryPublication,
-    isInitialized
+    isInitialized,
+    manualCheckPublications
   };
   
   return (

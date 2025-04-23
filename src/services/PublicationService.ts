@@ -35,6 +35,7 @@ class PublicationService {
   private accessToken?: string;
   private databaseService: DatabaseService;
   private emailService: EmailPublicationService;
+  private isCurrentlyProcessing = false; // Add flag to track if currently checking publications
 
   private constructor() {
     this.databaseService = new DatabaseService();
@@ -62,13 +63,15 @@ class PublicationService {
     console.log("Publication service started");
     this.isRunning = true;
     
-    // Check immediately on startup
-    this.checkScheduledPublications();
-    
-    // Then set interval for future checks
-    this.timerId = setInterval(() => {
+    // Check after a delay on startup to avoid immediate checks during page load
+    setTimeout(() => {
       this.checkScheduledPublications();
-    }, this.checkInterval);
+      
+      // Then set interval for future checks
+      this.timerId = setInterval(() => {
+        this.checkScheduledPublications();
+      }, this.checkInterval);
+    }, 5000); // 5 second delay before first check
   }
 
   /**
@@ -85,9 +88,18 @@ class PublicationService {
 
   /**
    * Check for articles that need to be published
+   * Added isImmediate flag for manual checks vs. scheduled checks
    */
-  private async checkScheduledPublications(): Promise<void> {
+  private async checkScheduledPublications(isImmediate: boolean = false): Promise<void> {
+    // If already processing and this is not an immediate check, exit
+    if (this.isCurrentlyProcessing && !isImmediate) {
+      console.log("[Publication Service] Already processing publications, skipping this check");
+      return;
+    }
+    
     try {
+      this.isCurrentlyProcessing = true;
+      
       // Get current timestamp
       const now = new Date().toISOString();
       console.log(`[Publication Service] Checking for scheduled publications at ${now}`);
@@ -97,6 +109,7 @@ class PublicationService {
 
       if (!scheduledPublications || scheduledPublications.length === 0) {
         console.log("[Publication Service] No publications scheduled for now");
+        this.isCurrentlyProcessing = false;
         return;
       }
 
@@ -150,7 +163,18 @@ class PublicationService {
 
     } catch (error) {
       console.error("[Publication Service] Error checking scheduled publications:", error);
+    } finally {
+      this.isCurrentlyProcessing = false;
     }
+  }
+
+  /**
+   * Manually trigger a check for publications
+   * This can be called explicitly when needed (e.g., after an article is published)
+   */
+  public async manualCheckPublications(): Promise<void> {
+    console.log("[Publication Service] Manual check for publications triggered");
+    await this.checkScheduledPublications(true);
   }
 
   /**

@@ -329,15 +329,28 @@ const ArticleEditor: React.FC = () => {
             content_length: data.content_markdown ? data.content_markdown.length : 0,
             category: data.category_id
           });
+        } else {
+          console.warn('Editor content save failed or returned no data');
         }
       }
-      
-      const supabaseInstance = await getSupabaseClient();
       
       if (!data.content_markdown && contentRef.current) {
         console.log('Using contentRef as fallback for missing content_markdown');
         data.content_markdown = contentRef.current;
       }
+      
+      if (!data.content_markdown) {
+        console.error('No content available to save');
+        toast({
+          title: "שגיאה בשמירת המאמר",
+          description: "לא ניתן לשמור מאמר ריק, נסה שוב",
+          variant: "destructive",
+        });
+        setIsSaving(false);
+        return;
+      }
+      
+      const supabaseInstance = await getSupabaseClient();
       
       console.log('Sending to Supabase:', {
         title: data.title,

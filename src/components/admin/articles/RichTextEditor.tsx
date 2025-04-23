@@ -9,7 +9,7 @@ import Link from '@editorjs/link';
 import Marker from '@editorjs/marker';
 import { RefreshCw, Save, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';  // Add this import
+import { Button } from '@/components/ui/button';
 
 export interface RichTextEditorRef {
   saveContent: () => Promise<boolean>;
@@ -36,21 +36,11 @@ const DEFAULT_INITIAL_DATA = {
   ]
 };
 
-// הזמן המקסימלי (במילישניות) שהעורך יכול להיות פעיל ללא חידוש
-// Extending session timeout to 30 minutes
 const EDITOR_SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
-
-// התדירות (במילישניות) בה נבדוק אם העורך פעיל
-// Check connection every minute
 const CONNECTION_CHECK_INTERVAL = 60 * 1000; // 1 minute
-
-// Autosave interval (5 minutes)
 const AUTOSAVE_INTERVAL = 5 * 60 * 1000; // 5 minutes
-
-// Warning threshold before timeout (5 minutes before)
 const WARNING_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 
-// Convert HTML to EditorJS blocks
 const htmlToEditorJS = (html: string): any => {
   if (!html) return DEFAULT_INITIAL_DATA;
   
@@ -58,7 +48,6 @@ const htmlToEditorJS = (html: string): any => {
   const doc = parser.parseFromString(html, 'text/html');
   const blocks = [];
   
-  // Process each element
   const elements = Array.from(doc.body.childNodes);
   
   for (const element of elements) {
@@ -76,7 +65,6 @@ const htmlToEditorJS = (html: string): any => {
     
     const el = element as HTMLElement;
     
-    // Process based on tag name
     switch (el.tagName.toLowerCase()) {
       case 'h1':
       case 'h2':
@@ -128,7 +116,6 @@ const htmlToEditorJS = (html: string): any => {
         break;
         
       default:
-        // Handle divs and other elements as paragraphs
         blocks.push({
           type: 'paragraph',
           data: { text: el.innerHTML }
@@ -171,7 +158,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
   const autosaveInterval = useRef<number | null>(null);
   const { toast } = useToast();
   
-  // שמירת טיוטה מקומית למקרי חירום
   const saveLocalBackup = useCallback(() => {
     if (!contentRef.current) return;
     
@@ -183,7 +169,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     }
   }, []);
   
-  // טעינת טיוטה מקומית במקרה שיש
   const loadLocalBackup = useCallback((): string | null => {
     try {
       const backup = localStorage.getItem(localBackupKey.current);
@@ -199,42 +184,32 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     }
   }, []);
 
-  // בדיקת מצב החיבור והחידוש במידת הצורך
-  // Enhanced connection check with warning
   const checkConnection = useCallback(() => {
     const currentTime = Date.now();
     const timeSinceLastActivity = currentTime - lastActivityTimestamp.current;
     
-    // Show warning 5 minutes before timeout
     if (timeSinceLastActivity > (EDITOR_SESSION_TIMEOUT - WARNING_THRESHOLD)) {
       setShowTimeoutWarning(true);
     }
     
-    // If timeout reached, update status
     if (timeSinceLastActivity > EDITOR_SESSION_TIMEOUT) {
       console.log('Editor: Session timeout detected, editor needs refresh');
       setEditorStatus('timeout');
       return;
     }
     
-    // Reset warning if we're back in safe territory
     setShowTimeoutWarning(false);
-    
-    // Update last activity timestamp
     lastActivityTimestamp.current = currentTime;
   }, []);
 
-  // Process email links to convert "כתבי לי" into clickable mailto links
   const processEmailLinks = (content: string, title: string): string => {
     const encodedTitle = encodeURIComponent(`שאלה על ${title}`);
     const emailAddress = "RuthPrissman@gmail.com";
     const emailLink = `<a href="mailto:${emailAddress}?subject=${encodedTitle}">כתבי לי</a>`;
 
-    // Replace all occurrences of "כתבי לי" with the email link
     return content.replace(/כתבי לי/g, emailLink);
   };
 
-  // Convert EditorJS blocks to HTML
   const convertToHTML = (data: any): string => {
     if (!data || !data.blocks || data.blocks.length === 0) return '';
     
@@ -272,24 +247,22 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
       }
     }
     
-    // Process email links before returning the HTML
     const processedHTML = articleTitle ? processEmailLinks(html, articleTitle) : html;
     return processedHTML;
   };
 
-  // Enhanced save content function
   const saveContent = async () => {
-    if (!isEditorReady.current || !editorInstance.current) return false;
+    if (!isEditorReady.current || !editorInstance.current) {
+      console.log('Editor: Cannot save - editor not ready or instance not available');
+      return false;
+    }
     
     try {
       setIsSaving(true);
       
-      // Check connection status before saving
       if (editorStatus === 'timeout') {
-        // Try to refresh editor first
         await refreshEditor();
         
-        // If still in timeout, can't save
         if (editorStatus === 'timeout') {
           toast({
             title: "לא ניתן לשמור",
@@ -301,44 +274,72 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
       }
       
       console.log('Editor: Saving editor content');
-      const data = await editorInstance.current.save();
+      
+      const savePromise = editorInstance.current.save();
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Editor save operation timed out')), 5000);
+      });
+      
+      const data = await Promise.race([savePromise, timeoutPromise]) as any;
       
       if (data) {
         const newHTML = convertToHTML(data);
         contentRef.current = newHTML;
-        onChange(newHTML);
-        console.log('Editor: Content saved successfully');
         
-        // Save local backup
+        console.log('Editor: Content saved successfully, length:', newHTML.length);
+        
+        onChange(newHTML);
+        
         saveLocalBackup();
         
-        // Reset activity timestamp after successful save
         lastActivityTimestamp.current = Date.now();
         
         hasUnsavedChangesRef.current = false;
         setShowUnsavedIndicator(false);
-        setIsSaving(false);
         return true;
       }
       
-      setIsSaving(false);
+      console.warn('Editor: Save returned no data');
       return false;
     } catch (error) {
       console.error('Editor: Error saving editor data:', error);
-      setIsSaving(false);
       
-      // ניסיון נוסף לשמור את התוכן הגולמי
       try {
-        const backup = await editorInstance.current?.save();
-        if (backup) {
-          console.log('Editor: Created emergency backup of content');
-          localStorage.setItem(`article_emergency_backup_${Date.now()}`, JSON.stringify(backup));
+        if (editorInstance.current) {
+          const blocks = await editorInstance.current.blocks.getBlocks();
+          if (blocks && blocks.length > 0) {
+            const emergencyData = { blocks, time: Date.now(), version: "2.28.0" };
+            console.log('Editor: Created emergency backup of content');
+            localStorage.setItem(`article_emergency_backup_${Date.now()}`, JSON.stringify(emergencyData));
+            
+            let emergencyHTML = '';
+            for (const block of blocks) {
+              if (block.type === 'paragraph' && block.data && block.data.text) {
+                emergencyHTML += `<p>${block.data.text}</p>`;
+              }
+            }
+            
+            if (emergencyHTML) {
+              contentRef.current = emergencyHTML;
+              onChange(emergencyHTML);
+              console.log('Editor: Generated emergency HTML from blocks');
+            }
+          }
         }
       } catch (e) {
         console.error('Editor: Failed to create emergency backup', e);
       }
       
+      toast({
+        title: "שגיאה בשמירת התוכן",
+        description: "נתקלנו בבעיה בשמירת התוכן. נסה שוב.",
+        variant: "destructive"
+      });
+      
       return false;
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -347,7 +348,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
       setShowUnsavedIndicator(true);
     }
     
-    // עדכון זמן הפעילות האחרונה
     lastActivityTimestamp.current = Date.now();
     
     hasUnsavedChangesRef.current = true;
@@ -357,10 +357,8 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     console.log('Editor: Refreshing editor connection');
     setEditorStatus('refreshing');
     
-    // שמירת התוכן הנוכחי אם יש
     const currentContent = contentRef.current;
     
-    // השמדת מופע קודם אם קיים
     if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
       try {
         editorInstance.current.destroy();
@@ -372,7 +370,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     editorInstance.current = null;
     isEditorReady.current = false;
     
-    // איתחול מחדש
     setTimeout(() => {
       initializeEditor(currentContent);
     }, 100);
@@ -387,10 +384,8 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     isLoading.current = true;
     setEditorStatus('initializing');
     
-    // בדיקה אם יש גיבוי מקומי
     const localBackup = loadLocalBackup();
     
-    // תעדיפות: תוכן שהועבר > גיבוי מקומי > ערך ברירת מחדל
     const contentToUse = contentToLoad || localBackup || defaultValue || '';
     
     try {
@@ -445,14 +440,12 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
           isEditorReady.current = true;
           setEditorStatus('ready');
           
-          // עדכון זמן הפעילות האחרונה
           lastActivityTimestamp.current = Date.now();
           
           if (containerRef.current) {
             containerRef.current.addEventListener('input', () => {
               hasUnsavedChangesRef.current = true;
               
-              // עדכון זמן הפעילות האחרונה
               lastActivityTimestamp.current = Date.now();
               
               if (!showUnsavedIndicator) {
@@ -462,7 +455,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
               }
             }, false);
             
-            // האזנה לאירועי עכבר ומקלדת לעדכון זמן הפעילות
             const updateActivity = () => {
               lastActivityTimestamp.current = Date.now();
             };
@@ -479,7 +471,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     }
   }, [defaultValue, loadLocalBackup, placeholder]);
 
-  // התחלת הבדיקה התקופתית של מצב החיבור
   useEffect(() => {
     if (connectionCheckInterval.current === null) {
       connectionCheckInterval.current = window.setInterval(() => {
@@ -495,7 +486,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     };
   }, [checkConnection]);
 
-  // Setup autosave
   useEffect(() => {
     if (autosaveInterval.current === null) {
       autosaveInterval.current = window.setInterval(async () => {
@@ -514,20 +504,16 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     };
   }, [saveContent]);
 
-  // איתחול העורך כשהרכיב נטען לראשונה
   useEffect(() => {
     initializeEditor();
     
-    // ניקוי כשהרכיב מוסר
     return () => {
       console.log('Editor: Cleaning up editor instance');
       
-      // שחרור משאבים
       if (connectionCheckInterval.current !== null) {
         window.clearInterval(connectionCheckInterval.current);
       }
       
-      // ניסיון לשמור את התוכן לפני הסגירה
       if (editorInstance.current && isEditorReady.current) {
         try {
           editorInstance.current.save().then(data => {
@@ -538,14 +524,12 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
               onChange(finalHTML);
             }
             
-            // השמדת המופע
             if (editorInstance.current) {
               editorInstance.current.destroy();
             }
           }).catch(e => {
             console.error('Editor: Error saving content during cleanup:', e);
             
-            // השמדת המופע גם במקרה של שגיאה
             if (editorInstance.current) {
               editorInstance.current.destroy();
             }
@@ -553,7 +537,6 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
         } catch (error) {
           console.error('Editor: Error destroying editor:', error);
           
-          // ניסיון אחרון להשמדה
           if (editorInstance.current && typeof editorInstance.current.destroy === 'function') {
             try {
               editorInstance.current.destroy();
@@ -573,13 +556,11 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     };
   }, []);
 
-  // חשיפת הפונקציות לרכיב ההורה
   React.useImperativeHandle(ref, () => ({
     saveContent,
     hasUnsavedChanges: () => hasUnsavedChangesRef.current
   }));
 
-  // טיפול בשמירה ידנית
   const handleManualSave = async () => {
     const saved = await saveContent();
     if (saved) {
@@ -589,9 +570,7 @@ const RichTextEditor = React.forwardRef<RichTextEditorRef, RichTextEditorProps>(
     }
   };
 
-  // טיפול בחידוש ידני
   const handleManualRefresh = () => {
-    // שמירה לפני חידוש
     if (editorInstance.current && isEditorReady.current) {
       editorInstance.current.save().then(data => {
         if (data) {
