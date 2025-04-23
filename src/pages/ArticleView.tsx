@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
@@ -149,7 +148,6 @@ const ArticleView = () => {
   const createMarkup = (content: string | null) => {
     if (!content) return { __html: '' };
     
-    // For HTML content, return it directly without transformation
     if (content.startsWith('<')) {
       return { __html: content };
     }
@@ -340,6 +338,12 @@ const ArticleView = () => {
           margin-bottom: 1rem;
           white-space: normal;
           text-align: center;
+          min-height: 1.5rem;
+        }
+        
+        .article-html-content p:empty {
+          height: 1.5rem;
+          border-top: 1px solid transparent;
         }
         
         .article-html-content a {
