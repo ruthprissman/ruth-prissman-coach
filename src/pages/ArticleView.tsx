@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
@@ -12,6 +13,7 @@ import { convertToHebrewDateSync, formatDateInIsraelTimeZone } from '@/utils/dat
 import { formatInTimeZone } from 'date-fns-tz';
 import { format, parseISO } from 'date-fns';
 import { he } from 'date-fns/locale';
+import MarkdownPreview from '@/components/admin/articles/MarkdownPreview';
 
 const ARTICLE_DEFAULT_IMAGE = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/stories_img//content-tree.PNG';
 
@@ -147,6 +149,11 @@ const ArticleView = () => {
   const createMarkup = (content: string | null) => {
     if (!content) return { __html: '' };
     
+    // For HTML content, return it directly without transformation
+    if (content.startsWith('<')) {
+      return { __html: content };
+    }
+    
     const htmlContent = content
       .replace(/\n\n/g, '</p><p>')
       .replace(/\n/g, '<br />')
@@ -219,11 +226,18 @@ const ArticleView = () => {
                 )}
               </div>
               
-              <div className="prose prose-lg max-w-none text-center">
-                <div 
-                  dangerouslySetInnerHTML={createMarkup(article.content_markdown)} 
-                  className="text-gray-800 leading-relaxed text-center [&>*]:text-center [&>p]:text-center [&>a]:block [&>a]:text-center"
-                />
+              <div className="prose prose-lg max-w-none">
+                {article.content_markdown?.startsWith('<') ? (
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: article.content_markdown }} 
+                    className="text-gray-800 leading-relaxed article-html-content"
+                  />
+                ) : (
+                  <MarkdownPreview
+                    markdown={article.content_markdown || ''}
+                    className="text-gray-800 leading-relaxed text-center"
+                  />
+                )}
               </div>
               
               {article.contact_email && (
@@ -320,6 +334,23 @@ const ArticleView = () => {
           position: absolute;
           right: -1rem;
           top: 0;
+        }
+        
+        .article-html-content p {
+          margin-bottom: 1rem;
+          white-space: normal;
+          text-align: center;
+        }
+        
+        .article-html-content a {
+          color: #4A148C;
+          text-decoration: none;
+          font-weight: bold;
+          transition: color 0.3s ease;
+        }
+        
+        .article-html-content a:hover {
+          color: #7E69AB;
         }
         `}
       </style>
