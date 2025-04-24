@@ -1,7 +1,7 @@
 
 import { format } from 'date-fns';
 import { formatInTimeZone, toZonedTime, fromZonedTime } from 'date-fns-tz';
-import { HebrewCalendar } from '@hebcal/core';
+import { HebrewCalendar, HDate } from '@hebcal/core';
 import { he } from 'date-fns/locale';
 
 /**
@@ -14,8 +14,9 @@ import { he } from 'date-fns/locale';
  */
 export const convertToHebrewDateSync = (date: Date): string => {
   try {
-    const hDate = HebrewCalendar.gregorianToHebrew(date);
-    return format(new Date(hDate.gy, hDate.gm - 1, hDate.gd), "do MMMM yyyy", { locale: he });
+    // Create an HDate object from a JavaScript Date
+    const hDate = new HDate(date);
+    return format(new Date(hDate.getFullYear(), hDate.getMonth() - 1, hDate.getDate()), "do MMMM yyyy", { locale: he });
   } catch (error) {
     console.error('Error converting to Hebrew date (sync):', error);
     return '';
