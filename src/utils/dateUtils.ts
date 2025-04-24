@@ -1,4 +1,3 @@
-
 /**
  * Converts a JavaScript Date to a Hebrew date string
  * @param date JavaScript Date object
@@ -203,19 +202,7 @@ export const formatDateTimeInIsrael = (dateString: string | null | Date): string
   
   try {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    
-    // Format date in Israel time zone
-    const formatter = new Intl.DateTimeFormat('he-IL', {
-      timeZone: 'Asia/Jerusalem',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-    
-    return formatter.format(date).replace(/\./g, '/');
+    return formatInTimeZone(date, 'Asia/Jerusalem', 'dd/MM/yyyy, HH:mm');
   } catch (error) {
     console.error('Error formatting date in Israel time zone:', error);
     return '';
@@ -232,19 +219,26 @@ export const formatDateOnlyInIsrael = (date: string | null | Date): string => {
   
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    
-    // Format date in Israel time zone (date only)
-    const formatter = new Intl.DateTimeFormat('he-IL', {
-      timeZone: 'Asia/Jerusalem',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-    
-    return formatter.format(dateObj).replace(/\./g, '/');
+    return formatInTimeZone(dateObj, 'Asia/Jerusalem', 'dd/MM/yyyy');
   } catch (error) {
     console.error('Error formatting date in Israel time zone:', error);
     return '';
+  }
+};
+
+/**
+ * Converts a local date to UTC while considering Israel timezone
+ * @param localDate Local date in Israel timezone
+ * @returns UTC date string
+ */
+export const convertLocalToUTC = (localDate: Date): string => {
+  try {
+    // Convert the local date to UTC considering Israel timezone
+    const utcDate = zonedTimeToUtc(localDate, 'Asia/Jerusalem');
+    return utcDate.toISOString();
+  } catch (error) {
+    console.error('Error converting local date to UTC:', error);
+    return new Date().toISOString();
   }
 };
 

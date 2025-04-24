@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -6,6 +5,7 @@ import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { NewFutureSessionFormData } from '@/types/session';
 import { supabase } from '@/lib/supabase';
+import { convertLocalToUTC } from '@/utils/dateUtils';
 
 import {
   Dialog,
@@ -127,13 +127,16 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
         combinedDate.setHours(hours, minutes);
       }
 
+      // Convert to UTC before saving to database
+      const utcDate = convertLocalToUTC(combinedDate);
+
       const { error } = await supabase
         .from('future_sessions')
         .insert({
           patient_id: patientId,
-          session_date: combinedDate.toISOString(),
+          session_date: utcDate,
           meeting_type: formData.meeting_type,
-          status: 'Scheduled', // Always set to Scheduled for new sessions
+          status: 'Scheduled',
           zoom_link: formData.zoom_link || null,
         });
 

@@ -27,6 +27,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { convertLocalToUTC } from '@/utils/dateUtils';
 
 interface AddSessionDialogProps {
   isOpen: boolean;
@@ -168,7 +169,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     
     const success = await onAddSession({
       patient_id: patientId,
-      session_date: data.session_date.toISOString(),
+      session_date: convertLocalToUTC(data.session_date),
       meeting_type: data.meeting_type,
       sent_exercises: data.sent_exercises,
       exercise_list: data.exercise_list,
@@ -176,7 +177,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
       paid_amount: data.paid_amount,
       payment_method: data.payment_method,
       payment_status: data.payment_status,
-      payment_date: data.payment_date ? data.payment_date.toISOString() : null,
+      payment_date: data.payment_date ? convertLocalToUTC(data.payment_date) : null,
       payment_notes: data.payment_notes
     });
     
