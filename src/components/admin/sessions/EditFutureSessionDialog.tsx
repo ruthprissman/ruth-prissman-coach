@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -142,6 +141,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
       // Convert local date to UTC before saving to database
       const utcDate = convertLocalToUTC(combinedDate);
 
+      // Only include fields that exist in the database table
       const { error } = await supabase
         .from('future_sessions')
         .update({
