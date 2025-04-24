@@ -100,6 +100,7 @@ const ClientDetails = () => {
 
       if (futureSessionsError) throw futureSessionsError;
       
+      console.log('Future sessions from DB:', futureSessionsData);
       setFutureSessions(futureSessionsData as FutureSession[]);
 
       const { data: nextSessionData, error: nextSessionError } = await supabase
@@ -155,7 +156,10 @@ const ClientDetails = () => {
 
   const formatDateTime = (date: string | null) => {
     if (!date) return 'אין מידע';
-    return formatDateTimeInIsrael(date);
+    console.log('Formatting date to Israel timezone:', date);
+    const formatted = formatDateTimeInIsrael(date);
+    console.log('Formatted date in Israel timezone:', formatted);
+    return formatted;
   };
 
   const handleEditFutureSession = (session: FutureSession) => {

@@ -54,50 +54,57 @@ const SessionsList: React.FC<SessionsListProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {sessions.map((session) => (
-                <tr key={session.id} className="hover:bg-gray-50">
-                  <td className="py-4 px-6">
-                    <Link 
-                      to={`/admin/patients/${session.patient_id}`}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      {session.patients.name}
-                    </Link>
-                  </td>
-                  <td className="py-4 px-6 whitespace-nowrap">
-                    {formatDate(session.session_date)}
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center">
-                      {getMeetingTypeIcon(session.meeting_type)}
-                      <span>{session.meeting_type === 'Zoom' ? 'זום' : 
-                             session.meeting_type === 'Phone' ? 'טלפון' : 'פגישה פרונטלית'}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex space-x-2 space-x-reverse">
-                      <Button
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => onEditSession(session)}
-                        className="flex items-center"
+              {sessions.map((session) => {
+                // Log the session date before formatting to help debug
+                console.log(`Session ${session.id} original date:`, session.session_date);
+                const formattedDate = formatDate(session.session_date);
+                console.log(`Session ${session.id} formatted date:`, formattedDate);
+                
+                return (
+                  <tr key={session.id} className="hover:bg-gray-50">
+                    <td className="py-4 px-6">
+                      <Link 
+                        to={`/admin/patients/${session.patient_id}`}
+                        className="text-primary hover:underline font-medium"
                       >
-                        <Edit className="h-4 w-4 ml-2" />
-                        עריכה
-                      </Button>
-                      <Button
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => onDeleteSession(session)}
-                        className="flex items-center text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4 ml-2" />
-                        מחיקה
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        {session.patients.name}
+                      </Link>
+                    </td>
+                    <td className="py-4 px-6 whitespace-nowrap">
+                      {formattedDate}
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center">
+                        {getMeetingTypeIcon(session.meeting_type)}
+                        <span>{session.meeting_type === 'Zoom' ? 'זום' : 
+                               session.meeting_type === 'Phone' ? 'טלפון' : 'פגישה פרונטלית'}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex space-x-2 space-x-reverse">
+                        <Button
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => onEditSession(session)}
+                          className="flex items-center"
+                        >
+                          <Edit className="h-4 w-4 ml-2" />
+                          עריכה
+                        </Button>
+                        <Button
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => onDeleteSession(session)}
+                          className="flex items-center text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4 ml-2" />
+                          מחיקה
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
