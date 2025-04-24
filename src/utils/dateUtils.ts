@@ -234,7 +234,7 @@ export const formatDateOnlyInIsrael = (date: string | null | Date): string => {
 export const convertLocalToUTC = (localDate: Date): string => {
   try {
     // Convert the local date to UTC considering Israel timezone
-    const utcDate = zonedTimeToUtc(localDate, 'Asia/Jerusalem');
+    const utcDate = fromZonedTime(localDate, 'Asia/Jerusalem');
     return utcDate.toISOString();
   } catch (error) {
     console.error('Error converting local date to UTC:', error);
