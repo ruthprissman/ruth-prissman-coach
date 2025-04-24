@@ -6,6 +6,7 @@ import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { FutureSession } from '@/types/session';
 import { supabase } from '@/lib/supabase';
+import { convertLocalToUTC } from '@/utils/dateUtils';
 
 import {
   Dialog,
@@ -138,10 +139,13 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
         combinedDate.setHours(hours, minutes);
       }
 
+      // Convert local date to UTC before saving to database
+      const utcDate = convertLocalToUTC(combinedDate);
+
       const { error } = await supabase
         .from('future_sessions')
         .update({
-          session_date: combinedDate.toISOString(),
+          session_date: utcDate,
           meeting_type: formData.meeting_type,
           status: formData.status,
           zoom_link: formData.meeting_type === 'Zoom' ? formData.zoom_link : null,
