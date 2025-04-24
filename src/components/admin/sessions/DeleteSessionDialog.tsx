@@ -22,6 +22,11 @@ const DeleteSessionDialog: React.FC<DeleteSessionDialogProps> = ({
 }) => {
   if (!session) return null;
 
+  console.log('DeleteSessionDialog - Session date:', {
+    original: session.session_date,
+    formatted: formatDate(session.session_date)
+  });
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent dir="rtl">

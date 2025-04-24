@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -7,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { NewHistoricalSessionFormData, FutureSession } from '@/types/session';
 import { Patient } from '@/types/patient';
 import { supabase } from '@/lib/supabase';
-import { formatDateInIsraelTimeZone } from '@/utils/dateUtils';
+import { formatDateInIsraelTimeZone, convertLocalToUTC } from '@/utils/dateUtils';
 
 import {
   Dialog,
@@ -78,7 +77,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     payment_notes: null,
   });
 
-  // Fetch available exercises
   useEffect(() => {
     const fetchExercises = async () => {
       try {
@@ -98,11 +96,9 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     fetchExercises();
   }, []);
 
-  // Initialize form data when dialog opens or fromFutureSession changes
   useEffect(() => {
     if (open) {
       if (fromFutureSession) {
-        // Pre-fill form with future session data
         const sessionDate = new Date(fromFutureSession.session_date);
         
         setDate(sessionDate);
@@ -125,7 +121,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
           payment_notes: null,
         });
       } else {
-        // Default values for new session
         const now = new Date();
         setDate(now);
         setTime(
@@ -164,9 +159,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     
     setFormData((prev) => ({ ...prev, [name]: numValue }));
     
-    // Update payment status based on paid amount
     if (name === 'paid_amount') {
-      
       if (patient?.session_price) {
         if (numValue === null || numValue === 0) {
           setFormData(prev => ({ ...prev, payment_status: 'pending' }));
@@ -182,13 +175,11 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     
-    // Reset payment_date if payment_status is "pending"
     if (name === 'payment_status' && value === 'pending') {
       setFormData((prev) => ({ ...prev, payment_date: null }));
       setPaymentDate(undefined);
     }
     
-    // Set payment_date to today if payment_status changed to "paid" or "partial" and there's no date
     if (name === 'payment_status' && (value === 'paid' || value === 'partial') && !formData.payment_date) {
       const today = new Date();
       setFormData((prev) => ({ ...prev, payment_date: today }));
@@ -199,7 +190,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   const handleCheckboxChange = (checked: boolean) => {
     setFormData((prev) => ({ ...prev, sent_exercises: checked }));
     
-    // If unchecked, clear selected exercises
     if (!checked) {
       setSelectedExercises([]);
       setFormData((prev) => ({ ...prev, exercise_list: [] }));
@@ -222,7 +212,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTime(e.target.value);
     
-    // Update session_date with new time
     if (date) {
       const [hours, minutes] = e.target.value.split(':').map(Number);
       const newDate = new Date(date);
@@ -235,7 +224,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     if (newDate) {
       setDate(newDate);
       
-      // Preserve the selected time
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
         newDate.setHours(hours, minutes);
@@ -287,23 +275,29 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
       return;
     }
 
-    // Validate payment_status to ensure it's one of the allowed values
     if (!['paid', 'partial', 'pending'].includes(formData.payment_status)) {
       setFormData(prev => ({ ...prev, payment_status: 'pending' }));
     }
 
     setIsSubmitting(true);
     try {
-      // Format the combined date and time for database
       const combinedDate = date;
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
         combinedDate.setHours(hours, minutes);
       }
 
+      const isoDate = convertLocalToUTC(combinedDate);
+      
+      console.log('Creating new historical session with date:', {
+        original: combinedDate.toString(),
+        iso: isoDate,
+        timeInput: time
+      });
+
       const sessionData = {
         patient_id: patientId,
-        session_date: combinedDate.toISOString(),
+        session_date: isoDate,
         meeting_type: formData.meeting_type,
         summary: formData.summary,
         sent_exercises: formData.sent_exercises,
@@ -311,9 +305,11 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
         paid_amount: formData.paid_amount,
         payment_status: formData.payment_status,
         payment_method: formData.payment_method,
-        payment_date: formData.payment_date ? formData.payment_date.toISOString() : null,
+        payment_date: formData.payment_date ? convertLocalToUTC(formData.payment_date) : null,
         payment_notes: formData.payment_notes,
       };
+
+      console.log('Saving historical session data:', sessionData);
 
       const { error } = await supabase
         .from('sessions')
@@ -326,7 +322,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
         description: "הפגישה נוספה להיסטוריית הפגישות",
       });
 
-      // If this was from a future session, delete the future session
       if (fromFutureSession && onDeleteFutureSession) {
         try {
           await onDeleteFutureSession();
