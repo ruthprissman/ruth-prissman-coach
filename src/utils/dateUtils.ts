@@ -87,15 +87,18 @@ export const formatDateTimeInIsrael = (dateString: string | null | Date): string
 
 /**
  * Converts a local datetime to UTC for storage in database
- * @param localDate Local datetime
+ * Correctly handles Israel timezone conversion
+ * @param localDate Local datetime in Israel timezone
  * @returns UTC ISO string
  */
 export const convertLocalToUTC = (localDate: Date): string => {
   try {
-    // Convert local date to UTC
-    return localDate.toISOString();
+    // Convert local date from Israel timezone to UTC using date-fns-tz
+    const utcDate = fromZonedTime(localDate, 'Asia/Jerusalem');
+    return utcDate.toISOString();
   } catch (error) {
     console.error('Error converting local date to UTC:', error);
     return new Date().toISOString();
   }
 };
+
