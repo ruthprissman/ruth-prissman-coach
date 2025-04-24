@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -128,13 +129,18 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
       }
 
       // Convert to UTC before saving to database
-      const utcDate = convertLocalToUTC(combinedDate);
+      const isoDate = convertLocalToUTC(combinedDate);
+      
+      console.log('Creating new session with date:', {
+        original: combinedDate.toString(),
+        iso: isoDate
+      });
 
       const { error } = await supabase
         .from('future_sessions')
         .insert({
           patient_id: patientId,
-          session_date: utcDate,
+          session_date: isoDate,
           meeting_type: formData.meeting_type,
           status: 'Scheduled',
           zoom_link: formData.zoom_link || null,

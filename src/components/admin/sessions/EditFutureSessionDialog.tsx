@@ -82,6 +82,12 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
           status: session.status,
           zoom_link: session.zoom_link || '',
         });
+        
+        console.log('Editing session with date:', {
+          original: session.session_date,
+          parsed: sessionDate.toString(),
+          time: `${hours}:${minutes}`
+        });
       } catch (error) {
         console.error("Error initializing session edit form:", error);
         toast({
@@ -150,17 +156,19 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
       }
 
       // Convert local date to UTC before saving to database
-      const utcDate = convertLocalToUTC(combinedDate);
+      const isoDate = convertLocalToUTC(combinedDate);
       
-      console.log('Edit Session - Original date:', date);
-      console.log('Edit Session - With time:', combinedDate);
-      console.log('Edit Session - UTC to save:', utcDate);
+      console.log('Edit Session - Details:', {
+        original: date.toString(),
+        withTime: combinedDate.toString(),
+        isoToSave: isoDate
+      });
 
       // Only include fields that exist in the database table
       const { error } = await supabase
         .from('future_sessions')
         .update({
-          session_date: utcDate,
+          session_date: isoDate,
           meeting_type: formData.meeting_type,
           status: formData.status,
           zoom_link: formData.meeting_type === 'Zoom' ? formData.zoom_link : null,

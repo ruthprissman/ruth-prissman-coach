@@ -5,6 +5,7 @@ import { he } from 'date-fns/locale/he';
 import { Calendar, Clock, Repeat } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { convertLocalToUTC } from '@/utils/dateUtils';
 
 import {
   Dialog,
@@ -97,13 +98,22 @@ const RecurringSessionDialog: React.FC<RecurringSessionDialogProps> = ({
       
       const sessions = [];
       for (let i = 0; i < recurringCount; i++) {
+        // Create a new session date for each recurring instance
         const sessionDate = new Date(startDate);
         sessionDate.setDate(sessionDate.getDate() + (i * 7)); // Weekly sessions
-        sessionDate.setHours(hours, minutes);
+        sessionDate.setHours(hours, minutes); // Set the time component
+        
+        // Convert local date to ISO string
+        const isoDate = convertLocalToUTC(sessionDate);
+        
+        console.log(`Recurring Session ${i+1} - Date:`, {
+          original: sessionDate.toString(),
+          iso: isoDate
+        });
 
         sessions.push({
           patient_id: patientId,
-          session_date: sessionDate.toISOString(),
+          session_date: isoDate,
           meeting_type: meetingType,
           status: 'Scheduled',
           zoom_link: meetingType === 'Zoom' ? zoomLink : null,

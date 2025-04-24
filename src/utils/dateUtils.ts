@@ -102,28 +102,23 @@ export const formatDateTimeInIsrael = (dateString: string | null | Date): string
 };
 
 /**
- * Converts a local datetime in Israel timezone to UTC for storage in database
- * @param localDate Local datetime in Israel timezone
- * @returns UTC ISO string
+ * בעיה: כשמשתמשים בתאריך מקומי בישראל (לדוגמא: 31/03/2025 בשעה 08:45)
+ * וקוראים לפונקציה זו, הפונקציה מניחה שזה תאריך UTC וממירה אותו לשעון ישראל
+ * שגורם לתזוזה של שעות נוספות (לדוגמא: מ-08:45 ל-11:45).
+ * 
+ * הפתרון: לשמור את התאריך כפי שהוא ללא המרה נוספת מזמן מקומי ל-UTC.
+ *
+ * @param localDate התאריך המקומי בישראל
+ * @returns התאריך כמחרוזת ISO ללא המרה נוספת
  */
 export const convertLocalToUTC = (localDate: Date): string => {
   try {
-    const year = localDate.getFullYear();
-    const month = localDate.getMonth();
-    const day = localDate.getDate();
-    const hours = localDate.getHours();
-    const minutes = localDate.getMinutes();
-    const seconds = localDate.getSeconds();
-    
-    console.log(`Converting local date: ${year}-${month+1}-${day} ${hours}:${minutes}:${seconds} (Israel time)`);
-    
-    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    
-    const utcDate = fromZonedTime(new Date(dateString), 'Asia/Jerusalem');
-    
-    console.log(`Converted to UTC: ${utcDate.toISOString()}`);
-    
-    return utcDate.toISOString();
+    // במקום להמיר את התאריך, פשוט נשמור אותו כ-ISO string
+    // זה יתן לנו תאריך ב-UTC, אבל יקח בחשבון שהמשתמש הזין את הזמן בשעון ישראל
+    // ולכן ישמור את התאריך והזמן המדויקים
+    const isoString = localDate.toISOString();
+    console.log(`Converting local date to ISO string: ${isoString} (keeping original time)`);
+    return isoString;
   } catch (error) {
     console.error('Error converting local date to UTC:', error);
     console.error('Date input was:', localDate);
