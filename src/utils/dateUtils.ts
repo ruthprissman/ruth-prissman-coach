@@ -1,8 +1,7 @@
-
 import { format } from 'date-fns';
 import { formatInTimeZone, toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { HebrewCalendar, HDate } from '@hebcal/core';
-import { he } from 'date-fns/locale';
+import { he } from 'date-fns/locale/he';
 
 /**
  * Creates a Hebrew date string from a JavaScript Date
@@ -85,25 +84,12 @@ export const formatDateTimeInIsrael = (dateString: string | null | Date): string
   if (!dateString) return '';
   
   try {
-    // Ensure we're working with a Date object
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    console.log('formatDateTimeInIsrael - input:', dateString);
+    console.log('formatDateTimeInIsrael - date object:', date);
     
-    // Debug original input
-    console.log('formatDateTimeInIsrael - Original input:', dateString);
-    console.log('formatDateTimeInIsrael - Original UTC date object:', date.toISOString());
-    
-    // Convert UTC date to Israel timezone using toZonedTime
-    // Explicitly pass the UTC date and the target timezone
-    // This will adjust the date to Israel's timezone
-    const israelDate = toZonedTime(date, 'Asia/Jerusalem');
-    
-    console.log('formatDateTimeInIsrael - Converted to Israel timezone:', israelDate.toString());
-    
-    // Format the zoned date in Israel timezone format
-    // Important: Use israelDate here (already in Israel timezone) instead of the original date
-    const formatted = format(israelDate, 'dd/MM/yyyy, HH:mm');
-    
-    console.log('formatDateTimeInIsrael - Final formatted output:', formatted);
+    const formatted = formatInTimeZone(date, 'Asia/Jerusalem', 'dd/MM/yyyy, HH:mm');
+    console.log('formatDateTimeInIsrael - formatted output:', formatted);
     
     return formatted;
   } catch (error) {
@@ -120,7 +106,6 @@ export const formatDateTimeInIsrael = (dateString: string | null | Date): string
  */
 export const convertLocalToUTC = (localDate: Date): string => {
   try {
-    // Create a Date object representing the local time
     const year = localDate.getFullYear();
     const month = localDate.getMonth();
     const day = localDate.getDate();
@@ -130,10 +115,8 @@ export const convertLocalToUTC = (localDate: Date): string => {
     
     console.log(`Converting local date: ${year}-${month+1}-${day} ${hours}:${minutes}:${seconds} (Israel time)`);
     
-    // Create a date string in ISO format with the Israel timezone
     const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     
-    // Use fromZonedTime to convert from Israel timezone to UTC
     const utcDate = fromZonedTime(new Date(dateString), 'Asia/Jerusalem');
     
     console.log(`Converted to UTC: ${utcDate.toISOString()}`);
