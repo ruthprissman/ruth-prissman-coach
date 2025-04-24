@@ -1,3 +1,4 @@
+
 import { format } from 'date-fns';
 import { formatInTimeZone, toZonedTime, fromZonedTime } from 'date-fns-tz';
 import { HebrewCalendar, HDate } from '@hebcal/core';
@@ -88,6 +89,7 @@ export const formatDateTimeInIsrael = (dateString: string | null | Date): string
     console.log('formatDateTimeInIsrael - input:', dateString);
     console.log('formatDateTimeInIsrael - date object:', date);
     
+    // Important: Use formatInTimeZone to properly convert and format in one step
     const formatted = formatInTimeZone(date, 'Asia/Jerusalem', 'dd/MM/yyyy, HH:mm');
     console.log('formatDateTimeInIsrael - formatted output:', formatted);
     
