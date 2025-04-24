@@ -85,21 +85,30 @@ export const formatDateTimeInIsrael = (dateString: string | null | Date): string
   if (!dateString) return '';
   
   try {
+    // Ensure we're working with a Date object
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     
-    console.log('formatDateTimeInIsrael - Original UTC date:', date.toISOString());
+    // Debug original input
+    console.log('formatDateTimeInIsrael - Original input:', dateString);
+    console.log('formatDateTimeInIsrael - Original UTC date object:', date.toISOString());
     
-    // Use toZonedTime to convert UTC date to Israel timezone
+    // Convert UTC date to Israel timezone using toZonedTime
+    // Explicitly pass the UTC date and the target timezone
+    // This will adjust the date to Israel's timezone
     const israelDate = toZonedTime(date, 'Asia/Jerusalem');
+    
     console.log('formatDateTimeInIsrael - Converted to Israel timezone:', israelDate.toString());
     
-    // Format the date in Israel timezone
-    const formatted = formatInTimeZone(date, 'Asia/Jerusalem', 'dd/MM/yyyy, HH:mm');
-    console.log('formatDateTimeInIsrael - Formatted output:', formatted);
+    // Format the zoned date in Israel timezone format
+    // Important: Use israelDate here (already in Israel timezone) instead of the original date
+    const formatted = format(israelDate, 'dd/MM/yyyy, HH:mm');
+    
+    console.log('formatDateTimeInIsrael - Final formatted output:', formatted);
     
     return formatted;
   } catch (error) {
     console.error('Error formatting date in Israel time zone:', error);
+    console.error('Input was:', dateString);
     return '';
   }
 };

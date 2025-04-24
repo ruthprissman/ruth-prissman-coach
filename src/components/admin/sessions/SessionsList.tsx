@@ -32,6 +32,15 @@ const SessionsList: React.FC<SessionsListProps> = ({
     }
   };
 
+  // Debug logs to check the session dates
+  React.useEffect(() => {
+    if (sessions.length > 0) {
+      console.log('SessionsList received sessions:', sessions.length);
+      console.log('First session date (raw):', sessions[0].session_date);
+      console.log('First session formatted date:', formatDate(sessions[0].session_date));
+    }
+  }, [sessions, formatDate]);
+
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="p-6 border-b">
