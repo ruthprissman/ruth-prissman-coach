@@ -65,6 +65,8 @@ const ClientDetails = () => {
   }, [patientId]);
 
   const fetchClientData = async () => {
+    if (!patientId) return;
+    
     setLoading(true);
     try {
       const { data: patientData, error: patientError } = await supabase
@@ -86,11 +88,14 @@ const ClientDetails = () => {
       
       setHistoricalSessions(sessionsData as Session[]);
       
+      const oneDayAgo = new Date();
+      oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+      
       const { data: futureSessionsData, error: futureSessionsError } = await supabase
         .from('future_sessions')
         .select('*')
         .eq('patient_id', patientId)
-        .gt('session_date', new Date().toISOString())
+        .gt('session_date', oneDayAgo.toISOString())
         .order('session_date', { ascending: true });
 
       if (futureSessionsError) throw futureSessionsError;
@@ -101,7 +106,7 @@ const ClientDetails = () => {
         .from('future_sessions')
         .select('*')
         .eq('patient_id', patientId)
-        .gt('session_date', new Date().toISOString())
+        .gt('session_date', oneDayAgo.toISOString())
         .order('session_date', { ascending: true })
         .limit(1);
 
@@ -131,7 +136,7 @@ const ClientDetails = () => {
         next_session: nextSessionDate
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching client data:', error);
       toast({
         title: "שגיאה בטעינת נתונים",
