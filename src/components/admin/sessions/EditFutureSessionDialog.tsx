@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { he } from 'date-fns/locale/he';
+import { he } from 'date-fns/locale';
 import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { FutureSession } from '@/types/session';
 import { supabase } from '@/lib/supabase';
-import { convertLocalToUTC } from '@/utils/dateUtils';
+import { convertLocalToUTC, formatDateTimeInIsrael } from '@/utils/dateUtils';
 
 import {
   Dialog,
@@ -62,27 +63,35 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
   // Initialize form with session data when it's loaded
   useEffect(() => {
     if (session && open) {
-      // Convert UTC to local date for the input fields - we'll convert back on submit
-      const sessionDate = new Date(session.session_date);
-      
-      // Set the date and time values for editing
-      setDate(sessionDate);
-      
-      // Format time in 24-hour format
-      setTime(
-        sessionDate.getHours().toString().padStart(2, '0') + 
-        ':' + 
-        sessionDate.getMinutes().toString().padStart(2, '0')
-      );
-      
-      setFormData({
-        session_date: session.session_date,
-        meeting_type: session.meeting_type,
-        status: session.status,
-        zoom_link: session.zoom_link || '',
-      });
+      try {
+        // Convert session date to local date for editing
+        const sessionDate = new Date(session.session_date);
+        
+        // Set the date and time values for display
+        setDate(sessionDate);
+        
+        // Format time in 24-hour format
+        const hours = sessionDate.getHours().toString().padStart(2, '0');
+        const minutes = sessionDate.getMinutes().toString().padStart(2, '0');
+        setTime(`${hours}:${minutes}`);
+        
+        // Update form data
+        setFormData({
+          session_date: session.session_date,
+          meeting_type: session.meeting_type,
+          status: session.status,
+          zoom_link: session.zoom_link || '',
+        });
+      } catch (error) {
+        console.error("Error initializing session edit form:", error);
+        toast({
+          title: "שגיאה",
+          description: "שגיאה בטעינת נתוני הפגישה",
+          variant: "destructive",
+        });
+      }
     }
-  }, [session, open]);
+  }, [session, open, toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -112,10 +121,12 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
       // Preserve the selected time
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
-        newDate.setHours(hours, minutes);
+        const dateWithTime = new Date(newDate);
+        dateWithTime.setHours(hours, minutes);
+        setFormData((prev) => ({ ...prev, session_date: dateWithTime.toISOString() }));
+      } else {
+        setFormData((prev) => ({ ...prev, session_date: newDate.toISOString() }));
       }
-      
-      setFormData((prev) => ({ ...prev, session_date: newDate.toISOString() }));
     }
   };
 
@@ -131,8 +142,8 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
 
     setIsSubmitting(true);
     try {
-      // Format the combined date and time for database
-      const combinedDate = date;
+      // Build the combined date and time
+      const combinedDate = new Date(date);
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
         combinedDate.setHours(hours, minutes);
@@ -140,6 +151,10 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
 
       // Convert local date to UTC before saving to database
       const utcDate = convertLocalToUTC(combinedDate);
+      
+      console.log('Edit Session - Original date:', date);
+      console.log('Edit Session - With time:', combinedDate);
+      console.log('Edit Session - UTC to save:', utcDate);
 
       // Only include fields that exist in the database table
       const { error } = await supabase

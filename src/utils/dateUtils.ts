@@ -86,19 +86,34 @@ export const formatDateTimeInIsrael = (dateString: string | null | Date): string
 };
 
 /**
- * Converts a local datetime to UTC for storage in database
- * Correctly handles Israel timezone conversion
+ * Converts a local datetime in Israel timezone to UTC for storage in database
  * @param localDate Local datetime in Israel timezone
  * @returns UTC ISO string
  */
 export const convertLocalToUTC = (localDate: Date): string => {
   try {
-    // Convert local date from Israel timezone to UTC using date-fns-tz
-    const utcDate = fromZonedTime(localDate, 'Asia/Jerusalem');
+    // Create a Date object representing the local time
+    const year = localDate.getFullYear();
+    const month = localDate.getMonth();
+    const day = localDate.getDate();
+    const hours = localDate.getHours();
+    const minutes = localDate.getMinutes();
+    const seconds = localDate.getSeconds();
+    
+    console.log(`Converting local date: ${year}-${month+1}-${day} ${hours}:${minutes}:${seconds} (Israel time)`);
+    
+    // Create a date string in ISO format with the Israel timezone
+    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    
+    // Use fromZonedTime to convert from Israel timezone to UTC
+    const utcDate = fromZonedTime(new Date(dateString), 'Asia/Jerusalem');
+    
+    console.log(`Converted to UTC: ${utcDate.toISOString()}`);
+    
     return utcDate.toISOString();
   } catch (error) {
     console.error('Error converting local date to UTC:', error);
+    console.error('Date input was:', localDate);
     return new Date().toISOString();
   }
 };
-
