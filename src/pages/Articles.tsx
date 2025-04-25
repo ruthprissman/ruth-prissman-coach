@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { Article } from '@/types/article';
 import ArticleCard from '@/components/ArticleCard';
 import ArticleFilters from '@/components/ArticleFilters';
@@ -40,6 +41,7 @@ const Articles = () => {
         console.log("🔍 [Articles] Today's date for date-only comparison:", todayDateOnly);
         
         console.log("🔍 [Articles] Executing Supabase query to fetch professional_content with joined tables");
+        const supabase = await supabaseClient();
         const { data, error } = await supabase
           .from('professional_content')
           .select(`

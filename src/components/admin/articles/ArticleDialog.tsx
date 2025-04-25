@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -84,7 +85,7 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
       console.log(`Starting upload for file: ${file.name}`);
       setUploadProgress(0);
       
-      const supabase = supabaseClient();
+      const supabase = await supabaseClient();
 
       // Check if article has an existing image
       if (article?.image_url) {
@@ -152,12 +153,18 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
     setIsSaving(true);
     
     try {
-      const supabase = supabaseClient();
+      const supabase = await supabaseClient();
+      
+      console.log('Sending to Supabase:', {
+        title: data.title,
+        content_length: data.content_markdown ? data.content_markdown.length : 0,
+        category: data.category_id
+      });
       
       const formattedData: any = {
         title: data.title,
-        content_markdown: data.content_markdown,
-        category_id: data.category_id ? parseInt(data.category_id) : null,
+        content_markdown: data.content_markdown || '',
+        category_id: data.category_id ? parseInt(data.category_id as string) : null,
         scheduled_publish: data.scheduled_publish ? data.scheduled_publish.toISOString() : null,
         type: data.type,
       };
@@ -187,24 +194,26 @@ const ArticleDialog: React.FC<ArticleDialogProps> = ({
         formattedData['image_url'] = imageUrl;
       }
       
+      let result;
+      
       if (isEditMode && article) {
         console.log('Updating existing article ID:', article.id);
-        const { error } = await supabase
+        result = await supabase
           .from('professional_content')
           .update(formattedData)
           .eq('id', article.id);
           
-        if (error) throw error;
+        if (result.error) throw result.error;
       } else {
         console.log('Creating new article');
-        const { error } = await supabase
+        result = await supabase
           .from('professional_content')
           .insert(formattedData);
           
-        if (error) throw error;
+        if (result.error) throw result.error;
       }
       
-      console.log('Article saved successfully');
+      console.log('Article saved successfully', result);
       onSave();
     } catch (error: any) {
       console.error('Error saving article:', error);
