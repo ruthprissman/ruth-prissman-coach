@@ -16,10 +16,10 @@ const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ patient, onPatientUpdat
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   return (
-    <Card className="border-purple-200 overflow-hidden relative">
+    <Card className="border-purple-200 overflow-hidden relative" dir="rtl">
       <CardHeader className="pb-3 bg-purple-50">
         <div className="flex flex-row-reverse justify-between items-center">
-          <CardTitle className="text-2xl text-purple-700">{patient.name}</CardTitle>
+          <CardTitle className="text-2xl text-purple-700 text-right">{patient.name}</CardTitle>
           <TooltipProvider delayDuration={300}>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -43,27 +43,27 @@ const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ patient, onPatientUpdat
       <CardContent className="pt-6">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-4">
-            <div className="flex items-start">
-              <Phone className="h-5 w-5 text-purple-500 mt-0.5 ml-2" />
-              <div>
-                <div className="text-sm text-purple-600 font-medium text-right">טלפון</div>
-                <div className="font-medium text-right">{patient.phone || 'לא צוין'}</div>
+            <div className="flex items-start flex-row-reverse">
+              <Phone className="h-5 w-5 text-purple-500 mt-0.5 mr-2" />
+              <div className="w-full text-right">
+                <div className="text-sm text-purple-600 font-medium">טלפון</div>
+                <div className="font-medium">{patient.phone || 'לא צוין'}</div>
               </div>
             </div>
             
-            <div className="flex items-start">
-              <Mail className="h-5 w-5 text-purple-500 mt-0.5 ml-2" />
-              <div>
-                <div className="text-sm text-purple-600 font-medium text-right">אימייל</div>
-                <div className="font-medium text-right">{patient.email || 'לא צוין'}</div>
+            <div className="flex items-start flex-row-reverse">
+              <Mail className="h-5 w-5 text-purple-500 mt-0.5 mr-2" />
+              <div className="w-full text-right">
+                <div className="text-sm text-purple-600 font-medium">אימייל</div>
+                <div className="font-medium">{patient.email || 'לא צוין'}</div>
               </div>
             </div>
             
-            <div className="flex items-start">
-              <DollarSign className="h-5 w-5 text-purple-500 mt-0.5 ml-2" />
-              <div>
-                <div className="text-sm text-purple-600 font-medium text-right">מחיר לפגישה</div>
-                <div className="font-medium text-right">
+            <div className="flex items-start flex-row-reverse">
+              <DollarSign className="h-5 w-5 text-purple-500 mt-0.5 mr-2" />
+              <div className="w-full text-right">
+                <div className="text-sm text-purple-600 font-medium">מחיר לפגישה</div>
+                <div className="font-medium">
                   {patient.session_price ? `₪${patient.session_price}` : 'לא צוין'}
                 </div>
               </div>
@@ -71,8 +71,8 @@ const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ patient, onPatientUpdat
           </div>
           
           <div className="space-y-2">
-            <div className="flex items-start">
-              <FileText className="h-5 w-5 text-purple-500 mt-0.5 ml-2" />
+            <div className="flex items-start flex-row-reverse">
+              <FileText className="h-5 w-5 text-purple-500 mt-0.5 mr-2" />
               <div className="flex-1">
                 <div className="text-sm text-purple-600 font-medium text-right">הערות</div>
               </div>
