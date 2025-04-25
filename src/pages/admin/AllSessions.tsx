@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -256,6 +257,7 @@ const AllSessions: React.FC = () => {
               onClose={() => setIsEditDialogOpen(false)}
               session={editingSession}
               onSessionUpdated={handleSessionUpdated}
+              sessionPrice={null} // Providing null as default value
             />
           )}
           
