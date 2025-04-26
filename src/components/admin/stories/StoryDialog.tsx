@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -133,7 +134,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       
       let pdfUrl = story?.pdf_url || '';
       if (pdfFile) {
-        const pdfBucketName = 'stories';
+        const pdfBucketName = 'Stories';
         
         const pdfFileName = `${Date.now()}-${pdfFile.name}`;
         console.log(`Uploading PDF to '${pdfBucketName}' bucket: ${pdfFileName}`);
@@ -164,7 +165,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       
       let imageUrl = story?.image_url || '';
       if (imageFile) {
-        const imageBucketName = 'stories_img';
+        const imageBucketName = 'Stories_img';
         
         const imageFileName = `${Date.now()}-${imageFile.name}`;
         console.log(`Uploading image to '${imageBucketName}' bucket: ${imageFileName}`);
