@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -78,11 +79,17 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
         if (error) throw error;
 
         if (data) {
-          setStory(data);
+          // Map database column to interface
+          const mappedStory = {
+            ...data,
+            publish_date: data.published_at
+          };
+          
+          setStory(mappedStory);
           form.reset({
             title: data.title,
             summary: data.summary,
-            publish_date: new Date(data.publish_date),
+            publish_date: new Date(data.published_at),
           });
           
           setPdfPreview(data.pdf_url || '');
@@ -175,7 +182,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       console.log('Saving story with data:', {
         title: data.title,
         summary: data.summary,
-        publish_date: data.publish_date.toISOString(),
+        published_at: data.publish_date.toISOString(),
         pdf_url: pdfUrl,
         image_url: imageUrl,
       });
@@ -183,7 +190,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       const storyData = {
         title: data.title,
         summary: data.summary,
-        publish_date: data.publish_date.toISOString(),
+        published_at: data.publish_date.toISOString(), // Use published_at for database
         pdf_url: pdfUrl,
         image_url: imageUrl,
       };

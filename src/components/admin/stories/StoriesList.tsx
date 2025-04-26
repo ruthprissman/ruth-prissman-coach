@@ -37,14 +37,20 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
       const { data, error } = await supabase
         .from('stories')
         .select('*')
-        .order('publish_date', { ascending: false });
+        .order('published_at', { ascending: false });
 
       if (error) {
         console.error('Supabase error details:', error);
         throw error;
       }
       
-      setStories(data || []);
+      // Map the database column to our interface
+      const mappedStories = data?.map(story => ({
+        ...story,
+        publish_date: story.published_at
+      })) || [];
+      
+      setStories(mappedStories);
     } catch (error) {
       console.error('Error fetching stories:', error);
       toast({
