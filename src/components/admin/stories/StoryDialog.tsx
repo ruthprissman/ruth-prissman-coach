@@ -236,7 +236,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] h-[80vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-right">
             {storyId ? 'עריכת סיפור' : 'הוספת סיפור חדש'}
@@ -253,150 +253,152 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" dir="rtl">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>כותרת</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="הזן כותרת לסיפור" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="summary"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>תקציר</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        {...field} 
-                        placeholder="הזן תקציר לסיפור שיוצג ברשימת הסיפורים" 
-                        rows={4}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="publish_date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>תאריך פרסום</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-right font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy")
-                            ) : (
-                              <span>בחר תאריך</span>
-                            )}
-                            <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
+          <div className="flex-1 overflow-y-auto pr-1">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" dir="rtl">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>כותרת</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="הזן כותרת לסיפור" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="summary"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>תקציר</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          {...field} 
+                          placeholder="הזן תקציר לסיפור שיוצג ברשימת הסיפורים" 
+                          rows={4}
                         />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="space-y-2">
-                <FormLabel>קובץ PDF</FormLabel>
-                <FileUploadField
-                  onFileSelected={(file) => setPdfFile(file)}
-                  id="pdf-file"
-                  name="pdf-file"
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                {pdfPreview && !pdfFile && (
-                  <div className="flex items-center justify-between p-2 bg-muted rounded mt-2">
-                    <span className="text-sm truncate">PDF נוכחי: קובץ קיים</span>
-                    <Button
-                      type="button"
-                      variant="link"
-                      size="sm"
-                      onClick={() => window.open(pdfPreview, '_blank')}
-                    >
-                      צפה
-                    </Button>
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <FormLabel>תמונה מקדימה</FormLabel>
-                <FileUploadField
-                  onFileSelected={(file) => {
-                    setImageFile(file);
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (e) => {
-                        setImagePreview(e.target?.result as string);
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                  id="image-file"
-                  name="image-file"
+                
+                <FormField
+                  control={form.control}
+                  name="publish_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>תאריך פרסום</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-right font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "dd/MM/yyyy")
+                              ) : (
+                                <span>בחר תאריך</span>
+                              )}
+                              <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                {(imagePreview || imageFile) && (
-                  <div className="mt-2">
-                    <p className="text-sm mb-1">תצוגה מקדימה:</p>
-                    <img 
-                      src={imageFile ? URL.createObjectURL(imageFile) : imagePreview} 
-                      alt="תצוגה מקדימה" 
-                      className="max-h-48 max-w-full rounded"
-                    />
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex justify-between pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onClose}
-                  disabled={isSaving}
-                >
-                  ביטול
-                </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                      שומר...
-                    </>
-                  ) : storyId ? 'עדכן סיפור' : 'צור סיפור'}
-                </Button>
-              </div>
-            </form>
-          </Form>
+                
+                <div className="space-y-2">
+                  <FormLabel>קובץ PDF</FormLabel>
+                  <FileUploadField
+                    onFileSelected={(file) => setPdfFile(file)}
+                    id="pdf-file"
+                    name="pdf-file"
+                  />
+                  {pdfPreview && !pdfFile && (
+                    <div className="flex items-center justify-between p-2 bg-muted rounded mt-2">
+                      <span className="text-sm truncate">PDF נוכחי: קובץ קיים</span>
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        onClick={() => window.open(pdfPreview, '_blank')}
+                      >
+                        צפה
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <FormLabel>תמונה מקדימה</FormLabel>
+                  <FileUploadField
+                    onFileSelected={(file) => {
+                      setImageFile(file);
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                          setImagePreview(e.target?.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    id="image-file"
+                    name="image-file"
+                  />
+                  {(imagePreview || imageFile) && (
+                    <div className="mt-2">
+                      <p className="text-sm mb-1">תצוגה מקדימה:</p>
+                      <img 
+                        src={imageFile ? URL.createObjectURL(imageFile) : imagePreview} 
+                        alt="תצוגה מקדימה" 
+                        className="max-h-48 max-w-full rounded"
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex justify-between pt-4 pb-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onClose}
+                    disabled={isSaving}
+                  >
+                    ביטול
+                  </Button>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                        שומר...
+                      </>
+                    ) : storyId ? 'עדכן סיפור' : 'צור סיפור'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
         )}
       </DialogContent>
     </Dialog>
