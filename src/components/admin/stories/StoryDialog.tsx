@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -165,7 +164,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       
       let imageUrl = story?.image_url || '';
       if (imageFile) {
-        const imageBucketName = 'Stories_img';
+        const imageBucketName = 'stories_img';
         
         const imageFileName = `${Date.now()}-${imageFile.name}`;
         console.log(`Uploading image to '${imageBucketName}' bucket: ${imageFileName}`);
