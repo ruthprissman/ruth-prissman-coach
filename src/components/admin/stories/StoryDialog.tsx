@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -60,7 +59,6 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
     },
   });
 
-  // Fetch story data if editing
   useEffect(() => {
     const fetchStory = async () => {
       if (!storyId) {
@@ -128,7 +126,6 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
     try {
       const supabase = supabaseClient();
       
-      // Upload PDF file if provided
       let pdfUrl = story?.pdf_url || '';
       if (pdfFile) {
         const pdfFileName = `${Date.now()}-${pdfFile.name}`;
@@ -142,7 +139,6 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
           
         if (pdfError) throw pdfError;
         
-        // Get public URL
         const { data: pdfPublicUrl } = supabase
           .storage
           .from('stories')
@@ -153,7 +149,6 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
         throw new Error('יש להעלות קובץ PDF');
       }
       
-      // Upload image if provided
       let imageUrl = story?.image_url || '';
       if (imageFile) {
         const imageFileName = `${Date.now()}-${imageFile.name}`;
@@ -167,7 +162,6 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
           
         if (imageError) throw imageError;
         
-        // Get public URL
         const { data: imagePublicUrl } = supabase
           .storage
           .from('stories_img')
@@ -177,6 +171,14 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       } else if (!storyId && !imageFile) {
         throw new Error('יש להעלות תמונה');
       }
+      
+      console.log('Saving story with data:', {
+        title: data.title,
+        summary: data.summary,
+        publish_date: data.publish_date.toISOString(),
+        pdf_url: pdfUrl,
+        image_url: imageUrl,
+      });
       
       const storyData = {
         title: data.title,
@@ -189,20 +191,21 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       let result;
       
       if (storyId) {
-        // Update existing story
         result = await supabase
           .from('stories')
           .update(storyData)
           .eq('id', storyId);
       } else {
-        // Create new story
         storyData['created_at'] = new Date().toISOString();
         result = await supabase
           .from('stories')
           .insert(storyData);
       }
       
-      if (result.error) throw result.error;
+      if (result.error) {
+        console.error('Supabase error details:', result.error);
+        throw result.error;
+      }
       
       toast({
         title: storyId ? "הסיפור עודכן בהצלחה" : "הסיפור נוצר בהצלחה",

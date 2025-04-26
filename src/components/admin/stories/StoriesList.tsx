@@ -39,7 +39,10 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
         .select('*')
         .order('publish_date', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
       
       setStories(data || []);
     } catch (error) {
