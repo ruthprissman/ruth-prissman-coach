@@ -36,7 +36,7 @@ interface StoryDialogProps {
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "הכותרת חייבת להכיל לפחות 2 תווים" }),
-  description: z.string().min(10, { message: "התקציר חייב להכיל לפחות 10 תווים" }),
+  description: z.string().min(10, { message: "התיאור חייב להכיל לפחות 10 תווים" }),
   publish_date: z.date({ required_error: "תאריך פרסום הוא שדה חובה" }),
 });
 
@@ -133,46 +133,65 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       
       let pdfUrl = story?.pdf_url || '';
       if (pdfFile) {
+        const { data: buckets } = await supabase.storage.listBuckets();
+        console.log("Available buckets:", buckets?.map(b => b.name));
+        
+        const pdfBucketName = 'stories_pdf';
+        
         const pdfFileName = `${Date.now()}-${pdfFile.name}`;
+        console.log(`Uploading PDF to '${pdfBucketName}' bucket: ${pdfFileName}`);
+        
         const { data: pdfData, error: pdfError } = await supabase
           .storage
-          .from('stories')
+          .from(pdfBucketName)
           .upload(pdfFileName, pdfFile, {
             cacheControl: '3600',
             upsert: false
           });
           
-        if (pdfError) throw pdfError;
+        if (pdfError) {
+          console.error("PDF upload error:", pdfError);
+          throw new Error(`שגיאה בהעלאת PDF: ${pdfError.message}`);
+        }
         
         const { data: pdfPublicUrl } = supabase
           .storage
-          .from('stories')
+          .from(pdfBucketName)
           .getPublicUrl(pdfFileName);
           
         pdfUrl = pdfPublicUrl.publicUrl;
+        console.log("PDF uploaded successfully:", pdfUrl);
       } else if (!storyId && !pdfFile) {
         throw new Error('יש להעלות קובץ PDF');
       }
       
       let imageUrl = story?.image_url || '';
       if (imageFile) {
+        const imageBucketName = 'stories_images';
+        
         const imageFileName = `${Date.now()}-${imageFile.name}`;
+        console.log(`Uploading image to '${imageBucketName}' bucket: ${imageFileName}`);
+        
         const { data: imageData, error: imageError } = await supabase
           .storage
-          .from('stories_img')
+          .from(imageBucketName)
           .upload(imageFileName, imageFile, {
             cacheControl: '3600',
             upsert: false
           });
           
-        if (imageError) throw imageError;
+        if (imageError) {
+          console.error("Image upload error:", imageError);
+          throw new Error(`שגיאה בהעלאת התמונה: ${imageError.message}`);
+        }
         
         const { data: imagePublicUrl } = supabase
           .storage
-          .from('stories_img')
+          .from(imageBucketName)
           .getPublicUrl(imageFileName);
           
         imageUrl = imagePublicUrl.publicUrl;
+        console.log("Image uploaded successfully:", imageUrl);
       } else if (!storyId && !imageFile) {
         throw new Error('יש להעלות תמונה');
       }
@@ -273,11 +292,11 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>תקציר</FormLabel>
+                      <FormLabel>תיאור</FormLabel>
                       <FormControl>
                         <Textarea 
                           {...field} 
-                          placeholder="הזן תקציר לסיפור שיוצג ברשימת הסיפורים" 
+                          placeholder="הזן תיאור לסיפור שיוצג ברשימת הסיפורים" 
                           rows={4}
                         />
                       </FormControl>

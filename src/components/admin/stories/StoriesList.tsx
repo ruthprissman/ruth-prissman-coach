@@ -80,14 +80,20 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
       if (storyToDelete.pdf_url) {
         const pdfPath = storyToDelete.pdf_url.split('/').pop();
         if (pdfPath) {
-          await supabase.storage.from('stories').remove([pdfPath]);
+          const pdfBucketName = 'stories_pdf';
+          console.log(`Deleting PDF from '${pdfBucketName}' bucket: ${pdfPath}`);
+          
+          await supabase.storage.from(pdfBucketName).remove([pdfPath]);
         }
       }
       
       if (storyToDelete.image_url) {
         const imagePath = storyToDelete.image_url.split('/').pop();
         if (imagePath) {
-          await supabase.storage.from('stories_img').remove([imagePath]);
+          const imageBucketName = 'stories_images';
+          console.log(`Deleting image from '${imageBucketName}' bucket: ${imagePath}`);
+          
+          await supabase.storage.from(imageBucketName).remove([imagePath]);
         }
       }
       
@@ -151,7 +157,7 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
                 <TableHead className="text-right">תמונה</TableHead>
                 <TableHead className="text-right">כותרת</TableHead>
                 <TableHead className="text-right">תאריך פרסום</TableHead>
-                <TableHead>תקציר</TableHead>
+                <TableHead>תיאור</TableHead>
                 <TableHead className="text-right">פעולות</TableHead>
               </TableRow>
             </TableHeader>
