@@ -133,10 +133,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       
       let pdfUrl = story?.pdf_url || '';
       if (pdfFile) {
-        const { data: buckets } = await supabase.storage.listBuckets();
-        console.log("Available buckets:", buckets?.map(b => b.name));
-        
-        const pdfBucketName = 'stories_pdf';
+        const pdfBucketName = 'stories';
         
         const pdfFileName = `${Date.now()}-${pdfFile.name}`;
         console.log(`Uploading PDF to '${pdfBucketName}' bucket: ${pdfFileName}`);
@@ -167,7 +164,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       
       let imageUrl = story?.image_url || '';
       if (imageFile) {
-        const imageBucketName = 'stories_images';
+        const imageBucketName = 'stories_img';
         
         const imageFileName = `${Date.now()}-${imageFile.name}`;
         console.log(`Uploading image to '${imageBucketName}' bucket: ${imageFileName}`);
