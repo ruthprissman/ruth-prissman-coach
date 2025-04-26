@@ -217,7 +217,6 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
           .update(storyData)
           .eq('id', storyId);
       } else {
-        storyData['created_at'] = new Date().toISOString();
         result = await supabase
           .from('stories')
           .insert(storyData);
