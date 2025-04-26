@@ -177,8 +177,8 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
                   </TableCell>
                   <TableCell className="font-medium">{story.title}</TableCell>
                   <TableCell>{formatDate(story.publish_date)}</TableCell>
-                  <TableCell>
-                    <div className="max-w-xs truncate">{story.summary}</div>
+                  <TableCell className="max-w-xs">
+                    <div className="truncate">{story.summary}</div>
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2 flex-row-reverse">
