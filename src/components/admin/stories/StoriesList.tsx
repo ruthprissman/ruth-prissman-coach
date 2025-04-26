@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -44,7 +43,6 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
         throw error;
       }
       
-      // Map the database column to our interface
       const mappedStories = data?.map(story => ({
         ...story,
         publish_date: story.published_at
@@ -79,7 +77,6 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
     try {
       const supabase = supabaseClient();
       
-      // Delete the associated files from storage first
       if (storyToDelete.pdf_url) {
         const pdfPath = storyToDelete.pdf_url.split('/').pop();
         if (pdfPath) {
@@ -94,7 +91,6 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
         }
       }
       
-      // Delete the record from the database
       const { error } = await supabase
         .from('stories')
         .delete()
@@ -155,7 +151,7 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
                 <TableHead className="text-right">תמונה</TableHead>
                 <TableHead className="text-right">כותרת</TableHead>
                 <TableHead className="text-right">תאריך פרסום</TableHead>
-                <TableHead className="text-right">תקציר</TableHead>
+                <TableHead>תקציר</TableHead>
                 <TableHead className="text-right">פעולות</TableHead>
               </TableRow>
             </TableHeader>
@@ -178,7 +174,7 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
                   <TableCell className="font-medium">{story.title}</TableCell>
                   <TableCell>{formatDate(story.publish_date)}</TableCell>
                   <TableCell className="max-w-xs">
-                    <div className="truncate">{story.summary}</div>
+                    <div className="truncate">{story.description}</div>
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2 flex-row-reverse">
@@ -208,7 +204,6 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>

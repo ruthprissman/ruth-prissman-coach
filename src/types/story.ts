@@ -2,8 +2,8 @@
 export interface Story {
   id: number;
   title: string;
-  summary: string;
-  publish_date: string;  // Keep this as is for the interface
+  description: string;  // Changed from summary
+  publish_date: string;
   pdf_url: string;
   image_url: string;
   created_at: string;
@@ -11,8 +11,8 @@ export interface Story {
 
 export interface NewStory {
   title: string;
-  summary: string;
-  publish_date: string;  // Keep this as is for the interface
+  description: string;  // Changed from summary
+  publish_date: string;
   pdf_url?: string;
   image_url?: string;
 }

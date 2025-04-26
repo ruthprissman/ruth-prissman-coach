@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -37,7 +36,7 @@ interface StoryDialogProps {
 
 const formSchema = z.object({
   title: z.string().min(2, { message: "הכותרת חייבת להכיל לפחות 2 תווים" }),
-  summary: z.string().min(10, { message: "התקציר חייב להכיל לפחות 10 תווים" }),
+  description: z.string().min(10, { message: "התקציר חייב להכיל לפחות 10 תווים" }),
   publish_date: z.date({ required_error: "תאריך פרסום הוא שדה חובה" }),
 });
 
@@ -55,7 +54,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
-      summary: '',
+      description: '',
       publish_date: new Date(),
     },
   });
@@ -79,7 +78,6 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
         if (error) throw error;
 
         if (data) {
-          // Map database column to interface
           const mappedStory = {
             ...data,
             publish_date: data.published_at
@@ -88,7 +86,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
           setStory(mappedStory);
           form.reset({
             title: data.title,
-            summary: data.summary,
+            description: data.description,
             publish_date: new Date(data.published_at),
           });
           
@@ -118,7 +116,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
   const resetForm = () => {
     form.reset({
       title: '',
-      summary: '',
+      description: '',
       publish_date: new Date(),
     });
     setPdfFile(undefined);
@@ -181,7 +179,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       
       console.log('Saving story with data:', {
         title: data.title,
-        summary: data.summary,
+        description: data.description,
         published_at: data.publish_date.toISOString(),
         pdf_url: pdfUrl,
         image_url: imageUrl,
@@ -189,8 +187,8 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
       
       const storyData = {
         title: data.title,
-        summary: data.summary,
-        published_at: data.publish_date.toISOString(), // Use published_at for database
+        description: data.description,
+        published_at: data.publish_date.toISOString(),
         pdf_url: pdfUrl,
         image_url: imageUrl,
       };
@@ -272,7 +270,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
                 
                 <FormField
                   control={form.control}
-                  name="summary"
+                  name="description"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>תקציר</FormLabel>
