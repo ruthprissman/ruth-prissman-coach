@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -144,7 +143,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   const isMeetingEvent = (summary?: string) => {
     if (!summary) return false;
-    // Check without toLowerCase() and include "שיחה עם" pattern
     return summary.startsWith("פגישה עם") || summary.startsWith("שיחה עם");
   };
 
@@ -158,7 +156,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     if (!slot.fromGoogle && !slot.notes) return null;
 
     const isMeeting = isMeetingEvent(slot.notes);
-    const timeDisplay = formatEventTime(slot.startTime, slot.endTime);
+    const timeDisplay = formatEventTime(slot.exactStartTime || slot.startTime, slot.exactEndTime || slot.endTime);
 
     return (
       <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${isMeeting ? 'text-white' : 'text-gray-700'}`}>

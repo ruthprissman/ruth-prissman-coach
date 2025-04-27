@@ -1,4 +1,3 @@
-
 export interface TimeSlot {
   day: number;
   date: string;
@@ -19,8 +18,10 @@ export interface CalendarSlot {
   fromGoogle?: boolean;
   syncStatus?: 'synced' | 'google-only' | 'supabase-only';
   googleEvent?: GoogleCalendarEvent;
-  startTime?: string;
-  endTime?: string;
+  startTime?: string;  // Format: "HH:mm"
+  endTime?: string;    // Format: "HH:mm"
+  exactStartTime?: string; // For non-round times, format: "HH:mm"
+  exactEndTime?: string;   // For non-round times, format: "HH:mm"
 }
 
 export interface ContextMenuOptions {

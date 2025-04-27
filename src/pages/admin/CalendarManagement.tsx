@@ -222,6 +222,7 @@ const CalendarManagement: React.FC = () => {
     
     const calendarData = new Map<string, Map<string, CalendarSlot>>();
     
+    // Initialize calendar data with empty slots
     days.forEach(day => {
       const daySlots = new Map<string, CalendarSlot>();
       hours.forEach(hour => {
@@ -234,7 +235,72 @@ const CalendarManagement: React.FC = () => {
       });
       calendarData.set(day.date, daySlots);
     });
-    
+
+    // Process Google Calendar events
+    googleCalendarEvents.forEach((event, index) => {
+      if (event.start?.dateTime && event.end?.dateTime) {
+        try {
+          const startDate = new Date(event.start.dateTime);
+          const endDate = new Date(event.end.dateTime);
+          
+          const googleDate = format(startDate, 'yyyy-MM-dd');
+          const exactStartTime = format(startDate, 'HH:mm');
+          const exactEndTime = format(endDate, 'HH:mm');
+          
+          // Get the rounded hour for the slot
+          const googleHour = format(startDate, 'HH:00');
+          
+          console.log(`Processing Google event ${index}:`, {
+            summary: event.summary,
+            exactStartTime,
+            exactEndTime,
+            googleHour,
+            googleDate
+          });
+
+          const isDayVisible = days.some(day => day.date === googleDate);
+          if (!isDayVisible) {
+            console.log(`Skipping event ${index}: day is not in current view`);
+            return;
+          }
+          
+          const dayMap = calendarData.get(googleDate);
+          if (dayMap && dayMap.has(googleHour)) {
+            const existingSlot = dayMap.get(googleHour);
+            
+            if (existingSlot?.status !== 'booked' && existingSlot?.status !== 'completed') {
+              const isMeeting = event.summary?.startsWith('פגישה עם') || 
+                              event.summary?.startsWith('שיחה עם');
+              
+              console.log(`Updating slot for event ${index}:`, {
+                summary: event.summary,
+                isMeeting,
+                exactStartTime,
+                exactEndTime
+              });
+              
+              dayMap.set(googleHour, {
+                ...existingSlot!,
+                status: 'booked',
+                notes: event.summary || 'אירוע Google',
+                description: event.description,
+                fromGoogle: true,
+                syncStatus: 'google-only',
+                googleEvent: event,
+                startTime: googleHour,
+                endTime: format(addHours(startDate, 1), 'HH:00'),
+                exactStartTime,
+                exactEndTime
+              });
+            }
+          }
+        } catch (error) {
+          console.error(`Error processing Google event ${index}:`, error);
+        }
+      }
+    });
+
+    // Process available and booked slots
     availableSlots.forEach(slot => {
       const dayMap = calendarData.get(slot.date);
       if (dayMap && dayMap.has(slot.start_time)) {
@@ -260,7 +326,7 @@ const CalendarManagement: React.FC = () => {
         const dayMap = calendarData.get(sessionDate);
         if (dayMap && dayMap.has(sessionTime)) {
           const endTime = addMinutes(sessionDateTime, 90);
-          const formattedEndTime = format(endTime, 'HH:mm');
+          const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
           
           let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
           if (session.status === 'completed') status = 'completed';
@@ -269,113 +335,13 @@ const CalendarManagement: React.FC = () => {
           dayMap.set(sessionTime, {
             ...dayMap.get(sessionTime)!,
             status,
-            notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`,
-            startTime: sessionTime,
-            endTime: formattedEndTime
+            notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`
           });
         }
       } catch (error) {
         console.error('Error processing session date:', error);
       }
     });
-    
-    googleCalendarEvents.forEach((event, index) => {
-      if (event.start?.dateTime && event.end?.dateTime) {
-        try {
-          console.log(`Processing Google event ${index}:`, {
-            summary: event.summary,
-            startTime: event.start.dateTime,
-            endTime: event.end.dateTime,
-            description: event.description?.substring(0, 50)
-          });
-          
-          const startDate = new Date(event.start.dateTime);
-          const endDate = new Date(event.end.dateTime);
-          
-          const googleDate = format(startDate, 'yyyy-MM-dd');
-          
-          const exactStartTime = format(startDate, 'HH:mm');
-          const exactEndTime = format(endDate, 'HH:mm');
-          
-          const googleHour = format(startDate, 'HH:00');
-          
-          console.log(`Event ${index} parsed date/time:`, {
-            googleDate,
-            exactStartTime,
-            exactEndTime,
-            googleHour,
-            durationMinutes: (endDate.getTime() - startDate.getTime()) / 60000
-          });
-          
-          const isDayVisible = days.some(day => day.date === googleDate);
-          console.log(`Is day ${googleDate} visible in calendar:`, isDayVisible);
-          
-          if (!isDayVisible) {
-            console.log(`Skipping event ${index}: day is not in current calendar view range`);
-            return;
-          }
-          
-          const dayMap = calendarData.get(googleDate);
-          if (dayMap && dayMap.has(googleHour)) {
-            console.log(`Found matching slot for event ${index} at ${googleDate} ${googleHour}`);
-            const existingSlot = dayMap.get(googleHour);
-            
-            if (existingSlot?.status !== 'booked' && existingSlot?.status !== 'completed') {
-              const isMeeting = event.summary?.startsWith('פגישה עם') || 
-                              event.summary?.startsWith('שיחה עם');
-              
-              console.log(`Updating slot for event ${index}:`, {
-                summary: event.summary,
-                isMeeting,
-                startTime: exactStartTime,
-                endTime: exactEndTime
-              });
-              
-              dayMap.set(googleHour, {
-                ...existingSlot!,
-                status: 'booked',
-                notes: event.summary || 'אירוע Google',
-                description: event.description,
-                fromGoogle: true,
-                syncStatus: 'google-only',
-                googleEvent: event,
-                startTime: exactStartTime,
-                endTime: exactEndTime
-              });
-            } else {
-              console.log(`Slot for event ${index} already booked or completed, not overriding`);
-            }
-          } else {
-            console.log(`No matching slot found for event ${index} at ${googleDate} ${googleHour}`);
-            if (!dayMap) {
-              console.log(`No day map for ${googleDate}`);
-            } else {
-              console.log(`Available hours for ${googleDate}:`, Array.from(dayMap.keys()));
-            }
-          }
-        } catch (error) {
-          console.error(`Error processing Google event ${index}:`, error);
-        }
-      } else {
-        console.log(`Skipping event ${index} - no start.dateTime:`, event);
-      }
-    });
-    
-    let googleEventsFound = 0;
-    calendarData.forEach((dayMap, date) => {
-      dayMap.forEach((slot, hour) => {
-        if (slot.fromGoogle) {
-          googleEventsFound++;
-          console.log(`Found Google event in final data at ${date} ${hour}:`, {
-            summary: slot.notes,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-            isMeeting: slot.notes?.startsWith('פגישה עם') || slot.notes?.startsWith('שיחה עם')
-          });
-        }
-      });
-    });
-    console.log(`Total Google events added to calendar: ${googleEventsFound}`);
     
     return calendarData;
   };
@@ -605,7 +571,7 @@ const CalendarManagement: React.FC = () => {
         if (dayMap && dayMap.has(googleTime)) {
           const existingSlot = dayMap.get(googleTime);
           const endTime = new Date(event.end.dateTime);
-          const formattedEndTime = format(endTime, 'HH:mm');
+          const formattedEndTime = format(endDate, 'HH:mm');
           
           dayMap.set(googleTime, {
             ...existingSlot!,
