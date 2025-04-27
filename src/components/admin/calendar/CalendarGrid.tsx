@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -58,7 +59,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             summary: slot.notes,
             description: slot.description,
             fromGoogle: slot.fromGoogle,
-            syncStatus: slot.syncStatus
+            syncStatus: slot.syncStatus,
+            startTime: slot.startTime,
+            endTime: slot.endTime
           });
         }
       });
@@ -118,7 +121,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       notes: slot?.notes,
       description: slot?.description,
       isGoogleEvent: slot?.syncStatus === 'google-only' || slot?.fromGoogle,
-      googleEvent: slot?.googleEvent
+      googleEvent: slot?.googleEvent,
+      startTime: slot?.startTime,
+      endTime: slot?.endTime
     });
     return true;
   };
@@ -137,22 +142,23 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   };
 
-  const formatEventTime = (hour: string, date: string) => {
-    const [hourPart] = hour.split(':');
-    const nextHour = `${(parseInt(hourPart) + 1).toString().padStart(2, '0')}:00`;
-    return `${hour}-${nextHour}`;
-  };
-
   const isMeetingEvent = (summary?: string) => {
     if (!summary) return false;
+    // Check without toLowerCase() and include "שיחה עם" pattern
     return summary.startsWith("פגישה עם") || summary.startsWith("שיחה עם");
   };
 
+  const formatEventTime = (startTime?: string, endTime?: string) => {
+    if (!startTime) return "";
+    if (!endTime) return startTime;
+    return `${startTime}-${endTime}`;
+  };
+
   const renderEventContent = (slot: CalendarSlot) => {
-    if (!slot.fromGoogle) return null;
+    if (!slot.fromGoogle && !slot.notes) return null;
 
     const isMeeting = isMeetingEvent(slot.notes);
-    const timeDisplay = formatEventTime(slot.hour, slot.date);
+    const timeDisplay = formatEventTime(slot.startTime, slot.endTime);
 
     return (
       <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${isMeeting ? 'text-white' : 'text-gray-700'}`}>
@@ -164,9 +170,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             {slot.description}
           </div>
         )}
-        <div className="text-xs mt-auto opacity-75">
-          {timeDisplay}
-        </div>
+        {timeDisplay && (
+          <div className="text-xs mt-auto opacity-75">
+            {timeDisplay}
+          </div>
+        )}
       </div>
     );
   };
@@ -223,7 +231,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const status = slot?.status || 'unspecified';
                   const syncStatus = slot?.syncStatus;
                   const isGoogleEvent = syncStatus === 'google-only' || slot?.fromGoogle;
-                  const isMeeting = slot?.fromGoogle && isMeetingEvent(slot?.notes);
+                  const isMeeting = slot?.notes && isMeetingEvent(slot?.notes);
                   
                   const { bg, border, text } = getStatusStyle(status, syncStatus, isGoogleEvent, isMeeting);
                   
@@ -232,7 +240,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       className={`${bg} ${border} ${text} border transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px]`}
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, status)}
                     >
-                      {isGoogleEvent ? (
+                      {isGoogleEvent || (slot?.notes && status === 'booked') ? (
                         renderEventContent(slot!)
                       ) : (
                         <>
@@ -266,6 +274,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                                 <div>
                                   <p className="font-bold">{slot?.notes}</p>
                                   {slot?.description && <p>{slot.description}</p>}
+                                  {slot?.startTime && slot?.endTime && (
+                                    <p className="mt-1">{slot.startTime}-{slot.endTime}</p>
+                                  )}
                                 </div>
                               ) : (
                                 slot?.description

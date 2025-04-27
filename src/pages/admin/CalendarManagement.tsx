@@ -269,7 +269,9 @@ const CalendarManagement: React.FC = () => {
           dayMap.set(sessionTime, {
             ...dayMap.get(sessionTime)!,
             status,
-            notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`
+            notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`,
+            startTime: sessionTime,
+            endTime: formattedEndTime
           });
         }
       } catch (error) {
@@ -278,7 +280,7 @@ const CalendarManagement: React.FC = () => {
     });
     
     googleCalendarEvents.forEach((event, index) => {
-      if (event.start?.dateTime) {
+      if (event.start?.dateTime && event.end?.dateTime) {
         try {
           console.log(`Processing Google event ${index}:`, {
             summary: event.summary,
@@ -287,24 +289,22 @@ const CalendarManagement: React.FC = () => {
             description: event.description?.substring(0, 50)
           });
           
-          const dateTimeStr = event.start.dateTime;
-          let startDate: Date;
-          
-          if (dateTimeStr.includes('+')) {
-            startDate = new Date(dateTimeStr);
-          } else {
-            startDate = new Date(dateTimeStr);
-          }
+          const startDate = new Date(event.start.dateTime);
+          const endDate = new Date(event.end.dateTime);
           
           const googleDate = format(startDate, 'yyyy-MM-dd');
-          const fullStartTime = format(startDate, 'HH:mm');
-          const googleTime = `${fullStartTime.split(':')[0]}:00`;
+          
+          const exactStartTime = format(startDate, 'HH:mm');
+          const exactEndTime = format(endDate, 'HH:mm');
+          
+          const googleHour = format(startDate, 'HH:00');
           
           console.log(`Event ${index} parsed date/time:`, {
             googleDate,
-            fullStartTime,
-            googleTime,
-            originalTimezone: dateTimeStr.includes('+') ? dateTimeStr.split('+')[1] : 'no timezone'
+            exactStartTime,
+            exactEndTime,
+            googleHour,
+            durationMinutes: (endDate.getTime() - startDate.getTime()) / 60000
           });
           
           const isDayVisible = days.some(day => day.date === googleDate);
@@ -316,24 +316,22 @@ const CalendarManagement: React.FC = () => {
           }
           
           const dayMap = calendarData.get(googleDate);
-          if (dayMap && dayMap.has(googleTime)) {
-            console.log(`Found matching slot for event ${index} at ${googleDate} ${googleTime}`);
-            const existingSlot = dayMap.get(googleTime);
+          if (dayMap && dayMap.has(googleHour)) {
+            console.log(`Found matching slot for event ${index} at ${googleDate} ${googleHour}`);
+            const existingSlot = dayMap.get(googleHour);
+            
             if (existingSlot?.status !== 'booked' && existingSlot?.status !== 'completed') {
-              const endTime = new Date(event.end.dateTime);
-              const formattedEndTime = format(endTime, 'HH:mm');
-              
-              const isGoogleMeeting = event.summary?.startsWith('פגישה עם') || 
-                                    event.summary?.startsWith('שיחה עם');
+              const isMeeting = event.summary?.startsWith('פגישה עם') || 
+                              event.summary?.startsWith('שיחה עם');
               
               console.log(`Updating slot for event ${index}:`, {
                 summary: event.summary,
-                isGoogleMeeting,
-                startTime: fullStartTime,
-                endTime: formattedEndTime
+                isMeeting,
+                startTime: exactStartTime,
+                endTime: exactEndTime
               });
               
-              dayMap.set(googleTime, {
+              dayMap.set(googleHour, {
                 ...existingSlot!,
                 status: 'booked',
                 notes: event.summary || 'אירוע Google',
@@ -341,14 +339,14 @@ const CalendarManagement: React.FC = () => {
                 fromGoogle: true,
                 syncStatus: 'google-only',
                 googleEvent: event,
-                startTime: fullStartTime,
-                endTime: formattedEndTime
+                startTime: exactStartTime,
+                endTime: exactEndTime
               });
             } else {
               console.log(`Slot for event ${index} already booked or completed, not overriding`);
             }
           } else {
-            console.log(`No matching slot found for event ${index} at ${googleDate} ${googleTime}`);
+            console.log(`No matching slot found for event ${index} at ${googleDate} ${googleHour}`);
             if (!dayMap) {
               console.log(`No day map for ${googleDate}`);
             } else {
