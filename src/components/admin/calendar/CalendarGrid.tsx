@@ -137,6 +137,40 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   };
 
+  const formatEventTime = (hour: string, date: string) => {
+    const [hourPart] = hour.split(':');
+    const nextHour = `${(parseInt(hourPart) + 1).toString().padStart(2, '0')}:00`;
+    return `${hour}-${nextHour}`;
+  };
+
+  const isMeetingEvent = (summary?: string) => {
+    if (!summary) return false;
+    return summary.startsWith("פגישה עם") || summary.startsWith("שיחה עם");
+  };
+
+  const renderEventContent = (slot: CalendarSlot) => {
+    if (!slot.fromGoogle) return null;
+
+    const isMeeting = isMeetingEvent(slot.notes);
+    const timeDisplay = formatEventTime(slot.hour, slot.date);
+
+    return (
+      <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${isMeeting ? 'text-white' : 'text-gray-700'}`}>
+        <div className="text-xs font-semibold w-full truncate">
+          {slot.notes}
+        </div>
+        {slot.description && (
+          <div className="text-xs w-full truncate mt-0.5 opacity-90">
+            {slot.description}
+          </div>
+        )}
+        <div className="text-xs mt-auto opacity-75">
+          {timeDisplay}
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -189,31 +223,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const status = slot?.status || 'unspecified';
                   const syncStatus = slot?.syncStatus;
                   const isGoogleEvent = syncStatus === 'google-only' || slot?.fromGoogle;
-                  const isMeeting = isGoogleEvent && (
-                    (slot?.notes && slot.notes.toLowerCase().includes('פגישה עם')) || 
-                    (slot?.description && slot.description.toLowerCase().includes('פגישה עם'))
-                  );
+                  const isMeeting = slot?.fromGoogle && isMeetingEvent(slot?.notes);
                   
                   const { bg, border, text } = getStatusStyle(status, syncStatus, isGoogleEvent, isMeeting);
                   
                   const slotContent = (
                     <TableCell 
-                      className={`${bg} ${border} ${text} border text-center transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px]`}
+                      className={`${bg} ${border} ${text} border transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px]`}
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, status)}
                     >
                       {isGoogleEvent ? (
-                        <div className={`flex flex-col items-center justify-center h-full p-1 ${isMeeting ? 'font-semibold' : ''}`}>
-                          <span className="text-xs block">
-                            {slot?.notes || 'אירוע גוגל'}
-                          </span>
-                          {slot?.description && (
-                            <span className="text-xs block truncate max-w-full mt-0.5">
-                              {slot.description.length > 20 
-                                ? `${slot.description.substring(0, 20)}...`
-                                : slot.description}
-                            </span>
-                          )}
-                        </div>
+                        renderEventContent(slot!)
                       ) : (
                         <>
                           {status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
@@ -244,7 +264,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                             >
                               {isGoogleEvent ? (
                                 <div>
-                                  <p className="font-bold">{slot?.notes || 'אירוע גוגל'}</p>
+                                  <p className="font-bold">{slot?.notes}</p>
                                   {slot?.description && <p>{slot.description}</p>}
                                 </div>
                               ) : (

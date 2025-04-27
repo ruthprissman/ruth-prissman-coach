@@ -14,10 +14,12 @@ export interface CalendarSlot {
   hour: string;
   status: 'available' | 'private' | 'unspecified' | 'booked' | 'completed' | 'canceled';
   notes?: string;
-  description?: string; // For Google Calendar event description
-  fromGoogle?: boolean; // Flag to indicate if this came from Google Calendar
+  description?: string;
+  fromGoogle?: boolean;
   syncStatus?: 'synced' | 'google-only' | 'supabase-only';
-  googleEvent?: GoogleCalendarEvent; // מאחסן את האירוע המקורי מגוגל
+  googleEvent?: GoogleCalendarEvent;
+  startTime?: string;
+  endTime?: string;
 }
 
 export interface ContextMenuOptions {
