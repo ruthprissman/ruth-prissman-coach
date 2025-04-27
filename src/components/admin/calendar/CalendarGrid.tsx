@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -41,9 +40,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   isLoading 
 }) => {
   const [contextMenu, setContextMenu] = useState<ContextMenuOptions | null>(null);
-  const [debugMode, setDebugMode] = useState(true); // הגדרת מצב דיבאג כברירת מחדל
+  const [debugMode, setDebugMode] = useState(true);
 
-  // הוספת useEffect שמציג מידע על הסלוטים בקונסול
   useEffect(() => {
     console.log('CalendarGrid rendered with data:', {
       daysCount: days.length,
@@ -51,7 +49,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       datesWithData: calendarData.size
     });
 
-    // חיפוש אירועי גוגל בתוך הנתונים
     let googleEventsFound = 0;
     calendarData.forEach((dayMap, date) => {
       dayMap.forEach((slot, hour) => {
@@ -69,17 +66,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     console.log(`Total Google events found in calendar data: ${googleEventsFound}`);
   }, [calendarData, days, hours]);
 
-  // Get status color and label (updated with Google Calendar event styling)
   const getStatusStyle = (status: string, syncStatus?: string, isGoogleEvent?: boolean, isMeeting?: boolean) => {
-    // Handle Google Calendar events first with higher priority
     if (isGoogleEvent) {
       if (isMeeting) {
-        return { bg: 'bg-[#5B2C6F]', border: 'border-[#5B2C6F]', text: 'text-white' }; // Dark purple for meetings
+        return { bg: 'bg-[#9b87f5]', border: 'border-[#9b87f5]', text: 'text-white' };
       }
-      return { bg: 'bg-[#3498DB]', border: 'border-[#3498DB]', text: 'text-white' }; // Clean blue for other events
+      return { bg: 'bg-[#D3E4FD]', border: 'border-[#D3E4FD]', text: 'text-gray-700' };
     }
     
-    // Then handle regular statuses
     switch (status) {
       case 'available':
         return { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-800' };
@@ -96,7 +90,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   };
 
-  // Handle right-click on a cell
   const handleContextMenu = (e: React.MouseEvent, date: string, hour: string, status: any) => {
     e.preventDefault();
     setContextMenu({
@@ -109,7 +102,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     });
   };
 
-  // Handle selecting an option from the context menu
   const handleSelectOption = (status: 'available' | 'private' | 'unspecified') => {
     if (contextMenu) {
       onUpdateSlot(contextMenu.date, contextMenu.hour, status);
@@ -117,7 +109,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   };
 
-  // Debug function to log slot information
   const logSlotInfo = (date: string, hour: string, slot?: CalendarSlot) => {
     console.log(`CalendarGrid: Slot at ${date} ${hour}:`, {
       slot,
@@ -129,15 +120,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       isGoogleEvent: slot?.syncStatus === 'google-only' || slot?.fromGoogle,
       googleEvent: slot?.googleEvent
     });
-    return true; // החזרת ערך כדי לאפשר שימוש בפונקציה בתוך JSX
+    return true;
   };
 
-  // Toggle debug mode
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
     console.log(`Debug mode ${!debugMode ? 'enabled' : 'disabled'}`);
     if (!debugMode) {
-      // Log all Google events when debug mode is enabled
       calendarData.forEach((dayMap, date) => {
         dayMap.forEach((slot, hour) => {
           if (slot.fromGoogle || slot.syncStatus === 'google-only') {
@@ -193,9 +182,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const dayMap = calendarData.get(day.date);
                   const slot = dayMap?.get(hour);
                   
-                  // Debugging - log slot data to console
-                  const hasGoogleEvent = slot?.fromGoogle || slot?.syncStatus === 'google-only';
-                  if (hasGoogleEvent && debugMode) {
+                  if (debugMode) {
                     logSlotInfo(day.date, hour, slot);
                   }
                   
@@ -203,9 +190,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const syncStatus = slot?.syncStatus;
                   const isGoogleEvent = syncStatus === 'google-only' || slot?.fromGoogle;
                   const isMeeting = isGoogleEvent && (
-                    (slot?.notes && slot.notes.includes('פגישה עם')) || 
-                    (slot?.description && slot.description.includes('פגישה עם'))
+                    (slot?.notes && slot.notes.toLowerCase().includes('פגישה עם')) || 
+                    (slot?.description && slot.description.toLowerCase().includes('פגישה עם'))
                   );
+                  
                   const { bg, border, text } = getStatusStyle(status, syncStatus, isGoogleEvent, isMeeting);
                   
                   const slotContent = (
@@ -213,36 +201,29 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       className={`${bg} ${border} ${text} border text-center transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px]`}
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, status)}
                     >
-                      {status === 'available' && !isGoogleEvent && <Check className="h-4 w-4 mx-auto text-purple-600" />}
-                      {status === 'booked' && !isGoogleEvent && (
-                        <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />
-                      )}
-                      {status === 'completed' && !isGoogleEvent && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
-                      {status === 'canceled' && !isGoogleEvent && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
-                      {status === 'private' && !isGoogleEvent && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
-                      
-                      {/* Google Calendar event display with improved styling */}
-                      {isGoogleEvent && (
-                        <div className={`flex flex-col items-center gap-1 p-1 ${isMeeting ? 'font-semibold' : ''}`}>
+                      {isGoogleEvent ? (
+                        <div className={`flex flex-col items-center justify-center h-full p-1 ${isMeeting ? 'font-semibold' : ''}`}>
                           <span className="text-xs block">
                             {slot?.notes || 'אירוע גוגל'}
                           </span>
                           {slot?.description && (
-                            <span className="text-xs block truncate max-w-full">
+                            <span className="text-xs block truncate max-w-full mt-0.5">
                               {slot.description.length > 20 
-                                ? slot.description.substring(0, 20) + '...' 
+                                ? `${slot.description.substring(0, 20)}...`
                                 : slot.description}
                             </span>
                           )}
-                          {debugMode && (
-                            <span className="text-[9px] text-gray-300 mt-1">
-                              [Google Event]
-                            </span>
-                          )}
                         </div>
+                      ) : (
+                        <>
+                          {status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
+                          {status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />}
+                          {status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
+                          {status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
+                          {status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
+                        </>
                       )}
                       
-                      {/* Add warning icon for mismatched slots */}
                       {(syncStatus === 'google-only' || syncStatus === 'supabase-only') && (
                         <AlertTriangle className="h-4 w-4 absolute top-1 right-1 text-orange-600" />
                       )}
@@ -252,7 +233,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   return (
                     <ContextMenu key={`${day.date}-${hour}`}>
                       <ContextMenuTrigger asChild>
-                        {(slot?.description || hasGoogleEvent) ? (
+                        {(slot?.description || isGoogleEvent) ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               {slotContent}
@@ -261,16 +242,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                               side="bottom"
                               className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded"
                             >
-                              {hasGoogleEvent ? (
+                              {isGoogleEvent ? (
                                 <div>
                                   <p className="font-bold">{slot?.notes || 'אירוע גוגל'}</p>
                                   {slot?.description && <p>{slot.description}</p>}
-                                  {slot?.googleEvent && (
-                                    <div className="mt-1 text-[10px] text-gray-400">
-                                      <p>התחלה: {new Date(slot.googleEvent.start.dateTime).toLocaleString()}</p>
-                                      <p>סיום: {new Date(slot.googleEvent.end.dateTime).toLocaleString()}</p>
-                                    </div>
-                                  )}
                                 </div>
                               ) : (
                                 slot?.description
