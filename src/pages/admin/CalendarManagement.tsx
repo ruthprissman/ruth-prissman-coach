@@ -8,7 +8,7 @@ import { TabsContent, Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TimeSlot, CalendarSlot, GoogleCalendarEvent, CalendarSyncComparison } from '@/types/calendar';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
-import { addDays, format, startOfWeek, startOfDay, addWeeks, addMinutes, parseISO } from 'date-fns';
+import { addDays, format, startOfWeek, startOfDay, addWeeks, addMinutes, parseISO, addHours } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -570,7 +570,7 @@ const CalendarManagement: React.FC = () => {
         const dayMap = calendarData.get(googleDate);
         if (dayMap && dayMap.has(googleTime)) {
           const existingSlot = dayMap.get(googleTime);
-          const endTime = new Date(event.end.dateTime);
+          const endDate = new Date(event.end.dateTime);
           const formattedEndTime = format(endDate, 'HH:mm');
           
           dayMap.set(googleTime, {
