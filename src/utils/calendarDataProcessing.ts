@@ -1,3 +1,4 @@
+
 import { format, startOfDay, addDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
@@ -130,7 +131,7 @@ export const processGoogleEvents = (
               startMinute: currentStartMinute,
               endMinute: currentEndMinute,
               isPartialHour: isPartialStart || isPartialEnd,
-              showBorder: false
+              showBorder: false // Ensure no borders for multi-hour events
             });
           }
         }
@@ -200,8 +201,12 @@ export const processFutureSessions = (
       const patientName = session.patients?.name || 'לקוח/ה';
       const noteText = `פגישה עם ${patientName}`;
       
+      // Track what hours we're modifying for this session
+      console.log(`Adding future session: Start hour ${parseInt(sessionTime.split(':')[0])}, End hour ${endHour}, Duration: 90 minutes`);
+      
       for (let h = parseInt(sessionTime.split(':')[0]); h <= endHour; h++) {
         const hourString = h.toString().padStart(2, '0') + ':00';
+        console.log(`Processing hour ${hourString} for session with ${patientName}`);
         
         if (dayMap.has(hourString)) {
           const isFirstHour = h === parseInt(sessionTime.split(':')[0]);
@@ -218,6 +223,9 @@ export const processFutureSessions = (
             currentEndMinute = endMinute;
           }
           
+          // Log the hour we're currently processing
+          console.log(`Setting slot for ${hourString} - isFirst: ${isFirstHour}, isLast: ${isLastHour}`);
+          
           dayMap.set(hourString, {
             ...dayMap.get(hourString)!,
             status,
@@ -233,7 +241,7 @@ export const processFutureSessions = (
             isFirstHour,
             isLastHour,
             syncStatus: 'synced',
-            showBorder: false,
+            showBorder: false, // Critical: Make sure this is false to prevent dividing lines
             fromFutureSession: true,
             futureSession: session,
             inGoogleCalendar: false
@@ -247,6 +255,16 @@ export const processFutureSessions = (
     } catch (error) {
       console.error('Error processing session date:', error, session);
     }
+  });
+  
+  // Debug: After processing, check all future sessions for showBorder property
+  console.log('Checking future sessions for proper styling...');
+  calendarData.forEach((dayMap, date) => {
+    dayMap.forEach((slot, hour) => {
+      if (slot.fromFutureSession) {
+        console.log(`Future session at ${date} ${hour} - showBorder: ${slot.showBorder}, isFirst: ${slot.isFirstHour}, isLast: ${slot.isLastHour}`);
+      }
+    });
   });
   
   return calendarData;

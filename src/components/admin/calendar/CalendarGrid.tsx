@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -84,7 +85,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       if (inGoogleCalendar) {
         return { 
           bg: 'bg-[#D3E4FD]', 
-          border: '#D3E4FD', 
+          border: 'border-[#D3E4FD]', 
           text: 'text-gray-700',
           colorClass: 'border-[#D3E4FD]'
         };
@@ -92,7 +93,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       
       return { 
         bg: 'bg-[#9b87f5]', 
-        border: '#7E69AB', 
+        border: 'border-[#7E69AB]', 
         text: 'text-white font-medium',
         colorClass: 'border-[#9b87f5]'
       };
@@ -101,7 +102,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     if (isPatientMeeting || (isMeeting && status === 'booked')) {
       return { 
         bg: 'bg-[#5C4C8D]', 
-        border: '#5C4C8D', 
+        border: 'border-[#5C4C8D]', 
         text: 'text-[#CFB53B] font-medium',
         colorClass: 'border-[#5C4C8D]'
       };
@@ -110,7 +111,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     if (fromGoogle) {
       return { 
         bg: 'bg-[#D3E4FD]', 
-        border: '#D3E4FD', 
+        border: 'border-[#D3E4FD]', 
         text: 'text-gray-700',
         colorClass: 'border-[#D3E4FD]'
       };
@@ -118,17 +119,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     
     switch (status) {
       case 'available':
-        return { bg: 'bg-purple-100', border: 'rgb(243 232 255)', text: 'text-purple-800', colorClass: 'border-purple-100' };
+        return { bg: 'bg-purple-100', border: 'border-purple-100', text: 'text-purple-800', colorClass: 'border-purple-100' };
       case 'booked':
-        return { bg: 'bg-[#5C4C8D]', border: '#5C4C8D', text: 'text-[#CFB53B]', colorClass: 'border-[#5C4C8D]' };
+        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]', colorClass: 'border-[#5C4C8D]' };
       case 'completed':
-        return { bg: 'bg-gray-200', border: 'rgb(229 231 235)', text: 'text-gray-800', colorClass: 'border-gray-200' };
+        return { bg: 'bg-gray-200', border: 'border-gray-200', text: 'text-gray-800', colorClass: 'border-gray-200' };
       case 'canceled':
-        return { bg: 'bg-red-100', border: 'rgb(254 226 226)', text: 'text-red-800', colorClass: 'border-red-100' };
+        return { bg: 'bg-red-100', border: 'border-red-100', text: 'text-red-800', colorClass: 'border-red-100' };
       case 'private':
-        return { bg: 'bg-amber-100', border: 'rgb(254 243 199)', text: 'text-amber-800', colorClass: 'border-amber-100' };
+        return { bg: 'bg-amber-100', border: 'border-amber-100', text: 'text-amber-800', colorClass: 'border-amber-100' };
       default:
-        return { bg: 'bg-gray-50', border: 'rgb(249 250 251)', text: 'text-gray-800', colorClass: 'border-gray-50' };
+        return { bg: 'bg-gray-50', border: 'border-gray-50', text: 'text-gray-800', colorClass: 'border-gray-50' };
     }
   };
 
@@ -145,6 +146,20 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       fromFutureSession,
       futureSession
     });
+    
+    // Add debugging for right-click event
+    console.log("Right-click event:", {
+      clientX: e.clientX,
+      clientY: e.clientY, 
+      buttons: e.buttons,
+      button: e.button,
+      type: e.type,
+      defaultPrevented: e.defaultPrevented,
+      cancelable: e.cancelable
+    });
+    
+    // Force prevent default to ensure context menu appears
+    e.stopPropagation();
   };
 
   const handleSelectOption = (status: 'available' | 'private' | 'unspecified') => {
@@ -251,8 +266,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         style={{ 
           top: `${startPercent}%`,
           height: `${heightPercent}%`,
-          borderTop: slot.isFirstHour ? 'none' : `1px solid ${border}`,
-          borderBottom: slot.isLastHour ? 'none' : `1px solid ${border}`
+          borderTop: slot.isFirstHour ? 'none' : 'none', // Remove border
+          borderBottom: slot.isLastHour ? 'none' : 'none' // Remove border
         }}
       >
         {slot.isFirstHour && slot.notes && (
@@ -380,17 +395,26 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   
                   const { bg, border, text, colorClass } = getStatusStyle(slot);
 
-                  const borderStyle = isConnectedToPrevHour 
-                    ? {} // No top border for connected events
-                    : {};
+                  // Fix for dividing lines - completely remove borders for multi-hour events
+                  const borderStyle: React.CSSProperties = {
+                    borderTop: isConnectedToPrevHour ? 'none' : undefined
+                  };
                   
                   const isCurrent = isCurrentTimeSlot(day.date, hour);
 
+                  // Test cell for debugging
+                  const testCellId = `cell-${day.date}-${hour}`;
+                  
+                  // Contents of the cell to be rendered
                   const cellContent = (
                     <TableCell 
+                      id={testCellId}
                       className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] border-l border-gray-200`}
                       style={borderStyle}
-                      onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status, slot.fromFutureSession, slot.futureSession)}
+                      onContextMenu={(e) => {
+                        console.log(`Context menu fired on ${testCellId}`);
+                        handleContextMenu(e, day.date, hour, slot.status, slot.fromFutureSession, slot.futureSession);
+                      }}
                     >
                       {isCurrent && (
                         <div className="absolute top-0 right-0 p-1">
@@ -398,6 +422,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         </div>
                       )}
                       
+                      {/* Fix for event content rendering */}
                       {slot.isPartialHour ? (
                         renderPartialHourEvent(slot)
                       ) : slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked') ? (
@@ -413,6 +438,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       )}
                     </TableCell>
                   );
+                  
+                  // Debug the right-click menu functionality
+                  console.log(`Rendering cell ${day.date}-${hour} with status ${slot.status}`);
                   
                   return (
                     <ContextMenu key={`${day.date}-${hour}`}>
