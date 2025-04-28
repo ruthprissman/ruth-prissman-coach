@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -78,29 +77,35 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const getStatusStyle = (slot: CalendarSlot) => {
     const { status, fromGoogle, isMeeting, isPatientMeeting } = slot;
     
-    // Patient meetings are always purple regardless of source
     if (isPatientMeeting || (isMeeting && status === 'booked')) {
-      return { bg: 'bg-[#5C4C8D]', border: 'border-transparent', text: 'text-[#CFB53B]' };
+      return { 
+        bg: 'bg-[#5C4C8D]', 
+        border: 'border-[#5C4C8D]', 
+        text: 'text-[#CFB53B]' 
+      };
     }
 
-    // Non-patient Google events
     if (fromGoogle) {
-      return { bg: 'bg-[#D3E4FD]', border: 'border-transparent', text: 'text-gray-700' };
+      return { 
+        bg: 'bg-[#D3E4FD]', 
+        border: 'border-[#D3E4FD]', 
+        text: 'text-gray-700' 
+      };
     }
     
     switch (status) {
       case 'available':
-        return { bg: 'bg-purple-100', border: 'border-transparent', text: 'text-purple-800' };
+        return { bg: 'bg-purple-100', border: 'border-purple-100', text: 'text-purple-800' };
       case 'booked':
-        return { bg: 'bg-[#5C4C8D]', border: 'border-transparent', text: 'text-[#CFB53B]' };
+        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]' };
       case 'completed':
-        return { bg: 'bg-gray-200', border: 'border-transparent', text: 'text-gray-800' };
+        return { bg: 'bg-gray-200', border: 'border-gray-200', text: 'text-gray-800' };
       case 'canceled':
-        return { bg: 'bg-red-100', border: 'border-transparent', text: 'text-red-800' };
+        return { bg: 'bg-red-100', border: 'border-red-100', text: 'text-red-800' };
       case 'private':
-        return { bg: 'bg-amber-100', border: 'border-transparent', text: 'text-amber-800' };
+        return { bg: 'bg-amber-100', border: 'border-amber-100', text: 'text-amber-800' };
       default:
-        return { bg: 'bg-gray-50', border: 'border-transparent', text: 'text-gray-800' };
+        return { bg: 'bg-gray-50', border: 'border-gray-50', text: 'text-gray-800' };
     }
   };
 
@@ -164,22 +169,19 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     
     const startPercent = slot.isFirstHour && slot.startMinute ? (slot.startMinute / 60) * 100 : 0;
     const endPercent = slot.isLastHour && slot.endMinute ? (slot.endMinute / 60) * 100 : 100;
-    
-    // Calculate height of the colored part
     const heightPercent = endPercent - startPercent;
     
-    // Create a style object with the correct positioning
-    const partialStyle = {
-      top: `${startPercent}%`,
-      height: `${heightPercent}%`
-    };
-    
-    const { bg } = getStatusStyle(slot);
+    const { bg, border } = getStatusStyle(slot);
     
     return (
       <div 
-        className={`absolute left-0 right-0 ${bg}`} 
-        style={partialStyle}
+        className={`absolute left-0 right-0 ${bg} ${border}`} 
+        style={{ 
+          top: `${startPercent}%`,
+          height: `${heightPercent}%`,
+          borderTop: slot.isFirstHour ? 'none' : `1px solid ${border.replace('border-', '')}`,
+          borderBottom: slot.isLastHour ? 'none' : `1px solid ${border.replace('border-', '')}`
+        }}
       >
         {slot.isFirstHour && slot.notes && (
           <div className={`p-1 text-xs ${slot.isPatientMeeting || slot.isMeeting ? 'text-[#CFB53B]' : 'text-gray-700'}`}>
@@ -193,7 +195,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const renderEventContent = (slot: CalendarSlot) => {
     if (!slot.fromGoogle && !slot.notes) return null;
 
-    // For partial hour events, we'll use a different rendering approach
     if (slot.isPartialHour) {
       return renderPartialHourEvent(slot);
     }
@@ -279,13 +280,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status)}
                     >
                       {slot.isPartialHour ? (
-                        // For partial hour events, we'll render a positioned div
                         renderEventContent(slot)
                       ) : slot.fromGoogle || (slot.notes && slot.status === 'booked') ? (
-                        // Full hour events with content
                         renderEventContent(slot)
                       ) : (
-                        // Simple status indicators for non-event slots
                         <>
                           {slot.status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
                           {slot.status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />}
