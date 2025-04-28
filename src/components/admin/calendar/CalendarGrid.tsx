@@ -80,32 +80,34 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     if (isPatientMeeting || (isMeeting && status === 'booked')) {
       return { 
         bg: 'bg-[#5C4C8D]', 
-        border: 'border-[#5C4C8D]', 
-        text: 'text-[#CFB53B]' 
+        border: '#5C4C8D', 
+        text: 'text-[#CFB53B]',
+        colorClass: 'border-[#5C4C8D]'
       };
     }
 
     if (fromGoogle) {
       return { 
         bg: 'bg-[#D3E4FD]', 
-        border: 'border-[#D3E4FD]', 
-        text: 'text-gray-700' 
+        border: '#D3E4FD', 
+        text: 'text-gray-700',
+        colorClass: 'border-[#D3E4FD]'
       };
     }
     
     switch (status) {
       case 'available':
-        return { bg: 'bg-purple-100', border: 'border-purple-100', text: 'text-purple-800' };
+        return { bg: 'bg-purple-100', border: 'rgb(243 232 255)', text: 'text-purple-800', colorClass: 'border-purple-100' };
       case 'booked':
-        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]' };
+        return { bg: 'bg-[#5C4C8D]', border: '#5C4C8D', text: 'text-[#CFB53B]', colorClass: 'border-[#5C4C8D]' };
       case 'completed':
-        return { bg: 'bg-gray-200', border: 'border-gray-200', text: 'text-gray-800' };
+        return { bg: 'bg-gray-200', border: 'rgb(229 231 235)', text: 'text-gray-800', colorClass: 'border-gray-200' };
       case 'canceled':
-        return { bg: 'bg-red-100', border: 'border-red-100', text: 'text-red-800' };
+        return { bg: 'bg-red-100', border: 'rgb(254 226 226)', text: 'text-red-800', colorClass: 'border-red-100' };
       case 'private':
-        return { bg: 'bg-amber-100', border: 'border-amber-100', text: 'text-amber-800' };
+        return { bg: 'bg-amber-100', border: 'rgb(254 243 199)', text: 'text-amber-800', colorClass: 'border-amber-100' };
       default:
-        return { bg: 'bg-gray-50', border: 'border-gray-50', text: 'text-gray-800' };
+        return { bg: 'bg-gray-50', border: 'rgb(249 250 251)', text: 'text-gray-800', colorClass: 'border-gray-50' };
     }
   };
 
@@ -175,12 +177,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     
     return (
       <div 
-        className={`absolute left-0 right-0 ${bg} ${border}`} 
+        className={`absolute left-0 right-0 ${bg}`} 
         style={{ 
           top: `${startPercent}%`,
           height: `${heightPercent}%`,
-          borderTop: slot.isFirstHour ? 'none' : `1px solid ${border.replace('border-', '')}`,
-          borderBottom: slot.isLastHour ? 'none' : `1px solid ${border.replace('border-', '')}`
+          borderTop: slot.isFirstHour ? 'none' : `1px solid ${border}`,
+          borderBottom: slot.isLastHour ? 'none' : `1px solid ${border}`
         }}
       >
         {slot.isFirstHour && slot.notes && (
@@ -221,6 +223,20 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   };
 
+  const isSameEvent = (currentSlot: CalendarSlot, prevSlot?: CalendarSlot): boolean => {
+    if (!prevSlot) return false;
+    
+    if (currentSlot.fromGoogle && prevSlot.fromGoogle) {
+      return currentSlot.googleEvent?.id === prevSlot.googleEvent?.id;
+    }
+    
+    if (currentSlot.isPatientMeeting && prevSlot.isPatientMeeting) {
+      return currentSlot.notes === prevSlot.notes;
+    }
+    
+    return false;
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -257,7 +273,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {hours.map((hour) => (
+            {hours.map((hour, hourIndex) => (
               <TableRow key={hour} className="border-b border-gray-200">
                 <TableCell className="font-medium bg-purple-50 text-purple-800 border-l border-gray-200">
                   {hour}
@@ -272,11 +288,20 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   
                   if (!slot) return null;
                   
-                  const { bg, border, text } = getStatusStyle(slot);
+                  const prevHour = hourIndex > 0 ? hours[hourIndex - 1] : null;
+                  const prevHourSlot = prevHour ? dayMap?.get(prevHour) : undefined;
+                  const isConnectedToPrevHour = isSameEvent(slot, prevHourSlot);
+                  
+                  const { bg, border, text, colorClass } = getStatusStyle(slot);
+
+                  const borderStyle = isConnectedToPrevHour 
+                    ? { borderTop: `1px solid ${border}` }
+                    : {};
                   
                   const slotContent = (
                     <TableCell 
-                      className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${border} ${text} border-gray-100 transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] ${index === days.length - 1 ? '' : 'border-r border-gray-200'}`}
+                      className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] ${index === days.length - 1 ? '' : 'border-r border-gray-200'}`}
+                      style={borderStyle}
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status)}
                     >
                       {slot.isPartialHour ? (
