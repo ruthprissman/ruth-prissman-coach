@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -278,8 +277,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 return (
                   <TableHead 
                     key={day.date} 
-                    className={`font-bold text-purple-800 text-center min-w-[120px] border-l border-gray-200 
-                      ${index === days.length - 1 ? '' : 'border-r'} 
+                    className={`font-bold text-purple-800 text-center min-w-[120px] border-l border-gray-200
                       ${isCurrentDay ? 'bg-purple-100/50' : ''}`}
                   >
                     {day.label}
@@ -315,7 +313,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
                   const cellContent = (
                     <TableCell 
-                      className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] ${index === days.length - 1 ? '' : 'border-r border-gray-200'}`}
+                      className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] border-l border-gray-200`}
                       style={borderStyle}
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status)}
                     >
