@@ -93,7 +93,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       
       return { 
         bg: 'bg-[#9b87f5]', 
-        border: 'border-[#7E69AB]', 
+        border: 'border-[#9b87f5]', 
         text: 'text-white font-medium',
         colorClass: 'border-[#9b87f5]'
       };
@@ -266,8 +266,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         style={{ 
           top: `${startPercent}%`,
           height: `${heightPercent}%`,
-          borderTop: slot.isFirstHour ? 'none' : 'none', // Remove border
-          borderBottom: slot.isLastHour ? 'none' : 'none' // Remove border
+          borderTop: slot.isFirstHour ? 'none' : 'none',
+          borderBottom: slot.isLastHour ? 'none' : 'none'
         }}
       >
         {slot.isFirstHour && slot.notes && (
@@ -395,9 +395,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   
                   const { bg, border, text, colorClass } = getStatusStyle(slot);
 
-                  // Fix for dividing lines - completely remove borders for multi-hour events
+                  // Fix for dividing lines - create a custom style to remove the top border for connected events
+                  // and set the background color to match the event color
                   const borderStyle: React.CSSProperties = {
-                    borderTop: isConnectedToPrevHour ? 'none' : undefined
+                    borderTop: isConnectedToPrevHour ? '0' : undefined,
+                    borderColor: isConnectedToPrevHour ? 'transparent' : undefined,
                   };
                   
                   const isCurrent = isCurrentTimeSlot(day.date, hour);
@@ -529,3 +531,4 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 };
 
 export default CalendarGrid;
+
