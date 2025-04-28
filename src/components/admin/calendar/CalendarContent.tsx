@@ -34,9 +34,9 @@ const CalendarContent: React.FC<CalendarContentProps> = ({
   const [selectedView, setSelectedView] = useState<'calendar' | 'list'>('calendar');
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="md:col-span-2">
-        <Card>
+    <div className="grid grid-cols-12 gap-4">
+      <div className="col-span-9">
+        <Card className="h-full">
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>הגדרת זמני זמינות לפגישות</CardTitle>
@@ -78,7 +78,7 @@ const CalendarContent: React.FC<CalendarContentProps> = ({
         </Card>
       </div>
       
-      <div>
+      <div className="col-span-3">
         <GoogleCalendarEventForm />
       </div>
     </div>

@@ -241,14 +241,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             {debugMode ? 'הסתר מידע דיבאג' : 'הצג מידע דיבאג'}
           </button>
         </div>
-        <Table className="border rounded-md">
-          <TableHeader className="bg-purple-50">
-            <TableRow>
-              <TableHead className="w-20 font-bold text-purple-800">שעה</TableHead>
-              {days.map((day) => (
+        <Table className="border border-gray-200 rounded-md">
+          <TableHeader className="bg-purple-50 sticky top-0 z-10">
+            <TableRow className="border-b border-gray-300">
+              <TableHead className="w-20 font-bold text-purple-800 border-l border-gray-200">שעה</TableHead>
+              {days.map((day, index) => (
                 <TableHead 
                   key={day.date} 
-                  className="font-bold text-purple-800 text-center min-w-[120px]"
+                  className={`font-bold text-purple-800 text-center min-w-[120px] border-l border-gray-200 ${index === days.length - 1 ? '' : 'border-r'}`}
                 >
                   {day.label}
                 </TableHead>
@@ -257,11 +257,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </TableHeader>
           <TableBody>
             {hours.map((hour) => (
-              <TableRow key={hour} className="border-b">
-                <TableCell className="font-medium bg-purple-50 text-purple-800">
+              <TableRow key={hour} className="border-b border-gray-200">
+                <TableCell className="font-medium bg-purple-50 text-purple-800 border-l border-gray-200">
                   {hour}
                 </TableCell>
-                {days.map((day) => {
+                {days.map((day, index) => {
                   const dayMap = calendarData.get(day.date);
                   const slot = dayMap?.get(hour);
                   
@@ -275,7 +275,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   
                   const slotContent = (
                     <TableCell 
-                      className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${border} ${text} border transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px]`}
+                      className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${border} ${text} border-gray-100 transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] ${index === days.length - 1 ? '' : 'border-r border-gray-200'}`}
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status)}
                     >
                       {slot.isPartialHour ? (
