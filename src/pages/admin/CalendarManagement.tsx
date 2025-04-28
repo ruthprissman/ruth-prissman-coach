@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -62,16 +61,19 @@ const CalendarManagement: React.FC = () => {
     
     // Get the Sunday of the current week
     const sundayOfThisWeek = addDays(weekStart, -daysToSunday);
+
+    const hebrewDayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
     
     // Generate the 7 days starting from Sunday
     return Array.from({ length: 7 }, (_, i) => {
       const date = addDays(sundayOfThisWeek, i);
+      const dayNumber = date.getDay();
       return {
         date: format(date, 'yyyy-MM-dd'),
-        label: format(date, 'EEE dd/MM'),
+        label: `${hebrewDayNames[dayNumber]} ${format(date, 'dd/MM')}`,
         dayNumber: i
       };
-    }).reverse(); // Reverse to show Saturday on the right (Hebrew calendar style)
+    });
   };
 
   const days = generateDaysOfWeek(currentDate);

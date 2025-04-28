@@ -38,15 +38,17 @@ export function useCalendarData(
       // Get the Sunday of the current week
       const sundayOfThisWeek = addDays(startDay, -daysToSunday);
       
-      // Generate the 7 days starting from Sunday
+      const hebrewDayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+      
       return Array.from({ length: 7 }, (_, i) => {
         const date = addDays(sundayOfThisWeek, i);
+        const dayNumber = date.getDay();
         return {
           date: format(date, 'yyyy-MM-dd'),
-          label: format(date, 'EEE dd/MM'),
+          label: `${hebrewDayNames[dayNumber]} ${format(date, 'dd/MM')}`,
           dayNumber: i
         };
-      }).reverse(); // Reverse to show Saturday on the right (Hebrew calendar style)
+      });
     };
 
     const days = generateDaysOfWeek(currentDate);
@@ -306,24 +308,21 @@ export function useCalendarData(
     
     const generateDaysOfWeek = (startDate: Date) => {
       const startDay = startOfDay(startDate);
-      // Get the current day of week (0-6, where 0 is Sunday)
       const currentDayOfWeek = startDay.getDay();
-      
-      // Calculate how many days to go back to get to Sunday
       const daysToSunday = currentDayOfWeek;
-      
-      // Get the Sunday of the current week
       const sundayOfThisWeek = addDays(startDay, -daysToSunday);
       
-      // Generate the 7 days starting from Sunday
+      const hebrewDayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+      
       return Array.from({ length: 7 }, (_, i) => {
         const date = addDays(sundayOfThisWeek, i);
+        const dayNumber = date.getDay();
         return {
           date: format(date, 'yyyy-MM-dd'),
-          label: format(date, 'EEE dd/MM'),
+          label: `${hebrewDayNames[dayNumber]} ${format(date, 'dd/MM')}`,
           dayNumber: i
         };
-      }).reverse(); // Reverse to show Saturday on the right (Hebrew calendar style)
+      });
     };
 
     const days = generateDaysOfWeek(currentDate);
@@ -396,24 +395,21 @@ export function useCalendarData(
 
     const generateDaysOfWeek = (startDate: Date) => {
       const startDay = startOfDay(startDate);
-      // Get the current day of week (0-6, where 0 is Sunday)
       const currentDayOfWeek = startDay.getDay();
-      
-      // Calculate how many days to go back to get to Sunday
       const daysToSunday = currentDayOfWeek;
-      
-      // Get the Sunday of the current week
       const sundayOfThisWeek = addDays(startDay, -daysToSunday);
       
-      // Generate the 7 days starting from Sunday
+      const hebrewDayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+      
       return Array.from({ length: 7 }, (_, i) => {
         const date = addDays(sundayOfThisWeek, i);
+        const dayNumber = date.getDay();
         return {
           date: format(date, 'yyyy-MM-dd'),
-          label: format(date, 'EEE dd/MM'),
+          label: `${hebrewDayNames[dayNumber]} ${format(date, 'dd/MM')}`,
           dayNumber: i
         };
-      }).reverse(); // Reverse to show Saturday on the right (Hebrew calendar style)
+      });
     };
 
     const days = generateDaysOfWeek(currentDate);
