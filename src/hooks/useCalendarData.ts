@@ -234,8 +234,10 @@ export function useCalendarData(
           // Always make sessions 90 minutes
           const endTime = addMinutes(sessionDateTime, 90);
           const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
+          const endHour = parseInt(formattedEndTime.split(':')[0]);
           const endMinute = parseInt(formattedEndTime.split(':')[1]);
           const isPartialHour = startMinute > 0 || endMinute > 0;
+          const hoursSpan = Math.ceil((90) / 60); // Always 90 minutes = 1.5 hours span
           
           // Check if this session exists in Google Calendar
           const eventDateHourKey = `${sessionDate}-${sessionTime}`;
@@ -255,28 +257,51 @@ export function useCalendarData(
           if (session.status === 'Completed') status = 'completed';
           if (session.status === 'Cancelled') status = 'canceled';
           
-          // Updated: Always prefix with "פגישה עם" if not already there
+          // Always use "פגישה עם [name]" format
           const patientName = session.patients?.name || 'לקוח/ה';
-          const noteText = session.title ? 
-            (session.title.startsWith('פגישה עם') ? session.title : `פגישה עם ${patientName}`) : 
-            `פגישה עם ${patientName}`;
+          const noteText = `פגישה עם ${patientName}`;
           
-          dayMap.set(sessionTime, {
-            ...dayMap.get(sessionTime)!,
-            status,
-            notes: noteText,
-            exactStartTime: `${timeParts[0]}:${timeParts[1]}`,
-            exactEndTime: formattedEndTime,
-            startMinute,
-            endMinute,
-            isPartialHour,
-            isPatientMeeting: true,
-            syncStatus: 'synced',
-            showBorder: false,
-            fromFutureSession: true,
-            futureSession: session,
-            inGoogleCalendar: false
-          });
+          // Calculate all affected hour slots
+          for (let h = parseInt(sessionTime.split(':')[0]); h <= endHour; h++) {
+            const hourString = h.toString().padStart(2, '0') + ':00';
+            
+            if (dayMap.has(hourString)) {
+              const isFirstHour = h === parseInt(sessionTime.split(':')[0]);
+              const isLastHour = h === endHour;
+              
+              let currentStartMinute = 0;
+              let currentEndMinute = 59;
+              
+              if (isFirstHour) {
+                currentStartMinute = startMinute;
+              }
+              
+              if (isLastHour) {
+                currentEndMinute = endMinute;
+              }
+              
+              dayMap.set(hourString, {
+                ...dayMap.get(hourString)!,
+                status,
+                notes: noteText,
+                description: session.title || '',
+                exactStartTime: `${timeParts[0]}:${timeParts[1]}`,
+                exactEndTime: formattedEndTime,
+                startMinute: currentStartMinute,
+                endMinute: currentEndMinute,
+                isPartialHour,
+                isPatientMeeting: true,
+                hoursSpan,
+                isFirstHour,
+                isLastHour,
+                syncStatus: 'synced',
+                showBorder: false,
+                fromFutureSession: true,
+                futureSession: session,
+                inGoogleCalendar: false
+              });
+            }
+          }
         }
       } catch (error) {
         console.error('Error processing session date:', error);
@@ -354,36 +379,62 @@ export function useCalendarData(
         
         const dayMap = calendarData.get(sessionDate);
         if (dayMap && dayMap.has(sessionTime)) {
+          // Always make sessions 90 minutes
           const endTime = addMinutes(sessionDateTime, 90);
           const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
+          const endHour = parseInt(formattedEndTime.split(':')[0]);
           const endMinute = parseInt(formattedEndTime.split(':')[1]);
           const isPartialHour = startMinute > 0 || endMinute > 0;
+          const hoursSpan = Math.ceil((90) / 60); // Always 90 minutes = 1.5 hours span
           
           let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
           if (session.status === 'Completed') status = 'completed';
           if (session.status === 'Cancelled') status = 'canceled';
           
-          // Updated: Always prefix with "פגישה עם" if not already there
+          // Always use "פגישה עם [name]" format
           const patientName = session.patients?.name || 'לקוח/ה';
-          const noteText = session.title ? 
-            (session.title.startsWith('פגישה עם') ? session.title : `פגישה עם ${patientName}`) : 
-            `פגישה עם ${patientName}`;
+          const noteText = `פגישה עם ${patientName}`;
           
-          dayMap.set(sessionTime, {
-            ...dayMap.get(sessionTime)!,
-            status,
-            notes: noteText,
-            exactStartTime: `${timeParts[0]}:${timeParts[1]}`,
-            exactEndTime: formattedEndTime,
-            startMinute,
-            endMinute,
-            isPartialHour,
-            isPatientMeeting: true,
-            showBorder: false,
-            fromFutureSession: true,
-            futureSession: session,
-            inGoogleCalendar: false
-          });
+          // Calculate all affected hour slots
+          for (let h = parseInt(sessionTime.split(':')[0]); h <= endHour; h++) {
+            const hourString = h.toString().padStart(2, '0') + ':00';
+            
+            if (dayMap.has(hourString)) {
+              const isFirstHour = h === parseInt(sessionTime.split(':')[0]);
+              const isLastHour = h === endHour;
+              
+              let currentStartMinute = 0;
+              let currentEndMinute = 59;
+              
+              if (isFirstHour) {
+                currentStartMinute = startMinute;
+              }
+              
+              if (isLastHour) {
+                currentEndMinute = endMinute;
+              }
+              
+              dayMap.set(hourString, {
+                ...dayMap.get(hourString)!,
+                status,
+                notes: noteText,
+                description: session.title || '',
+                exactStartTime: `${timeParts[0]}:${timeParts[1]}`,
+                exactEndTime: formattedEndTime,
+                startMinute: currentStartMinute,
+                endMinute: currentEndMinute,
+                isPartialHour,
+                isPatientMeeting: true,
+                hoursSpan,
+                isFirstHour,
+                isLastHour,
+                showBorder: false,
+                fromFutureSession: true,
+                futureSession: session,
+                inGoogleCalendar: false
+              });
+            }
+          }
         }
       } catch (error) {
         console.error('Error processing session date:', error);

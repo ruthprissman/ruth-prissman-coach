@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -134,6 +135,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   const handleContextMenu = (e: React.MouseEvent, date: string, hour: string, status: any, fromFutureSession?: boolean, futureSession?: any) => {
     e.preventDefault();
+    console.log("Context menu triggered:", { date, hour, status, fromFutureSession, futureSession });
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
@@ -215,7 +217,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       isPartialHour: slot?.isPartialHour,
       isPatientMeeting: slot?.isPatientMeeting,
       fromFutureSession: slot?.fromFutureSession,
-      inGoogleCalendar: slot?.inGoogleCalendar
+      inGoogleCalendar: slot?.inGoogleCalendar,
+      futureSession: slot?.futureSession
     });
     return true;
   };
@@ -241,7 +244,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const endPercent = slot.isLastHour && slot.endMinute ? (slot.endMinute / 60) * 100 : 100;
     const heightPercent = endPercent - startPercent;
     
-    const { bg, border } = getStatusStyle(slot);
+    const { bg, border, text } = getStatusStyle(slot);
     
     return (
       <div 
@@ -254,7 +257,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         }}
       >
         {slot.isFirstHour && slot.notes && (
-          <div className={`p-1 text-xs ${slot.isPatientMeeting || slot.isMeeting ? 'text-[#CFB53B]' : 'text-gray-700'}`}>
+          <div className={`p-1 text-xs ${slot.isPatientMeeting || slot.isMeeting ? 'text-[#CFB53B]' : (slot.fromFutureSession && !slot.inGoogleCalendar ? 'text-white' : 'text-gray-700')}`}>
             {slot.notes}
           </div>
         )}
@@ -446,7 +449,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           cellContent
                         )}
                       </ContextMenuTrigger>
-                      <ContextMenuContent className="min-w-[160px]">
+                      <ContextMenuContent className="min-w-[160px] z-50">
                         {slot.fromFutureSession && !slot.inGoogleCalendar ? (
                           <ContextMenuItem 
                             className="flex items-center gap-2 text-blue-600"
