@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -60,7 +61,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             fromGoogle: slot.fromGoogle,
             syncStatus: slot.syncStatus,
             startTime: slot.startTime,
-            endTime: slot.endTime
+            endTime: slot.endTime,
+            exactStartTime: slot.exactStartTime,
+            exactEndTime: slot.exactEndTime,
+            startMinute: slot.startMinute,
+            endMinute: slot.endMinute,
+            isPartialHour: slot.isPartialHour
           });
         }
       });
@@ -124,7 +130,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       isGoogleEvent: slot?.syncStatus === 'google-only' || slot?.fromGoogle,
       googleEvent: slot?.googleEvent,
       startTime: slot?.startTime,
-      endTime: slot?.endTime
+      endTime: slot?.endTime,
+      exactStartTime: slot?.exactStartTime,
+      exactEndTime: slot?.exactEndTime,
+      startMinute: slot?.startMinute,
+      endMinute: slot?.endMinute,
+      isPartialHour: slot?.isPartialHour
     });
     return true;
   };
@@ -145,7 +156,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   const isMeetingEvent = (summary?: string) => {
     if (!summary) return false;
-    return summary.startsWith("פגישה עם") || summary.startsWith("שיחה עם");
+    return summary.toLowerCase().includes('פגישה עם') || 
+           summary.toLowerCase().includes('שיחה עם');
   };
 
   const formatEventTime = (startTime?: string, endTime?: string) => {
@@ -154,19 +166,54 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     return `${startTime}-${endTime}`;
   };
 
+  const renderPartialHourEvent = (slot: CalendarSlot) => {
+    if (!slot.isPartialHour) return null;
+    
+    const startPercent = slot.isFirstHour && slot.startMinute ? (slot.startMinute / 60) * 100 : 0;
+    const endPercent = slot.isLastHour && slot.endMinute ? (slot.endMinute / 60) * 100 : 100;
+    
+    // Calculate height of the colored part
+    const heightPercent = endPercent - startPercent;
+    
+    // Create a style object with the correct positioning
+    const partialStyle = {
+      top: `${startPercent}%`,
+      height: `${heightPercent}%`
+    };
+    
+    const { bg } = getStatusStyle(slot);
+    
+    return (
+      <div 
+        className={`absolute left-0 right-0 ${bg}`} 
+        style={partialStyle}
+      >
+        {slot.isFirstHour && slot.notes && (
+          <div className={`p-1 text-xs ${slot.isMeeting ? 'text-[#CFB53B]' : 'text-gray-700'}`}>
+            {slot.notes}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderEventContent = (slot: CalendarSlot) => {
     if (!slot.fromGoogle && !slot.notes) return null;
 
-    const timeDisplay = `${slot.exactStartTime || slot.startTime}-${slot.exactEndTime || slot.endTime}`;
-    const showFullContent = slot.isFirstHour;
+    // For partial hour events, we'll use a different rendering approach
+    if (slot.isPartialHour) {
+      return renderPartialHourEvent(slot);
+    }
 
-    if (!showFullContent && slot.hoursSpan > 1) {
+    if (!slot.isFirstHour && slot.hoursSpan && slot.hoursSpan > 1) {
       return <div className="w-full h-full bg-inherit" />;
     }
 
+    const timeDisplay = `${slot.exactStartTime || slot.startTime}-${slot.exactEndTime || slot.endTime}`;
+
     return (
       <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${slot.isMeeting ? 'text-[#CFB53B]' : 'text-gray-700'}`}>
-        {showFullContent && (
+        {slot.isFirstHour && (
           <>
             <div className="text-xs font-semibold w-full truncate">
               {slot.notes}
@@ -240,12 +287,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   
                   const slotContent = (
                     <TableCell 
-                      className={`${bg} ${border} ${text} border transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px]`}
+                      className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${border} ${text} border transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px]`}
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status)}
                     >
-                      {slot.fromGoogle || (slot.notes && slot.status === 'booked') ? (
+                      {slot.isPartialHour ? (
+                        // For partial hour events, we'll render a positioned div
+                        renderEventContent(slot)
+                      ) : slot.fromGoogle || (slot.notes && slot.status === 'booked') ? (
+                        // Full hour events with content
                         renderEventContent(slot)
                       ) : (
+                        // Simple status indicators for non-event slots
                         <>
                           {slot.status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
                           {slot.status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />}
@@ -278,6 +330,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                                 {slot.description && <p>{slot.description}</p>}
                                 {slot.exactStartTime && (
                                   <p className="mt-1">{slot.exactStartTime}-{slot.exactEndTime}</p>
+                                )}
+                                {slot.isPartialHour && (
+                                  <p className="text-xs opacity-75">
+                                    {slot.isFirstHour ? `התחלה: דקה ${slot.startMinute}` : ''}
+                                    {slot.isFirstHour && slot.isLastHour ? ' | ' : ''}
+                                    {slot.isLastHour ? `סיום: דקה ${slot.endMinute}` : ''}
+                                  </p>
                                 )}
                               </div>
                             </TooltipContent>

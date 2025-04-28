@@ -70,18 +70,30 @@ export function useCalendarData(
           const exactStartTime = format(startDate, 'HH:mm');
           const exactEndTime = format(endDate, 'HH:mm');
           
-          // Get the starting hour for the event
+          // Extract hour and minute
           const startHour = format(startDate, 'HH');
+          const startMinute = parseInt(format(startDate, 'mm'));
           const endHour = format(endDate, 'HH');
-          const hoursSpan = (Number(endHour) - Number(startHour)) + (format(endDate, 'mm') > '00' ? 1 : 0);
+          const endMinute = parseInt(format(endDate, 'mm'));
+          
+          // Calculate duration in hours
+          const startTimeInMinutes = (parseInt(startHour) * 60) + startMinute;
+          const endTimeInMinutes = (parseInt(endHour) * 60) + endMinute;
+          const durationInMinutes = endTimeInMinutes - startTimeInMinutes;
+          const hoursSpan = Math.ceil(durationInMinutes / 60);
+          
+          const isPartialHour = startMinute > 0 || endMinute > 0;
           
           console.log(`Processing Google event ${index}:`, {
             summary: event.summary,
             exactStartTime,
             exactEndTime,
             startHour,
+            startMinute,
             endHour,
-            hoursSpan
+            endMinute,
+            hoursSpan,
+            isPartialHour
           });
 
           const isDayVisible = days.some(day => day.date === googleDate);
@@ -97,6 +109,27 @@ export function useCalendarData(
           for (let h = Number(startHour); h <= Number(endHour); h++) {
             const hourString = h.toString().padStart(2, '0') + ':00';
             if (dayMap.has(hourString)) {
+              // Calculate partial hour information
+              let isPartialStart = false;
+              let isPartialEnd = false;
+              let currentStartMinute = 0;
+              let currentEndMinute = 59;
+              
+              // If this is the first hour and has a non-zero start minute
+              if (h === Number(startHour) && startMinute > 0) {
+                isPartialStart = true;
+                currentStartMinute = startMinute;
+              }
+              
+              // If this is the last hour and doesn't end exactly at :00
+              if (h === Number(endHour) && endMinute > 0) {
+                isPartialEnd = true;
+                currentEndMinute = endMinute;
+              } else if (h === Number(endHour) && endMinute === 0) {
+                // If it ends exactly at the hour, don't include this hour block
+                continue;
+              }
+              
               const isMeeting = event.summary?.toLowerCase().includes('פגישה עם') || 
                               event.summary?.toLowerCase().includes('שיחה עם');
               
@@ -115,7 +148,10 @@ export function useCalendarData(
                 exactEndTime,
                 hoursSpan,
                 isFirstHour: h === Number(startHour),
-                isLastHour: h === Number(endHour)
+                isLastHour: h === Number(endHour),
+                startMinute: currentStartMinute,
+                endMinute: currentEndMinute,
+                isPartialHour: isPartialStart || isPartialEnd
               });
             }
           }
@@ -147,11 +183,15 @@ export function useCalendarData(
         const sessionDate = israelTime.split(' ')[0];
         const timeParts = israelTime.split(' ')[1].split(':');
         const sessionTime = `${timeParts[0]}:00`;
+        const startMinute = parseInt(timeParts[1]);
         
         const dayMap = calendarData.get(sessionDate);
         if (dayMap && dayMap.has(sessionTime)) {
           const endTime = addHours(sessionDateTime, 1.5);
           const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
+          const endHour = parseInt(formattedEndTime.split(':')[0]);
+          const endMinute = parseInt(formattedEndTime.split(':')[1]);
+          const isPartialHour = startMinute > 0 || endMinute > 0;
           
           let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
           if (session.status === 'completed') status = 'completed';
@@ -160,7 +200,12 @@ export function useCalendarData(
           dayMap.set(sessionTime, {
             ...dayMap.get(sessionTime)!,
             status,
-            notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`
+            notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`,
+            exactStartTime: `${timeParts[0]}:${timeParts[1]}`,
+            exactEndTime: formattedEndTime,
+            startMinute,
+            endMinute,
+            isPartialHour
           });
         }
       } catch (error) {

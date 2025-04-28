@@ -1,3 +1,4 @@
+
 export interface TimeSlot {
   day: number;
   date: string;
@@ -26,6 +27,9 @@ export interface CalendarSlot {
   hoursSpan?: number;    // Number of hours the event spans
   isFirstHour?: boolean; // Is this the first hour of a multi-hour event
   isLastHour?: boolean;  // Is this the last hour of a multi-hour event
+  startMinute?: number;  // For partial hour rendering, 0-59
+  endMinute?: number;    // For partial hour rendering, 0-59
+  isPartialHour?: boolean; // Indicates this slot has a non-round start or end time
 }
 
 export interface ContextMenuOptions {
