@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { CalendarSlot, TimeSlot, GoogleCalendarEvent } from '@/types/calendar';
-import { addDays, format, startOfDay, addHours } from 'date-fns';
+import { addDays, format, startOfDay, addHours, addMinutes } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 
 export function useCalendarData(
@@ -76,24 +76,41 @@ export function useCalendarData(
           const endHour = format(endDate, 'HH');
           const endMinute = parseInt(format(endDate, 'mm'));
           
+          // Check if this is a patient meeting
+          const isMeeting = event.summary?.toLowerCase().includes('פגישה עם') || 
+                         event.summary?.toLowerCase().includes('שיחה עם');
+          
+          // For patient meetings, always make them 90 minutes
+          let adjustedEndDate = endDate;
+          if (isMeeting) {
+            adjustedEndDate = addMinutes(startDate, 90);
+          }
+          
+          // Recalculate end hour and minute if this is a patient meeting
+          const adjustedEndHour = format(adjustedEndDate, 'HH');
+          const adjustedEndMinute = parseInt(format(adjustedEndDate, 'mm'));
+          const adjustedExactEndTime = format(adjustedEndDate, 'HH:mm');
+          
           // Calculate duration in hours
           const startTimeInMinutes = (parseInt(startHour) * 60) + startMinute;
-          const endTimeInMinutes = (parseInt(endHour) * 60) + endMinute;
+          const endTimeInMinutes = (parseInt(adjustedEndHour) * 60) + adjustedEndMinute;
           const durationInMinutes = endTimeInMinutes - startTimeInMinutes;
           const hoursSpan = Math.ceil(durationInMinutes / 60);
           
-          const isPartialHour = startMinute > 0 || endMinute > 0;
+          const isPartialHour = startMinute > 0 || adjustedEndMinute > 0;
           
           console.log(`Processing Google event ${index}:`, {
             summary: event.summary,
             exactStartTime,
-            exactEndTime,
+            originalEndTime: exactEndTime,
+            adjustedEndTime: adjustedExactEndTime,
             startHour,
             startMinute,
-            endHour,
-            endMinute,
+            endHour: adjustedEndHour,
+            endMinute: adjustedEndMinute,
             hoursSpan,
-            isPartialHour
+            isPartialHour,
+            isMeeting
           });
 
           const isDayVisible = days.some(day => day.date === googleDate);
@@ -106,7 +123,7 @@ export function useCalendarData(
           if (!dayMap) return;
 
           // Mark all affected hours
-          for (let h = Number(startHour); h <= Number(endHour); h++) {
+          for (let h = Number(startHour); h <= Number(adjustedEndHour); h++) {
             const hourString = h.toString().padStart(2, '0') + ':00';
             if (dayMap.has(hourString)) {
               // Calculate partial hour information
@@ -122,16 +139,13 @@ export function useCalendarData(
               }
               
               // If this is the last hour and doesn't end exactly at :00
-              if (h === Number(endHour) && endMinute > 0) {
+              if (h === Number(adjustedEndHour) && adjustedEndMinute > 0) {
                 isPartialEnd = true;
-                currentEndMinute = endMinute;
-              } else if (h === Number(endHour) && endMinute === 0) {
+                currentEndMinute = adjustedEndMinute;
+              } else if (h === Number(adjustedEndHour) && adjustedEndMinute === 0) {
                 // If it ends exactly at the hour, don't include this hour block
                 continue;
               }
-              
-              const isMeeting = event.summary?.toLowerCase().includes('פגישה עם') || 
-                              event.summary?.toLowerCase().includes('שיחה עם');
               
               dayMap.set(hourString, {
                 ...dayMap.get(hourString)!,
@@ -140,18 +154,20 @@ export function useCalendarData(
                 description: event.description,
                 fromGoogle: true,
                 isMeeting,
-                syncStatus: 'google-only',
+                isPatientMeeting: isMeeting,
+                syncStatus: 'synced', // Changed from 'google-only' to avoid warning triangle
                 googleEvent: event,
                 startTime: startHour + ':00',
-                endTime: endHour + ':00',
+                endTime: adjustedEndHour + ':00',
                 exactStartTime,
-                exactEndTime,
+                exactEndTime: adjustedExactEndTime,
                 hoursSpan,
                 isFirstHour: h === Number(startHour),
-                isLastHour: h === Number(endHour),
+                isLastHour: h === Number(adjustedEndHour),
                 startMinute: currentStartMinute,
                 endMinute: currentEndMinute,
-                isPartialHour: isPartialStart || isPartialEnd
+                isPartialHour: isPartialStart || isPartialEnd,
+                showBorder: false // No border for events
               });
             }
           }
@@ -168,7 +184,9 @@ export function useCalendarData(
         dayMap.set(slot.start_time, {
           ...dayMap.get(slot.start_time)!,
           status: (slot.slot_type || slot.status) as 'available' | 'private' | 'unspecified',
-          notes: slot.notes
+          notes: slot.notes,
+          syncStatus: 'synced',
+          showBorder: false
         });
       }
     });
@@ -187,7 +205,8 @@ export function useCalendarData(
         
         const dayMap = calendarData.get(sessionDate);
         if (dayMap && dayMap.has(sessionTime)) {
-          const endTime = addHours(sessionDateTime, 1.5);
+          // Always make sessions 90 minutes
+          const endTime = addMinutes(sessionDateTime, 90);
           const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
           const endHour = parseInt(formattedEndTime.split(':')[0]);
           const endMinute = parseInt(formattedEndTime.split(':')[1]);
@@ -197,15 +216,22 @@ export function useCalendarData(
           if (session.status === 'completed') status = 'completed';
           if (session.status === 'canceled') status = 'canceled';
           
+          // Set patient name without times
+          const patientName = session.patients?.name || 'לקוח/ה';
+          const noteText = `${session.title || 'פגישה'}: ${patientName}`;
+          
           dayMap.set(sessionTime, {
             ...dayMap.get(sessionTime)!,
             status,
-            notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`,
+            notes: noteText,
             exactStartTime: `${timeParts[0]}:${timeParts[1]}`,
             exactEndTime: formattedEndTime,
             startMinute,
             endMinute,
-            isPartialHour
+            isPartialHour,
+            isPatientMeeting: true,
+            syncStatus: 'synced', // Set to synced to avoid warning triangle
+            showBorder: false // No border for events
           });
         }
       } catch (error) {

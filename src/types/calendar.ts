@@ -1,4 +1,3 @@
-
 export interface TimeSlot {
   day: number;
   date: string;
@@ -30,6 +29,8 @@ export interface CalendarSlot {
   startMinute?: number;  // For partial hour rendering, 0-59
   endMinute?: number;    // For partial hour rendering, 0-59
   isPartialHour?: boolean; // Indicates this slot has a non-round start or end time
+  isPatientMeeting?: boolean; // Indicates if this is a patient meeting (always 90 minutes)
+  showBorder?: boolean; // Whether to show border around the event
 }
 
 export interface ContextMenuOptions {

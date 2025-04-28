@@ -16,7 +16,7 @@ import {
   ContextMenuTrigger,
   ContextMenuSeparator,
 } from '@/components/ui/context-menu';
-import { Check, Calendar, X, Lock, AlertTriangle } from 'lucide-react';
+import { Check, Calendar, X, Lock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -66,7 +66,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             exactEndTime: slot.exactEndTime,
             startMinute: slot.startMinute,
             endMinute: slot.endMinute,
-            isPartialHour: slot.isPartialHour
+            isPartialHour: slot.isPartialHour,
+            isPatientMeeting: slot.isPatientMeeting
           });
         }
       });
@@ -75,28 +76,31 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   }, [calendarData, days, hours]);
 
   const getStatusStyle = (slot: CalendarSlot) => {
-    const { status, fromGoogle, isMeeting } = slot;
+    const { status, fromGoogle, isMeeting, isPatientMeeting } = slot;
+    
+    // Patient meetings are always purple regardless of source
+    if (isPatientMeeting || (isMeeting && status === 'booked')) {
+      return { bg: 'bg-[#5C4C8D]', border: 'border-transparent', text: 'text-[#CFB53B]' };
+    }
 
+    // Non-patient Google events
     if (fromGoogle) {
-      if (isMeeting) {
-        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]' };
-      }
-      return { bg: 'bg-[#D3E4FD]', border: 'border-[#D3E4FD]', text: 'text-gray-700' };
+      return { bg: 'bg-[#D3E4FD]', border: 'border-transparent', text: 'text-gray-700' };
     }
     
     switch (status) {
       case 'available':
-        return { bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-800' };
+        return { bg: 'bg-purple-100', border: 'border-transparent', text: 'text-purple-800' };
       case 'booked':
-        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]' };
+        return { bg: 'bg-[#5C4C8D]', border: 'border-transparent', text: 'text-[#CFB53B]' };
       case 'completed':
-        return { bg: 'bg-gray-200', border: 'border-gray-300', text: 'text-gray-800' };
+        return { bg: 'bg-gray-200', border: 'border-transparent', text: 'text-gray-800' };
       case 'canceled':
-        return { bg: 'bg-red-100', border: 'border-red-300', text: 'text-red-800' };
+        return { bg: 'bg-red-100', border: 'border-transparent', text: 'text-red-800' };
       case 'private':
-        return { bg: 'bg-amber-100', border: 'border-amber-300', text: 'text-amber-800' };
+        return { bg: 'bg-amber-100', border: 'border-transparent', text: 'text-amber-800' };
       default:
-        return { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-800' };
+        return { bg: 'bg-gray-50', border: 'border-transparent', text: 'text-gray-800' };
     }
   };
 
@@ -135,7 +139,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       exactEndTime: slot?.exactEndTime,
       startMinute: slot?.startMinute,
       endMinute: slot?.endMinute,
-      isPartialHour: slot?.isPartialHour
+      isPartialHour: slot?.isPartialHour,
+      isPatientMeeting: slot?.isPatientMeeting
     });
     return true;
   };
@@ -152,18 +157,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         });
       });
     }
-  };
-
-  const isMeetingEvent = (summary?: string) => {
-    if (!summary) return false;
-    return summary.toLowerCase().includes('פגישה עם') || 
-           summary.toLowerCase().includes('שיחה עם');
-  };
-
-  const formatEventTime = (startTime?: string, endTime?: string) => {
-    if (!startTime) return "";
-    if (!endTime) return startTime;
-    return `${startTime}-${endTime}`;
   };
 
   const renderPartialHourEvent = (slot: CalendarSlot) => {
@@ -189,7 +182,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         style={partialStyle}
       >
         {slot.isFirstHour && slot.notes && (
-          <div className={`p-1 text-xs ${slot.isMeeting ? 'text-[#CFB53B]' : 'text-gray-700'}`}>
+          <div className={`p-1 text-xs ${slot.isPatientMeeting || slot.isMeeting ? 'text-[#CFB53B]' : 'text-gray-700'}`}>
             {slot.notes}
           </div>
         )}
@@ -209,10 +202,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       return <div className="w-full h-full bg-inherit" />;
     }
 
-    const timeDisplay = `${slot.exactStartTime || slot.startTime}-${slot.exactEndTime || slot.endTime}`;
-
     return (
-      <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${slot.isMeeting ? 'text-[#CFB53B]' : 'text-gray-700'}`}>
+      <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${slot.isPatientMeeting || slot.isMeeting ? 'text-[#CFB53B]' : 'text-gray-700'}`}>
         {slot.isFirstHour && (
           <>
             <div className="text-xs font-semibold w-full truncate">
@@ -223,9 +214,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 {slot.description}
               </div>
             )}
-            <div className="text-xs mt-auto opacity-75">
-              {timeDisplay}
-            </div>
           </>
         )}
       </div>
@@ -305,10 +293,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                           {slot.status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
                           {slot.status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
                         </>
-                      )}
-                      
-                      {(slot.syncStatus === 'google-only' || slot.syncStatus === 'supabase-only') && (
-                        <AlertTriangle className="h-4 w-4 absolute top-1 right-1 text-orange-600" />
                       )}
                     </TableCell>
                   );
