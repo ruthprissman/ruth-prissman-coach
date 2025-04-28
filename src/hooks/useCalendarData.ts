@@ -28,15 +28,25 @@ export function useCalendarData(
     
     // Initialize calendar data with empty slots
     const generateDaysOfWeek = (startDate: Date) => {
-      const weekStart = startOfDay(startDate);
+      const startDay = startOfDay(startDate);
+      // Get the current day of week (0-6, where 0 is Sunday)
+      const currentDayOfWeek = startDay.getDay();
+      
+      // Calculate how many days to go back to get to Sunday
+      const daysToSunday = currentDayOfWeek;
+      
+      // Get the Sunday of the current week
+      const sundayOfThisWeek = addDays(startDay, -daysToSunday);
+      
+      // Generate the 7 days starting from Sunday
       return Array.from({ length: 7 }, (_, i) => {
-        const date = addDays(weekStart, i);
+        const date = addDays(sundayOfThisWeek, i);
         return {
           date: format(date, 'yyyy-MM-dd'),
           label: format(date, 'EEE dd/MM'),
           dayNumber: i
         };
-      });
+      }).reverse(); // Reverse to show Saturday on the right (Hebrew calendar style)
     };
 
     const days = generateDaysOfWeek(currentDate);
@@ -295,15 +305,25 @@ export function useCalendarData(
     const calendarData = new Map<string, Map<string, CalendarSlot>>();
     
     const generateDaysOfWeek = (startDate: Date) => {
-      const weekStart = startOfDay(startDate);
+      const startDay = startOfDay(startDate);
+      // Get the current day of week (0-6, where 0 is Sunday)
+      const currentDayOfWeek = startDay.getDay();
+      
+      // Calculate how many days to go back to get to Sunday
+      const daysToSunday = currentDayOfWeek;
+      
+      // Get the Sunday of the current week
+      const sundayOfThisWeek = addDays(startDay, -daysToSunday);
+      
+      // Generate the 7 days starting from Sunday
       return Array.from({ length: 7 }, (_, i) => {
-        const date = addDays(weekStart, i);
+        const date = addDays(sundayOfThisWeek, i);
         return {
           date: format(date, 'yyyy-MM-dd'),
           label: format(date, 'EEE dd/MM'),
           dayNumber: i
         };
-      });
+      }).reverse(); // Reverse to show Saturday on the right (Hebrew calendar style)
     };
 
     const days = generateDaysOfWeek(currentDate);
@@ -375,15 +395,25 @@ export function useCalendarData(
     const emptyCalendarData = new Map<string, Map<string, CalendarSlot>>();
 
     const generateDaysOfWeek = (startDate: Date) => {
-      const weekStart = startOfDay(startDate);
+      const startDay = startOfDay(startDate);
+      // Get the current day of week (0-6, where 0 is Sunday)
+      const currentDayOfWeek = startDay.getDay();
+      
+      // Calculate how many days to go back to get to Sunday
+      const daysToSunday = currentDayOfWeek;
+      
+      // Get the Sunday of the current week
+      const sundayOfThisWeek = addDays(startDay, -daysToSunday);
+      
+      // Generate the 7 days starting from Sunday
       return Array.from({ length: 7 }, (_, i) => {
-        const date = addDays(weekStart, i);
+        const date = addDays(sundayOfThisWeek, i);
         return {
           date: format(date, 'yyyy-MM-dd'),
           label: format(date, 'EEE dd/MM'),
           dayNumber: i
         };
-      });
+      }).reverse(); // Reverse to show Saturday on the right (Hebrew calendar style)
     };
 
     const days = generateDaysOfWeek(currentDate);

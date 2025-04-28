@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -15,7 +16,7 @@ import {
   ContextMenuTrigger,
   ContextMenuSeparator,
 } from '@/components/ui/context-menu';
-import { Check, Calendar, X, Lock } from 'lucide-react';
+import { Check, Calendar, X, Lock, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -23,7 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { format } from 'date-fns';
+import { format, isToday, isSameDay } from 'date-fns';
 
 interface CalendarGridProps {
   days: { date: string; label: string; dayNumber: number }[];
@@ -42,20 +43,29 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 }) => {
   const [contextMenu, setContextMenu] = useState<ContextMenuOptions | null>(null);
   const [debugMode, setDebugMode] = useState(true);
-  const [currentTimePosition, setCurrentTimePosition] = useState<{ day: string; percentage: number } | null>(null);
+  const [currentTime, setCurrentTime] = useState<{
+    date: string;
+    hour: string;
+    minute: number;
+  } | null>(null);
 
   useEffect(() => {
     const updateCurrentTime = () => {
       const now = new Date();
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
-      const currentDay = format(now, 'yyyy-MM-dd');
       
       if (currentHour >= 8 && currentHour < 24) {
-        const percentage = ((currentHour - 8) * 60 + currentMinute) / (16 * 60) * 100;
-        setCurrentTimePosition({ day: currentDay, percentage });
+        const formattedDate = format(now, 'yyyy-MM-dd');
+        const formattedHour = `${String(currentHour).padStart(2, '0')}:00`;
+        
+        setCurrentTime({
+          date: formattedDate,
+          hour: formattedHour,
+          minute: currentMinute
+        });
       } else {
-        setCurrentTimePosition(null);
+        setCurrentTime(null);
       }
     };
 
@@ -228,6 +238,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     return false;
   };
 
+  const isCurrentTimeSlot = (date: string, hourStr: string): boolean => {
+    if (!currentTime) return false;
+    
+    // Check if this is the current date and hour
+    return currentTime.date === date && currentTime.hour === hourStr;
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -253,16 +270,22 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           <TableHeader className="bg-purple-50 sticky top-0 z-10">
             <TableRow className="border-b border-gray-300">
               <TableHead className="w-20 font-bold text-purple-800 border-l border-gray-200">שעה</TableHead>
-              {days.map((day, index) => (
-                <TableHead 
-                  key={day.date} 
-                  className={`font-bold text-purple-800 text-center min-w-[120px] border-l border-gray-200 
-                    ${index === days.length - 1 ? '' : 'border-r'} 
-                    ${day.date === currentTimePosition?.day ? 'bg-purple-100/50' : ''}`}
-                >
-                  {day.label}
-                </TableHead>
-              ))}
+              {days.map((day, index) => {
+                // Convert the day.date string to a Date object for comparison
+                const dayDate = new Date(day.date);
+                const isCurrentDay = dayDate && isToday(dayDate);
+                
+                return (
+                  <TableHead 
+                    key={day.date} 
+                    className={`font-bold text-purple-800 text-center min-w-[120px] border-l border-gray-200 
+                      ${index === days.length - 1 ? '' : 'border-r'} 
+                      ${isCurrentDay ? 'bg-purple-100/50' : ''}`}
+                  >
+                    {day.label}
+                  </TableHead>
+                );
+              })}
             </TableRow>
           </TableHeader>
           <TableBody className="relative">
@@ -286,6 +309,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const borderStyle = isConnectedToPrevHour 
                     ? { borderTop: `1px solid ${border}` }
                     : {};
+                  
+                  // Check if this is the current time slot
+                  const isCurrent = isCurrentTimeSlot(day.date, hour);
 
                   const cellContent = (
                     <TableCell 
@@ -293,15 +319,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       style={borderStyle}
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status)}
                     >
-                      {currentTimePosition?.day === day.date && (
-                        <div 
-                          className="absolute left-0 w-full border-t-2 border-[#1EAEDB] z-10"
-                          style={{ 
-                            top: `${currentTimePosition.percentage}%`,
-                            borderColor: '#1EAEDB'
-                          }}
-                        />
+                      {isCurrent && (
+                        <div className="absolute top-0 right-0 p-1">
+                          <Clock className="h-4 w-4 text-[#1EAEDB]" />
+                        </div>
                       )}
+                      
                       {slot.isPartialHour ? (
                         renderPartialHourEvent(slot)
                       ) : slot.fromGoogle || (slot.notes && slot.status === 'booked') ? (

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,15 +51,27 @@ const CalendarManagement: React.FC = () => {
   });
 
   const generateDaysOfWeek = (startDate: Date) => {
-    const weekStart = startOfWeek(startDate, { weekStartsOn: 0 });
+    // Fix: Correctly set weekStartsOn to 0 (Sunday)
+    const weekStart = startOfDay(startDate);
+    
+    // Get the current day of week (0-6, where 0 is Sunday)
+    const currentDayOfWeek = weekStart.getDay();
+    
+    // Calculate how many days to go back to get to Sunday
+    const daysToSunday = currentDayOfWeek;
+    
+    // Get the Sunday of the current week
+    const sundayOfThisWeek = addDays(weekStart, -daysToSunday);
+    
+    // Generate the 7 days starting from Sunday
     return Array.from({ length: 7 }, (_, i) => {
-      const date = addDays(weekStart, i);
+      const date = addDays(sundayOfThisWeek, i);
       return {
         date: format(date, 'yyyy-MM-dd'),
         label: format(date, 'EEE dd/MM'),
         dayNumber: i
       };
-    });
+    }).reverse(); // Reverse to show Saturday on the right (Hebrew calendar style)
   };
 
   const days = generateDaysOfWeek(currentDate);
