@@ -7,6 +7,7 @@ import CalendarGrid from './CalendarGrid';
 import CalendarListView from './CalendarListView';
 import { CalendarSlot } from '@/types/calendar';
 import { GoogleCalendarEventForm } from './GoogleCalendarEventForm';
+import CalendarLegend from './CalendarLegend';
 
 interface CalendarContentProps {
   days: { date: string; label: string; dayNumber: number }[];
@@ -56,6 +57,8 @@ const CalendarContent: React.FC<CalendarContentProps> = ({
               onToday={() => onSetCurrentDate(new Date())}
               onAddRecurring={onRecurringDialogOpen}
             />
+            
+            {selectedView === 'calendar' && <CalendarLegend />}
             
             <div className="mt-4">
               {selectedView === 'calendar' ? (

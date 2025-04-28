@@ -31,6 +31,9 @@ export interface CalendarSlot {
   isPartialHour?: boolean; // Indicates this slot has a non-round start or end time
   isPatientMeeting?: boolean; // Indicates if this is a patient meeting (always 90 minutes)
   showBorder?: boolean; // Whether to show border around the event
+  fromFutureSession?: boolean; // New: Indicates if this event is from future_sessions table
+  futureSession?: any; // New: Stores the original future session data for reference
+  inGoogleCalendar?: boolean; // New: Indicates if this future session exists in Google Calendar
 }
 
 export interface ContextMenuOptions {
@@ -40,6 +43,8 @@ export interface ContextMenuOptions {
   day: number;
   hour: string;
   status: string;
+  fromFutureSession?: boolean; // New: Indicates if the context menu is for a future session
+  futureSession?: any; // New: Holds the future session data
 }
 
 export interface RecurringRule {

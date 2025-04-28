@@ -15,7 +15,7 @@ import {
   ContextMenuTrigger,
   ContextMenuSeparator,
 } from '@/components/ui/context-menu';
-import { Check, Calendar, X, Lock, Clock } from 'lucide-react';
+import { Check, Calendar, X, Lock, Clock, CalendarPlus, Info } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -24,6 +24,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { format, isToday, isSameDay } from 'date-fns';
+import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
+import { toast } from '@/components/ui/use-toast';
 
 interface CalendarGridProps {
   days: { date: string; label: string; dayNumber: number }[];
@@ -47,6 +49,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     hour: string;
     minute: number;
   } | null>(null);
+  const { createEvent } = useGoogleOAuth();
 
   useEffect(() => {
     const updateCurrentTime = () => {
@@ -75,7 +78,25 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   }, []);
 
   const getStatusStyle = (slot: CalendarSlot) => {
-    const { status, fromGoogle, isMeeting, isPatientMeeting } = slot;
+    const { status, fromGoogle, isMeeting, isPatientMeeting, fromFutureSession, inGoogleCalendar } = slot;
+    
+    if (fromFutureSession) {
+      if (inGoogleCalendar) {
+        return { 
+          bg: 'bg-[#D3E4FD]', 
+          border: '#D3E4FD', 
+          text: 'text-gray-700',
+          colorClass: 'border-[#D3E4FD]'
+        };
+      }
+      
+      return { 
+        bg: 'bg-blue-100', 
+        border: 'rgb(219 234 254)', 
+        text: 'text-blue-800',
+        colorClass: 'border-blue-100'
+      };
+    }
     
     if (isPatientMeeting || (isMeeting && status === 'booked')) {
       return { 
@@ -111,7 +132,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   };
 
-  const handleContextMenu = (e: React.MouseEvent, date: string, hour: string, status: any) => {
+  const handleContextMenu = (e: React.MouseEvent, date: string, hour: string, status: any, fromFutureSession?: boolean, futureSession?: any) => {
     e.preventDefault();
     setContextMenu({
       x: e.clientX,
@@ -119,7 +140,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       date,
       day: new Date(date).getDay(),
       hour,
-      status
+      status,
+      fromFutureSession,
+      futureSession
     });
   };
 
@@ -128,6 +151,49 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       onUpdateSlot(contextMenu.date, contextMenu.hour, status);
       setContextMenu(null);
     }
+  };
+
+  const handleCopyToGoogleCalendar = async () => {
+    if (!contextMenu?.fromFutureSession || !contextMenu?.futureSession) {
+      setContextMenu(null);
+      return;
+    }
+
+    try {
+      const session = contextMenu.futureSession;
+      
+      const sessionDateTime = new Date(session.session_date);
+      const summary = `פגישה עם ${session.patients?.name || 'לקוח/ה'}`; 
+      
+      const startDateTime = sessionDateTime.toISOString();
+      
+      const endDateTime = new Date(sessionDateTime.getTime() + 90 * 60000).toISOString();
+      
+      const description = `סוג פגישה: ${session.meeting_type}${session.zoom_link ? `\nקישור לזום: ${session.zoom_link}` : ''}`;
+      
+      const success = await createEvent(
+        summary,
+        startDateTime,
+        endDateTime,
+        description
+      );
+      
+      if (success) {
+        toast({
+          title: "הפגישה נוספה ליומן Google",
+          description: `הפגישה עם ${session.patients?.name || 'לקוח/ה'} נוספה בהצלחה ליומן Google`,
+        });
+      }
+    } catch (error: any) {
+      console.error("Failed to add event to Google Calendar:", error);
+      toast({
+        title: "שגיאה בהוספת פגישה ליומן",
+        description: error.message || "לא הצלחנו להוסיף את הפגישה ליומן Google",
+        variant: "destructive"
+      });
+    }
+    
+    setContextMenu(null);
   };
 
   const logSlotInfo = (date: string, hour: string, slot?: CalendarSlot) => {
@@ -147,7 +213,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       startMinute: slot?.startMinute,
       endMinute: slot?.endMinute,
       isPartialHour: slot?.isPartialHour,
-      isPatientMeeting: slot?.isPatientMeeting
+      isPatientMeeting: slot?.isPatientMeeting,
+      fromFutureSession: slot?.fromFutureSession,
+      inGoogleCalendar: slot?.inGoogleCalendar
     });
     return true;
   };
@@ -158,7 +226,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     if (!debugMode) {
       calendarData.forEach((dayMap, date) => {
         dayMap.forEach((slot, hour) => {
-          if (slot.fromGoogle || slot.syncStatus === 'google-only') {
+          if (slot.fromGoogle || slot.syncStatus === 'google-only' || slot.fromFutureSession) {
             logSlotInfo(date, hour, slot);
           }
         });
@@ -195,7 +263,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   };
 
   const renderEventContent = (slot: CalendarSlot) => {
-    if (!slot.fromGoogle && !slot.notes) return null;
+    if (!slot.fromGoogle && !slot.notes && !slot.fromFutureSession) return null;
 
     if (slot.isPartialHour) {
       return renderPartialHourEvent(slot);
@@ -205,11 +273,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       return <div className="w-full h-full bg-inherit" />;
     }
 
+    const showNotInGoogleIcon = slot.fromFutureSession && !slot.inGoogleCalendar;
+
     return (
       <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${slot.isPatientMeeting || slot.isMeeting ? 'text-[#CFB53B]' : 'text-gray-700'}`}>
         {slot.isFirstHour && (
           <>
-            <div className="text-xs font-semibold w-full truncate">
+            <div className="text-xs font-semibold w-full truncate flex items-center gap-1">
+              {showNotInGoogleIcon && <Info className="h-3 w-3 text-blue-500" />}
               {slot.notes}
             </div>
             {slot.description && (
@@ -234,13 +305,16 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       return currentSlot.notes === prevSlot.notes;
     }
     
+    if (currentSlot.fromFutureSession && prevSlot.fromFutureSession) {
+      return currentSlot.futureSession?.id === prevSlot.futureSession?.id;
+    }
+    
     return false;
   };
 
   const isCurrentTimeSlot = (date: string, hourStr: string): boolean => {
     if (!currentTime) return false;
     
-    // Check if this is the current date and hour
     return currentTime.date === date && currentTime.hour === hourStr;
   };
 
@@ -270,7 +344,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             <TableRow className="border-b border-gray-300">
               <TableHead className="w-20 font-bold text-purple-800 border-l border-gray-200">שעה</TableHead>
               {days.map((day, index) => {
-                // Convert the day.date string to a Date object for comparison
                 const dayDate = new Date(day.date);
                 const isCurrentDay = dayDate && isToday(dayDate);
                 
@@ -308,14 +381,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     ? { borderTop: `1px solid ${border}` }
                     : {};
                   
-                  // Check if this is the current time slot
                   const isCurrent = isCurrentTimeSlot(day.date, hour);
 
                   const cellContent = (
                     <TableCell 
                       className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] border-l border-gray-200`}
                       style={borderStyle}
-                      onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status)}
+                      onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status, slot.fromFutureSession, slot.futureSession)}
                     >
                       {isCurrent && (
                         <div className="absolute top-0 right-0 p-1">
@@ -325,7 +397,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       
                       {slot.isPartialHour ? (
                         renderPartialHourEvent(slot)
-                      ) : slot.fromGoogle || (slot.notes && slot.status === 'booked') ? (
+                      ) : slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked') ? (
                         renderEventContent(slot)
                       ) : (
                         <>
@@ -342,7 +414,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   return (
                     <ContextMenu key={`${day.date}-${hour}`}>
                       <ContextMenuTrigger asChild>
-                        {(slot.description || slot.fromGoogle) ? (
+                        {(slot.description || slot.fromGoogle || slot.fromFutureSession) ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               {cellContent}
@@ -364,6 +436,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                                     {slot.isLastHour ? `סיום: דקה ${slot.endMinute}` : ''}
                                   </p>
                                 )}
+                                {slot.fromFutureSession && !slot.inGoogleCalendar && (
+                                  <p className="text-blue-300 mt-1">לא קיים ביומן Google (לחץ ימני להעתקה)</p>
+                                )}
                               </div>
                             </TooltipContent>
                           </Tooltip>
@@ -372,31 +447,43 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         )}
                       </ContextMenuTrigger>
                       <ContextMenuContent className="min-w-[160px]">
-                        <ContextMenuItem 
-                          className="flex items-center gap-2 text-purple-600"
-                          onClick={() => handleSelectOption('available')}
-                          disabled={slot.status === 'booked' || slot.fromGoogle}
-                        >
-                          <Check className="h-4 w-4" />
-                          <span>הגדר כזמין</span>
-                        </ContextMenuItem>
-                        <ContextMenuItem 
-                          className="flex items-center gap-2 text-amber-600"
-                          onClick={() => handleSelectOption('private')}
-                          disabled={slot.status === 'booked' || slot.fromGoogle}
-                        >
-                          <Lock className="h-4 w-4" />
-                          <span>הגדר כזמן פרטי</span>
-                        </ContextMenuItem>
-                        <ContextMenuSeparator />
-                        <ContextMenuItem 
-                          className="flex items-center gap-2 text-gray-600"
-                          onClick={() => handleSelectOption('unspecified')}
-                          disabled={slot.status === 'booked' || slot.fromGoogle}
-                        >
-                          <X className="h-4 w-4" />
-                          <span>נקה סטטוס</span>
-                        </ContextMenuItem>
+                        {slot.fromFutureSession && !slot.inGoogleCalendar ? (
+                          <ContextMenuItem 
+                            className="flex items-center gap-2 text-blue-600"
+                            onClick={handleCopyToGoogleCalendar}
+                          >
+                            <CalendarPlus className="h-4 w-4" />
+                            <span>העתק ליומן Google</span>
+                          </ContextMenuItem>
+                        ) : (
+                          <>
+                            <ContextMenuItem 
+                              className="flex items-center gap-2 text-purple-600"
+                              onClick={() => handleSelectOption('available')}
+                              disabled={slot.status === 'booked' || slot.fromGoogle || slot.fromFutureSession}
+                            >
+                              <Check className="h-4 w-4" />
+                              <span>הגדר כזמין</span>
+                            </ContextMenuItem>
+                            <ContextMenuItem 
+                              className="flex items-center gap-2 text-amber-600"
+                              onClick={() => handleSelectOption('private')}
+                              disabled={slot.status === 'booked' || slot.fromGoogle || slot.fromFutureSession}
+                            >
+                              <Lock className="h-4 w-4" />
+                              <span>הגדר כזמן פרטי</span>
+                            </ContextMenuItem>
+                            <ContextMenuSeparator />
+                            <ContextMenuItem 
+                              className="flex items-center gap-2 text-gray-600"
+                              onClick={() => handleSelectOption('unspecified')}
+                              disabled={slot.status === 'booked' || slot.fromGoogle || slot.fromFutureSession}
+                            >
+                              <X className="h-4 w-4" />
+                              <span>נקה סטטוס</span>
+                            </ContextMenuItem>
+                          </>
+                        )}
                       </ContextMenuContent>
                     </ContextMenu>
                   );

@@ -71,6 +71,19 @@ export function useCalendarData(
       calendarData.set(day.date, daySlots);
     });
 
+    // Create a map of Google Calendar events for easy lookup
+    const googleEventsMap = new Map<string, GoogleCalendarEvent>();
+    googleCalendarEvents.forEach(event => {
+      if (!event.start?.dateTime) return;
+      
+      const eventDate = new Date(event.start.dateTime);
+      const dateKey = format(eventDate, 'yyyy-MM-dd');
+      const hourKey = format(eventDate, 'HH:00');
+      const key = `${dateKey}-${hourKey}`;
+      
+      googleEventsMap.set(key, event);
+    });
+
     // Process Google Calendar events
     googleCalendarEvents.forEach((event, index) => {
       if (event.start?.dateTime && event.end?.dateTime) {
@@ -203,6 +216,7 @@ export function useCalendarData(
       }
     });
     
+    // Process future sessions (bookings)
     bookedSlots.forEach(session => {
       if (!session.session_date) return;
       
@@ -220,13 +234,26 @@ export function useCalendarData(
           // Always make sessions 90 minutes
           const endTime = addMinutes(sessionDateTime, 90);
           const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
-          const endHour = parseInt(formattedEndTime.split(':')[0]);
           const endMinute = parseInt(formattedEndTime.split(':')[1]);
           const isPartialHour = startMinute > 0 || endMinute > 0;
           
+          // Check if this session exists in Google Calendar
+          const eventDateHourKey = `${sessionDate}-${sessionTime}`;
+          const inGoogleCalendar = googleEventsMap.has(eventDateHourKey);
+          
+          // If the session is already in Google Calendar, we don't need to mark it as a future session
+          if (inGoogleCalendar) {
+            console.log(`Session already exists in Google Calendar:`, {
+              date: sessionDate,
+              time: sessionTime,
+              patientName: session.patients?.name || 'לקוח/ה'
+            });
+            return; // Skip this session as it's already in the calendar
+          }
+          
           let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
-          if (session.status === 'completed') status = 'completed';
-          if (session.status === 'canceled') status = 'canceled';
+          if (session.status === 'Completed') status = 'completed';
+          if (session.status === 'Cancelled') status = 'canceled';
           
           // Set patient name without times
           const patientName = session.patients?.name || 'לקוח/ה';
@@ -242,8 +269,11 @@ export function useCalendarData(
             endMinute,
             isPartialHour,
             isPatientMeeting: true,
-            syncStatus: 'synced', // Set to synced to avoid warning triangle
-            showBorder: false // No border for events
+            syncStatus: 'synced',
+            showBorder: false,
+            fromFutureSession: true,
+            futureSession: session,
+            inGoogleCalendar: false
           });
         }
       } catch (error) {
@@ -306,6 +336,7 @@ export function useCalendarData(
   const processCalendarData = (availableSlots: any[], bookedSlots: any[]) => {
     const calendarData = new Map<string, Map<string, CalendarSlot>>();
     
+    // Initialize calendar data with empty slots
     const generateDaysOfWeek = (startDate: Date) => {
       const startDay = startOfDay(startDate);
       const currentDayOfWeek = startDay.getDay();
@@ -366,20 +397,36 @@ export function useCalendarData(
         const sessionDate = israelTime.split(' ')[0];
         const timeParts = israelTime.split(' ')[1].split(':');
         const sessionTime = `${timeParts[0]}:00`;
+        const startMinute = parseInt(timeParts[1]);
         
         const dayMap = calendarData.get(sessionDate);
         if (dayMap && dayMap.has(sessionTime)) {
-          const endTime = addHours(sessionDateTime, 1.5);
+          const endTime = addMinutes(sessionDateTime, 90);
           const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
+          const endMinute = parseInt(formattedEndTime.split(':')[1]);
+          const isPartialHour = startMinute > 0 || endMinute > 0;
           
           let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
-          if (session.status === 'completed') status = 'completed';
-          if (session.status === 'canceled') status = 'canceled';
+          if (session.status === 'Completed') status = 'completed';
+          if (session.status === 'Cancelled') status = 'canceled';
+          
+          const patientName = session.patients?.name || 'IClient/ה';
+          const noteText = `${session.title || 'פגישה'}: ${patientName}`;
           
           dayMap.set(sessionTime, {
             ...dayMap.get(sessionTime)!,
             status,
-            notes: `${session.title || 'פגישה'}: ${session.patients?.name || 'לקוח/ה'} (${sessionTime}-${formattedEndTime})`
+            notes: noteText,
+            exactStartTime: `${timeParts[0]}:${timeParts[1]}`,
+            exactEndTime: formattedEndTime,
+            startMinute,
+            endMinute,
+            isPartialHour,
+            isPatientMeeting: true,
+            showBorder: false,
+            fromFutureSession: true,
+            futureSession: session,
+            inGoogleCalendar: false
           });
         }
       } catch (error) {
