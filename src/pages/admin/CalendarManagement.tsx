@@ -228,6 +228,10 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
+  const handleSignInGoogle = async (): Promise<void> => {
+    await signInWithGoogle();
+  };
+
   useEffect(() => {
     checkTableExists();
   }, []);
@@ -243,7 +247,7 @@ const CalendarManagement: React.FC = () => {
             googleEvents={googleEvents}
             isSyncing={isSyncing}
             isLoadingGoogleEvents={isLoadingGoogleEvents}
-            onSignInGoogle={signInWithGoogle}
+            onSignInGoogle={handleSignInGoogle}
             onSignOutGoogle={signOutFromGoogle}
             onGoogleSync={handleGoogleSync}
           />

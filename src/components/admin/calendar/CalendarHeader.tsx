@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Calendar as CalendarIcon, Settings, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Settings, AlertCircle, RefreshCw } from 'lucide-react';
 import { GoogleOAuthButton } from './GoogleOAuthButton';
 import { Card } from '@/components/ui/card';
 
