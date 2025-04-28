@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -391,6 +392,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const isConnectedToPrevHour = isSameEvent(slot, prevHourSlot);
                   
                   const { bg, text, colorClass } = getStatusStyle(slot);
+                  
+                  // Check if this is the current time slot
+                  const isCurrentCell = isCurrentTimeSlot(day.date, hour);
 
                   const cellContent = (
                     <TableCell 
@@ -398,7 +402,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] border-l border-gray-200 ${isConnectedToPrevHour ? 'border-t-0' : ''}`}
                       onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status, slot.fromFutureSession, slot.futureSession)}
                     >
-                      {isCurrent && (
+                      {isCurrentCell && (
                         <div className="absolute top-0 right-0 p-1">
                           <Clock className="h-4 w-4 text-[#1EAEDB]" />
                         </div>
