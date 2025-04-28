@@ -16,12 +16,16 @@ export interface CalendarSlot {
   notes?: string;
   description?: string;
   fromGoogle?: boolean;
+  isMeeting?: boolean;
   syncStatus?: 'synced' | 'google-only' | 'supabase-only';
   googleEvent?: GoogleCalendarEvent;
-  startTime?: string;  // Format: "HH:mm"
-  endTime?: string;    // Format: "HH:mm"
+  startTime?: string;    // Format: "HH:mm"
+  endTime?: string;      // Format: "HH:mm"
   exactStartTime?: string; // For non-round times, format: "HH:mm"
   exactEndTime?: string;   // For non-round times, format: "HH:mm"
+  hoursSpan?: number;    // Number of hours the event spans
+  isFirstHour?: boolean; // Is this the first hour of a multi-hour event
+  isLastHour?: boolean;  // Is this the last hour of a multi-hour event
 }
 
 export interface ContextMenuOptions {

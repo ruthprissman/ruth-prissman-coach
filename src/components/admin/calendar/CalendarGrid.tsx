@@ -68,10 +68,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     console.log(`Total Google events found in calendar data: ${googleEventsFound}`);
   }, [calendarData, days, hours]);
 
-  const getStatusStyle = (status: string, syncStatus?: string, isGoogleEvent?: boolean, isMeeting?: boolean) => {
-    if (isGoogleEvent) {
+  const getStatusStyle = (slot: CalendarSlot) => {
+    const { status, fromGoogle, isMeeting } = slot;
+
+    if (fromGoogle) {
       if (isMeeting) {
-        return { bg: 'bg-[#9b87f5]', border: 'border-[#9b87f5]', text: 'text-white' };
+        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]' };
       }
       return { bg: 'bg-[#D3E4FD]', border: 'border-[#D3E4FD]', text: 'text-gray-700' };
     }
@@ -155,23 +157,29 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const renderEventContent = (slot: CalendarSlot) => {
     if (!slot.fromGoogle && !slot.notes) return null;
 
-    const isMeeting = isMeetingEvent(slot.notes);
-    const timeDisplay = formatEventTime(slot.exactStartTime || slot.startTime, slot.exactEndTime || slot.endTime);
+    const timeDisplay = `${slot.exactStartTime || slot.startTime}-${slot.exactEndTime || slot.endTime}`;
+    const showFullContent = slot.isFirstHour;
+
+    if (!showFullContent && slot.hoursSpan > 1) {
+      return <div className="w-full h-full bg-inherit" />;
+    }
 
     return (
-      <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${isMeeting ? 'text-white' : 'text-gray-700'}`}>
-        <div className="text-xs font-semibold w-full truncate">
-          {slot.notes}
-        </div>
-        {slot.description && (
-          <div className="text-xs w-full truncate mt-0.5 opacity-90">
-            {slot.description}
-          </div>
-        )}
-        {timeDisplay && (
-          <div className="text-xs mt-auto opacity-75">
-            {timeDisplay}
-          </div>
+      <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${slot.isMeeting ? 'text-[#CFB53B]' : 'text-gray-700'}`}>
+        {showFullContent && (
+          <>
+            <div className="text-xs font-semibold w-full truncate">
+              {slot.notes}
+            </div>
+            {slot.description && (
+              <div className="text-xs w-full truncate mt-0.5 opacity-90">
+                {slot.description}
+              </div>
+            )}
+            <div className="text-xs mt-auto opacity-75">
+              {timeDisplay}
+            </div>
+          </>
         )}
       </div>
     );
@@ -226,31 +234,28 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     logSlotInfo(day.date, hour, slot);
                   }
                   
-                  const status = slot?.status || 'unspecified';
-                  const syncStatus = slot?.syncStatus;
-                  const isGoogleEvent = syncStatus === 'google-only' || slot?.fromGoogle;
-                  const isMeeting = slot?.notes && isMeetingEvent(slot?.notes);
+                  if (!slot) return null;
                   
-                  const { bg, border, text } = getStatusStyle(status, syncStatus, isGoogleEvent, isMeeting);
+                  const { bg, border, text } = getStatusStyle(slot);
                   
                   const slotContent = (
                     <TableCell 
                       className={`${bg} ${border} ${text} border transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px]`}
-                      onContextMenu={(e) => handleContextMenu(e, day.date, hour, status)}
+                      onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status)}
                     >
-                      {isGoogleEvent || (slot?.notes && status === 'booked') ? (
-                        renderEventContent(slot!)
+                      {slot.fromGoogle || (slot.notes && slot.status === 'booked') ? (
+                        renderEventContent(slot)
                       ) : (
                         <>
-                          {status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
-                          {status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />}
-                          {status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
-                          {status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
-                          {status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
+                          {slot.status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
+                          {slot.status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />}
+                          {slot.status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
+                          {slot.status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
+                          {slot.status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
                         </>
                       )}
                       
-                      {(syncStatus === 'google-only' || syncStatus === 'supabase-only') && (
+                      {(slot.syncStatus === 'google-only' || slot.syncStatus === 'supabase-only') && (
                         <AlertTriangle className="h-4 w-4 absolute top-1 right-1 text-orange-600" />
                       )}
                     </TableCell>
@@ -259,7 +264,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   return (
                     <ContextMenu key={`${day.date}-${hour}`}>
                       <ContextMenuTrigger asChild>
-                        {(slot?.description || isGoogleEvent) ? (
+                        {(slot.description || slot.fromGoogle) ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               {slotContent}
@@ -268,17 +273,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                               side="bottom"
                               className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded"
                             >
-                              {isGoogleEvent ? (
-                                <div>
-                                  <p className="font-bold">{slot?.notes}</p>
-                                  {slot?.description && <p>{slot.description}</p>}
-                                  {slot?.startTime && slot?.endTime && (
-                                    <p className="mt-1">{slot.startTime}-{slot.endTime}</p>
-                                  )}
-                                </div>
-                              ) : (
-                                slot?.description
-                              )}
+                              <div>
+                                <p className="font-bold">{slot.notes}</p>
+                                {slot.description && <p>{slot.description}</p>}
+                                {slot.exactStartTime && (
+                                  <p className="mt-1">{slot.exactStartTime}-{slot.exactEndTime}</p>
+                                )}
+                              </div>
                             </TooltipContent>
                           </Tooltip>
                         ) : (
@@ -289,7 +290,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         <ContextMenuItem 
                           className="flex items-center gap-2 text-purple-600"
                           onClick={() => handleSelectOption('available')}
-                          disabled={status === 'booked' || isGoogleEvent}
+                          disabled={slot.status === 'booked' || slot.fromGoogle}
                         >
                           <Check className="h-4 w-4" />
                           <span>הגדר כזמין</span>
@@ -297,7 +298,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         <ContextMenuItem 
                           className="flex items-center gap-2 text-amber-600"
                           onClick={() => handleSelectOption('private')}
-                          disabled={status === 'booked' || isGoogleEvent}
+                          disabled={slot.status === 'booked' || slot.fromGoogle}
                         >
                           <Lock className="h-4 w-4" />
                           <span>הגדר כזמן פרטי</span>
@@ -306,7 +307,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         <ContextMenuItem 
                           className="flex items-center gap-2 text-gray-600"
                           onClick={() => handleSelectOption('unspecified')}
-                          disabled={status === 'booked' || isGoogleEvent}
+                          disabled={slot.status === 'booked' || slot.fromGoogle}
                         >
                           <X className="h-4 w-4" />
                           <span>נקה סטטוס</span>

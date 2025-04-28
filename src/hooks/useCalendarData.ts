@@ -40,12 +40,12 @@ export function useCalendarData(
     };
 
     const days = generateDaysOfWeek(currentDate);
-
     const hours = Array.from({ length: 16 }, (_, i) => {
       const hour = i + 8;
       return `${hour.toString().padStart(2, '0')}:00`;
     });
 
+    // Initialize empty calendar
     days.forEach(day => {
       const daySlots = new Map<string, CalendarSlot>();
       hours.forEach(hour => {
@@ -70,15 +70,18 @@ export function useCalendarData(
           const exactStartTime = format(startDate, 'HH:mm');
           const exactEndTime = format(endDate, 'HH:mm');
           
-          // Get the rounded hour for the slot
-          const googleHour = format(startDate, 'HH:00');
+          // Get the starting hour for the event
+          const startHour = format(startDate, 'HH');
+          const endHour = format(endDate, 'HH');
+          const hoursSpan = (Number(endHour) - Number(startHour)) + (format(endDate, 'mm') > '00' ? 1 : 0);
           
           console.log(`Processing Google event ${index}:`, {
             summary: event.summary,
             exactStartTime,
             exactEndTime,
-            googleHour,
-            googleDate
+            startHour,
+            endHour,
+            hoursSpan
           });
 
           const isDayVisible = days.some(day => day.date === googleDate);
@@ -88,32 +91,31 @@ export function useCalendarData(
           }
           
           const dayMap = calendarData.get(googleDate);
-          if (dayMap && dayMap.has(googleHour)) {
-            const existingSlot = dayMap.get(googleHour);
-            
-            if (existingSlot?.status !== 'booked' && existingSlot?.status !== 'completed') {
-              const isMeeting = event.summary?.startsWith('פגישה עם') || 
-                              event.summary?.startsWith('שיחה עם');
+          if (!dayMap) return;
+
+          // Mark all affected hours
+          for (let h = Number(startHour); h <= Number(endHour); h++) {
+            const hourString = h.toString().padStart(2, '0') + ':00';
+            if (dayMap.has(hourString)) {
+              const isMeeting = event.summary?.toLowerCase().includes('פגישה עם') || 
+                              event.summary?.toLowerCase().includes('שיחה עם');
               
-              console.log(`Updating slot for event ${index}:`, {
-                summary: event.summary,
-                isMeeting,
-                exactStartTime,
-                exactEndTime
-              });
-              
-              dayMap.set(googleHour, {
-                ...existingSlot!,
+              dayMap.set(hourString, {
+                ...dayMap.get(hourString)!,
                 status: 'booked',
                 notes: event.summary || 'אירוע Google',
                 description: event.description,
                 fromGoogle: true,
+                isMeeting,
                 syncStatus: 'google-only',
                 googleEvent: event,
-                startTime: googleHour,
-                endTime: format(addHours(startDate, 1), 'HH:00'),
+                startTime: startHour + ':00',
+                endTime: endHour + ':00',
                 exactStartTime,
-                exactEndTime
+                exactEndTime,
+                hoursSpan,
+                isFirstHour: h === Number(startHour),
+                isLastHour: h === Number(endHour)
               });
             }
           }
@@ -140,7 +142,7 @@ export function useCalendarData(
       
       try {
         const sessionDateTime = new Date(session.session_date);
-        const israelTime = format(sessionDateTime, 'yyyy-MM-dd HH:mm:ss');
+        const israelTime = formatInTimeZone(sessionDateTime, 'Asia/Jerusalem', 'yyyy-MM-dd HH:mm:ss');
         
         const sessionDate = israelTime.split(' ')[0];
         const timeParts = israelTime.split(' ')[1].split(':');
