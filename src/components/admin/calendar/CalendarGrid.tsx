@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -258,7 +257,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const endPercent = slot.isLastHour && slot.endMinute ? (slot.endMinute / 60) * 100 : 100;
     const heightPercent = endPercent - startPercent;
     
-    const { bg, border, text } = getStatusStyle(slot);
+    const { bg, text } = getStatusStyle(slot);
     
     return (
       <div 
@@ -266,8 +265,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         style={{ 
           top: `${startPercent}%`,
           height: `${heightPercent}%`,
-          borderTop: slot.isFirstHour ? 'none' : 'none',
-          borderBottom: slot.isLastHour ? 'none' : 'none'
         }}
       >
         {slot.isFirstHour && slot.notes && (
@@ -393,30 +390,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const prevHourSlot = prevHour ? dayMap?.get(prevHour) : undefined;
                   const isConnectedToPrevHour = isSameEvent(slot, prevHourSlot);
                   
-                  const { bg, border, text, colorClass } = getStatusStyle(slot);
+                  const { bg, text, colorClass } = getStatusStyle(slot);
 
-                  // Fix for dividing lines - create a custom style to remove the top border for connected events
-                  // and set the background color to match the event color
-                  const borderStyle: React.CSSProperties = {
-                    borderTop: isConnectedToPrevHour ? '0' : undefined,
-                    borderColor: isConnectedToPrevHour ? 'transparent' : undefined,
-                  };
-                  
-                  const isCurrent = isCurrentTimeSlot(day.date, hour);
-
-                  // Test cell for debugging
-                  const testCellId = `cell-${day.date}-${hour}`;
-                  
-                  // Contents of the cell to be rendered
                   const cellContent = (
                     <TableCell 
-                      id={testCellId}
-                      className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] border-l border-gray-200`}
-                      style={borderStyle}
-                      onContextMenu={(e) => {
-                        console.log(`Context menu fired on ${testCellId}`);
-                        handleContextMenu(e, day.date, hour, slot.status, slot.fromFutureSession, slot.futureSession);
-                      }}
+                      id={`cell-${day.date}-${hour}`}
+                      className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] border-l border-gray-200 ${isConnectedToPrevHour ? 'border-t-0' : ''}`}
+                      onContextMenu={(e) => handleContextMenu(e, day.date, hour, slot.status, slot.fromFutureSession, slot.futureSession)}
                     >
                       {isCurrent && (
                         <div className="absolute top-0 right-0 p-1">
@@ -424,7 +404,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         </div>
                       )}
                       
-                      {/* Fix for event content rendering */}
                       {slot.isPartialHour ? (
                         renderPartialHourEvent(slot)
                       ) : slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked') ? (
@@ -440,10 +419,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       )}
                     </TableCell>
                   );
-                  
-                  // Debug the right-click menu functionality
-                  console.log(`Rendering cell ${day.date}-${hour} with status ${slot.status}`);
-                  
+
                   return (
                     <ContextMenu key={`${day.date}-${hour}`}>
                       <ContextMenuTrigger asChild>
@@ -531,4 +507,3 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 };
 
 export default CalendarGrid;
-
