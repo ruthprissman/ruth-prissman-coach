@@ -1,4 +1,3 @@
-
 import { format, startOfDay, addDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
@@ -149,8 +148,13 @@ export const processFutureSessions = (
   bookedSlots: any[],
   googleEventsMap: Map<string, GoogleCalendarEvent>
 ) => {
-  bookedSlots.forEach(session => {
-    if (!session.session_date) return;
+  console.log('Processing future sessions:', bookedSlots.length);
+  
+  bookedSlots.forEach((session, index) => {
+    if (!session.session_date) {
+      console.log(`Session ${index} has no date:`, session);
+      return;
+    }
     
     try {
       const sessionDateTime = new Date(session.session_date);
@@ -161,70 +165,87 @@ export const processFutureSessions = (
       const sessionTime = `${timeParts[0]}:00`;
       const startMinute = parseInt(timeParts[1]);
       
+      console.log(`Session ${index} date: ${sessionDate}, time: ${sessionTime}, patient: ${session.patients?.name || 'unknown'}`);
+      
       const dayMap = calendarData.get(sessionDate);
-      if (dayMap && dayMap.has(sessionTime)) {
-        const endTime = new Date(sessionDateTime.getTime() + 90 * 60000);
-        const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
-        const endHour = parseInt(formattedEndTime.split(':')[0]);
-        const endMinute = parseInt(formattedEndTime.split(':')[1]);
-        const isPartialHour = startMinute > 0 || endMinute > 0;
-        const hoursSpan = Math.ceil(90 / 60);
+      if (!dayMap) {
+        console.log(`No day map for session date: ${sessionDate}`);
+        return;
+      }
+      
+      if (!dayMap.has(sessionTime)) {
+        console.log(`No slot for session time: ${sessionTime}`);
+        return;
+      }
+      
+      const endTime = new Date(sessionDateTime.getTime() + 90 * 60000);
+      const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
+      const endHour = parseInt(formattedEndTime.split(':')[0]);
+      const endMinute = parseInt(formattedEndTime.split(':')[1]);
+      const isPartialHour = startMinute > 0 || endMinute > 0;
+      const hoursSpan = Math.ceil(90 / 60);
+      
+      const eventDateHourKey = `${sessionDate}-${sessionTime}`;
+      const inGoogleCalendar = googleEventsMap.has(eventDateHourKey);
+      
+      if (inGoogleCalendar) {
+        console.log(`Session ${index} already in Google Calendar`);
+        return;
+      }
+      
+      let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
+      if (session.status === 'Completed') status = 'completed';
+      if (session.status === 'Cancelled') status = 'canceled';
+      
+      const patientName = session.patients?.name || 'לקוח/ה';
+      const noteText = `פגישה עם ${patientName}`;
+      
+      for (let h = parseInt(sessionTime.split(':')[0]); h <= endHour; h++) {
+        const hourString = h.toString().padStart(2, '0') + ':00';
         
-        const eventDateHourKey = `${sessionDate}-${sessionTime}`;
-        const inGoogleCalendar = googleEventsMap.has(eventDateHourKey);
-        
-        if (inGoogleCalendar) return;
-        
-        let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
-        if (session.status === 'Completed') status = 'completed';
-        if (session.status === 'Cancelled') status = 'canceled';
-        
-        const patientName = session.patients?.name || 'לקוח/ה';
-        const noteText = `פגישה עם ${patientName}`;
-        
-        for (let h = parseInt(sessionTime.split(':')[0]); h <= endHour; h++) {
-          const hourString = h.toString().padStart(2, '0') + ':00';
+        if (dayMap.has(hourString)) {
+          const isFirstHour = h === parseInt(sessionTime.split(':')[0]);
+          const isLastHour = h === endHour;
           
-          if (dayMap.has(hourString)) {
-            const isFirstHour = h === parseInt(sessionTime.split(':')[0]);
-            const isLastHour = h === endHour;
-            
-            let currentStartMinute = 0;
-            let currentEndMinute = 59;
-            
-            if (isFirstHour) {
-              currentStartMinute = startMinute;
-            }
-            
-            if (isLastHour) {
-              currentEndMinute = endMinute;
-            }
-            
-            dayMap.set(hourString, {
-              ...dayMap.get(hourString)!,
-              status,
-              notes: noteText,
-              description: session.title || '',
-              exactStartTime: `${timeParts[0]}:${timeParts[1]}`,
-              exactEndTime: formattedEndTime,
-              startMinute: currentStartMinute,
-              endMinute: currentEndMinute,
-              isPartialHour,
-              isPatientMeeting: true,
-              hoursSpan,
-              isFirstHour,
-              isLastHour,
-              syncStatus: 'synced',
-              showBorder: false,
-              fromFutureSession: true,
-              futureSession: session,
-              inGoogleCalendar: false
-            });
+          let currentStartMinute = 0;
+          let currentEndMinute = 59;
+          
+          if (isFirstHour) {
+            currentStartMinute = startMinute;
+          }
+          
+          if (isLastHour) {
+            currentEndMinute = endMinute;
+          }
+          
+          dayMap.set(hourString, {
+            ...dayMap.get(hourString)!,
+            status,
+            notes: noteText,
+            description: session.title || '',
+            exactStartTime: `${timeParts[0]}:${timeParts[1]}`,
+            exactEndTime: formattedEndTime,
+            startMinute: currentStartMinute,
+            endMinute: currentEndMinute,
+            isPartialHour,
+            isPatientMeeting: true,
+            hoursSpan,
+            isFirstHour,
+            isLastHour,
+            syncStatus: 'synced',
+            showBorder: false,
+            fromFutureSession: true,
+            futureSession: session,
+            inGoogleCalendar: false
+          });
+          
+          if (isFirstHour) {
+            console.log(`Added future session at ${sessionDate} ${hourString} for ${patientName}`);
           }
         }
       }
     } catch (error) {
-      console.error('Error processing session date:', error);
+      console.error('Error processing session date:', error, session);
     }
   });
   

@@ -25,12 +25,14 @@ export function useCalendarData(
   const fetchAvailabilityData = async () => {
     try {
       setIsLoading(true);
+      console.log('Fetching calendar data for', currentDate);
       
       const [availableSlots, bookedSlots] = await Promise.all([
         fetchAvailabilitySlots(),
         fetchBookedSessions()
       ]);
 
+      console.log('Generating calendar data');
       let newCalendarData = generateEmptyCalendarData(currentDate);
       const days = generateWeekDays(currentDate);
       
@@ -49,6 +51,7 @@ export function useCalendarData(
       });
 
       if (isGoogleAuthenticated && googleEvents.length > 0) {
+        console.log('Processing Google Calendar events', googleEvents.length);
         // Process Google Calendar events
         newCalendarData = processGoogleEvents(newCalendarData, googleEvents, days);
         
@@ -58,11 +61,13 @@ export function useCalendarData(
         // Process future sessions
         newCalendarData = processFutureSessions(newCalendarData, bookedSlots, googleEventsMap);
       } else {
+        console.log('No Google Calendar integration or events');
         // Process future sessions without Google Calendar integration
         const emptyGoogleEventsMap = new Map<string, GoogleCalendarEvent>();
         newCalendarData = processFutureSessions(newCalendarData, bookedSlots, emptyGoogleEventsMap);
       }
       
+      console.log('Calendar data processing complete');
       setCalendarData(newCalendarData);
       
     } catch (error: any) {

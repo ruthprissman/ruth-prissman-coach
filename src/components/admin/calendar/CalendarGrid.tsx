@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -94,7 +93,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       return { 
         bg: 'bg-[#9b87f5]', 
         border: '#7E69AB', 
-        text: 'text-white',
+        text: 'text-white font-medium',
         colorClass: 'border-[#9b87f5]'
       };
     }
@@ -103,7 +102,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       return { 
         bg: 'bg-[#5C4C8D]', 
         border: '#5C4C8D', 
-        text: 'text-[#CFB53B]',
+        text: 'text-[#CFB53B] font-medium',
         colorClass: 'border-[#5C4C8D]'
       };
     }
@@ -257,7 +256,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         }}
       >
         {slot.isFirstHour && slot.notes && (
-          <div className={`p-1 text-xs ${slot.isPatientMeeting || slot.isMeeting ? 'text-[#CFB53B]' : (slot.fromFutureSession && !slot.inGoogleCalendar ? 'text-white' : 'text-gray-700')}`}>
+          <div className={`p-1 text-xs ${text}`}>
             {slot.notes}
           </div>
         )}
@@ -277,9 +276,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
 
     const showNotInGoogleIcon = slot.fromFutureSession && !slot.inGoogleCalendar;
+    const { text } = getStatusStyle(slot);
 
     return (
-      <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${slot.isPatientMeeting || slot.isMeeting ? 'text-[#CFB53B]' : slot.fromFutureSession && !slot.inGoogleCalendar ? 'text-white' : 'text-gray-700'}`}>
+      <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${text}`}>
         {slot.isFirstHour && (
           <>
             <div className="text-xs font-semibold w-full truncate flex items-center gap-1">
@@ -381,7 +381,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const { bg, border, text, colorClass } = getStatusStyle(slot);
 
                   const borderStyle = isConnectedToPrevHour 
-                    ? { borderTop: `1px solid ${border}` }
+                    ? {} // No top border for connected events
                     : {};
                   
                   const isCurrent = isCurrentTimeSlot(day.date, hour);
