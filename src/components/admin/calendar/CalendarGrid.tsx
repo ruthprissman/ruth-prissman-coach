@@ -85,64 +85,57 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       if (inGoogleCalendar) {
         return { 
           bg: 'bg-[#D3E4FD]', 
+          border: 'border-[#D3E4FD]', 
           text: 'text-gray-700',
-          colorClass: ''
+          colorClass: 'border-[#D3E4FD]'
         };
       }
       
       return { 
         bg: 'bg-[#9b87f5]', 
+        border: 'border-[#7E69AB]', 
         text: 'text-white font-medium',
-        colorClass: ''
+        colorClass: 'border-[#9b87f5]'
       };
     }
     
     if (isPatientMeeting || (isMeeting && status === 'booked')) {
       return { 
         bg: 'bg-[#5C4C8D]', 
+        border: 'border-[#5C4C8D]', 
         text: 'text-[#CFB53B] font-medium',
-        colorClass: ''
+        colorClass: 'border-[#5C4C8D]'
       };
     }
 
     if (fromGoogle) {
       return { 
         bg: 'bg-[#D3E4FD]', 
+        border: 'border-[#D3E4FD]', 
         text: 'text-gray-700',
-        colorClass: ''
+        colorClass: 'border-[#D3E4FD]'
       };
     }
     
     switch (status) {
       case 'available':
-        return { bg: 'bg-purple-100', text: 'text-purple-800', colorClass: '' };
+        return { bg: 'bg-purple-100', border: 'border-purple-100', text: 'text-purple-800', colorClass: 'border-purple-100' };
       case 'booked':
-        return { bg: 'bg-[#5C4C8D]', text: 'text-[#CFB53B]', colorClass: '' };
+        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]', colorClass: 'border-[#5C4C8D]' };
       case 'completed':
-        return { bg: 'bg-gray-200', text: 'text-gray-800', colorClass: '' };
+        return { bg: 'bg-gray-200', border: 'border-gray-200', text: 'text-gray-800', colorClass: 'border-gray-200' };
       case 'canceled':
-        return { bg: 'bg-red-100', text: 'text-red-800', colorClass: '' };
+        return { bg: 'bg-red-100', border: 'border-red-100', text: 'text-red-800', colorClass: 'border-red-100' };
       case 'private':
-        return { bg: 'bg-amber-100', text: 'text-amber-800', colorClass: '' };
+        return { bg: 'bg-amber-100', border: 'border-amber-100', text: 'text-amber-800', colorClass: 'border-amber-100' };
       default:
-        return { bg: 'bg-gray-50', text: 'text-gray-800', colorClass: '' };
+        return { bg: 'bg-gray-50', border: 'border-gray-50', text: 'text-gray-800', colorClass: 'border-gray-50' };
     }
   };
 
   const handleContextMenu = (e: React.MouseEvent, date: string, hour: string, status: any, fromFutureSession?: boolean, futureSession?: any) => {
-    console.log('Context menu event triggered:', {
-      type: e.type,
-      button: e.button,
-      clientX: e.clientX,
-      clientY: e.clientY,
-      date,
-      hour,
-      status
-    });
-
     e.preventDefault();
-    e.stopPropagation();
-    
+    console.log("Context menu triggered:", { date, hour, status, fromFutureSession, futureSession });
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
@@ -153,6 +146,20 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       fromFutureSession,
       futureSession
     });
+    
+    // Add debugging for right-click event
+    console.log("Right-click event:", {
+      clientX: e.clientX,
+      clientY: e.clientY, 
+      buttons: e.buttons,
+      button: e.button,
+      type: e.type,
+      defaultPrevented: e.defaultPrevented,
+      cancelable: e.cancelable
+    });
+    
+    // Force prevent default to ensure context menu appears
+    e.stopPropagation();
   };
 
   const handleSelectOption = (status: 'available' | 'private' | 'unspecified') => {
@@ -251,7 +258,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const endPercent = slot.isLastHour && slot.endMinute ? (slot.endMinute / 60) * 100 : 100;
     const heightPercent = endPercent - startPercent;
     
-    const { bg, text } = getStatusStyle(slot);
+    const { bg, border, text } = getStatusStyle(slot);
     
     return (
       <div 
@@ -277,6 +284,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
     if (slot.isPartialHour) {
       return renderPartialHourEvent(slot);
+    }
+
+    if (!slot.isFirstHour && slot.hoursSpan && slot.hoursSpan > 1) {
+      return <div className="w-full h-full bg-inherit" />;
     }
 
     const showNotInGoogleIcon = slot.fromFutureSession && !slot.inGoogleCalendar;
@@ -366,10 +377,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               })}
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="relative">
             {hours.map((hour, hourIndex) => (
               <TableRow key={hour} className="border-b border-gray-200">
-                <TableCell className="font-medium bg-purple-50 text-purple-800">
+                <TableCell className="font-medium bg-purple-50 text-purple-800 border-l border-gray-200">
                   {hour}
                 </TableCell>
                 {days.map((day, index) => {
@@ -382,82 +393,91 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const prevHourSlot = prevHour ? dayMap?.get(prevHour) : undefined;
                   const isConnectedToPrevHour = isSameEvent(slot, prevHourSlot);
                   
-                  const { bg, text } = getStatusStyle(slot);
-                  const isMultiHourEvent = slot.hoursSpan && slot.hoursSpan > 1;
-                  
-                  const cellClasses = `
-                    ${slot.isPartialHour ? 'bg-transparent' : bg} 
-                    ${text} 
-                    transition-colors 
-                    cursor-pointer 
-                    hover:opacity-80 
-                    relative 
-                    min-h-[60px]
-                    ${isConnectedToPrevHour ? 'border-t-0' : ''}
-                  `.trim();
+                  const { bg, border, text, colorClass } = getStatusStyle(slot);
 
+                  // Fix for dividing lines - completely remove borders for multi-hour events
+                  const borderStyle: React.CSSProperties = {
+                    borderTop: isConnectedToPrevHour ? 'none' : undefined
+                  };
+                  
+                  const isCurrent = isCurrentTimeSlot(day.date, hour);
+
+                  // Test cell for debugging
+                  const testCellId = `cell-${day.date}-${hour}`;
+                  
+                  // Contents of the cell to be rendered
                   const cellContent = (
-                    <div className={`w-full h-full relative ${isMultiHourEvent ? 'overflow-visible' : ''}`}>
+                    <TableCell 
+                      id={testCellId}
+                      className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] border-l border-gray-200`}
+                      style={borderStyle}
+                      onContextMenu={(e) => {
+                        console.log(`Context menu fired on ${testCellId}`);
+                        handleContextMenu(e, day.date, hour, slot.status, slot.fromFutureSession, slot.futureSession);
+                      }}
+                    >
+                      {isCurrent && (
+                        <div className="absolute top-0 right-0 p-1">
+                          <Clock className="h-4 w-4 text-[#1EAEDB]" />
+                        </div>
+                      )}
+                      
+                      {/* Fix for event content rendering */}
                       {slot.isPartialHour ? (
                         renderPartialHourEvent(slot)
                       ) : slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked') ? (
                         renderEventContent(slot)
                       ) : (
-                        <div className="flex items-center justify-center h-full">
-                          {slot.status === 'available' && <Check className="h-4 w-4 text-purple-600" />}
-                          {slot.status === 'booked' && <Calendar className="h-4 w-4 text-[#CFB53B]" />}
-                          {slot.status === 'completed' && <Calendar className="h-4 w-4 text-gray-600" />}
-                          {slot.status === 'canceled' && <Calendar className="h-4 w-4 text-red-600" />}
-                          {slot.status === 'private' && <Lock className="h-4 w-4 text-amber-600" />}
-                        </div>
+                        <>
+                          {slot.status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
+                          {slot.status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />}
+                          {slot.status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
+                          {slot.status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
+                          {slot.status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
+                        </>
                       )}
-                    </div>
+                    </TableCell>
                   );
-
+                  
+                  // Debug the right-click menu functionality
+                  console.log(`Rendering cell ${day.date}-${hour} with status ${slot.status}`);
+                  
                   return (
                     <ContextMenu key={`${day.date}-${hour}`}>
-                      <ContextMenuTrigger
-                        onContextMenu={(e) => {
-                          console.log('ContextMenuTrigger onContextMenu fired');
-                          handleContextMenu(e, day.date, hour, slot.status, slot.fromFutureSession, slot.futureSession);
-                        }}
-                        className="w-full h-full"
-                      >
-                        <TableCell className={cellClasses}>
-                          {(slot.description || slot.fromGoogle || slot.fromFutureSession) ? (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                {cellContent}
-                              </TooltipTrigger>
-                              <TooltipContent 
-                                side="bottom"
-                                className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded z-50"
-                              >
-                                <div>
-                                  <p className="font-bold">{slot.notes}</p>
-                                  {slot.description && <p>{slot.description}</p>}
-                                  {slot.exactStartTime && (
-                                    <p className="mt-1">{slot.exactStartTime}-{slot.exactEndTime}</p>
-                                  )}
-                                  {slot.isPartialHour && (
-                                    <p className="text-xs opacity-75">
-                                      {slot.isFirstHour ? `התחלה: דקה ${slot.startMinute}` : ''}
-                                      {slot.isFirstHour && slot.isLastHour ? ' | ' : ''}
-                                      {slot.isLastHour ? `סיום: דקה ${slot.endMinute}` : ''}
-                                    </p>
-                                  )}
-                                  {slot.fromFutureSession && !slot.inGoogleCalendar && (
-                                    <p className="text-blue-300 mt-1">לא קיים ביומן Google (לחץ ימני להעתקה)</p>
-                                  )}
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            cellContent
-                          )}
-                        </TableCell>
+                      <ContextMenuTrigger asChild>
+                        {(slot.description || slot.fromGoogle || slot.fromFutureSession) ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              {cellContent}
+                            </TooltipTrigger>
+                            <TooltipContent 
+                              side="bottom"
+                              className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded"
+                            >
+                              <div>
+                                <p className="font-bold">{slot.notes}</p>
+                                {slot.description && <p>{slot.description}</p>}
+                                {slot.exactStartTime && (
+                                  <p className="mt-1">{slot.exactStartTime}-{slot.exactEndTime}</p>
+                                )}
+                                {slot.isPartialHour && (
+                                  <p className="text-xs opacity-75">
+                                    {slot.isFirstHour ? `התחלה: דקה ${slot.startMinute}` : ''}
+                                    {slot.isFirstHour && slot.isLastHour ? ' | ' : ''}
+                                    {slot.isLastHour ? `סיום: דקה ${slot.endMinute}` : ''}
+                                  </p>
+                                )}
+                                {slot.fromFutureSession && !slot.inGoogleCalendar && (
+                                  <p className="text-blue-300 mt-1">לא קיים ביומן Google (לחץ ימני להעתקה)</p>
+                                )}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          cellContent
+                        )}
                       </ContextMenuTrigger>
-                      <ContextMenuContent className="min-w-[160px] z-[100]">
+                      <ContextMenuContent className="min-w-[160px] z-50">
                         {slot.fromFutureSession && !slot.inGoogleCalendar ? (
                           <ContextMenuItem 
                             className="flex items-center gap-2 text-blue-600"
