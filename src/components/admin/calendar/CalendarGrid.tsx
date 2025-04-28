@@ -91,10 +91,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       }
       
       return { 
-        bg: 'bg-blue-100', 
-        border: 'rgb(219 234 254)', 
-        text: 'text-blue-800',
-        colorClass: 'border-blue-100'
+        bg: 'bg-[#9b87f5]', 
+        border: '#7E69AB', 
+        text: 'text-white',
+        colorClass: 'border-[#9b87f5]'
       };
     }
     
@@ -276,11 +276,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const showNotInGoogleIcon = slot.fromFutureSession && !slot.inGoogleCalendar;
 
     return (
-      <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${slot.isPatientMeeting || slot.isMeeting ? 'text-[#CFB53B]' : 'text-gray-700'}`}>
+      <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${slot.isPatientMeeting || slot.isMeeting ? 'text-[#CFB53B]' : slot.fromFutureSession && !slot.inGoogleCalendar ? 'text-white' : 'text-gray-700'}`}>
         {slot.isFirstHour && (
           <>
             <div className="text-xs font-semibold w-full truncate flex items-center gap-1">
-              {showNotInGoogleIcon && <Info className="h-3 w-3 text-blue-500" />}
+              {showNotInGoogleIcon && <Info className="h-3 w-3 text-white" />}
               {slot.notes}
             </div>
             {slot.description && (

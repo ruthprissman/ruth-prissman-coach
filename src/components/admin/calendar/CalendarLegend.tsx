@@ -23,9 +23,9 @@ const CalendarLegend: React.FC = () => {
       </div>
       
       <div className="flex items-center gap-1">
-        <div className="w-4 h-4 bg-blue-100 rounded"></div>
+        <div className="w-4 h-4 bg-[#9b87f5] rounded"></div>
         <span>פגישה לא ביומן גוגל</span>
-        <Info className="h-3 w-3 text-blue-500 mr-1" />
+        <Info className="h-3 w-3 text-white mr-1" />
       </div>
       
       <div className="flex items-center gap-1">

@@ -255,9 +255,11 @@ export function useCalendarData(
           if (session.status === 'Completed') status = 'completed';
           if (session.status === 'Cancelled') status = 'canceled';
           
-          // Set patient name without times
+          // Updated: Always prefix with "פגישה עם" if not already there
           const patientName = session.patients?.name || 'לקוח/ה';
-          const noteText = `${session.title || 'פגישה'}: ${patientName}`;
+          const noteText = session.title ? 
+            (session.title.startsWith('פגישה עם') ? session.title : `פגישה עם ${patientName}`) : 
+            `פגישה עם ${patientName}`;
           
           dayMap.set(sessionTime, {
             ...dayMap.get(sessionTime)!,
@@ -282,55 +284,6 @@ export function useCalendarData(
     });
     
     return calendarData;
-  };
-
-  const fetchAvailabilityData = async () => {
-    try {
-      setIsLoading(true);
-      
-      const supabase = await supabaseClient();
-      
-      const today = startOfDay(new Date());
-      const thirtyDaysLater = addDays(today, 30);
-      
-      const { data: availableSlots, error: availableSlotsError } = await supabase
-        .from('calendar_slots')
-        .select('*')
-        .gte('date', format(today, 'yyyy-MM-dd'))
-        .lte('date', format(thirtyDaysLater, 'yyyy-MM-dd'));
-      
-      if (availableSlotsError) throw new Error(availableSlotsError.message);
-      
-      const { data: bookedSlots, error: bookedSlotsError } = await supabase
-        .from('future_sessions')
-        .select('*, patients(name)')
-        .gte('session_date', format(today, 'yyyy-MM-dd'))
-        .lte('session_date', format(thirtyDaysLater, 'yyyy-MM-dd'));
-      
-      if (bookedSlotsError) throw new Error(bookedSlotsError.message);
-
-      if (isGoogleAuthenticated && googleEvents.length > 0) {
-        console.log('Processing calendar data with Google events:', googleEvents);
-        const newData = processCalendarDataWithGoogleEvents(availableSlots || [], bookedSlots || [], googleEvents);
-        setCalendarData(newData);
-      } else {
-        console.log('Using regular calendar data processing (no Google events)');
-        const newCalendarData = processCalendarData(availableSlots || [], bookedSlots || []);
-        setCalendarData(newCalendarData);
-      }
-      
-    } catch (error: any) {
-      console.error('Error fetching calendar data:', error);
-      toast({
-        title: 'שגיאה בטעינת נתוני יומן',
-        description: error.message,
-        variant: 'destructive',
-      });
-      
-      initializeEmptyCalendarData();
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const processCalendarData = (availableSlots: any[], bookedSlots: any[]) => {
@@ -410,8 +363,11 @@ export function useCalendarData(
           if (session.status === 'Completed') status = 'completed';
           if (session.status === 'Cancelled') status = 'canceled';
           
-          const patientName = session.patients?.name || 'IClient/ה';
-          const noteText = `${session.title || 'פגישה'}: ${patientName}`;
+          // Updated: Always prefix with "פגישה עם" if not already there
+          const patientName = session.patients?.name || 'לקוח/ה';
+          const noteText = session.title ? 
+            (session.title.startsWith('פגישה עם') ? session.title : `פגישה עם ${patientName}`) : 
+            `פגישה עם ${patientName}`;
           
           dayMap.set(sessionTime, {
             ...dayMap.get(sessionTime)!,
@@ -435,6 +391,55 @@ export function useCalendarData(
     });
     
     return calendarData;
+  };
+
+  const fetchAvailabilityData = async () => {
+    try {
+      setIsLoading(true);
+      
+      const supabase = await supabaseClient();
+      
+      const today = startOfDay(new Date());
+      const thirtyDaysLater = addDays(today, 30);
+      
+      const { data: availableSlots, error: availableSlotsError } = await supabase
+        .from('calendar_slots')
+        .select('*')
+        .gte('date', format(today, 'yyyy-MM-dd'))
+        .lte('date', format(thirtyDaysLater, 'yyyy-MM-dd'));
+      
+      if (availableSlotsError) throw new Error(availableSlotsError.message);
+      
+      const { data: bookedSlots, error: bookedSlotsError } = await supabase
+        .from('future_sessions')
+        .select('*, patients(name)')
+        .gte('session_date', format(today, 'yyyy-MM-dd'))
+        .lte('session_date', format(thirtyDaysLater, 'yyyy-MM-dd'));
+      
+      if (bookedSlotsError) throw new Error(bookedSlotsError.message);
+
+      if (isGoogleAuthenticated && googleEvents.length > 0) {
+        console.log('Processing calendar data with Google events:', googleEvents);
+        const newData = processCalendarDataWithGoogleEvents(availableSlots || [], bookedSlots || [], googleEvents);
+        setCalendarData(newData);
+      } else {
+        console.log('Using regular calendar data processing (no Google events)');
+        const newCalendarData = processCalendarData(availableSlots || [], bookedSlots || []);
+        setCalendarData(newCalendarData);
+      }
+      
+    } catch (error: any) {
+      console.error('Error fetching calendar data:', error);
+      toast({
+        title: 'שגיאה בטעינת נתוני יומן',
+        description: error.message,
+        variant: 'destructive',
+      });
+      
+      initializeEmptyCalendarData();
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const initializeEmptyCalendarData = () => {
