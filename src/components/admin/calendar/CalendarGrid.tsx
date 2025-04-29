@@ -169,7 +169,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     return !!slot.notes && 
            typeof slot.notes === 'string' && 
            slot.notes.startsWith('פגישה עם') && 
-           (slot.status === 'booked' || slot.isPatientMeeting || (slot.isMeeting && slot.status === 'booked'));
+           ((slot.status === 'booked') || slot.isPatientMeeting || (slot.isMeeting && slot.status === 'booked'));
   };
 
   // Extract client name from meeting notes
