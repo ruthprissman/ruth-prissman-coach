@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -7,15 +8,8 @@ import {
   TableBody, 
   TableCell 
 } from '@/components/ui/table';
-import { CalendarSlot, ContextMenuOptions } from '@/types/calendar';
-import { 
-  ContextMenu,
-  ContextMenuTrigger,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-} from '@/components/ui/context-menu';
-import { Check, Calendar, X, Lock, Clock, CalendarPlus, Info, Trash2, Edit } from 'lucide-react';
+import { CalendarSlot } from '@/types/calendar';
+import { Check, Calendar, Lock, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -24,8 +18,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { format, isToday } from 'date-fns';
-import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
-import { toast } from '@/components/ui/use-toast';
 
 interface CalendarGridProps {
   days: { date: string; label: string; dayNumber: number }[];
@@ -48,7 +40,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     hour: string;
     minute: number;
   } | null>(null);
-  const { createEvent } = useGoogleOAuth();
 
   useEffect(() => {
     const updateCurrentTime = () => {
@@ -131,90 +122,30 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   };
 
-  const handleSelectOption = (date: string, hour: string, status: 'available' | 'private' | 'unspecified') => {
-    console.log("Selected option:", status, "for date:", date, "hour:", hour);
-    onUpdateSlot(date, hour, status);
-  };
-
-  const handleCopyToGoogleCalendar = async (futureSession: any) => {
-    try {
-      console.log("Copying to Google Calendar:", futureSession);
-      
-      const sessionDateTime = new Date(futureSession.session_date);
-      const summary = `פגישה עם ${futureSession.patients?.name || 'לקוח/ה'}`; 
-      
-      const startDateTime = sessionDateTime.toISOString();
-      
-      const endDateTime = new Date(sessionDateTime.getTime() + 90 * 60000).toISOString();
-      
-      const description = `סוג פגישה: ${futureSession.meeting_type}${futureSession.zoom_link ? `\nקישור לזום: ${futureSession.zoom_link}` : ''}`;
-      
-      const success = await createEvent(
-        summary,
-        startDateTime,
-        endDateTime,
-        description
-      );
-      
-      if (success) {
-        toast({
-          title: "הפגישה נוספה ליומן Google",
-          description: `הפגישה עם ${futureSession.patients?.name || 'לקוח/ה'} נוספה בהצלחה ליומן Google`,
-        });
-        console.log("Successfully added to Google Calendar");
-      }
-    } catch (error: any) {
-      console.error("Failed to add event to Google Calendar:", error);
-      toast({
-        title: "שגיאה בהוספת פגיש�� ליומן",
-        description: error.message || "לא הצלחנו להוסיף את הפגישה ליומן Google",
-        variant: "destructive"
+  const logSlotInfo = (date: string, hour: string, slot?: CalendarSlot) => {
+    if (debugMode) {
+      console.log(`CalendarGrid: Slot at ${date} ${hour}:`, {
+        slot,
+        status: slot?.status,
+        syncStatus: slot?.syncStatus,
+        fromGoogle: slot?.fromGoogle,
+        notes: slot?.notes,
+        description: slot?.description,
+        isGoogleEvent: slot?.syncStatus === 'google-only' || slot?.fromGoogle,
+        googleEvent: slot?.googleEvent,
+        startTime: slot?.startTime,
+        endTime: slot?.endTime,
+        exactStartTime: slot?.exactStartTime,
+        exactEndTime: slot?.exactEndTime,
+        startMinute: slot?.startMinute,
+        endMinute: slot?.endMinute,
+        isPartialHour: slot?.isPartialHour,
+        isPatientMeeting: slot?.isPatientMeeting,
+        fromFutureSession: slot?.fromFutureSession,
+        inGoogleCalendar: slot?.inGoogleCalendar,
+        futureSession: slot?.futureSession
       });
     }
-  };
-
-  const handleDeleteFutureSession = (futureSession: any) => {
-    console.log("Delete future session:", futureSession);
-    // Currently just logging, will be implemented in the future
-    
-    toast({
-      title: "פעולה בפיתוח",
-      description: "מחיקת פגישה עדיין לא מושלמת, תודה על הסבלנות",
-    });
-  };
-
-  const handleUpdateFutureSession = (futureSession: any) => {
-    console.log("Update future session:", futureSession);
-    // Currently just logging, will be implemented in the future
-    
-    toast({
-      title: "פעולה בפיתוח",
-      description: "עדכון פגישה עדיין לא מושלם, תודה על הסבלנות",
-    });
-  };
-
-  const logSlotInfo = (date: string, hour: string, slot?: CalendarSlot) => {
-    console.log(`CalendarGrid: Slot at ${date} ${hour}:`, {
-      slot,
-      status: slot?.status,
-      syncStatus: slot?.syncStatus,
-      fromGoogle: slot?.fromGoogle,
-      notes: slot?.notes,
-      description: slot?.description,
-      isGoogleEvent: slot?.syncStatus === 'google-only' || slot?.fromGoogle,
-      googleEvent: slot?.googleEvent,
-      startTime: slot?.startTime,
-      endTime: slot?.endTime,
-      exactStartTime: slot?.exactStartTime,
-      exactEndTime: slot?.exactEndTime,
-      startMinute: slot?.startMinute,
-      endMinute: slot?.endMinute,
-      isPartialHour: slot?.isPartialHour,
-      isPatientMeeting: slot?.isPatientMeeting,
-      fromFutureSession: slot?.fromFutureSession,
-      inGoogleCalendar: slot?.inGoogleCalendar,
-      futureSession: slot?.futureSession
-    });
     return true;
   };
 
@@ -232,6 +163,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   };
 
+  // Improved function to render multi-hour events
   const renderPartialHourEvent = (slot: CalendarSlot) => {
     if (!slot.isPartialHour) return null;
     
@@ -249,6 +181,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           height: `${heightPercent}%`,
         }}
       >
+        {/* Only show text in the first hour of a multi-hour event */}
         {slot.isFirstHour && slot.notes && (
           <div className={`p-1 text-xs ${text}`}>
             {slot.notes}
@@ -258,7 +191,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   };
 
+  // Simplified function to render event content only in the first hour
   const renderEventContent = (slot: CalendarSlot) => {
+    if (!slot.isFirstHour && (slot.fromGoogle || slot.fromFutureSession)) {
+      return null; // Don't show content in non-first hours of multi-hour events
+    }
+    
     return (
       <div className="p-1 text-xs overflow-hidden">
         {slot.notes && (
@@ -280,7 +218,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     return (
       <div 
         id={`cell-${day}-${hour}`}
-        className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] h-full w-full`}
+        className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} relative min-h-[60px] h-full w-full`}
       >
         {isCurrentCell && (
           <div className="absolute top-0 right-0 p-1">
@@ -305,6 +243,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   };
 
+  // Determines if two slots are part of the same event
   const isSameEvent = (currentSlot: CalendarSlot, prevSlot?: CalendarSlot): boolean => {
     if (!prevSlot) return false;
     
@@ -402,141 +341,37 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         </p>
                       )}
                       {slot.fromFutureSession && !slot.inGoogleCalendar && (
-                        <p className="text-blue-300 mt-1">לא קיים ביומן Google (לחץ ימני להעתקה)</p>
+                        <p className="text-blue-300 mt-1">לא קיים ביומן Google</p>
                       )}
                     </div>
                   );
 
-                  // Render different context menus based on whether it's a future session or regular slot
-                  if (slot.fromFutureSession) {
-                    return (
-                      <TableCell 
-                        key={`${day.date}-${hour}`}
-                        className="p-0 border-l border-gray-200"
-                        onContextMenu={(e) => {
-                          // CRITICAL: Prevent default browser context menu
-                          e.preventDefault();
-                          console.log("Context menu triggered for future session", day.date, hour);
-                        }}
-                      >
-                        <ContextMenu>
-                          <ContextMenuTrigger className="w-full h-full flex">
-                            {(slot.description || slot.fromGoogle || slot.fromFutureSession) ? (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="w-full h-full">
-                                    {renderCellContent(day.date, hour, slot)}
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent 
-                                  side="bottom"
-                                  className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded z-50"
-                                >
-                                  {tooltipContent}
-                                </TooltipContent>
-                              </Tooltip>
-                            ) : (
-                              <div className="w-full h-full">
-                                {renderCellContent(day.date, hour, slot)}
-                              </div>
-                            )}
-                          </ContextMenuTrigger>
-                          <ContextMenuContent 
-                            className="min-w-[160px] z-[9999] bg-white border-2 border-purple-400 shadow-xl"
+                  return (
+                    <TableCell 
+                      key={`${day.date}-${hour}`}
+                      className="p-0 border-l border-gray-200"
+                    >
+                      {(slot.description || slot.fromGoogle || slot.fromFutureSession) ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="w-full h-full">
+                              {renderCellContent(day.date, hour, slot)}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent 
+                            side="bottom"
+                            className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded z-50"
                           >
-                            <ContextMenuItem 
-                              className="flex items-center gap-2 text-blue-600 hover:bg-blue-50"
-                              onClick={() => handleCopyToGoogleCalendar(slot.futureSession)}
-                            >
-                              <CalendarPlus className="h-4 w-4" />
-                              <span>העתק ליומן Google</span>
-                            </ContextMenuItem>
-                            <ContextMenuSeparator />
-                            <ContextMenuItem 
-                              className="flex items-center gap-2 text-red-600 hover:bg-red-50"
-                              onClick={() => handleDeleteFutureSession(slot.futureSession)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span>מחיקה</span>
-                            </ContextMenuItem>
-                            <ContextMenuItem 
-                              className="flex items-center gap-2 bg-green-50 text-green-700 hover:bg-green-100"
-                              onClick={() => handleUpdateFutureSession(slot.futureSession)}
-                            >
-                              <Edit className="h-4 w-4" />
-                              <span>עדכון</span>
-                            </ContextMenuItem>
-                          </ContextMenuContent>
-                        </ContextMenu>
-                      </TableCell>
-                    );
-                  } else {
-                    // Regular slot context menu
-                    return (
-                      <TableCell 
-                        key={`${day.date}-${hour}`}
-                        className="p-0 border-l border-gray-200"
-                        onContextMenu={(e) => {
-                          // CRITICAL: Prevent default browser context menu
-                          e.preventDefault();
-                          console.log("Context menu triggered for regular slot", day.date, hour);
-                        }}
-                      >
-                        <ContextMenu>
-                          <ContextMenuTrigger className="w-full h-full flex">
-                            {(slot.description || slot.fromGoogle) ? (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="w-full h-full">
-                                    {renderCellContent(day.date, hour, slot)}
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent 
-                                  side="bottom"
-                                  className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded z-50"
-                                >
-                                  {tooltipContent}
-                                </TooltipContent>
-                              </Tooltip>
-                            ) : (
-                              <div className="w-full h-full">
-                                {renderCellContent(day.date, hour, slot)}
-                              </div>
-                            )}
-                          </ContextMenuTrigger>
-                          <ContextMenuContent 
-                            className="min-w-[160px] z-[9999] bg-white border-2 border-purple-400 shadow-xl"
-                          >
-                            <ContextMenuItem 
-                              className="flex items-center gap-2 text-purple-600 hover:bg-purple-50"
-                              onClick={() => handleSelectOption(day.date, hour, 'available')}
-                              disabled={slot.status === 'booked'}
-                            >
-                              <Check className="h-4 w-4" />
-                              <span>הגדר כזמין</span>
-                            </ContextMenuItem>
-                            <ContextMenuItem 
-                              className="flex items-center gap-2 text-amber-600 hover:bg-amber-50"
-                              onClick={() => handleSelectOption(day.date, hour, 'private')}
-                              disabled={slot.status === 'booked'}
-                            >
-                              <Lock className="h-4 w-4" />
-                              <span>הגדר כזמן פרטי</span>
-                            </ContextMenuItem>
-                            <ContextMenuSeparator />
-                            <ContextMenuItem 
-                              className="flex items-center gap-2 text-gray-600 hover:bg-gray-50"
-                              onClick={() => handleSelectOption(day.date, hour, 'unspecified')}
-                              disabled={slot.status === 'booked'}
-                            >
-                              <X className="h-4 w-4" />
-                              <span>נקה סטטוס</span>
-                            </ContextMenuItem>
-                          </ContextMenuContent>
-                        </ContextMenu>
-                      </TableCell>
-                    );
-                  }
+                            {tooltipContent}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <div className="w-full h-full">
+                          {renderCellContent(day.date, hour, slot)}
+                        </div>
+                      )}
+                    </TableCell>
+                  );
                 })}
               </TableRow>
             ))}

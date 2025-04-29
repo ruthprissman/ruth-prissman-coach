@@ -1,4 +1,3 @@
-
 import { format, startOfDay, addDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
@@ -69,10 +68,10 @@ export const processGoogleEvents = (
         const isMeeting = event.summary?.toLowerCase().includes('פגישה עם') || 
                        event.summary?.toLowerCase().includes('שיחה עם');
         
-        let adjustedEndDate = endDate;
-        if (isMeeting) {
-          adjustedEndDate = new Date(startDate.getTime() + 90 * 60000);
-        }
+        // Always use 90 minutes for patient meetings
+        let adjustedEndDate = isMeeting 
+          ? new Date(startDate.getTime() + 90 * 60000) 
+          : endDate;
         
         const adjustedEndHour = format(adjustedEndDate, 'HH');
         const adjustedEndMinute = parseInt(format(adjustedEndDate, 'mm'));
@@ -91,49 +90,52 @@ export const processGoogleEvents = (
         const dayMap = calendarData.get(googleDate);
         if (!dayMap) return;
 
+        // Process each hour of the event
         for (let h = Number(startHour); h <= Number(adjustedEndHour); h++) {
           const hourString = h.toString().padStart(2, '0') + ':00';
-          if (dayMap.has(hourString)) {
-            let isPartialStart = false;
-            let isPartialEnd = false;
-            let currentStartMinute = 0;
-            let currentEndMinute = 59;
-            
-            if (h === Number(startHour) && startMinute > 0) {
-              isPartialStart = true;
-              currentStartMinute = startMinute;
-            }
-            
-            if (h === Number(adjustedEndHour) && adjustedEndMinute > 0) {
-              isPartialEnd = true;
-              currentEndMinute = adjustedEndMinute;
-            } else if (h === Number(adjustedEndHour) && adjustedEndMinute === 0) {
-              continue;
-            }
-            
-            dayMap.set(hourString, {
-              ...dayMap.get(hourString)!,
-              status: 'booked',
-              notes: event.summary || 'אירוע Google',
-              description: event.description,
-              fromGoogle: true,
-              isMeeting,
-              isPatientMeeting: isMeeting,
-              syncStatus: 'synced',
-              googleEvent: event,
-              startTime: startHour + ':00',
-              endTime: adjustedEndHour + ':00',
-              exactStartTime,
-              exactEndTime: adjustedExactEndTime,
-              hoursSpan,
-              isFirstHour: h === Number(startHour),
-              isLastHour: h === Number(adjustedEndHour),
-              startMinute: currentStartMinute,
-              endMinute: currentEndMinute,
-              isPartialHour: isPartialStart || isPartialEnd,
-              showBorder: false // Ensure no borders for multi-hour events
-            });
+          if (!dayMap.has(hourString)) continue;
+          
+          // Skip the last hour if the event ends exactly at :00
+          if (h === Number(adjustedEndHour) && adjustedEndMinute === 0) {
+            continue;
           }
+          
+          // Calculate if this hour is partial (for proper rendering)
+          const isFirstHour = h === Number(startHour);
+          const isLastHour = h === Number(adjustedEndHour);
+          let currentStartMinute = 0;
+          let currentEndMinute = 59;
+          
+          if (isFirstHour && startMinute > 0) {
+            currentStartMinute = startMinute;
+          }
+          
+          if (isLastHour && adjustedEndMinute > 0) {
+            currentEndMinute = adjustedEndMinute;
+          }
+          
+          dayMap.set(hourString, {
+            ...dayMap.get(hourString)!,
+            status: 'booked',
+            notes: event.summary || 'אירוע Google',
+            description: event.description,
+            fromGoogle: true,
+            isMeeting,
+            isPatientMeeting: isMeeting,
+            syncStatus: 'synced',
+            googleEvent: event,
+            startTime: startHour + ':00',
+            endTime: adjustedEndHour + ':00',
+            exactStartTime,
+            exactEndTime: adjustedExactEndTime,
+            hoursSpan,
+            isFirstHour,
+            isLastHour,
+            startMinute: currentStartMinute,
+            endMinute: currentEndMinute,
+            isPartialHour: isPartialHour && (isFirstHour || isLastHour),
+            showBorder: false
+          });
         }
       } catch (error) {
         console.error(`Error processing Google event ${index}:`, error);
@@ -179,19 +181,19 @@ export const processFutureSessions = (
         return;
       }
       
+      // Always use 90 minutes (1.5 hours) for patient meetings
       const endTime = new Date(sessionDateTime.getTime() + 90 * 60000);
       const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
       const endHour = parseInt(formattedEndTime.split(':')[0]);
       const endMinute = parseInt(formattedEndTime.split(':')[1]);
-      const isPartialHour = startMinute > 0 || endMinute > 0;
-      const hoursSpan = Math.ceil(90 / 60);
+      const hoursSpan = Math.ceil(90 / 60); // 1.5 hours
       
       const eventDateHourKey = `${sessionDate}-${sessionTime}`;
       const inGoogleCalendar = googleEventsMap.has(eventDateHourKey);
       
       if (inGoogleCalendar) {
         console.log(`Session ${index} already in Google Calendar`);
-        return;
+        return; // Skip if already in Google Calendar
       }
       
       let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
@@ -201,12 +203,14 @@ export const processFutureSessions = (
       const patientName = session.patients?.name || 'לקוח/ה';
       const noteText = `פגישה עם ${patientName}`;
       
-      // Track what hours we're modifying for this session
-      console.log(`Adding future session: Start hour ${parseInt(sessionTime.split(':')[0])}, End hour ${endHour}, Duration: 90 minutes`);
-      
+      // Process each hour of the event
       for (let h = parseInt(sessionTime.split(':')[0]); h <= endHour; h++) {
         const hourString = h.toString().padStart(2, '0') + ':00';
-        console.log(`Processing hour ${hourString} for session with ${patientName}`);
+        
+        // Skip the last hour if the event ends exactly at :00
+        if (h === endHour && endMinute === 0) {
+          continue;
+        }
         
         if (dayMap.has(hourString)) {
           const isFirstHour = h === parseInt(sessionTime.split(':')[0]);
@@ -223,9 +227,7 @@ export const processFutureSessions = (
             currentEndMinute = endMinute;
           }
           
-          // Log the hour we're currently processing
-          console.log(`Setting slot for ${hourString} - isFirst: ${isFirstHour}, isLast: ${isLastHour}`);
-          
+          // Create or update the slot
           dayMap.set(hourString, {
             ...dayMap.get(hourString)!,
             status,
@@ -235,21 +237,17 @@ export const processFutureSessions = (
             exactEndTime: formattedEndTime,
             startMinute: currentStartMinute,
             endMinute: currentEndMinute,
-            isPartialHour,
+            isPartialHour: (isFirstHour && startMinute > 0) || (isLastHour && endMinute > 0),
             isPatientMeeting: true,
             hoursSpan,
             isFirstHour,
             isLastHour,
             syncStatus: 'synced',
-            showBorder: false, // Critical: Make sure this is false to prevent dividing lines
+            showBorder: false,
             fromFutureSession: true,
             futureSession: session,
             inGoogleCalendar: false
           });
-          
-          if (isFirstHour) {
-            console.log(`Added future session at ${sessionDate} ${hourString} for ${patientName}`);
-          }
         }
       }
     } catch (error) {
