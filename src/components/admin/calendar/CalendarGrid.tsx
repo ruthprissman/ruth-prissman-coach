@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -169,7 +170,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     return !!slot.notes && 
            typeof slot.notes === 'string' && 
            slot.notes.startsWith('פגישה עם') && 
-           ((slot.status === 'booked') || slot.isPatientMeeting || (slot.isMeeting && slot.status === 'booked'));
+           ((slot.status as string) === 'booked' || slot.isPatientMeeting || (slot.isMeeting && (slot.status as string) === 'booked'));
   };
 
   // Extract client name from meeting notes
