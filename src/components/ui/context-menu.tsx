@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
@@ -7,7 +6,23 @@ import { cn } from "@/lib/utils"
 
 const ContextMenu = ContextMenuPrimitive.Root
 
-const ContextMenuTrigger = ContextMenuPrimitive.Trigger
+// Ensure the trigger captures all events properly
+const ContextMenuTrigger = React.forwardRef<
+  React.ElementRef<typeof ContextMenuPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <ContextMenuPrimitive.Trigger
+    ref={ref}
+    className={cn("inline-flex w-full h-full", className)}
+    onContextMenu={(e) => {
+      // Critical: Prevent default browser context menu
+      e.preventDefault();
+      console.log("ContextMenuTrigger: preventing default context menu");
+    }}
+    {...props}
+  />
+))
+ContextMenuTrigger.displayName = ContextMenuPrimitive.Trigger.displayName
 
 const ContextMenuGroup = ContextMenuPrimitive.Group
 
@@ -53,6 +68,7 @@ const ContextMenuSubContent = React.forwardRef<
 ))
 ContextMenuSubContent.displayName = ContextMenuPrimitive.SubContent.displayName
 
+// Increase z-index and make the menu more visible
 const ContextMenuContent = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Content>
@@ -61,12 +77,14 @@ const ContextMenuContent = React.forwardRef<
     <ContextMenuPrimitive.Content
       ref={ref}
       className={cn(
-        "z-[9999] min-w-[8rem] overflow-hidden rounded-md border-2 border-gray-300 bg-white p-1 text-popover-foreground shadow-xl animate-in fade-in-80",
+        "z-[9999] min-w-[8rem] overflow-hidden rounded-md border-2 border-purple-400 bg-white p-1 text-popover-foreground shadow-2xl animate-in fade-in-80",
         className
       )}
       onContextMenu={(e) => {
-        // Prevent browser's default context menu
+        // Always prevent browser's default context menu
         e.preventDefault();
+        e.stopPropagation();
+        console.log("ContextMenuContent preventing default context menu");
       }}
       {...props}
     />
@@ -74,6 +92,7 @@ const ContextMenuContent = React.forwardRef<
 ))
 ContextMenuContent.displayName = ContextMenuPrimitive.Content.displayName
 
+// Make menu items more visually distinct
 const ContextMenuItem = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Item> & {
@@ -83,7 +102,7 @@ const ContextMenuItem = React.forwardRef<
   <ContextMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-100",
       inset && "pl-8",
       className
     )}
@@ -162,7 +181,7 @@ const ContextMenuSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ContextMenuPrimitive.Separator
     ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-border", className)}
+    className={cn("-mx-1 my-1 h-px bg-gray-200", className)}
     {...props}
   />
 ))

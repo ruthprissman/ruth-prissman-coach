@@ -281,10 +281,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       <div 
         id={`cell-${day}-${hour}`}
         className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] h-full w-full`}
-        onContextMenu={(e) => {
-          // To help debug
-          console.log("Context menu triggered on cell", day, hour);
-        }}
       >
         {isCurrentCell && (
           <div className="absolute top-0 right-0 p-1">
@@ -418,16 +414,19 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         key={`${day.date}-${hour}`}
                         className="p-0 border-l border-gray-200"
                         onContextMenu={(e) => {
-                          // Debug info
+                          // CRITICAL: Prevent default browser context menu
+                          e.preventDefault();
                           console.log("Context menu triggered for future session", day.date, hour);
                         }}
                       >
                         <ContextMenu>
-                          <ContextMenuTrigger asChild>
+                          <ContextMenuTrigger className="w-full h-full flex">
                             {(slot.description || slot.fromGoogle || slot.fromFutureSession) ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  {renderCellContent(day.date, hour, slot)}
+                                  <div className="w-full h-full">
+                                    {renderCellContent(day.date, hour, slot)}
+                                  </div>
                                 </TooltipTrigger>
                                 <TooltipContent 
                                   side="bottom"
@@ -437,14 +436,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                                 </TooltipContent>
                               </Tooltip>
                             ) : (
-                              renderCellContent(day.date, hour, slot)
+                              <div className="w-full h-full">
+                                {renderCellContent(day.date, hour, slot)}
+                              </div>
                             )}
                           </ContextMenuTrigger>
-                          <ContextMenuContent className="min-w-[160px] z-[9999] bg-white border-2 border-gray-300 shadow-xl" onContextMenu={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log("Context menu content preventing default");
-                          }}>
+                          <ContextMenuContent 
+                            className="min-w-[160px] z-[9999] bg-white border-2 border-purple-400 shadow-xl"
+                          >
                             <ContextMenuItem 
                               className="flex items-center gap-2 text-blue-600 hover:bg-blue-50"
                               onClick={() => handleCopyToGoogleCalendar(slot.futureSession)}
@@ -478,16 +477,19 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         key={`${day.date}-${hour}`}
                         className="p-0 border-l border-gray-200"
                         onContextMenu={(e) => {
-                          // Debug info
+                          // CRITICAL: Prevent default browser context menu
+                          e.preventDefault();
                           console.log("Context menu triggered for regular slot", day.date, hour);
                         }}
                       >
                         <ContextMenu>
-                          <ContextMenuTrigger asChild>
+                          <ContextMenuTrigger className="w-full h-full flex">
                             {(slot.description || slot.fromGoogle) ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  {renderCellContent(day.date, hour, slot)}
+                                  <div className="w-full h-full">
+                                    {renderCellContent(day.date, hour, slot)}
+                                  </div>
                                 </TooltipTrigger>
                                 <TooltipContent 
                                   side="bottom"
@@ -497,14 +499,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                                 </TooltipContent>
                               </Tooltip>
                             ) : (
-                              renderCellContent(day.date, hour, slot)
+                              <div className="w-full h-full">
+                                {renderCellContent(day.date, hour, slot)}
+                              </div>
                             )}
                           </ContextMenuTrigger>
-                          <ContextMenuContent className="min-w-[160px] z-[9999] bg-white border-2 border-gray-300 shadow-xl" onContextMenu={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log("Context menu content preventing default");
-                          }}>
+                          <ContextMenuContent 
+                            className="min-w-[160px] z-[9999] bg-white border-2 border-purple-400 shadow-xl"
+                          >
                             <ContextMenuItem 
                               className="flex items-center gap-2 text-purple-600 hover:bg-purple-50"
                               onClick={() => handleSelectOption(day.date, hour, 'available')}
