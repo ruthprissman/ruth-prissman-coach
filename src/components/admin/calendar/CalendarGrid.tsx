@@ -258,6 +258,21 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   };
 
+  const renderEventContent = (slot: CalendarSlot) => {
+    return (
+      <div className="p-1 text-xs overflow-hidden">
+        {slot.notes && (
+          <div className="font-medium truncate">{slot.notes}</div>
+        )}
+        {slot.exactStartTime && (
+          <div className="text-xs opacity-75">
+            {slot.exactStartTime}-{slot.exactEndTime}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderCellContent = (day: string, hour: string, slot: CalendarSlot) => {
     const isCurrentCell = isCurrentTimeSlot(day, hour);
     const { bg, text, colorClass } = getStatusStyle(slot);
