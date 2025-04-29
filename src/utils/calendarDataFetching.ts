@@ -1,10 +1,12 @@
-
-import { format, startOfDay, addDays } from 'date-fns';
+import { format, startOfDay, addDays, startOfWeek } from 'date-fns';
 import { supabaseClient } from '@/lib/supabaseClient';
 
-export const fetchAvailabilitySlots = async () => {
+export const fetchAvailabilitySlots = async (currentDate?: Date) => {
   const supabase = await supabaseClient();
-  const today = startOfDay(new Date());
+  
+  // Start from the beginning of the current week if currentDate is provided
+  // otherwise use today
+  const today = currentDate ? startOfWeek(currentDate, { weekStartsOn: 0 }) : startOfDay(new Date());
   const thirtyDaysLater = addDays(today, 30);
   
   console.log('Fetching availability slots from', format(today, 'yyyy-MM-dd'), 'to', format(thirtyDaysLater, 'yyyy-MM-dd'));
@@ -24,9 +26,12 @@ export const fetchAvailabilitySlots = async () => {
   return availableSlots || [];
 };
 
-export const fetchBookedSessions = async () => {
+export const fetchBookedSessions = async (currentDate?: Date) => {
   const supabase = await supabaseClient();
-  const today = startOfDay(new Date());
+  
+  // Start from the beginning of the current week if currentDate is provided
+  // otherwise use today
+  const today = currentDate ? startOfWeek(currentDate, { weekStartsOn: 0 }) : startOfDay(new Date());
   const thirtyDaysLater = addDays(today, 30);
   
   console.log('Fetching booked sessions from', format(today, 'yyyy-MM-dd'), 'to', format(thirtyDaysLater, 'yyyy-MM-dd'));

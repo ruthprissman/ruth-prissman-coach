@@ -51,12 +51,12 @@ export function useGoogleOAuth() {
     initialize();
   }, []);
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (currentDisplayDate?: Date) => {
     try {
       setIsLoadingEvents(true);
-      console.log('Starting to fetch Google Calendar events');
+      console.log('Starting to fetch Google Calendar events', currentDisplayDate ? `for date: ${currentDisplayDate.toISOString()}` : '');
       
-      const calendarEvents = await fetchGoogleCalendarEvents();
+      const calendarEvents = await fetchGoogleCalendarEvents(currentDisplayDate);
       setEvents(calendarEvents);
       
       console.log(`Fetched ${calendarEvents.length} Google Calendar events`);

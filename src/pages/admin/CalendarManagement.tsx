@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -92,7 +93,8 @@ const CalendarManagement: React.FC = () => {
         setDebugLogs([]);
         setShowDebugLogs(true);
         
-        await fetchGoogleEvents();
+        // Pass the current date to fetch events from the beginning of the displayed week
+        await fetchGoogleEvents(currentDate);
         await fetchAvailabilityData();
         
       } catch (error: any) {
@@ -105,6 +107,14 @@ const CalendarManagement: React.FC = () => {
       }
     }
   };
+
+  // Update calendar data when current date changes
+  useEffect(() => {
+    if (isGoogleAuthenticated) {
+      // Fetch Google events from the beginning of the displayed week
+      fetchGoogleEvents(currentDate);
+    }
+  }, [currentDate, isGoogleAuthenticated]);
 
   const updateTimeSlot = async (date: string, hour: string, newStatus: 'available' | 'private' | 'unspecified') => {
     if (!tableExists) {
@@ -244,7 +254,12 @@ const CalendarManagement: React.FC = () => {
   };
 
   const handleSignInGoogle = async (): Promise<void> => {
-    await signInWithGoogle();
+    const success = await signInWithGoogle();
+    
+    // If sign-in was successful, fetch events starting from the current week
+    if (success) {
+      await fetchGoogleEvents(currentDate);
+    }
   };
 
   useEffect(() => {

@@ -2,6 +2,7 @@
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
+import { startOfWeek, format } from 'date-fns';
 
 // OAuth2 configuration
 const CLIENT_ID = '216734901779-csrnrl4nmkilae4blbolsip8mmibsk3t.apps.googleusercontent.com';
@@ -82,23 +83,24 @@ export async function signOutFromGoogle(): Promise<void> {
   }
 }
 
-export async function fetchGoogleCalendarEvents(): Promise<GoogleCalendarEvent[]> {
+export async function fetchGoogleCalendarEvents(currentDisplayDate?: Date): Promise<GoogleCalendarEvent[]> {
   try {
     const token = await getAccessToken();
     if (!token) {
       throw new Error('אין הרשאות גישה ליומן Google');
     }
     
-    // Updated to fetch 3 months of events instead of 7 days
-    const now = new Date();
+    // Start from the beginning of the current displayed week (Sunday) or today if no date is provided
+    const now = currentDisplayDate || new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 0 }); // Start week on Sunday
     const threeMonthsLater = new Date(now);
     threeMonthsLater.setMonth(now.getMonth() + 3);
     
-    const timeMin = encodeURIComponent(now.toISOString());
+    const timeMin = encodeURIComponent(weekStart.toISOString());
     const timeMax = encodeURIComponent(threeMonthsLater.toISOString());
     
     console.log('Fetching Google Calendar events from API, time range:', {
-      from: now.toISOString(),
+      from: weekStart.toISOString(),
       to: threeMonthsLater.toISOString()
     });
     

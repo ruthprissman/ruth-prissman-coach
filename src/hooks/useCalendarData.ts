@@ -28,8 +28,8 @@ export function useCalendarData(
       console.log('Fetching calendar data for', currentDate);
       
       const [availableSlots, bookedSlots] = await Promise.all([
-        fetchAvailabilitySlots(),
-        fetchBookedSessions()
+        fetchAvailabilitySlots(currentDate),
+        fetchBookedSessions(currentDate)
       ]);
 
       console.log('Generating calendar data');
