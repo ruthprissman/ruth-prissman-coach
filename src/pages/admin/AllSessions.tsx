@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
 import { Patient, Session } from '@/types/patient';
@@ -16,6 +15,7 @@ import SessionEditDialog from '@/components/admin/SessionEditDialog';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AllSessions: React.FC = () => {
+  const location = useLocation();
   const [sessions, setSessions] = useState<SessionWithPatient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filteredSessions, setFilteredSessions] = useState<SessionWithPatient[]>([]);
@@ -39,6 +39,15 @@ const AllSessions: React.FC = () => {
   const navigate = useNavigate();
   const { session: authSession } = useAuth();
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
+
+  // Extract search parameter from URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const searchParam = searchParams.get('search');
+    if (searchParam) {
+      setSearchTerm(searchParam);
+    }
+  }, [location.search]);
 
   const fetchSessions = useCallback(async () => {
     if (isLoading && hasAttemptedFetch) return;
@@ -233,7 +242,17 @@ const AllSessions: React.FC = () => {
         <div className="space-y-6">
           <SessionFilters
             searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
+            setSearchTerm={(value) => {
+              setSearchTerm(value);
+              // Update URL when search term changes
+              const params = new URLSearchParams(location.search);
+              if (value) {
+                params.set('search', value);
+              } else {
+                params.delete('search');
+              }
+              navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+            }}
             patientFilter={patientFilter}
             setPatientFilter={setPatientFilter}
             meetingTypeFilter={meetingTypeFilter}
@@ -241,7 +260,14 @@ const AllSessions: React.FC = () => {
             dateRangeFilter={dateRangeFilter}
             setDateRangeFilter={setDateRangeFilter}
             patients={patients}
-            resetFilters={resetFilters}
+            resetFilters={() => {
+              setSearchTerm('');
+              setPatientFilter('all');
+              setMeetingTypeFilter('all');
+              setDateRangeFilter({ from: undefined, to: undefined });
+              // Clear search param from URL
+              navigate(location.pathname, { replace: true });
+            }}
           />
           
           <SessionsList
@@ -249,6 +275,7 @@ const AllSessions: React.FC = () => {
             formatDate={formatDate}
             onEditSession={handleEditSession}
             onDeleteSession={handleDeleteSession}
+            searchTerm={searchTerm}
           />
           
           {editingSession && (

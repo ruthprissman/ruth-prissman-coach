@@ -11,6 +11,7 @@ interface SessionsListProps {
   formatDate: (dateString: string) => string;
   onEditSession: (session: Session) => void;
   onDeleteSession: (session: Session) => void;
+  searchTerm?: string;
 }
 
 const SessionsList: React.FC<SessionsListProps> = ({
@@ -18,6 +19,7 @@ const SessionsList: React.FC<SessionsListProps> = ({
   formatDate,
   onEditSession,
   onDeleteSession,
+  searchTerm = '',
 }) => {
   const getMeetingTypeIcon = (type: string) => {
     switch (type) {
@@ -32,14 +34,19 @@ const SessionsList: React.FC<SessionsListProps> = ({
     }
   };
 
-  // Debug logs to check the session dates
-  React.useEffect(() => {
-    if (sessions.length > 0) {
-      console.log('SessionsList received sessions:', sessions.length);
-      console.log('First session date (raw):', sessions[0].session_date);
-      console.log('First session formatted date:', formatDate(sessions[0].session_date));
-    }
-  }, [sessions, formatDate]);
+  // Function to highlight search term in text
+  const highlightText = (text: string, term: string) => {
+    if (!term.trim()) return text;
+    
+    const regex = new RegExp(`(${term.trim()})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, i) => 
+      regex.test(part) ? 
+        <span key={i} className="bg-yellow-200 text-black font-bold">{part}</span> : 
+        part
+    );
+  };
 
   return (
     <div className="bg-white shadow rounded-lg">
@@ -64,10 +71,7 @@ const SessionsList: React.FC<SessionsListProps> = ({
             </thead>
             <tbody className="divide-y divide-gray-200">
               {sessions.map((session) => {
-                // Log the session date before formatting to help debug
-                console.log(`Session ${session.id} original date:`, session.session_date);
                 const formattedDate = formatDate(session.session_date);
-                console.log(`Session ${session.id} formatted date:`, formattedDate);
                 
                 return (
                   <tr key={session.id} className="hover:bg-gray-50">
@@ -76,7 +80,9 @@ const SessionsList: React.FC<SessionsListProps> = ({
                         to={`/admin/patients/${session.patient_id}`}
                         className="text-primary hover:underline font-medium"
                       >
-                        {session.patients.name}
+                        {searchTerm ? 
+                          highlightText(session.patients.name, searchTerm) : 
+                          session.patients.name}
                       </Link>
                     </td>
                     <td className="py-4 px-6 whitespace-nowrap">
