@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -9,7 +8,7 @@ import {
   TableCell 
 } from '@/components/ui/table';
 import { CalendarSlot } from '@/types/calendar';
-import { Check, Calendar, Lock, Clock } from 'lucide-react';
+import { Check, Calendar, Lock, Clock, ArrowUp, Trash2, Database } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -17,7 +16,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { format, isToday } from 'date-fns';
+import { format, isToday, isPast } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface CalendarGridProps {
   days: { date: string; label: string; dayNumber: number }[];
@@ -40,6 +40,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     hour: string;
     minute: number;
   } | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const updateCurrentTime = () => {
@@ -163,6 +164,109 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
   };
 
+  // Function to check if a slot is a work meeting (starts with "פגישה עם")
+  const isWorkMeeting = (slot: CalendarSlot): boolean => {
+    return !!slot.notes && 
+           typeof slot.notes === 'string' && 
+           slot.notes.startsWith('פגישה עם') && 
+           (slot.status === 'booked' || slot.isPatientMeeting || (slot.isMeeting && slot.status === 'booked'));
+  };
+
+  // Extract client name from meeting notes
+  const extractClientName = (notes: string | undefined): string => {
+    if (!notes || !notes.startsWith('פגישה עם')) return '';
+    return notes.replace('פגישה עם', '').trim();
+  };
+
+  // Navigate to sessions with client name as search param
+  const navigateToSessions = (clientName: string) => {
+    navigate(`/admin/sessions?search=${encodeURIComponent(clientName)}`);
+  };
+
+  // Render action icons for work meetings
+  const renderActionIcons = (slot: CalendarSlot, date: string) => {
+    if (!isWorkMeeting(slot)) return null;
+
+    const meetingDate = new Date(date);
+    meetingDate.setHours(parseInt(slot.hour.split(':')[0]), 0, 0, 0);
+    const isPastMeeting = isPast(meetingDate);
+    const clientName = extractClientName(slot.notes);
+    
+    return (
+      <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {isPastMeeting ? (
+          // Past meetings - only show update button that navigates to sessions page
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateToSessions(clientName);
+                }}
+                className="bg-white p-1 rounded-full shadow hover:bg-purple-50"
+              >
+                <ArrowUp className="w-3.5 h-3.5 text-purple-800" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>עדכן פגישה</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          // Future meetings - show different buttons based on whether it exists in future_sessions
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigateToSessions(clientName);
+                  }}
+                  className="bg-white p-1 rounded-full shadow hover:bg-purple-50"
+                >
+                  <ArrowUp className="w-3.5 h-3.5 text-purple-800" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>עדכן פגישה</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white p-1 rounded-full shadow hover:bg-red-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>מחק פגישה</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            {!slot.fromFutureSession && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    onClick={(e) => e.stopPropagation()}
+                    className="bg-white p-1 rounded-full shadow hover:bg-blue-50"
+                  >
+                    <Database className="w-3.5 h-3.5 text-blue-600" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>הוסף לטבלת פגישות</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
   // Improved function to render multi-hour events
   const renderPartialHourEvent = (slot: CalendarSlot) => {
     if (!slot.isPartialHour) return null;
@@ -214,17 +318,20 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const renderCellContent = (day: string, hour: string, slot: CalendarSlot) => {
     const isCurrentCell = isCurrentTimeSlot(day, hour);
     const { bg, text, colorClass } = getStatusStyle(slot);
+    const isWorkMeetingSlot = isWorkMeeting(slot);
     
     return (
       <div 
         id={`cell-${day}-${hour}`}
-        className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} relative min-h-[60px] h-full w-full`}
+        className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} relative min-h-[60px] h-full w-full group`}
       >
         {isCurrentCell && (
           <div className="absolute top-0 right-0 p-1">
             <Clock className="h-4 w-4 text-[#1EAEDB]" />
           </div>
         )}
+        
+        {isWorkMeetingSlot && renderActionIcons(slot, day)}
         
         {slot.isPartialHour ? (
           renderPartialHourEvent(slot)
