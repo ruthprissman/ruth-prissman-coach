@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -167,7 +166,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     } catch (error: any) {
       console.error("Failed to add event to Google Calendar:", error);
       toast({
-        title: "שגיאה בהוספת פגישה ליומן",
+        title: "שגיאה בהוספת פגיש�� ליומן",
         description: error.message || "לא הצלחנו להוסיף את הפגישה ליומן Google",
         variant: "destructive"
       });
@@ -259,33 +258,36 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   };
 
-  const renderEventContent = (slot: CalendarSlot) => {
-    if (!slot.fromGoogle && !slot.notes && !slot.fromFutureSession) return null;
-
-    if (slot.isPartialHour) {
-      return renderPartialHourEvent(slot);
-    }
-
-    if (!slot.isFirstHour && slot.hoursSpan && slot.hoursSpan > 1) {
-      return <div className="w-full h-full bg-inherit" />;
-    }
-
-    const showNotInGoogleIcon = slot.fromFutureSession && !slot.inGoogleCalendar;
-    const { text } = getStatusStyle(slot);
-
+  const renderCellContent = (day: string, hour: string, slot: CalendarSlot) => {
+    const isCurrentCell = isCurrentTimeSlot(day, hour);
+    const { bg, text, colorClass } = getStatusStyle(slot);
+    
     return (
-      <div className={`flex flex-col items-start p-1 overflow-hidden h-full ${text}`}>
-        {slot.isFirstHour && (
+      <div 
+        id={`cell-${day}-${hour}`}
+        className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] h-full w-full`}
+        onContextMenu={(e) => {
+          // To help debug
+          console.log("Context menu triggered on cell", day, hour);
+        }}
+      >
+        {isCurrentCell && (
+          <div className="absolute top-0 right-0 p-1">
+            <Clock className="h-4 w-4 text-[#1EAEDB]" />
+          </div>
+        )}
+        
+        {slot.isPartialHour ? (
+          renderPartialHourEvent(slot)
+        ) : slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked') ? (
+          renderEventContent(slot)
+        ) : (
           <>
-            <div className="text-xs font-semibold w-full truncate flex items-center gap-1">
-              {showNotInGoogleIcon && <Info className="h-3 w-3 text-white" />}
-              {slot.notes}
-            </div>
-            {slot.description && (
-              <div className="text-xs w-full truncate mt-0.5 opacity-90">
-                {slot.description}
-              </div>
-            )}
+            {slot.status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
+            {slot.status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />}
+            {slot.status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
+            {slot.status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
+            {slot.status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
           </>
         )}
       </div>
@@ -373,35 +375,23 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const prevHourSlot = prevHour ? dayMap?.get(prevHour) : undefined;
                   const isConnectedToPrevHour = isSameEvent(slot, prevHourSlot);
                   
-                  const { bg, text, colorClass } = getStatusStyle(slot);
-                  
-                  // Check if this is the current time slot
-                  const isCurrentCell = isCurrentTimeSlot(day.date, hour);
-                  
-                  // Standard cell content
-                  const cellContent = (
-                    <div 
-                      id={`cell-${day.date}-${hour}`}
-                      className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} transition-colors cursor-pointer hover:opacity-80 relative min-h-[60px] h-full w-full ${isConnectedToPrevHour ? 'border-t-0' : ''}`}
-                    >
-                      {isCurrentCell && (
-                        <div className="absolute top-0 right-0 p-1">
-                          <Clock className="h-4 w-4 text-[#1EAEDB]" />
-                        </div>
+                  // Tooltip content for the cell
+                  const tooltipContent = (
+                    <div>
+                      <p className="font-bold">{slot.notes}</p>
+                      {slot.description && <p>{slot.description}</p>}
+                      {slot.exactStartTime && (
+                        <p className="mt-1">{slot.exactStartTime}-{slot.exactEndTime}</p>
                       )}
-                      
-                      {slot.isPartialHour ? (
-                        renderPartialHourEvent(slot)
-                      ) : slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked') ? (
-                        renderEventContent(slot)
-                      ) : (
-                        <>
-                          {slot.status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
-                          {slot.status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />}
-                          {slot.status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
-                          {slot.status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
-                          {slot.status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
-                        </>
+                      {slot.isPartialHour && (
+                        <p className="text-xs opacity-75">
+                          {slot.isFirstHour ? `התחלה: דקה ${slot.startMinute}` : ''}
+                          {slot.isFirstHour && slot.isLastHour ? ' | ' : ''}
+                          {slot.isLastHour ? `סיום: דקה ${slot.endMinute}` : ''}
+                        </p>
+                      )}
+                      {slot.fromFutureSession && !slot.inGoogleCalendar && (
+                        <p className="text-blue-300 mt-1">לא קיים ביומן Google (לחץ ימני להעתקה)</p>
                       )}
                     </div>
                   );
@@ -412,42 +402,34 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       <TableCell 
                         key={`${day.date}-${hour}`}
                         className="p-0 border-l border-gray-200"
+                        onContextMenu={(e) => {
+                          // Debug info
+                          console.log("Context menu triggered for future session", day.date, hour);
+                        }}
                       >
                         <ContextMenu>
                           <ContextMenuTrigger asChild>
                             {(slot.description || slot.fromGoogle || slot.fromFutureSession) ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  {cellContent}
+                                  {renderCellContent(day.date, hour, slot)}
                                 </TooltipTrigger>
                                 <TooltipContent 
                                   side="bottom"
                                   className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded z-50"
                                 >
-                                  <div>
-                                    <p className="font-bold">{slot.notes}</p>
-                                    {slot.description && <p>{slot.description}</p>}
-                                    {slot.exactStartTime && (
-                                      <p className="mt-1">{slot.exactStartTime}-{slot.exactEndTime}</p>
-                                    )}
-                                    {slot.isPartialHour && (
-                                      <p className="text-xs opacity-75">
-                                        {slot.isFirstHour ? `התחלה: דקה ${slot.startMinute}` : ''}
-                                        {slot.isFirstHour && slot.isLastHour ? ' | ' : ''}
-                                        {slot.isLastHour ? `סיום: דקה ${slot.endMinute}` : ''}
-                                      </p>
-                                    )}
-                                    {slot.fromFutureSession && !slot.inGoogleCalendar && (
-                                      <p className="text-blue-300 mt-1">לא קיים ביומן Google (לחץ ימני להעתקה)</p>
-                                    )}
-                                  </div>
+                                  {tooltipContent}
                                 </TooltipContent>
                               </Tooltip>
                             ) : (
-                              cellContent
+                              renderCellContent(day.date, hour, slot)
                             )}
                           </ContextMenuTrigger>
-                          <ContextMenuContent className="min-w-[160px] z-[100] bg-white border-2 border-gray-300 shadow-lg">
+                          <ContextMenuContent className="min-w-[160px] z-[9999] bg-white border-2 border-gray-300 shadow-xl" onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log("Context menu content preventing default");
+                          }}>
                             <ContextMenuItem 
                               className="flex items-center gap-2 text-blue-600 hover:bg-blue-50"
                               onClick={() => handleCopyToGoogleCalendar(slot.futureSession)}
@@ -457,14 +439,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                             </ContextMenuItem>
                             <ContextMenuSeparator />
                             <ContextMenuItem 
-                              className="flex items-center gap-2 text-[#ea384c] hover:bg-red-50"
+                              className="flex items-center gap-2 text-red-600 hover:bg-red-50"
                               onClick={() => handleDeleteFutureSession(slot.futureSession)}
                             >
                               <Trash2 className="h-4 w-4" />
                               <span>מחיקה</span>
                             </ContextMenuItem>
                             <ContextMenuItem 
-                              className="flex items-center gap-2 bg-[#F2FCE2] text-green-700 hover:bg-green-100"
+                              className="flex items-center gap-2 bg-green-50 text-green-700 hover:bg-green-100"
                               onClick={() => handleUpdateFutureSession(slot.futureSession)}
                             >
                               <Edit className="h-4 w-4" />
@@ -480,39 +462,34 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       <TableCell 
                         key={`${day.date}-${hour}`}
                         className="p-0 border-l border-gray-200"
+                        onContextMenu={(e) => {
+                          // Debug info
+                          console.log("Context menu triggered for regular slot", day.date, hour);
+                        }}
                       >
                         <ContextMenu>
                           <ContextMenuTrigger asChild>
                             {(slot.description || slot.fromGoogle) ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  {cellContent}
+                                  {renderCellContent(day.date, hour, slot)}
                                 </TooltipTrigger>
                                 <TooltipContent 
                                   side="bottom"
                                   className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded z-50"
                                 >
-                                  <div>
-                                    <p className="font-bold">{slot.notes}</p>
-                                    {slot.description && <p>{slot.description}</p>}
-                                    {slot.exactStartTime && (
-                                      <p className="mt-1">{slot.exactStartTime}-{slot.exactEndTime}</p>
-                                    )}
-                                    {slot.isPartialHour && (
-                                      <p className="text-xs opacity-75">
-                                        {slot.isFirstHour ? `התחלה: דקה ${slot.startMinute}` : ''}
-                                        {slot.isFirstHour && slot.isLastHour ? ' | ' : ''}
-                                        {slot.isLastHour ? `סיום: דקה ${slot.endMinute}` : ''}
-                                      </p>
-                                    )}
-                                  </div>
+                                  {tooltipContent}
                                 </TooltipContent>
                               </Tooltip>
                             ) : (
-                              cellContent
+                              renderCellContent(day.date, hour, slot)
                             )}
                           </ContextMenuTrigger>
-                          <ContextMenuContent className="min-w-[160px] z-[100] bg-white border-2 border-gray-300 shadow-lg">
+                          <ContextMenuContent className="min-w-[160px] z-[9999] bg-white border-2 border-gray-300 shadow-xl" onContextMenu={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log("Context menu content preventing default");
+                          }}>
                             <ContextMenuItem 
                               className="flex items-center gap-2 text-purple-600 hover:bg-purple-50"
                               onClick={() => handleSelectOption(day.date, hour, 'available')}
