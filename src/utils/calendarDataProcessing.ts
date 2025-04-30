@@ -2,11 +2,17 @@ import { format, startOfDay, addDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 
+// Debug version for tracking code execution
+const UTILS_VERSION = "1.0.2";
+console.log(`LOV_DEBUG_PROCESSING: Calendar data processing utils loaded, version ${UTILS_VERSION}`);
+
 export const generateWeekDays = (currentDate: Date) => {
   const startDay = startOfDay(currentDate);
   const currentDayOfWeek = startDay.getDay();
   const daysToSunday = currentDayOfWeek;
   const sundayOfThisWeek = addDays(startDay, -daysToSunday);
+  
+  console.log(`LOV_DEBUG_PROCESSING: Generating week days from ${format(sundayOfThisWeek, 'yyyy-MM-dd')} (Sunday of the week)`);
   
   const hebrewDayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   
@@ -22,6 +28,8 @@ export const generateWeekDays = (currentDate: Date) => {
 };
 
 export const generateEmptyCalendarData = (currentDate: Date) => {
+  console.log(`LOV_DEBUG_PROCESSING: Generating empty calendar data for date: ${currentDate.toISOString()}`);
+  
   const emptyCalendarData = new Map<string, Map<string, CalendarSlot>>();
   const days = generateWeekDays(currentDate);
   const hours = Array.from({ length: 16 }, (_, i) => {
@@ -42,6 +50,7 @@ export const generateEmptyCalendarData = (currentDate: Date) => {
     emptyCalendarData.set(day.date, daySlots);
   });
 
+  console.log(`LOV_DEBUG_PROCESSING: Empty calendar data generated with ${days.length} days`);
   return emptyCalendarData;
 };
 
@@ -50,6 +59,11 @@ export const processGoogleEvents = (
   googleEvents: GoogleCalendarEvent[],
   days: { date: string }[]
 ) => {
+  console.log(`LOV_DEBUG_PROCESSING: Processing ${googleEvents.length} Google events`);
+  
+  let processedEventCount = 0;
+  let skippedEventCount = 0;
+  
   googleEvents.forEach((event, index) => {
     if (event.start?.dateTime && event.end?.dateTime) {
       try {
@@ -64,6 +78,8 @@ export const processGoogleEvents = (
         const startMinute = parseInt(format(startDate, 'mm'));
         const endHour = format(endDate, 'HH');
         const endMinute = parseInt(format(endDate, 'mm'));
+        
+        console.log(`LOV_DEBUG_PROCESSING: Event ${index}: ${event.summary} on ${googleDate} at ${exactStartTime}-${exactEndTime}`);
         
         const isMeeting = event.summary?.toLowerCase().includes('פגישה עם') || 
                        event.summary?.toLowerCase().includes('שיחה עם');
@@ -85,18 +101,32 @@ export const processGoogleEvents = (
         const isPartialHour = startMinute > 0 || adjustedEndMinute > 0;
 
         const isDayVisible = days.some(day => day.date === googleDate);
-        if (!isDayVisible) return;
+        if (!isDayVisible) {
+          console.log(`LOV_DEBUG_PROCESSING: Skipping event ${index}, date ${googleDate} not in visible range`);
+          skippedEventCount++;
+          return;
+        }
         
         const dayMap = calendarData.get(googleDate);
-        if (!dayMap) return;
+        if (!dayMap) {
+          console.log(`LOV_DEBUG_PROCESSING: Skipping event ${index}, no day map for date ${googleDate}`);
+          skippedEventCount++;
+          return;
+        }
 
+        console.log(`LOV_DEBUG_PROCESSING: Processing hours for event ${index} from ${startHour} to ${adjustedEndHour}`);
+        
         // Process each hour of the event
         for (let h = Number(startHour); h <= Number(adjustedEndHour); h++) {
           const hourString = h.toString().padStart(2, '0') + ':00';
-          if (!dayMap.has(hourString)) continue;
+          if (!dayMap.has(hourString)) {
+            console.log(`LOV_DEBUG_PROCESSING: Hour ${hourString} not in calendar for event ${index}`);
+            continue;
+          }
           
           // Skip the last hour if the event ends exactly at :00
           if (h === Number(adjustedEndHour) && adjustedEndMinute === 0) {
+            console.log(`LOV_DEBUG_PROCESSING: Skipping last hour ${hourString} for event ${index} as it ends at :00`);
             continue;
           }
           
@@ -136,13 +166,21 @@ export const processGoogleEvents = (
             isPartialHour: isPartialHour && (isFirstHour || isLastHour),
             showBorder: false
           });
+          
+          console.log(`LOV_DEBUG_PROCESSING: Set calendar slot for ${googleDate} ${hourString}, event "${event.summary}"`);
         }
+        
+        processedEventCount++;
       } catch (error) {
-        console.error(`Error processing Google event ${index}:`, error);
+        console.error(`LOV_DEBUG_PROCESSING: Error processing Google event ${index}:`, error);
       }
+    } else {
+      console.log(`LOV_DEBUG_PROCESSING: Skipping event ${index}, missing start/end time`);
+      skippedEventCount++;
     }
   });
   
+  console.log(`LOV_DEBUG_PROCESSING: Google events processing complete. Processed: ${processedEventCount}, Skipped: ${skippedEventCount}`);
   return calendarData;
 };
 
@@ -271,8 +309,13 @@ export const processFutureSessions = (
 export const createGoogleEventsMap = (googleEvents: GoogleCalendarEvent[]) => {
   const googleEventsMap = new Map<string, GoogleCalendarEvent>();
   
-  googleEvents.forEach(event => {
-    if (!event.start?.dateTime) return;
+  console.log(`LOV_DEBUG_PROCESSING: Creating Google events map from ${googleEvents.length} events`);
+  
+  googleEvents.forEach((event, index) => {
+    if (!event.start?.dateTime) {
+      console.log(`LOV_DEBUG_PROCESSING: Skipping event ${index} in map creation, no start time`);
+      return;
+    }
     
     const eventDate = new Date(event.start.dateTime);
     const dateKey = format(eventDate, 'yyyy-MM-dd');
@@ -280,7 +323,9 @@ export const createGoogleEventsMap = (googleEvents: GoogleCalendarEvent[]) => {
     const key = `${dateKey}-${hourKey}`;
     
     googleEventsMap.set(key, event);
+    console.log(`LOV_DEBUG_PROCESSING: Added event to map with key: ${key}`);
   });
   
+  console.log(`LOV_DEBUG_PROCESSING: Completed Google events map with ${googleEventsMap.size} entries`);
   return googleEventsMap;
 };

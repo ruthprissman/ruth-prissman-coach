@@ -1,4 +1,3 @@
-
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
@@ -10,6 +9,10 @@ const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.go
 // Use the utility to get the correct redirect URL
 const REDIRECT_URI = getDashboardRedirectUrl();
 
+// Version identifier for debugging
+const SERVICE_VERSION = "1.0.1";
+console.log(`LOV_DEBUG_GOOGLE_OAUTH: Service initialized, version ${SERVICE_VERSION}`);
+
 export interface GoogleOAuthState {
   isAuthenticated: boolean;
   isAuthenticating: boolean;
@@ -19,21 +22,25 @@ export interface GoogleOAuthState {
 // Get access token from Supabase session
 export async function getAccessToken(): Promise<string | null> {
   try {
+    console.log('LOV_DEBUG_GOOGLE_OAUTH: Getting access token from session');
     const { data } = await supabase.auth.getSession();
     const session = data.session;
     
     if (session?.provider_token) {
+      console.log('LOV_DEBUG_GOOGLE_OAUTH: Access token found in session');
       return session.provider_token;
     }
+    console.log('LOV_DEBUG_GOOGLE_OAUTH: No access token found');
     return null;
   } catch (error) {
-    console.error('Error getting access token:', error);
+    console.error('LOV_DEBUG_GOOGLE_OAUTH: Error getting access token:', error);
     return null;
   }
 }
 
 export async function checkIfSignedIn(): Promise<boolean> {
   const token = await getAccessToken();
+  console.log(`LOV_DEBUG_GOOGLE_OAUTH: checkIfSignedIn result: ${!!token}`);
   return !!token;
 }
 
@@ -85,28 +92,40 @@ export async function signOutFromGoogle(): Promise<void> {
 
 export async function fetchGoogleCalendarEvents(currentDisplayDate?: Date): Promise<GoogleCalendarEvent[]> {
   try {
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH: fetchGoogleCalendarEvents called with date: ${currentDisplayDate?.toISOString() || 'undefined'}`);
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH: Service version: ${SERVICE_VERSION}`);
+    
     const token = await getAccessToken();
     if (!token) {
+      console.error('LOV_DEBUG_GOOGLE_OAUTH: No access token available');
       throw new Error('אין הרשאות גישה ליומן Google');
     }
     
     // IMPORTANT: Always start from the beginning of the displayed week (Sunday)
     // This ensures we fetch events from the beginning of the week
     const now = currentDisplayDate || new Date();
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH: Using date for events fetch: ${now.toISOString()}`);
+    
     const weekStart = startOfWeek(now, { weekStartsOn: 0 }); // Start week on Sunday
     const twoMonthsLater = addMonths(weekStart, 2);
+    
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH: Calculated week start: ${weekStart.toISOString()}`);
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH: End date (2 months later): ${twoMonthsLater.toISOString()}`);
     
     const timeMin = encodeURIComponent(weekStart.toISOString());
     const timeMax = encodeURIComponent(twoMonthsLater.toISOString());
     
-    console.log('Fetching Google Calendar events from API, time range:', {
+    console.log('LOV_DEBUG_GOOGLE_OAUTH: Fetching Google Calendar events from API, time range:', {
       from: weekStart.toISOString(),
       to: twoMonthsLater.toISOString()
     });
     
     // Make a direct fetch to Google Calendar API
+    const apiUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH: API URL: ${apiUrl}`);
+    
     const response = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
+      apiUrl,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -117,16 +136,17 @@ export async function fetchGoogleCalendarEvents(currentDisplayDate?: Date): Prom
     
     if (!response.ok) {
       const errorData = await response.json();
+      console.error(`LOV_DEBUG_GOOGLE_OAUTH: API response not OK: ${response.status}`, errorData);
       throw new Error(errorData.error?.message || 'Failed to fetch calendar events');
     }
     
     const data = await response.json();
-    console.log('Google Calendar API response - events count:', data.items.length);
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH: Google Calendar API response - events count: ${data.items.length}`);
     
     // Transform the response to our GoogleCalendarEvent format and add logging
     const events: GoogleCalendarEvent[] = data.items.map((item: any, index: number) => {
-      // הוספת לוג לפריט כדי לבדוק את הפורמט
-      console.log(`Google Calendar event ${index}:`, {
+      // Log event details for debugging
+      console.log(`LOV_DEBUG_GOOGLE_OAUTH: Processing event ${index}:`, {
         id: item.id,
         summary: item.summary,
         start: item.start,
@@ -144,12 +164,12 @@ export async function fetchGoogleCalendarEvents(currentDisplayDate?: Date): Prom
       };
     });
     
-    // לוג מסכם והחזרת האירועים
-    console.log(`Processed ${events.length} Google Calendar events`);
+    // Summary log
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH: Processed ${events.length} Google Calendar events successfully`);
     
     return events;
   } catch (error) {
-    console.error('Error fetching Google Calendar events:', error);
+    console.error('LOV_DEBUG_GOOGLE_OAUTH: Error fetching Google Calendar events:', error);
     throw error;
   }
 }

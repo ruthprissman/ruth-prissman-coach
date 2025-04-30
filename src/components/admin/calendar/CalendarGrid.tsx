@@ -8,7 +8,7 @@ import {
   TableCell 
 } from '@/components/ui/table';
 import { CalendarSlot } from '@/types/calendar';
-import { Check, Calendar, Lock, Clock, ArrowUp, Trash2, Database } from 'lucide-react';
+import { Check, Calendar, Lock, Clock, ArrowUp, Trash2, Database, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -16,8 +16,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Button } from '@/components/ui/button';
 import { format, isToday, isPast } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+
+// Component version for debugging
+const COMPONENT_VERSION = "1.0.2";
+console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
   days: { date: string; label: string; dayNumber: number }[];
@@ -41,6 +46,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     minute: number;
   } | null>(null);
   const navigate = useNavigate();
+  const [forceRefreshToken, setForceRefreshToken] = useState<number>(Date.now());
+  
+  console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering with ${days.length} days, ${hours.length} hours, loading: ${isLoading}`);
+  console.log(`LOV_DEBUG_CALENDAR_GRID: Calendar data contains ${calendarData.size} days`);
 
   useEffect(() => {
     const updateCurrentTime = () => {
@@ -62,11 +71,20 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       }
     };
 
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Setting up current time effect, version: ${COMPONENT_VERSION}`);
     updateCurrentTime();
     const interval = setInterval(updateCurrentTime, 60000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      console.log('LOV_DEBUG_CALENDAR_GRID: Cleaning up current time interval');
+    };
   }, []);
+
+  useEffect(() => {
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Calendar data updated or force refresh triggered, token: ${forceRefreshToken}`);
+    // This effect runs whenever calendarData or forceRefreshToken changes
+  }, [calendarData, forceRefreshToken]);
 
   const getStatusStyle = (slot: CalendarSlot) => {
     const { status, fromGoogle, isMeeting, isPatientMeeting, fromFutureSession, inGoogleCalendar } = slot;
@@ -125,7 +143,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   const logSlotInfo = (date: string, hour: string, slot?: CalendarSlot) => {
     if (debugMode) {
-      console.log(`CalendarGrid: Slot at ${date} ${hour}:`, {
+      console.log(`LOV_DEBUG_CALENDAR_GRID: Slot at ${date} ${hour}:`, {
         slot,
         status: slot?.status,
         syncStatus: slot?.syncStatus,
@@ -152,7 +170,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
-    console.log(`Debug mode ${!debugMode ? 'enabled' : 'disabled'}`);
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Debug mode ${!debugMode ? 'enabled' : 'disabled'}`);
     if (!debugMode) {
       calendarData.forEach((dayMap, date) => {
         dayMap.forEach((slot, hour) => {
@@ -162,6 +180,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         });
       });
     }
+  };
+
+  // Force refresh to help diagnose caching/state issues
+  const handleForceRefresh = () => {
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Force refresh triggered at ${new Date().toISOString()}`);
+    setForceRefreshToken(Date.now());
+    // This will cause the component to re-render with a new token value
   };
 
   // Function to check if a slot is a work meeting (starts with "פגישה עם")
@@ -192,8 +217,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const isPastMeeting = isPast(meetingDate);
     const clientName = extractClientName(slot.notes);
     
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering action icons for meeting on ${date} at ${slot.hour}, is past: ${isPastMeeting}`);
+    
     return (
-      <div className="absolute top-0 right-0 p-1 flex gap-1 group-hover:opacity-100 transition-opacity z-10">
+      <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-100 group-hover:opacity-100 transition-opacity z-10">
         {isPastMeeting ? (
           // Past meetings - only show update button that navigates to sessions page
           <Tooltip>
@@ -320,6 +347,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const { bg, text, colorClass } = getStatusStyle(slot);
     const isWorkMeetingSlot = isWorkMeeting(slot);
     
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering cell ${day} ${hour}, isWorkMeeting: ${isWorkMeetingSlot}, status: ${slot.status}`);
+    
     return (
       <div 
         id={`cell-${day}-${hour}`}
@@ -385,10 +414,25 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   }
 
+  console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering calendar grid for days: ${days.map(d => d.date).join(', ')}`);
+  console.log(`LOV_DEBUG_CALENDAR_GRID: Force refresh token: ${forceRefreshToken}`);
+
   return (
     <TooltipProvider>
       <div className="overflow-x-auto">
-        <div className="mb-2 flex justify-end">
+        <div className="mb-2 flex justify-between items-center">
+          <Button 
+            onClick={handleForceRefresh}
+            variant="outline"
+            size="sm" 
+            className="text-xs flex items-center gap-1"
+          >
+            <RefreshCw className="h-3 w-3" />
+            ריענון יזום ({new Date().toLocaleTimeString()})
+          </Button>
+          <div className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+            גרסה: {COMPONENT_VERSION}
+          </div>
           <button 
             onClick={toggleDebugMode}
             className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 bg-gray-100 rounded"
@@ -396,6 +440,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             {debugMode ? 'הסתר מידע דיבאג' : 'הצג מידע דיבאג'}
           </button>
         </div>
+        
         <Table className="border border-gray-200 rounded-md">
           <TableHeader className="bg-purple-50 sticky top-0 z-10">
             <TableRow className="border-b border-gray-300">
@@ -426,7 +471,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const dayMap = calendarData.get(day.date);
                   const slot = dayMap?.get(hour);
                   
-                  if (!slot) return null;
+                  if (!slot) {
+                    console.log(`LOV_DEBUG_CALENDAR_GRID: No slot found for ${day.date} ${hour}`);
+                    return null;
+                  }
+                  
+                  // Log this slot when in debug mode
+                  logSlotInfo(day.date, hour, slot);
                   
                   const prevHour = hourIndex > 0 ? hours[hourIndex - 1] : null;
                   const prevHourSlot = prevHour ? dayMap?.get(prevHour) : undefined;

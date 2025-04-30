@@ -9,7 +9,7 @@ import { useCalendarOperations } from '@/hooks/useCalendarOperations';
 import { useCalendarData } from '@/hooks/useCalendarData';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import CalendarHeader from '@/components/admin/calendar/CalendarHeader';
 import CalendarContent from '@/components/admin/calendar/CalendarContent';
@@ -17,6 +17,11 @@ import { RecurringAvailabilityDialog } from '@/components/admin/calendar/Recurri
 import DebugLogPanel from '@/components/admin/calendar/DebugLogPanel';
 import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { forcePageRefresh, logComponentVersions } from '@/utils/debugUtils';
+
+// Component version for debugging
+const COMPONENT_VERSION = "1.0.1";
+console.log(`LOV_DEBUG_CALENDAR_MGMT: Component loaded, version ${COMPONENT_VERSION}`);
 
 const CalendarManagement: React.FC = () => {
   const { user } = useAuth();
@@ -25,6 +30,7 @@ const CalendarManagement: React.FC = () => {
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [showDebugLogs, setShowDebugLogs] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [lastRefresh, setLastRefresh] = useState<string>(new Date().toLocaleTimeString());
 
   const { settings, isLoading: isLoadingSettings } = useCalendarSettings();
   const { tableExists, checkTableExists, createCalendarSlotsTable, applyDefaultAvailability } = useCalendarOperations();
@@ -39,11 +45,20 @@ const CalendarManagement: React.FC = () => {
     fetchEvents: fetchGoogleEvents
   } = useGoogleOAuth();
 
-  const { calendarData, isLoading, fetchAvailabilityData } = useCalendarData(
+  const { calendarData, isLoading, fetchAvailabilityData, debugVersion } = useCalendarData(
     currentDate,
     googleEvents,
     isGoogleAuthenticated
   );
+
+  // Log initial debugging information
+  useEffect(() => {
+    console.log(`LOV_DEBUG_CALENDAR_MGMT: Initialization with date ${currentDate.toISOString()}`);
+    console.log(`LOV_DEBUG_CALENDAR_MGMT: Google authenticated: ${isGoogleAuthenticated}, events: ${googleEvents.length}`);
+    
+    // Log all component versions
+    logComponentVersions();
+  }, []);
 
   const hours = Array.from({ length: 16 }, (_, i) => {
     const hour = i + 8;
@@ -51,6 +66,8 @@ const CalendarManagement: React.FC = () => {
   });
 
   const generateDaysOfWeek = (startDate: Date) => {
+    console.log(`LOV_DEBUG_CALENDAR_MGMT: Generating days of week from ${startDate.toISOString()}`);
+    
     // Fix: Correctly set weekStartsOn to 0 (Sunday)
     const weekStart = startOfDay(startDate);
     
@@ -62,6 +79,7 @@ const CalendarManagement: React.FC = () => {
     
     // Get the Sunday of the current week
     const sundayOfThisWeek = addDays(weekStart, -daysToSunday);
+    console.log(`LOV_DEBUG_CALENDAR_MGMT: Sunday of this week: ${sundayOfThisWeek.toISOString()}`);
 
     const hebrewDayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
     
@@ -83,6 +101,7 @@ const CalendarManagement: React.FC = () => {
     const newDate = direction === 'next'
       ? addDays(currentDate, 7)
       : addDays(currentDate, -7);
+    console.log(`LOV_DEBUG_CALENDAR_MGMT: Navigating to ${direction} week: ${newDate.toISOString()}`);
     setCurrentDate(newDate);
   };
 
@@ -93,12 +112,14 @@ const CalendarManagement: React.FC = () => {
         setDebugLogs([]);
         setShowDebugLogs(true);
         
+        console.log(`LOV_DEBUG_CALENDAR_MGMT: Starting Google sync for date: ${currentDate.toISOString()}`);
+        
         // Pass the current date to fetch events from the beginning of the displayed week
         await fetchGoogleEvents(currentDate);
         await fetchAvailabilityData();
         
       } catch (error: any) {
-        console.error('Error syncing with Google Calendar:', error);
+        console.error('LOV_DEBUG_CALENDAR_MGMT: Error syncing with Google Calendar:', error);
       } finally {
         setIsSyncing(false);
         setTimeout(() => {
@@ -108,10 +129,50 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
+  // Handle manual refresh button
+  const handleManualRefresh = async () => {
+    console.log(`LOV_DEBUG_CALENDAR_MGMT: Manual refresh requested at ${new Date().toISOString()}`);
+    setLastRefresh(new Date().toLocaleTimeString());
+    
+    try {
+      setIsSyncing(true);
+      
+      // Refresh everything
+      await checkTableExists();
+      
+      if (isGoogleAuthenticated) {
+        await fetchGoogleEvents(currentDate);
+      }
+      
+      await fetchAvailabilityData();
+      
+      toast({
+        title: 'יומן רוענן',
+        description: `הנתונים רועננו בהצלחה בשעה ${new Date().toLocaleTimeString()}`,
+      });
+    } catch (error: any) {
+      console.error('LOV_DEBUG_CALENDAR_MGMT: Error during manual refresh:', error);
+      toast({
+        title: 'שגיאה בריענון נתונים',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Force a full page reload to clear any caches
+  const handleForceReload = () => {
+    console.log(`LOV_DEBUG_CALENDAR_MGMT: Forcing full page reload`);
+    forcePageRefresh();
+  };
+
   // Update calendar data when current date changes
   useEffect(() => {
     if (isGoogleAuthenticated) {
       // Fetch Google events from the beginning of the displayed week
+      console.log(`LOV_DEBUG_CALENDAR_MGMT: Date changed, fetching Google events for: ${currentDate.toISOString()}`);
       fetchGoogleEvents(currentDate);
     }
   }, [currentDate, isGoogleAuthenticated]);
@@ -270,6 +331,30 @@ const CalendarManagement: React.FC = () => {
     <AdminLayout title="ניהול זמינות יומן">
       <div className="container mx-auto py-6" dir="rtl">
         <div className="flex flex-col space-y-4">
+          <div className="flex justify-between items-center">
+            <div>גרסה: {COMPONENT_VERSION} | Debug version: {debugVersion?.substring(0, 15)}</div>
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleManualRefresh}
+                variant="outline"
+                size="sm" 
+                className="text-xs flex items-center gap-1"
+                disabled={isSyncing || isLoading || isLoadingSettings || isLoadingGoogleEvents}
+              >
+                <RefreshCw className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                ריענון נתונים ({lastRefresh})
+              </Button>
+              <Button 
+                onClick={handleForceReload}
+                variant="destructive"
+                size="sm" 
+                className="text-xs"
+              >
+                איפוס מלא (רענון דף)
+              </Button>
+            </div>
+          </div>
+          
           <CalendarHeader 
             isGoogleAuthenticated={isGoogleAuthenticated}
             isGoogleAuthenticating={isGoogleAuthenticating}
