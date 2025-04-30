@@ -106,14 +106,15 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
       const supabase = await supabaseClient();
       const { data, error } = await supabase
         .from('patients')
-        .select('id, name')
+        .select('*')  // Select all fields to properly satisfy Patient interface
         .ilike('name', `%${name}%`)
         .order('name', { ascending: true })
         .limit(5);
         
       if (error) throw error;
       
-      return data || [];
+      // Ensure the data matches the Patient interface
+      return data as Patient[];
     } catch (err: any) {
       console.error('Error searching for patient:', err.message);
       return [];

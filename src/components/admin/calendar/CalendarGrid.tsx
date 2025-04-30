@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -22,7 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.4";
+const COMPONENT_VERSION = "1.0.5";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -88,6 +89,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     console.log(`LOV_DEBUG_CALENDAR_GRID: Calendar data updated or force refresh triggered, token: ${forceRefreshToken}`);
     // This effect runs whenever calendarData or forceRefreshToken changes
   }, [calendarData, forceRefreshToken]);
+
+  // Add the missing handleFutureSessionCreated function
+  const handleFutureSessionCreated = () => {
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Future session created, forcing refresh`);
+    handleForceRefresh();
+  };
 
   const getStatusStyle = (slot: CalendarSlot) => {
     const { status, fromGoogle, isMeeting, isPatientMeeting, fromFutureSession, inGoogleCalendar } = slot;
