@@ -1,8 +1,7 @@
-
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
-import { startOfWeek, format } from 'date-fns';
+import { startOfWeek, format, addMonths } from 'date-fns';
 
 // OAuth2 configuration
 const CLIENT_ID = '216734901779-csrnrl4nmkilae4blbolsip8mmibsk3t.apps.googleusercontent.com';
@@ -93,15 +92,14 @@ export async function fetchGoogleCalendarEvents(currentDisplayDate?: Date): Prom
     // Start from the beginning of the current displayed week (Sunday) or today if no date is provided
     const now = currentDisplayDate || new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 0 }); // Start week on Sunday
-    const threeMonthsLater = new Date(now);
-    threeMonthsLater.setMonth(now.getMonth() + 3);
+    const twoMonthsLater = addMonths(weekStart, 2);
     
     const timeMin = encodeURIComponent(weekStart.toISOString());
-    const timeMax = encodeURIComponent(threeMonthsLater.toISOString());
+    const timeMax = encodeURIComponent(twoMonthsLater.toISOString());
     
     console.log('Fetching Google Calendar events from API, time range:', {
       from: weekStart.toISOString(),
-      to: threeMonthsLater.toISOString()
+      to: twoMonthsLater.toISOString()
     });
     
     // Make a direct fetch to Google Calendar API

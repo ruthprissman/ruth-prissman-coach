@@ -1,6 +1,5 @@
-
 import { GoogleCalendarEvent } from '@/types/calendar';
-import { addDays, format } from 'date-fns';
+import { addMonths, format, startOfWeek } from 'date-fns';
 
 // This service is now optional as we're using OAuth2 for Google Calendar integration
 // It remains for API key-based authentication if needed
@@ -20,10 +19,11 @@ export async function fetchGoogleCalendarEvents(
     logs.push(`${new Date().toISOString()} - תחילת סנכרון יומן Google`);
     
     const now = new Date();
-    const thirtyDaysLater = addDays(now, 30);
+    const weekStart = startOfWeek(now, { weekStartsOn: 0 });
+    const twoMonthsLater = addMonths(weekStart, 2);
     
-    const timeMin = now.toISOString();
-    const timeMax = thirtyDaysLater.toISOString();
+    const timeMin = weekStart.toISOString();
+    const timeMax = twoMonthsLater.toISOString();
     
     const encodedCalendarId = encodeURIComponent(calendarId);
     const url = `https://www.googleapis.com/calendar/v3/calendars/${encodedCalendarId}/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&key=${apiKey}`;

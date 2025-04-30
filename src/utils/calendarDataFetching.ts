@@ -1,4 +1,4 @@
-import { format, startOfDay, addDays, startOfWeek } from 'date-fns';
+import { format, startOfDay, addDays, startOfWeek, addMonths } from 'date-fns';
 import { supabaseClient } from '@/lib/supabaseClient';
 
 export const fetchAvailabilitySlots = async (currentDate?: Date) => {
@@ -7,15 +7,15 @@ export const fetchAvailabilitySlots = async (currentDate?: Date) => {
   // Start from the beginning of the current week if currentDate is provided
   // otherwise use today
   const today = currentDate ? startOfWeek(currentDate, { weekStartsOn: 0 }) : startOfDay(new Date());
-  const thirtyDaysLater = addDays(today, 30);
+  const twoMonthsLater = addMonths(today, 2);
   
-  console.log('Fetching availability slots from', format(today, 'yyyy-MM-dd'), 'to', format(thirtyDaysLater, 'yyyy-MM-dd'));
+  console.log('Fetching availability slots from', format(today, 'yyyy-MM-dd'), 'to', format(twoMonthsLater, 'yyyy-MM-dd'));
   
   const { data: availableSlots, error: availableSlotsError } = await supabase
     .from('calendar_slots')
     .select('*')
     .gte('date', format(today, 'yyyy-MM-dd'))
-    .lte('date', format(thirtyDaysLater, 'yyyy-MM-dd'));
+    .lte('date', format(twoMonthsLater, 'yyyy-MM-dd'));
   
   if (availableSlotsError) {
     console.error('Error fetching availability slots:', availableSlotsError);
@@ -32,15 +32,15 @@ export const fetchBookedSessions = async (currentDate?: Date) => {
   // Start from the beginning of the current week if currentDate is provided
   // otherwise use today
   const today = currentDate ? startOfWeek(currentDate, { weekStartsOn: 0 }) : startOfDay(new Date());
-  const thirtyDaysLater = addDays(today, 30);
+  const twoMonthsLater = addMonths(today, 2);
   
-  console.log('Fetching booked sessions from', format(today, 'yyyy-MM-dd'), 'to', format(thirtyDaysLater, 'yyyy-MM-dd'));
+  console.log('Fetching booked sessions from', format(today, 'yyyy-MM-dd'), 'to', format(twoMonthsLater, 'yyyy-MM-dd'));
   
   const { data: bookedSlots, error: bookedSlotsError } = await supabase
     .from('future_sessions')
     .select('*, patients(name)')
     .gte('session_date', format(today, 'yyyy-MM-dd'))
-    .lte('session_date', format(thirtyDaysLater, 'yyyy-MM-dd'));
+    .lte('session_date', format(twoMonthsLater, 'yyyy-MM-dd'));
   
   if (bookedSlotsError) {
     console.error('Error fetching booked sessions:', bookedSlotsError);
