@@ -19,9 +19,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { format, isToday, isPast } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.3";
+const COMPONENT_VERSION = "1.0.4";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -47,6 +48,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   } | null>(null);
   const navigate = useNavigate();
   const [forceRefreshToken, setForceRefreshToken] = useState<number>(Date.now());
+  const [addToFutureSessionDialogOpen, setAddToFutureSessionDialogOpen] = useState<boolean>(false);
+  const [selectedMeetingSlot, setSelectedMeetingSlot] = useState<CalendarSlot | null>(null);
   
   console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering with ${days.length} days, ${hours.length} hours, loading: ${isLoading}`);
   console.log(`LOV_DEBUG_CALENDAR_GRID: Calendar data contains ${calendarData.size} days`);
@@ -189,6 +192,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     // This will cause the component to re-render with a new token value
   };
 
+  // Handle add to future sessions
+  const handleAddToFutureSessions = (slot: CalendarSlot, date: string) => {
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Adding meeting to future sessions for ${date} at ${slot.hour}`);
+    // Set the selected meeting slot and open the dialog
+    setSelectedMeetingSlot(slot);
+    setAddToFutureSessionDialogOpen(true);
+  };
+
   // Function to check if a slot is a work meeting (starts with "פגישה עם")
   const isWorkMeeting = (slot: CalendarSlot): boolean => {
     return !!slot.notes && 
@@ -277,7 +288,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToFutureSessions(slot, date);
+                    }}
                     className="bg-white p-1 rounded-full shadow hover:bg-blue-50"
                   >
                     <Database className="w-3.5 h-3.5 text-blue-600" />
@@ -536,6 +550,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             ))}
           </TableBody>
         </Table>
+        
+        {/* Dialog for adding meetings to future sessions */}
+        <AddMeetingToFutureSessionsDialog
+          open={addToFutureSessionDialogOpen}
+          onOpenChange={setAddToFutureSessionDialogOpen}
+          meetingData={selectedMeetingSlot}
+          onCreated={handleFutureSessionCreated}
+        />
       </div>
     </TooltipProvider>
   );

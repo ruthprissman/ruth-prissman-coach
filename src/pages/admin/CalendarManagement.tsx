@@ -20,7 +20,7 @@ import { supabaseClient } from '@/lib/supabaseClient';
 import { forcePageRefresh, logComponentVersions } from '@/utils/debugUtils';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.1";
+const COMPONENT_VERSION = "1.0.2";
 console.log(`LOV_DEBUG_CALENDAR_MGMT: Component loaded, version ${COMPONENT_VERSION}`);
 
 const CalendarManagement: React.FC = () => {
