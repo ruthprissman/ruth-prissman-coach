@@ -1,3 +1,4 @@
+
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
@@ -89,7 +90,8 @@ export async function fetchGoogleCalendarEvents(currentDisplayDate?: Date): Prom
       throw new Error('אין הרשאות גישה ליומן Google');
     }
     
-    // Start from the beginning of the current displayed week (Sunday) or today if no date is provided
+    // IMPORTANT: Always start from the beginning of the displayed week (Sunday)
+    // This ensures we fetch events from the beginning of the week
     const now = currentDisplayDate || new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 0 }); // Start week on Sunday
     const twoMonthsLater = addMonths(weekStart, 2);

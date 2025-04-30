@@ -27,6 +27,7 @@ export function useCalendarData(
       setIsLoading(true);
       console.log('Fetching calendar data for', currentDate);
       
+      // Always fetch data from the beginning of the week
       const [availableSlots, bookedSlots] = await Promise.all([
         fetchAvailabilitySlots(currentDate),
         fetchBookedSessions(currentDate)

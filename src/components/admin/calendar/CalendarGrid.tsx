@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -90,7 +89,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       };
     }
     
-    if (isPatientMeeting || (isMeeting && status === 'booked')) {
+    if (isPatientMeeting || (isMeeting && (status as string) === 'booked')) {
       return { 
         bg: 'bg-[#5C4C8D]', 
         border: 'border-[#5C4C8D]', 
@@ -184,7 +183,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     navigate(`/admin/sessions?search=${encodeURIComponent(clientName)}`);
   };
 
-  // Render action icons for work meetings
+  // Render action icons for work meetings - Fixed to always be visible
   const renderActionIcons = (slot: CalendarSlot, date: string) => {
     if (!isWorkMeeting(slot)) return null;
 
@@ -194,7 +193,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const clientName = extractClientName(slot.notes);
     
     return (
-      <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-0 right-0 p-1 flex gap-1 group-hover:opacity-100 transition-opacity z-10">
         {isPastMeeting ? (
           // Past meetings - only show update button that navigates to sessions page
           <Tooltip>
