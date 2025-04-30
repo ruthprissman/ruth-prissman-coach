@@ -21,7 +21,7 @@ import { format, isToday, isPast } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.2";
+const COMPONENT_VERSION = "1.0.3";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -208,7 +208,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     navigate(`/admin/sessions?search=${encodeURIComponent(clientName)}`);
   };
 
-  // Render action icons for work meetings - Fixed to always be visible
+  // Render action icons for work meetings - Fixed to be visible only on hover
   const renderActionIcons = (slot: CalendarSlot, date: string) => {
     if (!isWorkMeeting(slot)) return null;
 
@@ -220,7 +220,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering action icons for meeting on ${date} at ${slot.hour}, is past: ${isPastMeeting}`);
     
     return (
-      <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-100 group-hover:opacity-100 transition-opacity z-10">
+      <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
         {isPastMeeting ? (
           // Past meetings - only show update button that navigates to sessions page
           <Tooltip>
@@ -360,7 +360,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </div>
         )}
         
-        {isWorkMeetingSlot && renderActionIcons(slot, day)}
+        {/* Only show action icons for work meetings, and only in the first hour of multi-hour events */}
+        {isWorkMeetingSlot && (!slot.isPartialHour || slot.isFirstHour) && renderActionIcons(slot, day)}
         
         {slot.isPartialHour ? (
           renderPartialHourEvent(slot)
