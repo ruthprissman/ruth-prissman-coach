@@ -3,7 +3,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 
 // Debug version for tracking code execution
-const UTILS_VERSION = "1.0.2";
+const UTILS_VERSION = "1.0.3";
 console.log(`LOV_DEBUG_PROCESSING: Calendar data processing utils loaded, version ${UTILS_VERSION}`);
 
 export const generateWeekDays = (currentDate: Date) => {
@@ -63,6 +63,14 @@ export const processGoogleEvents = (
   
   let processedEventCount = 0;
   let skippedEventCount = 0;
+  
+  // Create a map of google event IDs for quick lookup
+  const googleEventIds = new Map<string, boolean>();
+  googleEvents.forEach(event => {
+    if (event.id) {
+      googleEventIds.set(event.id, true);
+    }
+  });
   
   googleEvents.forEach((event, index) => {
     if (event.start?.dateTime && event.end?.dateTime) {
@@ -184,12 +192,40 @@ export const processGoogleEvents = (
   return calendarData;
 };
 
+export const createGoogleEventsMap = (googleEvents: GoogleCalendarEvent[]) => {
+  const googleEventsMap = new Map<string, GoogleCalendarEvent>();
+  
+  console.log(`LOV_DEBUG_PROCESSING: Creating Google events map from ${googleEvents.length} events`);
+  
+  googleEvents.forEach((event, index) => {
+    if (!event.start?.dateTime) {
+      console.log(`LOV_DEBUG_PROCESSING: Skipping event ${index} in map creation, no start time`);
+      return;
+    }
+    
+    const eventDate = new Date(event.start.dateTime);
+    const dateKey = format(eventDate, 'yyyy-MM-dd');
+    const hourKey = format(eventDate, 'HH:00');
+    const key = `${dateKey}-${hourKey}`;
+    
+    googleEventsMap.set(key, event);
+    console.log(`LOV_DEBUG_PROCESSING: Added event to map with key: ${key}`);
+  });
+  
+  console.log(`LOV_DEBUG_PROCESSING: Completed Google events map with ${googleEventsMap.size} entries`);
+  return googleEventsMap;
+};
+
 export const processFutureSessions = (
   calendarData: Map<string, Map<string, CalendarSlot>>,
   bookedSlots: any[],
   googleEventsMap: Map<string, GoogleCalendarEvent>
 ) => {
-  console.log('Processing future sessions:', bookedSlots.length);
+  console.log(`DB_BUTTON_DEBUG: Processing ${bookedSlots.length} future sessions`);
+  
+  // Create a map for faster lookups of which booked sessions exist in future_sessions
+  // This helps us identify which Google events should or shouldn't have "Add to DB" buttons
+  const futureSessionsMap = new Map<string, boolean>();
   
   bookedSlots.forEach((session, index) => {
     if (!session.session_date) {
@@ -204,9 +240,14 @@ export const processFutureSessions = (
       const sessionDate = israelTime.split(' ')[0];
       const timeParts = israelTime.split(' ')[1].split(':');
       const sessionTime = `${timeParts[0]}:00`;
-      const startMinute = parseInt(timeParts[1]);
       
-      console.log(`Session ${index} date: ${sessionDate}, time: ${sessionTime}, patient: ${session.patients?.name || 'unknown'}`);
+      // Add to map for quick lookups
+      const sessionKey = `${sessionDate}-${sessionTime}`;
+      futureSessionsMap.set(sessionKey, true);
+      
+      console.log(`DB_BUTTON_DEBUG: Session ${index} mapped with key: ${sessionKey}, patient: ${session.patients?.name || 'unknown'}`);
+      
+      const startMinute = parseInt(timeParts[1]);
       
       const dayMap = calendarData.get(sessionDate);
       if (!dayMap) {
@@ -229,10 +270,7 @@ export const processFutureSessions = (
       const eventDateHourKey = `${sessionDate}-${sessionTime}`;
       const inGoogleCalendar = googleEventsMap.has(eventDateHourKey);
       
-      if (inGoogleCalendar) {
-        console.log(`Session ${index} already in Google Calendar`);
-        return; // Skip if already in Google Calendar
-      }
+      console.log(`DB_BUTTON_DEBUG: Session ${index} - inGoogleCalendar: ${inGoogleCalendar}, key: ${eventDateHourKey}`);
       
       let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
       if (session.status === 'Completed') status = 'completed';
@@ -265,9 +303,13 @@ export const processFutureSessions = (
             currentEndMinute = endMinute;
           }
           
-          // Create or update the slot
+          // Check if this slot is already a Google event with the same details
+          const existingSlot = dayMap.get(hourString);
+          
+          // Create or update the slot - ALWAYS mark the session as fromFutureSession: true
+          // whether or not it's also in Google Calendar
           dayMap.set(hourString, {
-            ...dayMap.get(hourString)!,
+            ...existingSlot!,
             status,
             notes: noteText,
             description: session.title || '',
@@ -282,10 +324,17 @@ export const processFutureSessions = (
             isLastHour,
             syncStatus: 'synced',
             showBorder: false,
-            fromFutureSession: true,
+            fromFutureSession: true, // Mark ALL future_sessions entries with this flag
             futureSession: session,
-            inGoogleCalendar: false
+            inGoogleCalendar: inGoogleCalendar, // This indicates if the session is also in Google Calendar
+            // If the event is both in Google and DB, we keep the Google flag too
+            fromGoogle: existingSlot?.fromGoogle || false
           });
+          
+          // Log for debugging
+          if (isFirstHour) {
+            console.log(`DB_BUTTON_DEBUG: Set future session slot for ${sessionDate} ${hourString}, patient "${patientName}", inGoogleCalendar: ${inGoogleCalendar}`);
+          }
         }
       }
     } catch (error) {
@@ -293,39 +342,36 @@ export const processFutureSessions = (
     }
   });
   
-  // Debug: After processing, check all future sessions for showBorder property
-  console.log('Checking future sessions for proper styling...');
+  // Now we need to check if any Google events should be marked as "already in DB"
+  // This ensures we don't show "Add to DB" buttons for events that are already in our database
   calendarData.forEach((dayMap, date) => {
     dayMap.forEach((slot, hour) => {
-      if (slot.fromFutureSession) {
-        console.log(`Future session at ${date} ${hour} - showBorder: ${slot.showBorder}, isFirst: ${slot.isFirstHour}, isLast: ${slot.isLastHour}`);
+      if (slot.fromGoogle) {
+        const slotKey = `${date}-${hour}`;
+        // If this Google event's time slot exists in our future_sessions map, mark it accordingly
+        if (futureSessionsMap.has(slotKey)) {
+          console.log(`DB_BUTTON_DEBUG: Marking Google event at ${slotKey} as already in DB`);
+          
+          // Update the slot to show it's from future_sessions too
+          dayMap.set(hour, {
+            ...slot,
+            fromFutureSession: true, // Marking that this event is also in DB
+            inGoogleCalendar: true    // Since it's a Google event, it's in Google Calendar
+          });
+        }
+      }
+    });
+  });
+  
+  // Debug: After processing, check all future sessions and Google events for proper flags
+  console.log(`DB_BUTTON_DEBUG: Final check of flag states:`);
+  calendarData.forEach((dayMap, date) => {
+    dayMap.forEach((slot, hour) => {
+      if (slot.fromGoogle || slot.fromFutureSession) {
+        console.log(`DB_BUTTON_DEBUG: Event at ${date} ${hour} - fromGoogle: ${slot.fromGoogle}, fromFutureSession: ${slot.fromFutureSession}, inGoogleCalendar: ${slot.inGoogleCalendar}`);
       }
     });
   });
   
   return calendarData;
-};
-
-export const createGoogleEventsMap = (googleEvents: GoogleCalendarEvent[]) => {
-  const googleEventsMap = new Map<string, GoogleCalendarEvent>();
-  
-  console.log(`LOV_DEBUG_PROCESSING: Creating Google events map from ${googleEvents.length} events`);
-  
-  googleEvents.forEach((event, index) => {
-    if (!event.start?.dateTime) {
-      console.log(`LOV_DEBUG_PROCESSING: Skipping event ${index} in map creation, no start time`);
-      return;
-    }
-    
-    const eventDate = new Date(event.start.dateTime);
-    const dateKey = format(eventDate, 'yyyy-MM-dd');
-    const hourKey = format(eventDate, 'HH:00');
-    const key = `${dateKey}-${hourKey}`;
-    
-    googleEventsMap.set(key, event);
-    console.log(`LOV_DEBUG_PROCESSING: Added event to map with key: ${key}`);
-  });
-  
-  console.log(`LOV_DEBUG_PROCESSING: Completed Google events map with ${googleEventsMap.size} entries`);
-  return googleEventsMap;
 };
