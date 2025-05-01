@@ -1,6 +1,6 @@
-
 import { supabaseClient } from '@/lib/supabaseClient';
 import { ArticlePublication } from '@/types/article';
+import { FutureSession } from '@/types/session';
 
 /**
  * Database Service to handle Supabase interactions
@@ -232,6 +232,67 @@ export class DatabaseService {
     
     if (error) {
       throw error;
+    }
+  }
+  
+  /**
+   * Create a new future session
+   */
+  public async createFutureSession(sessionData: Partial<FutureSession>): Promise<FutureSession> {
+    console.log(`LOV_DEBUG_DB_SERVICE: Creating future session with data:`, sessionData);
+    
+    if (!sessionData.patient_id) {
+      throw new Error("Patient ID is required");
+    }
+    
+    if (!sessionData.session_date) {
+      throw new Error("Session date is required");
+    }
+    
+    const client = await supabaseClient();
+    
+    const { data, error, status } = await client
+      .from('future_sessions')
+      .insert({
+        ...sessionData,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    console.log(`LOV_DEBUG_DB_SERVICE: Future session creation status: ${status}`);
+    
+    if (error) {
+      console.error(`LOV_DEBUG_DB_SERVICE: Error creating future session:`, error);
+      throw error;
+    }
+    
+    if (!data) {
+      throw new Error("Failed to create future session: No data returned");
+    }
+    
+    console.log(`LOV_DEBUG_DB_SERVICE: Future session created successfully:`, data);
+    
+    return data as FutureSession;
+  }
+  
+  /**
+   * Check if user is authenticated
+   */
+  public async checkAuthentication(): Promise<boolean> {
+    try {
+      const client = await supabaseClient();
+      const { data, error } = await client.auth.getUser();
+      
+      if (error) {
+        console.error(`LOV_DEBUG_DB_SERVICE: Auth error:`, error);
+        return false;
+      }
+      
+      return !!data.user;
+    } catch (err) {
+      console.error(`LOV_DEBUG_DB_SERVICE: Error checking auth:`, err);
+      return false;
     }
   }
 }
