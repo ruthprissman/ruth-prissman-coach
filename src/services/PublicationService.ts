@@ -35,7 +35,8 @@ class PublicationService {
   private accessToken?: string;
   private databaseService: DatabaseService;
   private emailService: EmailPublicationService;
-  private isCurrentlyProcessing = false; // Add flag to track if currently checking publications
+  private isCurrentlyProcessing = false; // Flag to track if currently checking publications
+  private processingTimeout: NodeJS.Timeout | null = null; // Timeout to reset stuck processing state
 
   private constructor() {
     this.databaseService = new DatabaseService();
@@ -58,7 +59,10 @@ class PublicationService {
   public start(accessToken?: string): void {
     this.accessToken = accessToken;
     
-    if (this.isRunning) return;
+    if (this.isRunning) {
+      console.log("Publication service already running, ignoring start request");
+      return;
+    }
     
     console.log("Publication service started");
     this.isRunning = true;
@@ -82,6 +86,15 @@ class PublicationService {
       clearInterval(this.timerId);
       this.timerId = null;
     }
+    
+    // Clear any processing timeout
+    if (this.processingTimeout) {
+      clearTimeout(this.processingTimeout);
+      this.processingTimeout = null;
+    }
+    
+    // Reset processing state when service is stopped
+    this.isCurrentlyProcessing = false;
     this.isRunning = false;
     console.log("Publication service stopped");
   }
@@ -100,6 +113,19 @@ class PublicationService {
     try {
       this.isCurrentlyProcessing = true;
       
+      // Set a timeout to reset the processing flag in case something goes wrong
+      // This prevents the service from getting permanently stuck
+      if (this.processingTimeout) {
+        clearTimeout(this.processingTimeout);
+      }
+      
+      this.processingTimeout = setTimeout(() => {
+        if (this.isCurrentlyProcessing) {
+          console.log("[Publication Service] Processing appears stuck, resetting processing flag");
+          this.isCurrentlyProcessing = false;
+        }
+      }, 30000); // 30 second timeout
+      
       // Get current timestamp
       const now = new Date().toISOString();
       console.log(`[Publication Service] Checking for scheduled publications at ${now}`);
@@ -110,6 +136,8 @@ class PublicationService {
       if (!scheduledPublications || scheduledPublications.length === 0) {
         console.log("[Publication Service] No publications scheduled for now");
         this.isCurrentlyProcessing = false;
+        clearTimeout(this.processingTimeout);
+        this.processingTimeout = null;
         return;
       }
 
@@ -164,7 +192,14 @@ class PublicationService {
     } catch (error) {
       console.error("[Publication Service] Error checking scheduled publications:", error);
     } finally {
+      // Make sure to always reset the processing flag
       this.isCurrentlyProcessing = false;
+      
+      // Clear the processing timeout
+      if (this.processingTimeout) {
+        clearTimeout(this.processingTimeout);
+        this.processingTimeout = null;
+      }
     }
   }
 
@@ -341,8 +376,10 @@ class PublicationService {
       
       console.log(`[Publication Service] Publication ${publicationId} has been reset for retry`);
       
-      // Force an immediate check for publications
-      instance.checkScheduledPublications();
+      // Force an immediate check for publications, but make sure to reset processing state first
+      // to avoid the "already processing" message
+      instance.isCurrentlyProcessing = false;
+      instance.checkScheduledPublications(true);
       
     } catch (error) {
       console.error(`[Publication Service] Error retrying publication ${publicationId}:`, error);

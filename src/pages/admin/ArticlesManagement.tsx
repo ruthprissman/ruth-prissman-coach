@@ -8,12 +8,14 @@ import FailedPublicationsPanel from '@/components/admin/articles/FailedPublicati
 import { Button } from '@/components/ui/button';
 import { Article, Category } from '@/types/article';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePublication } from '@/contexts/PublicationContext';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 
 const ArticlesManagement: React.FC = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { isInitialized } = usePublication();
   const { toast } = useToast();
   const [articles, setArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -76,9 +78,16 @@ const ArticlesManagement: React.FC = () => {
   
   useEffect(() => {
     if (session) {
+      console.log('[ArticlesManagement] Session active, fetching articles and categories');
       Promise.all([fetchArticles(), fetchCategories()]);
     }
   }, [session]);
+  
+  useEffect(() => {
+    if (isInitialized) {
+      console.log('[ArticlesManagement] Publication service initialized');
+    }
+  }, [isInitialized]);
   
   const handleEditArticle = (article: Article) => {
     navigate(`/admin/articles/edit/${article.id}`);
