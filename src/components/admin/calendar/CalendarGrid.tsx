@@ -23,7 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.6";
+const COMPONENT_VERSION = "1.0.7";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -236,6 +236,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const clientName = extractClientName(slot.notes);
     
     console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering action icons for meeting on ${date} at ${slot.hour}, is past: ${isPastMeeting}`);
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Meeting details - fromGoogle: ${slot.fromGoogle}, fromFutureSession: ${slot.fromFutureSession}, notes: ${slot.notes}`);
     
     return (
       <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -291,7 +292,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               </TooltipContent>
             </Tooltip>
             
-            {!slot.fromFutureSession && (
+            {/* Only show "Add to DB" button for Google Calendar events that aren't already in the database */}
+            {slot.fromGoogle && !slot.fromFutureSession && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 
