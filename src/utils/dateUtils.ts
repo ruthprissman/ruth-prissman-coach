@@ -19,16 +19,33 @@ export const convertToHebrewDateSync = (date: Date): string => {
     
     // Get the Hebrew date components
     const day = hDate.getDate();
-    const month = hDate.getMonthName();
+    const monthId = hDate.getMonth();
     const year = hDate.getFullYear();
     
+    // Map of Hebrew month names in Hebrew
+    const hebrewMonthNames: Record<number, string> = {
+      1: 'ניסן',
+      2: 'אייר',
+      3: 'סיון',
+      4: 'תמוז',
+      5: 'אב',
+      6: 'אלול',
+      7: 'תשרי',
+      8: 'חשון',
+      9: 'כסלו',
+      10: 'טבת',
+      11: 'שבט',
+      12: 'אדר',
+      13: 'אדר ב׳',  // For leap years
+    };
+    
     // Format the Hebrew date manually using gematriya for Hebrew numerals
-    // Format: day monthName year (in Hebrew)
     const hebrewDay = gematriya(day);
+    const hebrewMonth = hebrewMonthNames[monthId] || '';
     const hebrewYear = gematriya(year);
     
-    // Combine the components with appropriate Hebrew formatting
-    return `${hebrewDay} ${month} ${hebrewYear}`;
+    // Return the formatted date
+    return `${hebrewDay} ${hebrewMonth} ${hebrewYear}`;
   } catch (error) {
     console.error('Error converting to Hebrew date (sync):', error);
     return '';
