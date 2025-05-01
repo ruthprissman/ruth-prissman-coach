@@ -23,7 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.5";
+const COMPONENT_VERSION = "1.0.6";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -92,7 +92,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Add the missing handleFutureSessionCreated function
   const handleFutureSessionCreated = () => {
-    console.log(`LOV_DEBUG_CALENDAR_GRID: Future session created, forcing refresh`);
+    console.log(`MEETING_SAVE_DEBUG: Future session created, forcing refresh`);
     handleForceRefresh();
   };
 
@@ -194,14 +194,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Force refresh to help diagnose caching/state issues
   const handleForceRefresh = () => {
-    console.log(`LOV_DEBUG_CALENDAR_GRID: Force refresh triggered at ${new Date().toISOString()}`);
+    console.log(`MEETING_SAVE_DEBUG: Force refresh triggered at ${new Date().toISOString()}`);
     setForceRefreshToken(Date.now());
     // This will cause the component to re-render with a new token value
   };
 
   // Handle add to future sessions
   const handleAddToFutureSessions = (slot: CalendarSlot, date: string) => {
-    console.log(`LOV_DEBUG_CALENDAR_GRID: Adding meeting to future sessions for ${date} at ${slot.hour}`);
+    console.log(`MEETING_SAVE_DEBUG: Adding meeting to future sessions for ${date} at ${slot.hour}`);
     // Set the selected meeting slot and open the dialog
     setSelectedMeetingSlot(slot);
     setAddToFutureSessionDialogOpen(true);
@@ -436,8 +436,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   }
 
-  console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering calendar grid for days: ${days.map(d => d.date).join(', ')}`);
-  console.log(`LOV_DEBUG_CALENDAR_GRID: Force refresh token: ${forceRefreshToken}`);
+  console.log(`MEETING_SAVE_DEBUG: Rendering calendar grid for days: ${days.map(d => d.date).join(', ')}`);
+  console.log(`MEETING_SAVE_DEBUG: Force refresh token: ${forceRefreshToken}`);
 
   return (
     <TooltipProvider>

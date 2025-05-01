@@ -69,7 +69,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.2";
+const COMPONENT_VERSION = "1.1.0";
 
 const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialogProps> = ({
   open,
@@ -84,7 +84,7 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const dbService = new DatabaseService();
   
-  console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Component loaded, version ${COMPONENT_VERSION}`);
+  console.log(`MEETING_SAVE_DEBUG: Component loaded, version ${COMPONENT_VERSION}`);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -106,35 +106,35 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
   const searchPatientByName = async (name: string) => {
     if (!name) return [];
     
-    console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Searching for patient with name: "${name}"`);
+    console.log(`MEETING_SAVE_DEBUG: Searching for patient with name: "${name}"`);
     setIsSearching(true);
     setError(null);
     
     try {
       const supabase = await supabaseClient();
       
-      console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Supabase client initialized`);
+      console.log(`MEETING_SAVE_DEBUG: Supabase client initialized for patient search`);
       
       const { data, error, status } = await supabase
         .from('patients')
-        .select('*')  // Select all fields to properly satisfy Patient interface
+        .select('id, name, phone, email, notes, session_price') // Explicitly select required fields
         .ilike('name', `%${name}%`)
         .order('name', { ascending: true })
         .limit(5);
         
-      console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Patient search completed, status: ${status}`);
+      console.log(`MEETING_SAVE_DEBUG: Patient search completed, status: ${status}`);
       
       if (error) {
-        console.error(`LOV_DEBUG_ADD_MEETING_DIALOG: Error in patient search:`, error);
+        console.error(`MEETING_SAVE_DEBUG: Error in patient search:`, error);
         throw error;
       }
       
-      console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Found ${data?.length || 0} patient(s):`, data);
+      console.log(`MEETING_SAVE_DEBUG: Found ${data?.length || 0} patient(s):`, data);
       
       // Ensure the data matches the Patient interface
       return data as Patient[];
     } catch (err: any) {
-      console.error('LOV_DEBUG_ADD_MEETING_DIALOG: Error searching for patient:', err.message);
+      console.error('MEETING_SAVE_DEBUG: Error searching for patient:', err.message);
       return [];
     } finally {
       setIsSearching(false);
@@ -144,7 +144,7 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
   // Reset form when meeting data changes
   useEffect(() => {
     if (meetingData && open) {
-      console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Setting form data from meetingData:`, meetingData);
+      console.log(`MEETING_SAVE_DEBUG: Setting form data from meetingData:`, meetingData);
       
       // Extract meeting date and time
       const meetingDate = meetingData.date;
@@ -152,11 +152,11 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
       
       // Format the session date
       const formattedSessionDate = `${meetingDate}T${meetingTime}:00`;
-      console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Formatted session date: ${formattedSessionDate}`);
+      console.log(`MEETING_SAVE_DEBUG: Formatted session date: ${formattedSessionDate}`);
       
       // Extract client name from notes
       const clientName = extractClientName(meetingData.notes);
-      console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Extracted client name: "${clientName}"`);
+      console.log(`MEETING_SAVE_DEBUG: Extracted client name: "${clientName}"`);
       
       // Reset form with new values
       form.reset({
@@ -178,7 +178,7 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
           if (results.length === 1) {
             setSelectedPatient(results[0]);
             form.setValue('patient_id', results[0].id);
-            console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Automatically selected patient:`, results[0]);
+            console.log(`MEETING_SAVE_DEBUG: Automatically selected patient:`, results[0]);
           } else if (results.length === 0) {
             setError(`לא נמצא מטופל עם השם "${clientName}"`);
           }
@@ -189,24 +189,48 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
 
   // Check authentication status
   const checkAuthentication = async () => {
-    const isAuthenticated = await dbService.checkAuthentication();
-    console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Authentication status: ${isAuthenticated ? 'Authenticated' : 'Not authenticated'}`);
-    return isAuthenticated;
+    console.log(`MEETING_SAVE_DEBUG: Checking authentication status`);
+    try {
+      const supabase = await supabaseClient();
+      const { data: session, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error(`MEETING_SAVE_DEBUG: Auth error:`, error);
+        return false;
+      }
+      
+      const hasSession = !!session && !!session.session;
+      console.log(`MEETING_SAVE_DEBUG: User has active session: ${hasSession ? 'Yes' : 'No'}`);
+      
+      if (hasSession) {
+        const { data: user } = await supabase.auth.getUser();
+        console.log(`MEETING_SAVE_DEBUG: Current user:`, user?.user?.email);
+      }
+      
+      return hasSession;
+    } catch (err) {
+      console.error(`MEETING_SAVE_DEBUG: Error checking auth:`, err);
+      return false;
+    }
   };
 
   const onSubmit = async (values: FormValues) => {
-    console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Form submitted with values:`, values);
+    console.log(`MEETING_SAVE_DEBUG: Form submitted with values:`, values);
     setIsLoading(true);
     setError(null);
     
     try {
       if (!values.patient_id) {
+        console.error(`MEETING_SAVE_DEBUG: Missing patient_id in form submission`);
         throw new Error("יש לבחור מטופל תחילה");
       }
       
       // Check authentication before proceeding
       const isAuthenticated = await checkAuthentication();
+      console.log(`MEETING_SAVE_DEBUG: Authentication check result: ${isAuthenticated}`);
+      
       if (!isAuthenticated) {
+        console.error(`MEETING_SAVE_DEBUG: User not authenticated`);
         throw new Error("אינך מחובר למערכת. יש להתחבר מחדש.");
       }
       
@@ -219,10 +243,28 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
         zoom_link: values.zoom_link || undefined,
       };
       
-      // Use the DatabaseService to create the future session
-      const result = await dbService.createFutureSession(sessionData);
+      console.log(`MEETING_SAVE_DEBUG: Attempting to create future session with data:`, sessionData);
       
-      console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Successfully created future session:`, result);
+      // Direct insertion using Supabase client for comparison
+      const supabase = await supabaseClient();
+      console.log(`MEETING_SAVE_DEBUG: Initialized direct Supabase client for insertion test`);
+      
+      const { data: directData, error: directError } = await supabase
+        .from('future_sessions')
+        .insert({
+          ...sessionData,
+          created_at: new Date().toISOString()
+        })
+        .select();
+      
+      console.log(`MEETING_SAVE_DEBUG: Direct insertion result:`, { data: directData, error: directError });
+      
+      if (directError) {
+        console.error(`MEETING_SAVE_DEBUG: Direct insertion failed:`, directError);
+        throw directError;
+      }
+      
+      console.log(`MEETING_SAVE_DEBUG: Direct insertion succeeded:`, directData);
       
       toast({
         title: "נוספה פגישה חדשה",
@@ -234,12 +276,12 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
       
       // Only call onCreated if the insert was successful
       if (onCreated) {
-        console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Calling onCreated callback`);
+        console.log(`MEETING_SAVE_DEBUG: Calling onCreated callback`);
         onCreated();
       }
       
     } catch (err: any) {
-      console.error('LOV_DEBUG_ADD_MEETING_DIALOG: Error creating future session:', err);
+      console.error('MEETING_SAVE_DEBUG: Error creating future session:', err);
       
       let errorMessage = err.message;
       if (err.code === 'PGRST301' || err.code === '42501') {
@@ -262,7 +304,7 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
 
   // Handle patient selection
   const handlePatientSelect = (patient: Patient) => {
-    console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Patient selected:`, patient);
+    console.log(`MEETING_SAVE_DEBUG: Patient selected:`, patient);
     setSelectedPatient(patient);
     form.setValue('patient_id', patient.id);
     form.setValue('patient_name', patient.name);
@@ -273,7 +315,7 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
     const patientName = form.getValues('patient_name');
     if (!patientName) return;
     
-    console.log(`LOV_DEBUG_ADD_MEETING_DIALOG: Manually searching for patient: "${patientName}"`);
+    console.log(`MEETING_SAVE_DEBUG: Manually searching for patient: "${patientName}"`);
     
     const results = await searchPatientByName(patientName);
     setSearchResults(results);

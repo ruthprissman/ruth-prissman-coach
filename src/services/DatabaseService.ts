@@ -1,3 +1,4 @@
+
 import { supabaseClient } from '@/lib/supabaseClient';
 import { ArticlePublication } from '@/types/article';
 import { FutureSession } from '@/types/session';
@@ -239,41 +240,65 @@ export class DatabaseService {
    * Create a new future session
    */
   public async createFutureSession(sessionData: Partial<FutureSession>): Promise<FutureSession> {
-    console.log(`LOV_DEBUG_DB_SERVICE: Creating future session with data:`, sessionData);
+    console.log(`MEETING_SAVE_DEBUG: Creating future session with data:`, sessionData);
     
     if (!sessionData.patient_id) {
+      console.error(`MEETING_SAVE_DEBUG: Patient ID is required but missing`);
       throw new Error("Patient ID is required");
     }
     
     if (!sessionData.session_date) {
+      console.error(`MEETING_SAVE_DEBUG: Session date is required but missing`);
       throw new Error("Session date is required");
     }
     
-    const client = await supabaseClient();
-    
-    const { data, error, status } = await client
-      .from('future_sessions')
-      .insert({
-        ...sessionData,
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-    
-    console.log(`LOV_DEBUG_DB_SERVICE: Future session creation status: ${status}`);
-    
-    if (error) {
-      console.error(`LOV_DEBUG_DB_SERVICE: Error creating future session:`, error);
-      throw error;
+    try {
+      const client = await supabaseClient();
+      
+      console.log(`MEETING_SAVE_DEBUG: Supabase client initialized for session creation`);
+
+      // First check if we have an auth session
+      const { data: session } = await client.auth.getSession();
+      console.log(`MEETING_SAVE_DEBUG: Auth session check:`, !!session?.session ? "Session exists" : "No session");
+      
+      if (!session?.session) {
+        console.error(`MEETING_SAVE_DEBUG: No authenticated session found`);
+        throw new Error("Authentication required");
+      }
+      
+      // Log session details for debugging
+      console.log(`MEETING_SAVE_DEBUG: Session user:`, session.session.user.email);
+      console.log(`MEETING_SAVE_DEBUG: Session expiry:`, new Date(session.session.expires_at * 1000).toISOString());
+      
+      // Proceed with insert if authenticated
+      const { data, error, status } = await client
+        .from('future_sessions')
+        .insert({
+          ...sessionData,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      console.log(`MEETING_SAVE_DEBUG: Future session creation status: ${status}`);
+      
+      if (error) {
+        console.error(`MEETING_SAVE_DEBUG: Error creating future session:`, error);
+        throw error;
+      }
+      
+      if (!data) {
+        console.error(`MEETING_SAVE_DEBUG: No data returned from insert operation`);
+        throw new Error("Failed to create future session: No data returned");
+      }
+      
+      console.log(`MEETING_SAVE_DEBUG: Future session created successfully:`, data);
+      
+      return data as FutureSession;
+    } catch (err) {
+      console.error(`MEETING_SAVE_DEBUG: Exception in createFutureSession:`, err);
+      throw err;
     }
-    
-    if (!data) {
-      throw new Error("Failed to create future session: No data returned");
-    }
-    
-    console.log(`LOV_DEBUG_DB_SERVICE: Future session created successfully:`, data);
-    
-    return data as FutureSession;
   }
   
   /**
@@ -281,17 +306,25 @@ export class DatabaseService {
    */
   public async checkAuthentication(): Promise<boolean> {
     try {
+      console.log(`MEETING_SAVE_DEBUG: Checking authentication status`);
       const client = await supabaseClient();
       const { data, error } = await client.auth.getUser();
       
       if (error) {
-        console.error(`LOV_DEBUG_DB_SERVICE: Auth error:`, error);
+        console.error(`MEETING_SAVE_DEBUG: Auth error:`, error);
         return false;
       }
       
-      return !!data.user;
+      const isAuthenticated = !!data.user;
+      console.log(`MEETING_SAVE_DEBUG: Authentication check result: ${isAuthenticated ? 'Authenticated' : 'Not authenticated'}`);
+      
+      if (isAuthenticated) {
+        console.log(`MEETING_SAVE_DEBUG: Authenticated as:`, data.user.email);
+      }
+      
+      return isAuthenticated;
     } catch (err) {
-      console.error(`LOV_DEBUG_DB_SERVICE: Error checking auth:`, err);
+      console.error(`MEETING_SAVE_DEBUG: Error checking auth:`, err);
       return false;
     }
   }
