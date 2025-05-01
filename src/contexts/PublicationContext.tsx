@@ -38,7 +38,7 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
       if (typeof window !== 'undefined') {
         const path = window.location.pathname;
         const isAdminArticles = path.includes('/admin/articles');
-        console.log('Current path:', path, 'isAdminArticles:', isAdminArticles);
+        console.log('[PublicationContext] Current path:', path, 'isAdminArticles:', isAdminArticles);
         setIsAdminArticlesPage(isAdminArticles);
       }
     };
@@ -47,30 +47,42 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
     
     // Add event listener for route changes if using client-side routing
     window.addEventListener('popstate', checkIfAdminArticlesPage);
+    window.addEventListener('pushstate', checkIfAdminArticlesPage);
+    window.addEventListener('hashchange', checkIfAdminArticlesPage);
+    
+    // Add listener for navigation events
+    const handleNavigation = () => {
+      setTimeout(checkIfAdminArticlesPage, 100);
+    };
+    
+    document.addEventListener('click', handleNavigation);
     
     return () => {
       window.removeEventListener('popstate', checkIfAdminArticlesPage);
+      window.removeEventListener('pushstate', checkIfAdminArticlesPage);
+      window.removeEventListener('hashchange', checkIfAdminArticlesPage);
+      document.removeEventListener('click', handleNavigation);
     };
   }, []);
   
-  // Initialize and stop the publication service based on auth state
+  // Initialize and stop the publication service based on auth state and current page
   useEffect(() => {
     const publicationService = PublicationService;
     
     // Only start the service if we're authenticated AND on the admin articles page
     if (session?.access_token && isAdminArticlesPage) {
-      console.log('Starting publication service - admin articles page detected');
+      console.log('[PublicationContext] Starting publication service - admin articles page detected');
       publicationService.start(session.access_token);
       setIsInitialized(true);
     } else {
-      console.log('Stopping publication service - not on admin articles page or not authenticated');
+      console.log('[PublicationContext] Stopping publication service - not on admin articles page or not authenticated');
       publicationService.stop();
       setIsInitialized(false);
     }
     
     // Cleanup on unmount
     return () => {
-      console.log('PublicationContext unmounting - stopping service');
+      console.log('[PublicationContext] Component unmounting - stopping service');
       publicationService.stop();
     };
   }, [session, isAdminArticlesPage]);
@@ -95,10 +107,16 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
   };
 
   const manualCheckPublications = async () => {
+    if (!isAdminArticlesPage) {
+      console.log('[PublicationContext] Not on admin articles page, skipping manual publication check');
+      return;
+    }
+    
+    console.log('[PublicationContext] Manually checking publications');
     try {
       await PublicationService.manualCheckPublications();
     } catch (error: any) {
-      console.error('Error manually checking publications:', error);
+      console.error('[PublicationContext] Error manually checking publications:', error);
       // Don't show toast here to avoid spamming the user
     }
   };

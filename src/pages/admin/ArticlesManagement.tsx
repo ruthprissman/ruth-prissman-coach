@@ -76,14 +76,21 @@ const ArticlesManagement: React.FC = () => {
     }
   };
   
+  // Initial data loading
   useEffect(() => {
     if (session) {
       Promise.all([fetchArticles(), fetchCategories()]);
-      
-      // Manually trigger publication check when the component loads
+    }
+  }, [session]);
+  
+  // Run publication check only once when the component is mounted
+  useEffect(() => {
+    if (session) {
+      console.log('[ArticlesManagement] Initial mount - checking publications');
       manualCheckPublications();
     }
-  }, [session, manualCheckPublications]);
+    // Only run this effect once when the component mounts
+  }, []);
   
   const handleEditArticle = (article: Article) => {
     navigate(`/admin/articles/edit/${article.id}`);
@@ -92,6 +99,8 @@ const ArticlesManagement: React.FC = () => {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await fetchArticles();
+    // Also check for new publications when refreshing
+    await manualCheckPublications();
     setIsRefreshing(false);
   };
   

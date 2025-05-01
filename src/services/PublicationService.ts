@@ -30,12 +30,14 @@ export interface EmailDeliveryStats {
 class PublicationService {
   private static instance: PublicationService;
   private timerId: NodeJS.Timeout | null = null;
+  private processingTimeoutId: NodeJS.Timeout | null = null; // Add timeout to reset stuck processing flag
   private isRunning = false;
   private checkInterval = 60000; // Check every minute
   private accessToken?: string;
   private databaseService: DatabaseService;
   private emailService: EmailPublicationService;
   private isCurrentlyProcessing = false; // Add flag to track if currently checking publications
+  private MAX_PROCESSING_TIME = 300000; // 5 minutes maximum processing time
 
   private constructor() {
     this.databaseService = new DatabaseService();
@@ -58,19 +60,29 @@ class PublicationService {
   public start(accessToken?: string): void {
     this.accessToken = accessToken;
     
-    if (this.isRunning) return;
+    if (this.isRunning) {
+      console.log("[Publication Service] Already running, not starting again");
+      return;
+    }
     
-    console.log("Publication service started");
+    console.log("[Publication Service] Started");
     this.isRunning = true;
+    
+    // Reset the processing flag when starting
+    this.isCurrentlyProcessing = false;
     
     // Check after a delay on startup to avoid immediate checks during page load
     setTimeout(() => {
-      this.checkScheduledPublications();
-      
-      // Then set interval for future checks
-      this.timerId = setInterval(() => {
+      if (this.isRunning) { // Double check we're still running
         this.checkScheduledPublications();
-      }, this.checkInterval);
+        
+        // Then set interval for future checks
+        this.timerId = setInterval(() => {
+          if (this.isRunning) { // Check we're still running before executing
+            this.checkScheduledPublications();
+          }
+        }, this.checkInterval);
+      }
     }, 5000); // 5 second delay before first check
   }
 
@@ -78,12 +90,24 @@ class PublicationService {
    * Stop the publication service
    */
   public stop(): void {
+    console.log("[Publication Service] Stopping");
+    
     if (this.timerId) {
       clearInterval(this.timerId);
       this.timerId = null;
     }
+    
+    if (this.processingTimeoutId) {
+      clearTimeout(this.processingTimeoutId);
+      this.processingTimeoutId = null;
+    }
+    
     this.isRunning = false;
-    console.log("Publication service stopped");
+    
+    // Reset the processing flag when stopping
+    this.isCurrentlyProcessing = false;
+    
+    console.log("[Publication Service] Stopped");
   }
 
   /**
@@ -97,9 +121,21 @@ class PublicationService {
       return;
     }
     
+    // Set processing flag and setup safeguard timeout
+    this.isCurrentlyProcessing = true;
+    
+    // Set timeout to automatically reset processing flag if it gets stuck
+    if (this.processingTimeoutId) {
+      clearTimeout(this.processingTimeoutId);
+    }
+    
+    this.processingTimeoutId = setTimeout(() => {
+      console.log("[Publication Service] Processing timeout reached, resetting processing flag");
+      this.isCurrentlyProcessing = false;
+      this.processingTimeoutId = null;
+    }, this.MAX_PROCESSING_TIME);
+    
     try {
-      this.isCurrentlyProcessing = true;
-      
       // Get current timestamp
       const now = new Date().toISOString();
       console.log(`[Publication Service] Checking for scheduled publications at ${now}`);
@@ -109,7 +145,6 @@ class PublicationService {
 
       if (!scheduledPublications || scheduledPublications.length === 0) {
         console.log("[Publication Service] No publications scheduled for now");
-        this.isCurrentlyProcessing = false;
         return;
       }
 
@@ -164,7 +199,14 @@ class PublicationService {
     } catch (error) {
       console.error("[Publication Service] Error checking scheduled publications:", error);
     } finally {
+      // Always reset processing flag when done
       this.isCurrentlyProcessing = false;
+      
+      // Clear the processing timeout
+      if (this.processingTimeoutId) {
+        clearTimeout(this.processingTimeoutId);
+        this.processingTimeoutId = null;
+      }
     }
   }
 
