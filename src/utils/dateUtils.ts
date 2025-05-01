@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { HebrewCalendar, HDate, months } from '@hebcal/core';
@@ -19,14 +18,11 @@ export const convertToHebrewDateSync = (date: Date): string => {
     
     // Get the Hebrew date components
     const day = hDate.getDate();
-    const month = hDate.getMonth();
+    const month = hDate.getMonthName();
     const year = hDate.getFullYear();
     
-    // Get the Hebrew month name
-    const monthName = months[month];
-    
-    // Format the complete Hebrew date
-    return `${day} ${monthName} ${year}`;
+    // Format the Hebrew date using the HebrewCalendar's format function
+    return HebrewCalendar.formatHebrewDate(hDate);
   } catch (error) {
     console.error('Error converting to Hebrew date (sync):', error);
     return '';

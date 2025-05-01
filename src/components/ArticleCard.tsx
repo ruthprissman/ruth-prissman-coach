@@ -53,9 +53,12 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
         
         if (formattedHebrewDate) {
           setHebrewDate(formattedHebrewDate);
+        } else {
+          console.warn("🛠️ [ArticleCard] Hebrew date conversion returned empty string");
         }
       } catch (error) {
         console.error('Error setting Hebrew date:', error);
+        setHebrewDate('');
       }
     }
   }, [article]);
@@ -128,7 +131,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
       <div className="p-4">
         <h2 className="text-xl font-alef font-bold text-purple-dark mb-2 line-clamp-2">{article.title}</h2>
         <div className="flex flex-col text-sm text-gray-600">
-          <span className="mb-1 text-gold-dark">{hebrewDate}</span>
+          <span className="mb-1 text-gold-dark">{hebrewDate || ''}</span>
           <span>{formatDate(publicationDate)}</span>
         </div>
         {article.categories && (
