@@ -8,13 +8,15 @@ interface PublicationContextType {
   retryPublication: (publicationId: number) => Promise<void>;
   isInitialized: boolean;
   manualCheckPublications: () => Promise<void>;
+  isAdminArticlesPage: boolean;
 }
 
 // Create context with default values
 const PublicationContext = createContext<PublicationContextType>({
   retryPublication: async () => {},
   isInitialized: false,
-  manualCheckPublications: async () => {}
+  manualCheckPublications: async () => {},
+  isAdminArticlesPage: false
 });
 
 export const usePublication = () => useContext(PublicationContext);
@@ -27,24 +29,51 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
   const { session } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
+  const [isAdminArticlesPage, setIsAdminArticlesPage] = useState(false);
+  
+  // Check if we're on an admin articles page based on window location
+  // This avoids using useLocation from react-router-dom which requires Router context
+  useEffect(() => {
+    const checkIfAdminArticlesPage = () => {
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        const isAdminArticles = path.includes('/admin/articles');
+        console.log('Current path:', path, 'isAdminArticles:', isAdminArticles);
+        setIsAdminArticlesPage(isAdminArticles);
+      }
+    };
+    
+    checkIfAdminArticlesPage();
+    
+    // Add event listener for route changes if using client-side routing
+    window.addEventListener('popstate', checkIfAdminArticlesPage);
+    
+    return () => {
+      window.removeEventListener('popstate', checkIfAdminArticlesPage);
+    };
+  }, []);
   
   // Initialize and stop the publication service based on auth state
   useEffect(() => {
     const publicationService = PublicationService;
     
-    if (session?.access_token) {
+    // Only start the service if we're authenticated AND on the admin articles page
+    if (session?.access_token && isAdminArticlesPage) {
+      console.log('Starting publication service - admin articles page detected');
       publicationService.start(session.access_token);
       setIsInitialized(true);
     } else {
+      console.log('Stopping publication service - not on admin articles page or not authenticated');
       publicationService.stop();
       setIsInitialized(false);
     }
     
     // Cleanup on unmount
     return () => {
+      console.log('PublicationContext unmounting - stopping service');
       publicationService.stop();
     };
-  }, [session]);
+  }, [session, isAdminArticlesPage]);
   
   const retryPublication = async (publicationId: number) => {
     try {
@@ -77,7 +106,8 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
   const value = {
     retryPublication,
     isInitialized,
-    manualCheckPublications
+    manualCheckPublications,
+    isAdminArticlesPage
   };
   
   return (

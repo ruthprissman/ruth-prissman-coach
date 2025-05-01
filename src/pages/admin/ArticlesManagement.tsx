@@ -10,11 +10,13 @@ import { Article, Category } from '@/types/article';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
+import { usePublication } from '@/contexts/PublicationContext';
 
 const ArticlesManagement: React.FC = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { toast } = useToast();
+  const { manualCheckPublications } = usePublication();
   const [articles, setArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,8 +79,11 @@ const ArticlesManagement: React.FC = () => {
   useEffect(() => {
     if (session) {
       Promise.all([fetchArticles(), fetchCategories()]);
+      
+      // Manually trigger publication check when the component loads
+      manualCheckPublications();
     }
-  }, [session]);
+  }, [session, manualCheckPublications]);
   
   const handleEditArticle = (article: Article) => {
     navigate(`/admin/articles/edit/${article.id}`);
