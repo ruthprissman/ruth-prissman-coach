@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -23,7 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.7";
+const COMPONENT_VERSION = "1.0.8";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -465,6 +464,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </button>
         </div>
         
+        {/* טבלת היומן */}
         <Table className="border border-gray-200 rounded-md">
           <TableHeader className="bg-purple-50 sticky top-0 z-10">
             <TableRow className="border-b border-gray-300">
@@ -560,7 +560,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </TableBody>
         </Table>
         
-        {/* Dialog for adding meetings to future sessions */}
+        {/* Dialog for adding meetings to future sessions - מעודכן לגרסה החדשה */}
         <AddMeetingToFutureSessionsDialog
           open={addToFutureSessionDialogOpen}
           onOpenChange={setAddToFutureSessionDialogOpen}
