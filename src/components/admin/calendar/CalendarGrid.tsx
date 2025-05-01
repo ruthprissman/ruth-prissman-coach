@@ -22,7 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.9";
+const COMPONENT_VERSION = "1.0.10";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -98,16 +98,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const getStatusStyle = (slot: CalendarSlot) => {
     const { status, fromGoogle, isMeeting, isPatientMeeting, fromFutureSession, inGoogleCalendar } = slot;
     
-    if (fromFutureSession) {
-      if (inGoogleCalendar) {
-        return { 
-          bg: 'bg-[#D3E4FD]', 
-          border: 'border-[#D3E4FD]', 
-          text: 'text-gray-700',
-          colorClass: 'border-[#D3E4FD]'
-        };
-      }
-      
+    console.log(`COLOR_DEBUG: Slot status check - fromFutureSession: ${fromFutureSession}, inGoogleCalendar: ${inGoogleCalendar}, fromGoogle: ${fromGoogle}, isMeeting: ${isMeeting}, status: ${status}`);
+    
+    // First priority: Future sessions from the DB that are not in Google Calendar
+    if (fromFutureSession && !inGoogleCalendar) {
+      console.log(`COLOR_DEBUG: Using purple color for future session not in Google Calendar`);
       return { 
         bg: 'bg-[#9b87f5]', 
         border: 'border-[#9b87f5]', 
@@ -116,7 +111,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       };
     }
     
+    // Second priority: Patient meetings (always get a specific color)
     if (isPatientMeeting || (isMeeting && (status as string) === 'booked')) {
+      console.log(`COLOR_DEBUG: Using dark purple color for patient meeting`);
       return { 
         bg: 'bg-[#5C4C8D]', 
         border: 'border-[#5C4C8D]', 
@@ -125,7 +122,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       };
     }
 
-    if (fromGoogle) {
+    // Third priority: Events that are in both DB and Google Calendar
+    if (fromFutureSession && inGoogleCalendar) {
+      console.log(`COLOR_DEBUG: Using light blue color for future session in Google Calendar`);
       return { 
         bg: 'bg-[#D3E4FD]', 
         border: 'border-[#D3E4FD]', 
@@ -134,6 +133,18 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       };
     }
     
+    // Fourth priority: Google Calendar events not in DB
+    if (fromGoogle && !fromFutureSession) {
+      console.log(`COLOR_DEBUG: Using light blue color for Google Calendar event`);
+      return { 
+        bg: 'bg-[#D3E4FD]', 
+        border: 'border-[#D3E4FD]', 
+        text: 'text-gray-700',
+        colorClass: 'border-[#D3E4FD]'
+      };
+    }
+    
+    // Default statuses - unchanged
     switch (status) {
       case 'available':
         return { bg: 'bg-purple-100', border: 'border-purple-100', text: 'text-purple-800', colorClass: 'border-purple-100' };

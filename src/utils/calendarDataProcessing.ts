@@ -1,9 +1,10 @@
+
 import { format, startOfDay, addDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 
 // Debug version for tracking code execution
-const UTILS_VERSION = "1.0.3";
+const UTILS_VERSION = "1.0.4";
 console.log(`LOV_DEBUG_PROCESSING: Calendar data processing utils loaded, version ${UTILS_VERSION}`);
 
 export const generateWeekDays = (currentDate: Date) => {
@@ -271,6 +272,7 @@ export const processFutureSessions = (
       const inGoogleCalendar = googleEventsMap.has(eventDateHourKey);
       
       console.log(`DB_BUTTON_DEBUG: Session ${index} - inGoogleCalendar: ${inGoogleCalendar}, key: ${eventDateHourKey}`);
+      console.log(`COLOR_DEBUG: Session ${index} color flags - inGoogleCalendar: ${inGoogleCalendar}, fromFutureSession: true`);
       
       let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
       if (session.status === 'Completed') status = 'completed';
@@ -327,9 +329,14 @@ export const processFutureSessions = (
             fromFutureSession: true, // Mark ALL future_sessions entries with this flag
             futureSession: session,
             inGoogleCalendar: inGoogleCalendar, // This indicates if the session is also in Google Calendar
-            // If the event is both in Google and DB, we keep the Google flag too
-            fromGoogle: existingSlot?.fromGoogle || false
+            // If the event exists in both Google and DB, preserve the Google flag
+            fromGoogle: existingSlot?.fromGoogle || inGoogleCalendar
           });
+          
+          // Additional color debug logging
+          if (isFirstHour) {
+            console.log(`COLOR_DEBUG: Set future session at ${sessionDate} ${hourString}, inGoogleCalendar: ${inGoogleCalendar}, fromFutureSession: true, fromGoogle: ${existingSlot?.fromGoogle || inGoogleCalendar}`);
+          }
           
           // Log for debugging
           if (isFirstHour) {
@@ -351,6 +358,7 @@ export const processFutureSessions = (
         // If this Google event's time slot exists in our future_sessions map, mark it accordingly
         if (futureSessionsMap.has(slotKey)) {
           console.log(`DB_BUTTON_DEBUG: Marking Google event at ${slotKey} as already in DB`);
+          console.log(`COLOR_DEBUG: Updating flags for existing Google event at ${slotKey} - setting fromFutureSession: true, inGoogleCalendar: true`);
           
           // Update the slot to show it's from future_sessions too
           dayMap.set(hour, {
@@ -358,17 +366,19 @@ export const processFutureSessions = (
             fromFutureSession: true, // Marking that this event is also in DB
             inGoogleCalendar: true    // Since it's a Google event, it's in Google Calendar
           });
+        } else {
+          console.log(`COLOR_DEBUG: Google event at ${slotKey} is not in future_sessions, keeping flags - fromFutureSession: ${slot.fromFutureSession || false}, inGoogleCalendar: ${slot.inGoogleCalendar || false}`);
         }
       }
     });
   });
   
   // Debug: After processing, check all future sessions and Google events for proper flags
-  console.log(`DB_BUTTON_DEBUG: Final check of flag states:`);
+  console.log(`COLOR_DEBUG: Final check of meeting color flag states:`);
   calendarData.forEach((dayMap, date) => {
     dayMap.forEach((slot, hour) => {
       if (slot.fromGoogle || slot.fromFutureSession) {
-        console.log(`DB_BUTTON_DEBUG: Event at ${date} ${hour} - fromGoogle: ${slot.fromGoogle}, fromFutureSession: ${slot.fromFutureSession}, inGoogleCalendar: ${slot.inGoogleCalendar}`);
+        console.log(`COLOR_DEBUG: Event at ${date} ${hour} - fromGoogle: ${slot.fromGoogle}, fromFutureSession: ${slot.fromFutureSession}, inGoogleCalendar: ${slot.inGoogleCalendar}`);
       }
     });
   });
