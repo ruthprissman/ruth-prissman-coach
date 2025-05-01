@@ -1,21 +1,32 @@
+
 import { format } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
-import { HebrewCalendar, HDate } from '@hebcal/core';
+import { HebrewCalendar, HDate, months } from '@hebcal/core';
 import { he } from 'date-fns/locale/he';
 
 /**
  * Creates a Hebrew date string from a JavaScript Date
  * 
- * Note: This function is synchronous, unlike the previous version which was async.
+ * This function properly uses @hebcal/core to convert a date to a real Hebrew date
  * 
  * @param date JavaScript Date object
- * @returns Hebrew date string
+ * @returns Hebrew date string in Hebrew (e.g., "כ״ד בתשרי תשפ״ה")
  */
 export const convertToHebrewDateSync = (date: Date): string => {
   try {
     // Create an HDate object from a JavaScript Date
     const hDate = new HDate(date);
-    return format(new Date(hDate.getFullYear(), hDate.getMonth() - 1, hDate.getDate()), "do MMMM yyyy", { locale: he });
+    
+    // Get the Hebrew date components
+    const day = hDate.getDate();
+    const month = hDate.getMonth();
+    const year = hDate.getFullYear();
+    
+    // Get the Hebrew month name
+    const monthName = months[month];
+    
+    // Format the complete Hebrew date
+    return `${day} ${monthName} ${year}`;
   } catch (error) {
     console.error('Error converting to Hebrew date (sync):', error);
     return '';
@@ -27,7 +38,7 @@ export const convertToHebrewDateSync = (date: Date): string => {
  * For backward compatibility as applications transition to the sync version
  * 
  * @param date JavaScript Date object
- * @returns Hebrew date string (e.g., "כ"ד תשרי תשפ"ה")
+ * @returns Hebrew date string (e.g., "כ״ד תשרי תשפ״ה")
  */
 export const convertToHebrewDate = async (date: Date): Promise<string> => {
   return convertToHebrewDateSync(date);

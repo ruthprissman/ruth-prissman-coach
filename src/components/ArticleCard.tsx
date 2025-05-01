@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Article } from '@/types/article';
 import { Check } from 'lucide-react';
@@ -18,12 +19,15 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
   const [isRead, setIsRead] = useState(false);
   const [hebrewDate, setHebrewDate] = useState('');
   
+  // Check if article has been read
   useEffect(() => {
     const readArticles = JSON.parse(localStorage.getItem('readArticles') || '[]');
     setIsRead(readArticles.includes(article.id));
   }, [article.id]);
   
+  // Calculate and set Hebrew date
   useEffect(() => {
+    // Get the publication date from either the scheduled date or published_at
     const publicationDate = article.article_publications && 
       article.article_publications.length > 0 && 
       article.article_publications[0].scheduled_date
@@ -34,32 +38,25 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
     console.log("🛠️ [ArticleCard] Raw publication date from Supabase:", publicationDate);
     
     if (publicationDate) {
-      const date = new Date(publicationDate);
-      console.log("🛠️ [ArticleCard] Parsed as Date object:", date);
-      console.log("🛠️ [ArticleCard] Date toString():", date.toString());
-      console.log("🛠️ [ArticleCard] Date toISOString():", date.toISOString());
-      console.log("🛠️ [ArticleCard] Date timezone offset (minutes):", date.getTimezoneOffset());
-      
-      const israelDate = new Date(date.getTime() + (2 * 60 * 60 * 1000));
-      console.log("🛠️ [ArticleCard] Adjusted to Israel Time (UTC+2):", israelDate);
-      console.log("🛠️ [ArticleCard] Israel Date toString():", israelDate.toString());
-      
-      const formattedDate = convertToHebrewDateSync(israelDate);
-      console.log("🛠️ [ArticleCard] Hebrew date (sync):", formattedDate);
-      setHebrewDate(formattedDate);
-      
-      const fetchHebrewDate = async () => {
-        try {
-          const { convertToHebrewDate } = await import('@/utils/dateUtils');
-          const asyncDate = await convertToHebrewDate(israelDate);
-          console.log("🛠️ [ArticleCard] Hebrew date (async):", asyncDate);
-          setHebrewDate(asyncDate);
-        } catch (error) {
-          console.error('Error fetching async Hebrew date:', error);
+      try {
+        // Parse the date
+        const date = new Date(publicationDate);
+        console.log("🛠️ [ArticleCard] Parsed as Date object:", date);
+        
+        // Adjust for Israel timezone (UTC+3)
+        const israelDate = new Date(date.getTime() + (3 * 60 * 60 * 1000));
+        console.log("🛠️ [ArticleCard] Adjusted to Israel Time (UTC+3):", israelDate);
+        
+        // Convert to Hebrew date
+        const formattedHebrewDate = convertToHebrewDateSync(israelDate);
+        console.log("🛠️ [ArticleCard] Hebrew date (sync):", formattedHebrewDate);
+        
+        if (formattedHebrewDate) {
+          setHebrewDate(formattedHebrewDate);
         }
-      };
-      
-      fetchHebrewDate();
+      } catch (error) {
+        console.error('Error setting Hebrew date:', error);
+      }
     }
   }, [article]);
   
@@ -77,16 +74,22 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
     
     console.log("🛠️ [ArticleCard] formatDate input:", dateString);
     
-    const utcDate = new Date(dateString);
-    console.log("🛠️ [ArticleCard] UTC Date object:", utcDate);
-    
-    const israelDate = new Date(utcDate.getTime() + (2 * 60 * 60 * 1000));
-    console.log("🛠️ [ArticleCard] Adjusted to Israel Time:", israelDate);
-    
-    const formattedDate = format(israelDate, 'dd/MM/yyyy', { locale: he });
-    console.log("🛠️ [ArticleCard] Final formatted date:", formattedDate);
-    
-    return formattedDate;
+    try {
+      const utcDate = new Date(dateString);
+      console.log("🛠️ [ArticleCard] UTC Date object:", utcDate);
+      
+      // Adjust for Israel timezone (UTC+3)
+      const israelDate = new Date(utcDate.getTime() + (3 * 60 * 60 * 1000));
+      console.log("🛠️ [ArticleCard] Adjusted to Israel Time:", israelDate);
+      
+      const formattedDate = format(israelDate, 'dd/MM/yyyy', { locale: he });
+      console.log("🛠️ [ArticleCard] Final formatted date:", formattedDate);
+      
+      return formattedDate;
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
   };
   
   const getArticleImage = () => {
