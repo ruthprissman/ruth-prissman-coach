@@ -1,3 +1,4 @@
+
 import { supabaseClient } from '@/lib/supabaseClient';
 import { ArticlePublication, ProfessionalContent } from "@/types/article";
 import { EmailPublicationService } from './EmailPublicationService';
@@ -30,14 +31,15 @@ export interface EmailDeliveryStats {
 class PublicationService {
   private static instance: PublicationService;
   private timerId: NodeJS.Timeout | null = null;
-  private processingTimeoutId: NodeJS.Timeout | null = null; // Add timeout to reset stuck processing flag
+  private processingTimeoutId: NodeJS.Timeout | null = null;
   private isRunning = false;
   private checkInterval = 60000; // Check every minute
   private accessToken?: string;
   private databaseService: DatabaseService;
   private emailService: EmailPublicationService;
-  private isCurrentlyProcessing = false; // Add flag to track if currently checking publications
+  private isCurrentlyProcessing = false;
   private MAX_PROCESSING_TIME = 300000; // 5 minutes maximum processing time
+  private lastProcessingStart: number | null = null;
 
   private constructor() {
     this.databaseService = new DatabaseService();
@@ -58,18 +60,18 @@ class PublicationService {
    * Start the publication service with the given access token
    */
   public start(accessToken?: string): void {
-    this.accessToken = accessToken;
-    
+    // Only start if not already running
     if (this.isRunning) {
       console.log("[Publication Service] Already running, not starting again");
       return;
     }
     
+    this.accessToken = accessToken;
     console.log("[Publication Service] Started");
     this.isRunning = true;
     
-    // Reset the processing flag when starting
-    this.isCurrentlyProcessing = false;
+    // Force reset processing state when starting
+    this.resetProcessingState();
     
     // Check after a delay on startup to avoid immediate checks during page load
     setTimeout(() => {
@@ -80,6 +82,9 @@ class PublicationService {
         this.timerId = setInterval(() => {
           if (this.isRunning) { // Check we're still running before executing
             this.checkScheduledPublications();
+          } else {
+            // Auto cleanup if no longer running
+            this.clearTimers();
           }
         }, this.checkInterval);
       }
@@ -87,11 +92,25 @@ class PublicationService {
   }
 
   /**
-   * Stop the publication service
+   * Stop the publication service and cleanup all timers
    */
   public stop(): void {
     console.log("[Publication Service] Stopping");
     
+    // Clear all timers
+    this.clearTimers();
+    
+    // Reset state
+    this.isRunning = false;
+    this.resetProcessingState();
+    
+    console.log("[Publication Service] Stopped");
+  }
+
+  /**
+   * Helper to clear all timers
+   */
+  private clearTimers(): void {
     if (this.timerId) {
       clearInterval(this.timerId);
       this.timerId = null;
@@ -101,13 +120,21 @@ class PublicationService {
       clearTimeout(this.processingTimeoutId);
       this.processingTimeoutId = null;
     }
-    
-    this.isRunning = false;
-    
-    // Reset the processing flag when stopping
+  }
+
+  /**
+   * Reset the processing state for safety
+   */
+  private resetProcessingState(): void {
     this.isCurrentlyProcessing = false;
+    this.lastProcessingStart = null;
     
-    console.log("[Publication Service] Stopped");
+    if (this.processingTimeoutId) {
+      clearTimeout(this.processingTimeoutId);
+      this.processingTimeoutId = null;
+    }
+    
+    console.log("[Publication Service] Processing state reset");
   }
 
   /**
@@ -115,6 +142,12 @@ class PublicationService {
    * Added isImmediate flag for manual checks vs. scheduled checks
    */
   private async checkScheduledPublications(isImmediate: boolean = false): Promise<void> {
+    // Safety check - if service isn't running, don't process
+    if (!this.isRunning) {
+      console.log("[Publication Service] Service not running, skipping check");
+      return;
+    }
+    
     // If already processing and this is not an immediate check, exit
     if (this.isCurrentlyProcessing && !isImmediate) {
       console.log("[Publication Service] Already processing publications, skipping this check");
@@ -123,6 +156,7 @@ class PublicationService {
     
     // Set processing flag and setup safeguard timeout
     this.isCurrentlyProcessing = true;
+    this.lastProcessingStart = Date.now();
     
     // Set timeout to automatically reset processing flag if it gets stuck
     if (this.processingTimeoutId) {
@@ -131,8 +165,7 @@ class PublicationService {
     
     this.processingTimeoutId = setTimeout(() => {
       console.log("[Publication Service] Processing timeout reached, resetting processing flag");
-      this.isCurrentlyProcessing = false;
-      this.processingTimeoutId = null;
+      this.resetProcessingState();
     }, this.MAX_PROCESSING_TIME);
     
     try {
@@ -199,14 +232,8 @@ class PublicationService {
     } catch (error) {
       console.error("[Publication Service] Error checking scheduled publications:", error);
     } finally {
-      // Always reset processing flag when done
-      this.isCurrentlyProcessing = false;
-      
-      // Clear the processing timeout
-      if (this.processingTimeoutId) {
-        clearTimeout(this.processingTimeoutId);
-        this.processingTimeoutId = null;
-      }
+      // Important: Always reset processing flag when done
+      this.resetProcessingState();
     }
   }
 
@@ -215,7 +242,21 @@ class PublicationService {
    * This can be called explicitly when needed (e.g., after an article is published)
    */
   public async manualCheckPublications(): Promise<void> {
+    // Only check if service is running
+    if (!this.isRunning) {
+      console.log("[Publication Service] Service not running, can't check publications");
+      return;
+    }
+    
     console.log("[Publication Service] Manual check for publications triggered");
+    
+    // If processing has been stuck for too long, reset it
+    const now = Date.now();
+    if (this.isCurrentlyProcessing && this.lastProcessingStart && (now - this.lastProcessingStart > this.MAX_PROCESSING_TIME)) {
+      console.log("[Publication Service] Processing appears stuck, resetting state before manual check");
+      this.resetProcessingState();
+    }
+    
     await this.checkScheduledPublications(true);
   }
 
@@ -384,7 +425,7 @@ class PublicationService {
       console.log(`[Publication Service] Publication ${publicationId} has been reset for retry`);
       
       // Force an immediate check for publications
-      instance.checkScheduledPublications();
+      await instance.manualCheckPublications();
       
     } catch (error) {
       console.error(`[Publication Service] Error retrying publication ${publicationId}:`, error);

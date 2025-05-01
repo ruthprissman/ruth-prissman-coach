@@ -16,11 +16,12 @@ const ArticlesManagement: React.FC = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { toast } = useToast();
-  const { manualCheckPublications } = usePublication();
+  const { manualCheckPublications, isInitialized } = usePublication();
   const [articles, setArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   
   const fetchArticles = async () => {
     try {
@@ -83,14 +84,14 @@ const ArticlesManagement: React.FC = () => {
     }
   }, [session]);
   
-  // Run publication check only once when the component is mounted
+  // Run publication check only once when the service is initialized
   useEffect(() => {
-    if (session) {
-      console.log('[ArticlesManagement] Initial mount - checking publications');
+    if (session && isInitialized && !initialCheckDone) {
+      console.log('[ArticlesManagement] Initial publication check');
       manualCheckPublications();
+      setInitialCheckDone(true);
     }
-    // Only run this effect once when the component mounts
-  }, []);
+  }, [session, isInitialized, initialCheckDone, manualCheckPublications]);
   
   const handleEditArticle = (article: Article) => {
     navigate(`/admin/articles/edit/${article.id}`);
@@ -99,7 +100,7 @@ const ArticlesManagement: React.FC = () => {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await fetchArticles();
-    // Also check for new publications when refreshing
+    // Also check for new publications when manually refreshing
     await manualCheckPublications();
     setIsRefreshing(false);
   };

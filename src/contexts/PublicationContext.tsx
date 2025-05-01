@@ -31,59 +31,71 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
   const { toast } = useToast();
   const [isAdminArticlesPage, setIsAdminArticlesPage] = useState(false);
   
-  // Check if we're on an admin articles page based on window location
-  // This avoids using useLocation from react-router-dom which requires Router context
+  // Improved path detection - specifically checks for admin/articles path segments
   useEffect(() => {
     const checkIfAdminArticlesPage = () => {
       if (typeof window !== 'undefined') {
         const path = window.location.pathname;
+        // Specific check for ONLY /admin/articles path (not subpaths)
         const isAdminArticles = path.includes('/admin/articles');
-        console.log('[PublicationContext] Current path:', path, 'isAdminArticles:', isAdminArticles);
+        console.log('[PublicationContext] Path check:', path, 'isAdminArticles:', isAdminArticles);
         setIsAdminArticlesPage(isAdminArticles);
       }
     };
     
+    // Initial check
     checkIfAdminArticlesPage();
     
-    // Add event listener for route changes if using client-side routing
-    window.addEventListener('popstate', checkIfAdminArticlesPage);
-    window.addEventListener('pushstate', checkIfAdminArticlesPage);
-    window.addEventListener('hashchange', checkIfAdminArticlesPage);
-    
-    // Add listener for navigation events
-    const handleNavigation = () => {
+    // Add event listeners for route changes
+    const handleRouteChange = () => {
+      console.log('[PublicationContext] Route change detected');
       setTimeout(checkIfAdminArticlesPage, 100);
     };
     
-    document.addEventListener('click', handleNavigation);
+    window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener('pushstate', handleRouteChange);
+    
+    // Custom event for React Router navigation
+    document.addEventListener('click', handleRouteChange);
     
     return () => {
-      window.removeEventListener('popstate', checkIfAdminArticlesPage);
-      window.removeEventListener('pushstate', checkIfAdminArticlesPage);
-      window.removeEventListener('hashchange', checkIfAdminArticlesPage);
-      document.removeEventListener('click', handleNavigation);
+      window.removeEventListener('popstate', handleRouteChange);
+      window.removeEventListener('pushstate', handleRouteChange);
+      document.removeEventListener('click', handleRouteChange);
     };
   }, []);
   
-  // Initialize and stop the publication service based on auth state and current page
+  // Improved service management - ensure service is always properly stopped when conditions change
   useEffect(() => {
-    const publicationService = PublicationService;
-    
-    // Only start the service if we're authenticated AND on the admin articles page
-    if (session?.access_token && isAdminArticlesPage) {
-      console.log('[PublicationContext] Starting publication service - admin articles page detected');
-      publicationService.start(session.access_token);
-      setIsInitialized(true);
-    } else {
-      console.log('[PublicationContext] Stopping publication service - not on admin articles page or not authenticated');
-      publicationService.stop();
+    if (!session?.access_token || !isAdminArticlesPage) {
+      console.log('[PublicationContext] Stopping service - conditions not met:', {
+        hasSession: !!session?.access_token,
+        isAdminArticlesPage
+      });
+      PublicationService.stop();
       setIsInitialized(false);
+      return;
     }
     
-    // Cleanup on unmount
+    // Only start if we have both session and are on admin/articles page
+    if (session?.access_token && isAdminArticlesPage) {
+      console.log('[PublicationContext] Starting service - admin articles page with auth');
+      PublicationService.start(session.access_token);
+      setIsInitialized(true);
+      
+      // One-time manual check on service start
+      setTimeout(() => {
+        if (isAdminArticlesPage) {
+          console.log('[PublicationContext] Initial publications check');
+          PublicationService.manualCheckPublications();
+        }
+      }, 2000);
+    }
+    
+    // Always ensure service is stopped when component unmounts or conditions change
     return () => {
-      console.log('[PublicationContext] Component unmounting - stopping service');
-      publicationService.stop();
+      console.log('[PublicationContext] Cleaning up service');
+      PublicationService.stop();
     };
   }, [session, isAdminArticlesPage]);
   
@@ -109,6 +121,11 @@ export const PublicationProvider: React.FC<PublicationProviderProps> = ({ childr
   const manualCheckPublications = async () => {
     if (!isAdminArticlesPage) {
       console.log('[PublicationContext] Not on admin articles page, skipping manual publication check');
+      return;
+    }
+    
+    if (!isInitialized) {
+      console.log('[PublicationContext] Service not initialized, skipping manual check');
       return;
     }
     
