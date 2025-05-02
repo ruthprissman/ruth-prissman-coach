@@ -228,6 +228,9 @@ export const processFutureSessions = (
   // This helps us identify which Google events should or shouldn't have "Add to DB" buttons
   const futureSessionsMap = new Map<string, boolean>();
   
+  // New map to track duplicate meetings (overlaps between Google events and future sessions)
+  const duplicateTracker = new Map<string, {googleEvent: string, dbEvent: string}>();
+  
   bookedSlots.forEach((session, index) => {
     if (!session.session_date) {
       console.log(`Session ${index} has no date:`, session);
@@ -245,6 +248,22 @@ export const processFutureSessions = (
       // Add to map for quick lookups
       const sessionKey = `${sessionDate}-${sessionTime}`;
       futureSessionsMap.set(sessionKey, true);
+      
+      // Check if this session overlaps with a Google event - NEW DUPLICATE CHECK
+      if (googleEventsMap.has(sessionKey)) {
+        const googleEvent = googleEventsMap.get(sessionKey);
+        const patientName = session.patients?.name || 'unknown';
+        
+        // Log the duplicate with unique prefix
+        console.log(`DUPLICATE_MEETING_ERROR: Found overlapping meeting at ${sessionDate} ${sessionTime}`);
+        console.log(`DUPLICATE_MEETING_ERROR: Google event: "${googleEvent?.summary || 'Unknown event'}", DB event: "${patientName}"`);
+        
+        // Track the duplicate for reference
+        duplicateTracker.set(sessionKey, {
+          googleEvent: googleEvent?.summary || 'Unknown event',
+          dbEvent: patientName
+        });
+      }
       
       console.log(`DB_BUTTON_DEBUG: Session ${index} mapped with key: ${sessionKey}, patient: ${session.patients?.name || 'unknown'}`);
       
@@ -383,5 +402,14 @@ export const processFutureSessions = (
     });
   });
   
+  // If we found duplicates, log a summary at the end
+  if (duplicateTracker.size > 0) {
+    console.log(`DUPLICATE_MEETING_ERROR: Found ${duplicateTracker.size} duplicate meetings:`);
+    duplicateTracker.forEach((value, key) => {
+      console.log(`DUPLICATE_MEETING_ERROR: At ${key} - Google: "${value.googleEvent}", DB: "${value.dbEvent}"`);
+    });
+  }
+  
   return calendarData;
 };
+
