@@ -5,7 +5,7 @@ import { ChevronRight, ChevronLeft, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { CalendarSlot } from '@/types/calendar';
 import CalendarGrid from './CalendarGrid';
-import { DatePicker } from '../DatePicker';
+import { DatePicker } from '@/components/admin/DatePicker';
 
 // Component version for debugging
 const COMPONENT_VERSION = "1.0.1";
