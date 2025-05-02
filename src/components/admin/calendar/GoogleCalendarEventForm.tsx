@@ -18,7 +18,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { format } from 'date-fns';
-import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
+import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
 
 // Define schema for form validation
 const eventFormSchema = z.object({
@@ -37,7 +37,8 @@ const eventFormSchema = z.object({
 type EventFormValues = z.infer<typeof eventFormSchema>;
 
 export function GoogleCalendarEventForm() {
-  const { createEvent, isAuthenticated } = useGoogleOAuth();
+  // Use useGoogleAuth from context instead of the removed useGoogleOAuth hook
+  const { isAuthenticated, createEvent } = useGoogleAuth();
   
   // Initialize form with validation schema
   const form = useForm<EventFormValues>({

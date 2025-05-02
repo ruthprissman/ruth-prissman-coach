@@ -29,7 +29,9 @@ export function GoogleAuthDebug() {
         session: {
           hasSession: !!data.session,
           hasProviderToken: !!data.session?.provider_token,
-          provider: data.session?.provider,
+          // Remove the 'provider' property access which doesn't exist in Session type
+          // Instead check for provider_token presence which is more relevant
+          hasProviderAuth: !!data.session?.provider_token,
           user: data.session?.user?.email || 'unknown'
         },
         contextDebug: debugInfo
