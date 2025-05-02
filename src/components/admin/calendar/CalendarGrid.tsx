@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -658,8 +657,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         <AddMeetingToFutureSessionsDialog
           open={addToFutureSessionDialogOpen}
           onOpenChange={setAddToFutureSessionDialogOpen}
-          meetingSlot={selectedMeetingSlot}
-          onSessionCreated={handleFutureSessionCreated}
+          meetingData={selectedMeetingSlot}
+          onCreated={handleFutureSessionCreated}
         />
         
         {/* Dialog for resolving conflicts between Google Calendar and future_sessions */}

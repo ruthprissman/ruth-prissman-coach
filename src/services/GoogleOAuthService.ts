@@ -144,7 +144,7 @@ export const signOutFromGoogle = async (): Promise<void> => {
     console.log(`${DEBUG_PREFIX}: Signing out`);
     const token = gapi.client.getToken();
     if (token !== null) {
-      google.accounts.oauth2.revoke(token.access_token);
+      window.google.accounts.oauth2.revoke(token.access_token);
       gapi.client.setToken(null);
     }
   } catch (error) {
