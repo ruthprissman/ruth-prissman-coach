@@ -1,5 +1,29 @@
 
 // src/services/GoogleOAuthService.ts
+
+// Define interfaces for window objects
+interface GoogleApi {
+  client: any;
+  load: (api: string, callback: any) => void;
+}
+
+interface GoogleIdentityServices {
+  accounts: {
+    oauth2: {
+      initTokenClient: (config: any) => any;
+      revoke: (token: string) => void;
+    }
+  }
+}
+
+// Extend the Window interface to recognize Google API properties
+declare global {
+  interface Window {
+    gapi: GoogleApi;
+    google: GoogleIdentityServices;
+  }
+}
+
 let gapi: any = null;
 let googleAuth: any = null;
 let tokenClient: any = null;
@@ -144,7 +168,7 @@ export const signOutFromGoogle = async (): Promise<void> => {
     console.log(`${DEBUG_PREFIX}: Signing out`);
     const token = gapi.client.getToken();
     if (token !== null) {
-      google.accounts.oauth2.revoke(token.access_token);
+      window.google.accounts.oauth2.revoke(token.access_token);
       gapi.client.setToken(null);
     }
   } catch (error) {
