@@ -53,7 +53,6 @@ const Index = () => {
         <Navigation />
         
         <main className="flex-grow">
-          {/* Hero Section */}
           <section className="pt-24 px-4 relative">
             <div className="container mx-auto relative z-10">
               <div className="flex flex-col items-center justify-center">
@@ -101,7 +100,6 @@ const Index = () => {
             </div>
           </section>
           
-          {/* Features Section */}
           <section className="py-6 px-4 relative">
             <div className="container mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -192,7 +190,6 @@ const Index = () => {
           
           <TestimonialsCarousel />
           
-          {/* Newsletter Section */}
           <section className="py-16 px-4 relative">
             <div className="container mx-auto max-w-2xl">
               <div className="text-center">
