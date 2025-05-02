@@ -1,4 +1,3 @@
-
 export interface TimeSlot {
   day: number;
   date: string;
@@ -35,8 +34,6 @@ export interface CalendarSlot {
   fromFutureSession?: boolean; // New: Indicates if this event is from future_sessions table
   futureSession?: any; // New: Stores the original future session data for reference
   inGoogleCalendar?: boolean; // New: Indicates if this future session exists in Google Calendar
-  hasConflict?: boolean; // Indicates if this slot has a conflicting meeting
-  conflictSlot?: CalendarSlot; // Reference to the conflicting slot
 }
 
 export interface ContextMenuOptions {

@@ -317,17 +317,16 @@ const Dashboard: React.FC = () => {
     session: FutureSession & {
       patient_name?: string;
     };
-  }) => (
-    <div className="flex justify-between items-center border-b border-gray-100 py-3 last:border-0">
-      <div className="flex flex-col items-end w-2/3">
+  }) => <div className="flex justify-between items-center border-b border-gray-100 py-3 last:border-0">
+      <div className="flex flex-col items-end">
         <div className="flex items-center mb-1">
-          <span className="text-sm font-medium truncate w-full text-right">{session.patient_name}</span>
+          <span className="text-sm font-medium">{session.patient_name}</span>
         </div>
         <div className="flex items-center">
-          <span className="text-sm text-gray-600 truncate">
+          <span className="text-sm text-gray-600">
             {formatDateTimeInIsrael(session.session_date)}
           </span>
-          <Calendar className="w-4 h-4 text-gray-600 ms-2 flex-shrink-0" />
+          <Calendar className="w-4 h-4 text-gray-600 ms-2" />
         </div>
         <div className="flex items-center mt-1">
           <span className="text-xs text-gray-500 ms-1">{getMeetingTypeText(session.meeting_type)}</span>
@@ -335,19 +334,11 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
       <div className="flex flex-col items-start">
-        {session.zoom_link && (
-          <a 
-            href={session.zoom_link} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-xs mt-1 text-blue-500 hover:underline whitespace-nowrap"
-          >
+        {session.zoom_link && <a href={session.zoom_link} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 text-blue-500 hover:underline">
             לינק לזום
-          </a>
-        )}
+          </a>}
       </div>
-    </div>
-  );
+    </div>;
 
   return <div className="min-h-screen bg-gray-100">
       <header className="bg-[#4A235A] text-white shadow-md">

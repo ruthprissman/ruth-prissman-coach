@@ -6,8 +6,6 @@ import {
   signOutFromGoogle,
   fetchGoogleCalendarEvents,
   createGoogleCalendarEvent,
-  deleteGoogleCalendarEvent,
-  updateGoogleCalendarEvent,
   GoogleOAuthState
 } from '@/services/GoogleOAuthService';
 import { toast } from '@/components/ui/use-toast';
@@ -129,66 +127,6 @@ export function useGoogleOAuth() {
     }
   };
 
-  const deleteEvent = async (eventId: string) => {
-    try {
-      console.log(`CONFLICT_RESOLUTION_DEBUG: Deleting event from Google Calendar: ${eventId}`);
-      const success = await deleteGoogleCalendarEvent(eventId);
-      
-      if (success) {
-        // Update local events state
-        setEvents(prev => prev.filter(event => event.id !== eventId));
-        
-        toast({
-          title: 'האירוע נמחק בהצלחה',
-          description: 'האירוע הוסר מיומן Google שלך',
-        });
-      }
-      
-      return success;
-    } catch (error: any) {
-      console.error('Error deleting calendar event:', error);
-      toast({
-        title: 'שגיאה במחיקת האירוע',
-        description: error.message,
-        variant: 'destructive',
-      });
-      return false;
-    }
-  };
-
-  const updateEvent = async (
-    eventId: string,
-    summary: string,
-    startDateTime: string,
-    endDateTime: string,
-    description: string = '',
-  ) => {
-    try {
-      console.log(`CONFLICT_RESOLUTION_DEBUG: Updating event in Google Calendar: ${eventId}`);
-      const success = await updateGoogleCalendarEvent(eventId, summary, startDateTime, endDateTime, description);
-      
-      if (success) {
-        // Refresh events to get the updated one
-        await fetchEvents();
-        
-        toast({
-          title: 'האירוע עודכן בהצלחה',
-          description: 'האירוע עודכן ביומן Google שלך',
-        });
-      }
-      
-      return success;
-    } catch (error: any) {
-      console.error('Error updating calendar event:', error);
-      toast({
-        title: 'שגיאה בעדכון האירוע',
-        description: error.message,
-        variant: 'destructive',
-      });
-      return false;
-    }
-  };
-
   const signIn = async () => {
     try {
       setState(prev => ({ ...prev, isAuthenticating: true, error: null }));
@@ -274,8 +212,6 @@ export function useGoogleOAuth() {
     signIn,
     signOut,
     fetchEvents,
-    createEvent,
-    deleteEvent,
-    updateEvent
+    createEvent
   };
 }

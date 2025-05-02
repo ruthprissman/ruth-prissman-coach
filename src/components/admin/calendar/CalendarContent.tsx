@@ -1,15 +1,13 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { ChevronRight, ChevronLeft, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
-import { CalendarSlot } from '@/types/calendar';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CalendarToolbar from './CalendarToolbar';
 import CalendarGrid from './CalendarGrid';
-import { DatePicker } from '@/components/admin/DatePicker';
-
-// Component version for debugging
-const COMPONENT_VERSION = "1.0.1";
-console.log(`LOV_DEBUG_CALENDAR_CONTENT: Component loaded, version ${COMPONENT_VERSION}`);
+import CalendarListView from './CalendarListView';
+import { CalendarSlot } from '@/types/calendar';
+import { GoogleCalendarEventForm } from './GoogleCalendarEventForm';
+import CalendarLegend from './CalendarLegend';
 
 interface CalendarContentProps {
   days: { date: string; label: string; dayNumber: number }[];
@@ -21,66 +19,71 @@ interface CalendarContentProps {
   onUpdateSlot: (date: string, hour: string, status: 'available' | 'private' | 'unspecified') => void;
   onSetCurrentDate: (date: Date) => void;
   onRecurringDialogOpen: () => void;
-  onResolutionComplete: () => void;
-  createGoogleCalendarEvent: (summary: string, startDateTime: string, endDateTime: string, description: string) => Promise<boolean>;
-  deleteGoogleCalendarEvent: (eventId: string) => Promise<boolean>;
-  updateGoogleCalendarEvent: (eventId: string, summary: string, startDateTime: string, endDateTime: string, description: string) => Promise<boolean>;
 }
 
-const CalendarContent: React.FC<CalendarContentProps> = ({ 
-  days, 
-  hours, 
-  currentDate, 
+const CalendarContent: React.FC<CalendarContentProps> = ({
+  days,
+  hours,
+  currentDate,
   calendarData,
   isLoading,
   onNavigateWeek,
   onUpdateSlot,
   onSetCurrentDate,
-  onRecurringDialogOpen,
-  onResolutionComplete,
-  createGoogleCalendarEvent,
-  deleteGoogleCalendarEvent,
-  updateGoogleCalendarEvent
+  onRecurringDialogOpen
 }) => {
+  const [selectedView, setSelectedView] = useState<'calendar' | 'list'>('calendar');
+
   return (
-    <div className="flex flex-col space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Button onClick={() => onNavigateWeek('prev')} variant="outline" size="sm">
-            <ChevronRight className="h-4 w-4" />
-            <span className="ml-2">שבוע קודם</span>
-          </Button>
-          
-          <Button onClick={() => onNavigateWeek('next')} variant="outline" size="sm">
-            <span className="mr-2">שבוע הבא</span>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <DatePicker
-            currentDate={currentDate}
-            onSelect={onSetCurrentDate}
-          />
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Button onClick={onRecurringDialogOpen} variant="default" size="sm">
-            <Calendar className="h-4 w-4 ml-2" />
-            הוסף זמינות חוזרת
-          </Button>
-        </div>
+    <div className="grid grid-cols-12 gap-4">
+      <div className="col-span-9">
+        <Card className="h-full">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>הגדרת זמני זמינות לפגישות</CardTitle>
+              <Tabs value={selectedView} onValueChange={(value) => setSelectedView(value as 'calendar' | 'list')}>
+                <TabsList>
+                  <TabsTrigger value="calendar">תצוגת לוח</TabsTrigger>
+                  <TabsTrigger value="list">תצוגת רשימה</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CalendarToolbar 
+              currentDate={currentDate}
+              onPrevWeek={() => onNavigateWeek('prev')}
+              onNextWeek={() => onNavigateWeek('next')}
+              onToday={() => onSetCurrentDate(new Date())}
+              onAddRecurring={onRecurringDialogOpen}
+            />
+            
+            {selectedView === 'calendar' && <CalendarLegend />}
+            
+            <div className="mt-4">
+              {selectedView === 'calendar' ? (
+                <CalendarGrid 
+                  days={days}
+                  hours={hours}
+                  calendarData={calendarData}
+                  onUpdateSlot={onUpdateSlot}
+                  isLoading={isLoading}
+                />
+              ) : (
+                <CalendarListView 
+                  calendarData={calendarData}
+                  onUpdateSlot={onUpdateSlot}
+                  isLoading={isLoading}
+                />
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
-      <CalendarGrid 
-        days={days}
-        hours={hours}
-        calendarData={calendarData}
-        onUpdateSlot={onUpdateSlot}
-        isLoading={isLoading}
-        onResolutionComplete={onResolutionComplete}
-        createGoogleCalendarEvent={createGoogleCalendarEvent}
-        deleteGoogleCalendarEvent={deleteGoogleCalendarEvent}
-        updateGoogleCalendarEvent={updateGoogleCalendarEvent}
-      />
+      <div className="col-span-3">
+        <GoogleCalendarEventForm />
+      </div>
     </div>
   );
 };
