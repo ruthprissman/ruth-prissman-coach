@@ -20,9 +20,11 @@ import { Button } from '@/components/ui/button';
 import { format, isToday, isPast } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
+import CalendarConflictResolutionDialog from './CalendarConflictResolutionDialog';
+import { formatInTimeZone } from '@/utils/dateTimeUtils';
 
-// Component version for debugging
-const COMPONENT_VERSION = "1.0.10";
+// Component version for debugging - updated to reflect fixes
+const COMPONENT_VERSION = "1.0.12";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -31,6 +33,10 @@ interface CalendarGridProps {
   calendarData: Map<string, Map<string, CalendarSlot>>;
   onUpdateSlot: (date: string, hour: string, status: 'available' | 'private' | 'unspecified') => void;
   isLoading: boolean;
+  onResolutionComplete: () => void;
+  createGoogleCalendarEvent: (summary: string, startDateTime: string, endDateTime: string, description: string) => Promise<boolean>;
+  deleteGoogleCalendarEvent: (eventId: string) => Promise<boolean>;
+  updateGoogleCalendarEvent: (eventId: string, summary: string, startDateTime: string, endDateTime: string, description: string) => Promise<boolean>;
 }
 
 const CalendarGrid: React.FC<CalendarGridProps> = ({ 
@@ -38,7 +44,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   hours, 
   calendarData, 
   onUpdateSlot,
-  isLoading 
+  isLoading,
+  onResolutionComplete,
+  createGoogleCalendarEvent,
+  deleteGoogleCalendarEvent,
+  updateGoogleCalendarEvent
 }) => {
   const [debugMode, setDebugMode] = useState(true);
   const [currentTime, setCurrentTime] = useState<{
@@ -50,6 +60,18 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const [forceRefreshToken, setForceRefreshToken] = useState<number>(Date.now());
   const [addToFutureSessionDialogOpen, setAddToFutureSessionDialogOpen] = useState<boolean>(false);
   const [selectedMeetingSlot, setSelectedMeetingSlot] = useState<CalendarSlot | null>(null);
+  
+  // New state for conflict resolution dialog
+  const [conflictDialogOpen, setConflictDialogOpen] = useState<boolean>(false);
+  const [conflictData, setConflictData] = useState<{
+    googleEvent: CalendarSlot | null;
+    futureSessionEvent: CalendarSlot | null;
+    date: string;
+  }>({
+    googleEvent: null,
+    futureSessionEvent: null,
+    date: ''
+  });
   
   console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering with ${days.length} days, ${hours.length} hours, loading: ${isLoading}`);
   console.log(`LOV_DEBUG_CALENDAR_GRID: Calendar data contains ${calendarData.size} days`);
@@ -89,7 +111,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     // This effect runs whenever calendarData or forceRefreshToken changes
   }, [calendarData, forceRefreshToken]);
 
-  // Add the missing handleFutureSessionCreated function
+  // Handle future session creation
   const handleFutureSessionCreated = () => {
     console.log(`MEETING_SAVE_DEBUG: Future session created, forcing refresh`);
     handleForceRefresh();
@@ -98,7 +120,16 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const getStatusStyle = (slot: CalendarSlot) => {
     const { status, fromGoogle, isMeeting, isPatientMeeting, fromFutureSession, inGoogleCalendar } = slot;
     
-    console.log(`COLOR_DEBUG: Slot status check - fromFutureSession: ${fromFutureSession}, inGoogleCalendar: ${inGoogleCalendar}, fromGoogle: ${fromGoogle}, isMeeting: ${isMeeting}, status: ${status}`);
+    // Check for conflicts (both in Google Calendar and future_sessions)
+    if (slot.hasConflict) {
+      console.log(`CONFLICT_RESOLUTION_DEBUG: Using alert color for conflicting slot`);
+      return { 
+        bg: 'bg-red-100', 
+        border: 'border-red-400 border-2', 
+        text: 'text-red-800 font-medium',
+        colorClass: 'border-red-400'
+      };
+    }
     
     // First priority: Future sessions from the DB that are not in Google Calendar
     if (fromFutureSession && !inGoogleCalendar) {
@@ -182,7 +213,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         isPatientMeeting: slot?.isPatientMeeting,
         fromFutureSession: slot?.fromFutureSession,
         inGoogleCalendar: slot?.inGoogleCalendar,
-        futureSession: slot?.futureSession
+        futureSession: slot?.futureSession,
+        hasConflict: slot?.hasConflict,
+        conflictSlot: slot?.conflictSlot
       });
     }
     return true;
@@ -206,6 +239,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const handleForceRefresh = () => {
     console.log(`MEETING_SAVE_DEBUG: Force refresh triggered at ${new Date().toISOString()}`);
     setForceRefreshToken(Date.now());
+    onResolutionComplete();
     // This will cause the component to re-render with a new token value
   };
 
@@ -215,6 +249,36 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     // Set the selected meeting slot and open the dialog
     setSelectedMeetingSlot(slot);
     setAddToFutureSessionDialogOpen(true);
+  };
+
+  // New: Handle conflict resolution
+  const handleOpenConflictResolution = (slot: CalendarSlot, date: string) => {
+    if (!slot.hasConflict || !slot.conflictSlot) {
+      return; // No conflict to resolve
+    }
+    
+    console.log(`CONFLICT_RESOLUTION_DEBUG: Opening conflict dialog for ${date} at ${slot.hour}`);
+    
+    // Determine which event is from Google Calendar and which is from future_sessions
+    let googleEvent: CalendarSlot | null = null;
+    let futureSessionEvent: CalendarSlot | null = null;
+    
+    if (slot.fromGoogle && slot.conflictSlot.fromFutureSession) {
+      googleEvent = slot;
+      futureSessionEvent = slot.conflictSlot;
+    } else if (slot.fromFutureSession && slot.conflictSlot.fromGoogle) {
+      googleEvent = slot.conflictSlot;
+      futureSessionEvent = slot;
+    }
+    
+    // Set conflict data and open dialog
+    setConflictData({
+      googleEvent,
+      futureSessionEvent,
+      date
+    });
+    
+    setConflictDialogOpen(true);
   };
 
   // Function to check if a slot is a work meeting (starts with "פגישה עם")
@@ -303,10 +367,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               </TooltipContent>
             </Tooltip>
             
-            {/* 
-              FIX: Modified condition to only show "Add to DB" button for Google Calendar events 
-              that aren't already in the database, checking both fromGoogle and fromFutureSession flags
-            */}
             {slot.fromGoogle && !slot.fromFutureSession && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -332,28 +392,51 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   };
 
-  // Improved function to render multi-hour events
+  // Improved function to render multi-hour events with better rendering
   const renderPartialHourEvent = (slot: CalendarSlot) => {
     if (!slot.isPartialHour) return null;
+
+    console.log(`LOV_DEBUG_RENDER: Rendering partial hour event for ${slot.date} ${slot.hour}`, {
+      isFirstHour: slot.isFirstHour,
+      isLastHour: slot.isLastHour,
+      startMinute: slot.startMinute,
+      endMinute: slot.endMinute,
+      exactStartTime: slot.exactStartTime,
+      exactEndTime: slot.exactEndTime
+    });
     
-    const startPercent = slot.isFirstHour && slot.startMinute ? (slot.startMinute / 60) * 100 : 0;
-    const endPercent = slot.isLastHour && slot.endMinute ? (slot.endMinute / 60) * 100 : 100;
+    // Calculate position based on minutes
+    const startPercent = slot.isFirstHour && typeof slot.startMinute === 'number' ? Math.min(Math.max((slot.startMinute / 60) * 100, 0), 100) : 0;
+    const endPercent = slot.isLastHour && typeof slot.endMinute === 'number' ? Math.min(Math.max((slot.endMinute / 60) * 100, 0), 100) : 100;
     const heightPercent = endPercent - startPercent;
+    
+    if (heightPercent <= 0) {
+      console.log(`LOV_DEBUG_RENDER: Invalid height for event: ${heightPercent}%`);
+      return null;
+    }
     
     const { bg, text } = getStatusStyle(slot);
     
     return (
       <div 
-        className={`absolute left-0 right-0 ${bg}`} 
+        className={`absolute left-0 right-0 ${bg} z-10 overflow-hidden`} 
         style={{ 
           top: `${startPercent}%`,
           height: `${heightPercent}%`,
+          minHeight: '10px',
+          borderTop: slot.isFirstHour ? '1px solid rgba(0,0,0,0.1)' : 'none',
+          borderBottom: slot.isLastHour ? '1px solid rgba(0,0,0,0.1)' : 'none',
         }}
       >
         {/* Only show text in the first hour of a multi-hour event */}
         {slot.isFirstHour && slot.notes && (
-          <div className={`p-1 text-xs ${text}`}>
+          <div className={`p-1 text-xs ${text} truncate`}>
             {slot.notes}
+            {slot.exactStartTime && (
+              <div className="text-xs opacity-75 truncate">
+                {slot.exactStartTime}-{slot.exactEndTime}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -362,8 +445,16 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Simplified function to render event content only in the first hour
   const renderEventContent = (slot: CalendarSlot) => {
+    // Don't show content in continuation hours
     if (!slot.isFirstHour && (slot.fromGoogle || slot.fromFutureSession)) {
-      return null; // Don't show content in non-first hours of multi-hour events
+      console.log(`LOV_DEBUG_RENDER: Skipping content for continuation hour ${slot.date} ${slot.hour}`);
+      return null;
+    }
+    
+    // For events with a clear start/end time, render the time range
+    let timeDisplay = '';
+    if (slot.exactStartTime && slot.exactEndTime) {
+      timeDisplay = `${slot.exactStartTime}-${slot.exactEndTime}`;
     }
     
     return (
@@ -371,10 +462,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         {slot.notes && (
           <div className="font-medium truncate">{slot.notes}</div>
         )}
-        {slot.exactStartTime && (
-          <div className="text-xs opacity-75">
-            {slot.exactStartTime}-{slot.exactEndTime}
-          </div>
+        {timeDisplay && (
+          <div className="text-xs opacity-75 truncate">{timeDisplay}</div>
         )}
       </div>
     );
@@ -385,16 +474,37 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const { bg, text, colorClass } = getStatusStyle(slot);
     const isWorkMeetingSlot = isWorkMeeting(slot);
     
-    console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering cell ${day} ${hour}, isWorkMeeting: ${isWorkMeetingSlot}, status: ${slot.status}`);
+    console.log(`LOV_DEBUG_RENDER: Rendering cell ${day} ${hour}`, {
+      isWorkMeeting: isWorkMeetingSlot,
+      status: slot.status,
+      isPartialHour: slot.isPartialHour,
+      isFirstHour: slot.isFirstHour,
+      isLastHour: slot.isLastHour
+    });
+    
+    // Handle clicks on conflict cells
+    const handleClick = () => {
+      if (slot.hasConflict) {
+        handleOpenConflictResolution(slot, day);
+      }
+    };
     
     return (
       <div 
         id={`cell-${day}-${hour}`}
-        className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} relative min-h-[60px] h-full w-full group`}
+        className={`${slot.isPartialHour ? 'bg-transparent' : bg} ${colorClass} ${text} relative min-h-[60px] h-full w-full group ${slot.hasConflict ? 'cursor-pointer' : ''}`}
+        onClick={handleClick}
       >
         {isCurrentCell && (
           <div className="absolute top-0 right-0 p-1">
             <Clock className="h-4 w-4 text-[#1EAEDB]" />
+          </div>
+        )}
+        
+        {/* Display conflict indicator */}
+        {slot.hasConflict && (
+          <div className="absolute top-0 left-0 p-1">
+            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
           </div>
         )}
         
@@ -403,7 +513,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         
         {slot.isPartialHour ? (
           renderPartialHourEvent(slot)
-        ) : slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked') ? (
+        ) : (slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked')) ? (
           renderEventContent(slot)
         ) : (
           <>
@@ -541,6 +651,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       {slot.fromFutureSession && !slot.inGoogleCalendar && (
                         <p className="text-blue-300 mt-1">לא קיים ביומן Google</p>
                       )}
+                      {slot.hasConflict && (
+                        <p className="text-red-500 mt-1 font-bold">התנגשו�� פגישות! לחץ לפתרון</p>
+                      )}
                     </div>
                   );
 
@@ -576,12 +689,26 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </TableBody>
         </Table>
         
-        {/* Dialog for adding meetings to future sessions - מעודכן לגרסה החדשה */}
+        {/* Dialog for adding meetings to future sessions */}
         <AddMeetingToFutureSessionsDialog
           open={addToFutureSessionDialogOpen}
           onOpenChange={setAddToFutureSessionDialogOpen}
-          meetingData={selectedMeetingSlot}
-          onCreated={handleFutureSessionCreated}
+          meetingSlot={selectedMeetingSlot}
+          onSessionCreated={handleFutureSessionCreated}
+        />
+        
+        {/* Dialog for resolving conflicts between Google Calendar and future_sessions */}
+        <CalendarConflictResolutionDialog
+          open={conflictDialogOpen}
+          onOpenChange={setConflictDialogOpen}
+          googleCalendarEvent={conflictData.googleEvent}
+          futureSessionEvent={conflictData.futureSessionEvent}
+          date={conflictData.date}
+          onResolutionComplete={onResolutionComplete}
+          availableHours={hours}
+          createGoogleCalendarEvent={createGoogleCalendarEvent}
+          deleteGoogleCalendarEvent={deleteGoogleCalendarEvent}
+          updateGoogleCalendarEvent={updateGoogleCalendarEvent}
         />
       </div>
     </TooltipProvider>

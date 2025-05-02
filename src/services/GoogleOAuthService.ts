@@ -1,17 +1,39 @@
-import { GoogleCalendarEvent } from '@/types/calendar';
-import { supabase } from '@/lib/supabase';
-import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
-import { startOfWeek, format, addMonths } from 'date-fns';
 
-// OAuth2 configuration
-const CLIENT_ID = '216734901779-csrnrl4nmkilae4blbolsip8mmibsk3t.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar';
-// Use the utility to get the correct redirect URL
-const REDIRECT_URI = getDashboardRedirectUrl();
+// src/services/GoogleOAuthService.ts
 
-// Version identifier for debugging
-const SERVICE_VERSION = "1.0.1";
-console.log(`LOV_DEBUG_GOOGLE_OAUTH: Service initialized, version ${SERVICE_VERSION}`);
+// Define interfaces for window objects
+interface GoogleApi {
+  client: any;
+  load: (api: string, callback: any) => void;
+}
+
+interface GoogleIdentityServices {
+  accounts: {
+    oauth2: {
+      initTokenClient: (config: any) => any;
+      revoke: (token: string) => void;
+    }
+  }
+}
+
+// Extend the Window interface to recognize Google API properties
+declare global {
+  interface Window {
+    gapi: GoogleApi;
+    google: GoogleIdentityServices;
+  }
+}
+
+let gapi: any = null;
+let googleAuth: any = null;
+let tokenClient: any = null;
+
+const CLIENT_ID = '827567424410-p0emdtbapj4i519snnind2j0k2e2r36v.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyC5FeinQIjGXRzRtK7JnjgxsU33E4-cji4';
+const SCOPES = 'https://www.googleapis.com/auth/calendar';
+
+// Debug prefix
+const DEBUG_PREFIX = "GOOGLE_OAUTH_SERVICE";
 
 export interface GoogleOAuthState {
   isAuthenticated: boolean;
@@ -19,258 +41,351 @@ export interface GoogleOAuthState {
   error: string | null;
 }
 
-// Get access token from Supabase session
-export async function getAccessToken(): Promise<string | null> {
+export const initializeGoogleAPI = async (): Promise<void> => {
   try {
-    console.log('LOV_DEBUG_GOOGLE_OAUTH: Getting access token from session');
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
+    console.log(`${DEBUG_PREFIX}: Initializing Google API`);
     
-    if (session?.provider_token) {
-      console.log('LOV_DEBUG_GOOGLE_OAUTH: Access token found in session');
-      return session.provider_token;
-    }
-    console.log('LOV_DEBUG_GOOGLE_OAUTH: No access token found');
-    return null;
-  } catch (error) {
-    console.error('LOV_DEBUG_GOOGLE_OAUTH: Error getting access token:', error);
-    return null;
-  }
-}
-
-export async function checkIfSignedIn(): Promise<boolean> {
-  const token = await getAccessToken();
-  console.log(`LOV_DEBUG_GOOGLE_OAUTH: checkIfSignedIn result: ${!!token}`);
-  return !!token;
-}
-
-export async function signInWithGoogle(): Promise<boolean> {
-  try {
-    // Save the current environment before redirecting
-    console.log('[auth] Starting Google OAuth flow');
-    saveEnvironmentForAuth();
-    
-    // Use Supabase OAuth with the exact scopes and configuration
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
-        redirectTo: window.location.origin + '/admin/dashboard',  // Use origin for correct domain
-        queryParams: {
-          // Force re-authentication even if already authenticated
-          prompt: 'consent',
-          access_type: 'offline'
-        }
-      }
-    });
-    
-    if (error) {
-      console.error('[auth] Error signing in with Google via Supabase:', error);
-      throw error;
-    }
-    
-    return true;
-  } catch (error: any) {
-    console.error('[auth] Error signing in with Google:', error);
-    // Check if the error is about cancellation
-    if (error.error === 'popup_closed_by_user' || 
-        error.message?.includes('popup') || 
-        error.message?.includes('בוטל')) {
-      throw new Error('ההתחברות בוטלה');
-    }
-    return false;
-  }
-}
-
-export async function signOutFromGoogle(): Promise<void> {
-  try {
-    await supabase.auth.signOut();
-  } catch (error) {
-    console.error('Error signing out from Google:', error);
-  }
-}
-
-export async function fetchGoogleCalendarEvents(currentDisplayDate?: Date): Promise<GoogleCalendarEvent[]> {
-  try {
-    console.log(`LOV_DEBUG_GOOGLE_OAUTH: fetchGoogleCalendarEvents called with date: ${currentDisplayDate?.toISOString() || 'undefined'}`);
-    console.log(`LOV_DEBUG_GOOGLE_OAUTH: Service version: ${SERVICE_VERSION}`);
-    
-    const token = await getAccessToken();
-    if (!token) {
-      console.error('LOV_DEBUG_GOOGLE_OAUTH: No access token available');
-      throw new Error('אין הרשאות גישה ליומן Google');
-    }
-    
-    // IMPORTANT: Always start from the beginning of the displayed week (Sunday)
-    // This ensures we fetch events from the beginning of the week
-    const now = currentDisplayDate || new Date();
-    console.log(`LOV_DEBUG_GOOGLE_OAUTH: Using date for events fetch: ${now.toISOString()}`);
-    
-    const weekStart = startOfWeek(now, { weekStartsOn: 0 }); // Start week on Sunday
-    const twoMonthsLater = addMonths(weekStart, 2);
-    
-    console.log(`LOV_DEBUG_GOOGLE_OAUTH: Calculated week start: ${weekStart.toISOString()}`);
-    console.log(`LOV_DEBUG_GOOGLE_OAUTH: End date (2 months later): ${twoMonthsLater.toISOString()}`);
-    
-    const timeMin = encodeURIComponent(weekStart.toISOString());
-    const timeMax = encodeURIComponent(twoMonthsLater.toISOString());
-    
-    console.log('LOV_DEBUG_GOOGLE_OAUTH: Fetching Google Calendar events from API, time range:', {
-      from: weekStart.toISOString(),
-      to: twoMonthsLater.toISOString()
-    });
-    
-    // Make a direct fetch to Google Calendar API
-    const apiUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
-    console.log(`LOV_DEBUG_GOOGLE_OAUTH: API URL: ${apiUrl}`);
-    
-    const response = await fetch(
-      apiUrl,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error(`LOV_DEBUG_GOOGLE_OAUTH: API response not OK: ${response.status}`, errorData);
-      throw new Error(errorData.error?.message || 'Failed to fetch calendar events');
-    }
-    
-    const data = await response.json();
-    console.log(`LOV_DEBUG_GOOGLE_OAUTH: Google Calendar API response - events count: ${data.items.length}`);
-    
-    // Transform the response to our GoogleCalendarEvent format and add logging
-    const events: GoogleCalendarEvent[] = data.items.map((item: any, index: number) => {
-      // Log event details for debugging
-      console.log(`LOV_DEBUG_GOOGLE_OAUTH: Processing event ${index}:`, {
-        id: item.id,
-        summary: item.summary,
-        start: item.start,
-        end: item.end
+    // Load the Google API client library if not already loaded
+    if (!window.gapi) {
+      console.log(`${DEBUG_PREFIX}: Loading gapi script`);
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://apis.google.com/js/api.js';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          console.log(`${DEBUG_PREFIX}: gapi script loaded`);
+          resolve();
+        };
+        script.onerror = () => reject(new Error('Failed to load gapi script'));
+        document.head.appendChild(script);
       });
-      
-      return {
-        id: item.id,
-        summary: item.summary || 'אירוע ללא כותרת',
-        description: item.description || '',
-        start: item.start,
-        end: item.end,
-        status: item.status || 'confirmed',
-        syncStatus: 'google-only'
-      };
+    }
+    
+    // Load the gapi.client library if not already loaded
+    if (!gapi) {
+      gapi = window.gapi;
+      console.log(`${DEBUG_PREFIX}: Loading gapi client`);
+      await new Promise<void>((resolve, reject) => {
+        gapi.load('client', {
+          callback: () => {
+            console.log(`${DEBUG_PREFIX}: gapi client loaded`);
+            resolve();
+          },
+          onerror: () => reject(new Error('Failed to load gapi client')),
+        });
+      });
+    }
+    
+    // Initialize the gapi.client with API key
+    await gapi.client.init({
+      apiKey: API_KEY,
+      discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+    });
+    console.log(`${DEBUG_PREFIX}: gapi client initialized`);
+    
+    // Load the Google Identity Services script if not already loaded
+    if (!window.google) {
+      console.log(`${DEBUG_PREFIX}: Loading Google Identity Services script`);
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          console.log(`${DEBUG_PREFIX}: Google Identity Services script loaded`);
+          resolve();
+        };
+        script.onerror = () => reject(new Error('Failed to load Google Identity Services script'));
+        document.head.appendChild(script);
+      });
+    }
+    
+    // Initialize token client
+    console.log(`${DEBUG_PREFIX}: Initializing token client`);
+    tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: () => {
+        console.log(`${DEBUG_PREFIX}: Token client callback triggered`);
+      },
     });
     
-    // Summary log
-    console.log(`LOV_DEBUG_GOOGLE_OAUTH: Processed ${events.length} Google Calendar events successfully`);
-    
-    return events;
+    console.log(`${DEBUG_PREFIX}: Google API initialized successfully`);
   } catch (error) {
-    console.error('LOV_DEBUG_GOOGLE_OAUTH: Error fetching Google Calendar events:', error);
+    console.error(`${DEBUG_PREFIX}: Error initializing Google API:`, error);
     throw error;
   }
-}
+};
 
-// Function to create a Google Calendar event
-export async function createGoogleCalendarEvent(
+export const checkIfSignedIn = async (): Promise<boolean> => {
+  try {
+    await initializeGoogleAPI();
+    
+    const tokenResponse = gapi.client.getToken();
+    const isSignedIn = !!tokenResponse && !!tokenResponse.access_token;
+    console.log(`${DEBUG_PREFIX}: Check if signed in result: ${isSignedIn}`);
+    
+    return isSignedIn;
+  } catch (error) {
+    console.error(`${DEBUG_PREFIX}: Error checking if signed in:`, error);
+    return false;
+  }
+};
+
+export const signInWithGoogle = async (): Promise<boolean> => {
+  try {
+    await initializeGoogleAPI();
+    
+    return new Promise<boolean>((resolve) => {
+      tokenClient.callback = (response: any) => {
+        if (response.error) {
+          console.error(`${DEBUG_PREFIX}: Error during OAuth flow:`, response);
+          resolve(false);
+          return;
+        }
+        
+        console.log(`${DEBUG_PREFIX}: Successfully signed in`);
+        resolve(true);
+      };
+      
+      if (gapi.client.getToken() === null) {
+        console.log(`${DEBUG_PREFIX}: Requesting access token`);
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+      } else {
+        console.log(`${DEBUG_PREFIX}: Reusing existing token`);
+        tokenClient.requestAccessToken({ prompt: '' });
+      }
+    });
+  } catch (error) {
+    console.error(`${DEBUG_PREFIX}: Error signing in:`, error);
+    return false;
+  }
+};
+
+export const signOutFromGoogle = async (): Promise<void> => {
+  try {
+    console.log(`${DEBUG_PREFIX}: Signing out`);
+    const token = gapi.client.getToken();
+    if (token !== null) {
+      window.google.accounts.oauth2.revoke(token.access_token);
+      gapi.client.setToken(null);
+    }
+  } catch (error) {
+    console.error(`${DEBUG_PREFIX}: Error signing out:`, error);
+    throw error;
+  }
+};
+
+export const fetchGoogleCalendarEvents = async (startDate?: Date) => {
+  try {
+    await initializeGoogleAPI();
+    
+    // If there's no token, we're not signed in
+    if (gapi.client.getToken() === null) {
+      console.log(`${DEBUG_PREFIX}: Not signed in, can't fetch events`);
+      return [];
+    }
+    
+    const now = startDate || new Date();
+    const timeMin = new Date(now);
+    timeMin.setDate(timeMin.getDate() - (timeMin.getDay() || 7) + 1); // Start from the beginning of the week
+    timeMin.setHours(0, 0, 0, 0);
+    
+    const timeMax = new Date(timeMin);
+    timeMax.setDate(timeMax.getDate() + 30); // Get events for the next month
+    
+    console.log(`${DEBUG_PREFIX}: Fetching events from ${timeMin.toISOString()} to ${timeMax.toISOString()}`);
+    
+    const response = await gapi.client.calendar.events.list({
+      'calendarId': 'primary',
+      'timeMin': timeMin.toISOString(),
+      'timeMax': timeMax.toISOString(),
+      'maxResults': 100,
+      'singleEvents': true,
+      'orderBy': 'startTime'
+    });
+    
+    console.log(`${DEBUG_PREFIX}: Received ${response.result.items.length} events`);
+    return response.result.items;
+  } catch (error: any) {
+    console.error(`${DEBUG_PREFIX}: Error fetching calendar events:`, error);
+    
+    // If the error is due to an expired token, try to refresh it
+    if (error.status === 401) {
+      console.log(`${DEBUG_PREFIX}: Token expired, attempting to refresh`);
+      try {
+        await signInWithGoogle();
+        return fetchGoogleCalendarEvents(startDate);
+      } catch (refreshError) {
+        console.error(`${DEBUG_PREFIX}: Failed to refresh token:`, refreshError);
+        throw refreshError;
+      }
+    }
+    
+    throw error;
+  }
+};
+
+export const createGoogleCalendarEvent = async (
   summary: string,
   startDateTime: string,
   endDateTime: string,
-  description: string = '',
-): Promise<string | null> {
+  description: string = ''
+): Promise<string> => {
   try {
-    const token = await getAccessToken();
-    if (!token) {
-      throw new Error('אין הרשאות גישה ליומן Google');
+    await initializeGoogleAPI();
+    
+    // If there's no token, we're not signed in
+    if (gapi.client.getToken() === null) {
+      console.log(`${DEBUG_PREFIX}: Not signed in, can't create event`);
+      throw new Error('Not signed in to Google. Please sign in first.');
     }
     
+    console.log(`${DEBUG_PREFIX}: Creating event "${summary}" from ${startDateTime} to ${endDateTime}`);
+    
     const event = {
-      'summary': summary,
-      'description': description,
-      'start': {
-        'dateTime': startDateTime,
-        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+      summary,
+      description,
+      start: {
+        dateTime: startDateTime,
+        timeZone: 'Asia/Jerusalem'
       },
-      'end': {
-        'dateTime': endDateTime,
-        'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+      end: {
+        dateTime: endDateTime,
+        timeZone: 'Asia/Jerusalem'
       }
     };
     
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(event)
+    const response = await gapi.client.calendar.events.insert({
+      calendarId: 'primary',
+      resource: event
     });
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Failed to create calendar event');
+    console.log(`${DEBUG_PREFIX}: Event created with ID: ${response.result.id}`);
+    return response.result.id;
+  } catch (error: any) {
+    console.error(`${DEBUG_PREFIX}: Error creating calendar event:`, error);
+    
+    // If the error is due to an expired token, try to refresh it
+    if (error.status === 401) {
+      console.log(`${DEBUG_PREFIX}: Token expired, attempting to refresh`);
+      try {
+        await signInWithGoogle();
+        return createGoogleCalendarEvent(summary, startDateTime, endDateTime, description);
+      } catch (refreshError) {
+        console.error(`${DEBUG_PREFIX}: Failed to refresh token:`, refreshError);
+        throw refreshError;
+      }
     }
     
-    const data = await response.json();
-    console.log('Event created:', data.htmlLink);
-    return data.id;
-  } catch (error) {
-    console.error('Error creating Google Calendar event:', error);
     throw error;
   }
-}
+};
 
-// Calendar data comparison utilities
-export function compareCalendarData(googleEvents: GoogleCalendarEvent[], supabaseSlots: any[]): {
-  matchingEvents: any[];
-  onlyInGoogle: GoogleCalendarEvent[];
-  onlyInSupabase: any[];
-} {
-  const matchingEvents: any[] = [];
-  const onlyInGoogle: GoogleCalendarEvent[] = [];
-  
-  // Process Google events
-  googleEvents.forEach(googleEvent => {
-    // Check if this event exists in Supabase slots
-    const matchingSlot = supabaseSlots.find(slot => {
-      if (!googleEvent.start?.dateTime) return false;
-      
-      const googleDate = new Date(googleEvent.start.dateTime);
-      const googleDateStr = googleDate.toISOString().split('T')[0];
-      const googleHour = googleDate.getHours().toString().padStart(2, '0') + ':00';
-      
-      return slot.date === googleDateStr && slot.start_time === googleHour;
+export const deleteGoogleCalendarEvent = async (eventId: string): Promise<boolean> => {
+  try {
+    await initializeGoogleAPI();
+    
+    // If there's no token, we're not signed in
+    if (gapi.client.getToken() === null) {
+      console.log(`${DEBUG_PREFIX}: Not signed in, can't delete event`);
+      throw new Error('Not signed in to Google. Please sign in first.');
+    }
+    
+    console.log(`${DEBUG_PREFIX}: Deleting event with ID: ${eventId}`);
+    
+    await gapi.client.calendar.events.delete({
+      calendarId: 'primary',
+      eventId: eventId
     });
     
-    if (matchingSlot) {
-      matchingEvents.push({
-        google: googleEvent,
-        supabase: matchingSlot
-      });
-    } else {
-      onlyInGoogle.push(googleEvent);
+    console.log(`${DEBUG_PREFIX}: Event deleted successfully`);
+    return true;
+  } catch (error: any) {
+    console.error(`${DEBUG_PREFIX}: Error deleting calendar event:`, error);
+    
+    // If the error is due to an expired token, try to refresh it
+    if (error.status === 401) {
+      console.log(`${DEBUG_PREFIX}: Token expired, attempting to refresh`);
+      try {
+        await signInWithGoogle();
+        return deleteGoogleCalendarEvent(eventId);
+      } catch (refreshError) {
+        console.error(`${DEBUG_PREFIX}: Failed to refresh token:`, refreshError);
+        throw refreshError;
+      }
     }
-  });
-  
-  // Find slots only in Supabase
-  const onlyInSupabase = supabaseSlots.filter(slot => {
-    return !googleEvents.some(googleEvent => {
-      if (!googleEvent.start?.dateTime) return false;
-      
-      const googleDate = new Date(googleEvent.start.dateTime);
-      const googleDateStr = googleDate.toISOString().split('T')[0];
-      const googleHour = googleDate.getHours().toString().padStart(2, '0') + ':00';
-      
-      return slot.date === googleDateStr && slot.start_time === googleHour;
+    
+    throw error;
+  }
+};
+
+export const updateGoogleCalendarEvent = async (
+  eventId: string,
+  summary: string,
+  startDateTime: string,
+  endDateTime: string,
+  description: string = ''
+): Promise<boolean> => {
+  try {
+    await initializeGoogleAPI();
+    
+    // If there's no token, we're not signed in
+    if (gapi.client.getToken() === null) {
+      console.log(`${DEBUG_PREFIX}: Not signed in, can't update event`);
+      throw new Error('Not signed in to Google. Please sign in first.');
+    }
+    
+    console.log(`${DEBUG_PREFIX}: Updating event ${eventId} with "${summary}" from ${startDateTime} to ${endDateTime}`);
+    
+    // First, get the current event to preserve any fields we're not updating
+    const getResponse = await gapi.client.calendar.events.get({
+      calendarId: 'primary',
+      eventId: eventId
     });
-  });
-  
-  return {
-    matchingEvents,
-    onlyInGoogle,
-    onlyInSupabase
-  };
-}
+    
+    const existingEvent = getResponse.result;
+    
+    // Update only the fields we want to change
+    const updatedEvent = {
+      ...existingEvent,
+      summary,
+      description,
+      start: {
+        dateTime: startDateTime,
+        timeZone: 'Asia/Jerusalem'
+      },
+      end: {
+        dateTime: endDateTime,
+        timeZone: 'Asia/Jerusalem'
+      }
+    };
+    
+    // Update the event
+    await gapi.client.calendar.events.update({
+      calendarId: 'primary',
+      eventId: eventId,
+      resource: updatedEvent
+    });
+    
+    console.log(`${DEBUG_PREFIX}: Event updated successfully`);
+    return true;
+  } catch (error: any) {
+    console.error(`${DEBUG_PREFIX}: Error updating calendar event:`, error);
+    
+    // If the error is due to an expired token, try to refresh it
+    if (error.status === 401) {
+      console.log(`${DEBUG_PREFIX}: Token expired, attempting to refresh`);
+      try {
+        await signInWithGoogle();
+        return updateGoogleCalendarEvent(eventId, summary, startDateTime, endDateTime, description);
+      } catch (refreshError) {
+        console.error(`${DEBUG_PREFIX}: Failed to refresh token:`, refreshError);
+        throw refreshError;
+      }
+    }
+    
+    throw error;
+  }
+};

@@ -7,7 +7,8 @@ import {
   generateWeekDays,
   processGoogleEvents,
   processFutureSessions,
-  createGoogleEventsMap
+  createGoogleEventsMap,
+  detectMeetingConflicts
 } from '@/utils/calendarDataProcessing';
 import {
   fetchAvailabilitySlots,
@@ -15,7 +16,7 @@ import {
 } from '@/utils/calendarDataFetching';
 
 // Version identifier for debugging
-const COMPONENT_VERSION = "1.0.1";
+const COMPONENT_VERSION = "1.0.2";
 
 export function useCalendarData(
   currentDate: Date,
@@ -85,6 +86,10 @@ export function useCalendarData(
         // Process future sessions
         console.log(`LOV_DEBUG_CALENDAR_DATA: Processing future sessions with Google Calendar integration`);
         newCalendarData = processFutureSessions(newCalendarData, bookedSlots, googleEventsMap);
+        
+        // Detect conflicts between Google Calendar and future sessions
+        console.log(`CONFLICT_RESOLUTION_DEBUG: Detecting conflicts between Google Calendar and future sessions`);
+        newCalendarData = detectMeetingConflicts(newCalendarData);
       } else {
         console.log(`LOV_DEBUG_CALENDAR_DATA: No Google Calendar integration or events. Auth status: ${isGoogleAuthenticated}, events count: ${googleEvents.length}`);
         // Process future sessions without Google Calendar integration
@@ -99,6 +104,7 @@ export function useCalendarData(
       let availableCount = 0;
       let bookedCount = 0;
       let googleCount = 0;
+      let conflictCount = 0;
       
       newCalendarData.forEach((dayMap, date) => {
         dayMap.forEach((slot, hour) => {
@@ -106,6 +112,7 @@ export function useCalendarData(
           if (slot.status === 'available') availableCount++;
           if (slot.status === 'booked') bookedCount++;
           if (slot.fromGoogle) googleCount++;
+          if (slot.hasConflict) conflictCount++;
         });
       });
       
@@ -113,7 +120,8 @@ export function useCalendarData(
         Total slots: ${totalSlots}, 
         Available: ${availableCount}, 
         Booked: ${bookedCount}, 
-        Google events: ${googleCount}`
+        Google events: ${googleCount},
+        Conflicts: ${conflictCount}`
       );
       
       setCalendarData(newCalendarData);

@@ -1,9 +1,9 @@
 import { format, startOfDay, addDays } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
+import { formatInTimeZone, getDateTimeParts, addMinutesToDate } from '@/utils/dateTimeUtils';
 
-// Debug version for tracking code execution
-const UTILS_VERSION = "1.0.4";
+// Debug version for tracking code execution - updated to reflect fixes
+const UTILS_VERSION = "1.0.6";
 console.log(`LOV_DEBUG_PROCESSING: Calendar data processing utils loaded, version ${UTILS_VERSION}`);
 
 export const generateWeekDays = (currentDate: Date) => {
@@ -75,39 +75,54 @@ export const processGoogleEvents = (
   googleEvents.forEach((event, index) => {
     if (event.start?.dateTime && event.end?.dateTime) {
       try {
+        console.log(`LOV_DEBUG_PROCESSING: Processing Google event ${index}: ${event.summary}`);
+
+        // Use our new date utilities with proper timezone handling
         const startDate = new Date(event.start.dateTime);
         const endDate = new Date(event.end.dateTime);
         
-        const googleDate = format(startDate, 'yyyy-MM-dd');
-        const exactStartTime = format(startDate, 'HH:mm');
-        const exactEndTime = format(endDate, 'HH:mm');
+        // Format the date parts using our utility function
+        const { date: googleDate, hour: startHour, minute: startMinute, fullTime: exactStartTime } = getDateTimeParts(startDate);
+        const { hour: endHour, minute: endMinute, fullTime: exactEndTime } = getDateTimeParts(endDate);
         
-        const startHour = format(startDate, 'HH');
-        const startMinute = parseInt(format(startDate, 'mm'));
-        const endHour = format(endDate, 'HH');
-        const endMinute = parseInt(format(endDate, 'mm'));
-        
-        console.log(`LOV_DEBUG_PROCESSING: Event ${index}: ${event.summary} on ${googleDate} at ${exactStartTime}-${exactEndTime}`);
+        console.log(`LOV_DEBUG_PROCESSING: Event ${index} time parts:`, {
+          googleDate,
+          exactStartTime,
+          exactEndTime,
+          startHour,
+          startMinute,
+          endHour,
+          endMinute
+        });
         
         const isMeeting = event.summary?.toLowerCase().includes('פגישה עם') || 
                        event.summary?.toLowerCase().includes('שיחה עם');
         
         // Always use 90 minutes for patient meetings
         let adjustedEndDate = isMeeting 
-          ? new Date(startDate.getTime() + 90 * 60000) 
+          ? addMinutesToDate(startDate, 90)
           : endDate;
         
-        const adjustedEndHour = format(adjustedEndDate, 'HH');
-        const adjustedEndMinute = parseInt(format(adjustedEndDate, 'mm'));
-        const adjustedExactEndTime = format(adjustedEndDate, 'HH:mm');
+        const { hour: adjustedEndHour, minute: adjustedEndMinute, fullTime: adjustedExactEndTime } = getDateTimeParts(adjustedEndDate);
         
-        const startTimeInMinutes = (parseInt(startHour) * 60) + startMinute;
-        const endTimeInMinutes = (parseInt(adjustedEndHour) * 60) + adjustedEndMinute;
+        const startTimeInMinutes = (parseInt(startHour) * 60) + parseInt(startMinute);
+        const endTimeInMinutes = (parseInt(adjustedEndHour) * 60) + parseInt(adjustedEndMinute);
         const durationInMinutes = endTimeInMinutes - startTimeInMinutes;
         const hoursSpan = Math.ceil(durationInMinutes / 60);
         
-        const isPartialHour = startMinute > 0 || adjustedEndMinute > 0;
+        const isPartialHour = parseInt(startMinute) > 0 || parseInt(adjustedEndMinute) > 0;
 
+        console.log(`LOV_DEBUG_PROCESSING: Event ${index} calculations:`, {
+          isMeeting,
+          durationInMinutes,
+          hoursSpan,
+          isPartialHour,
+          adjustedEndHour,
+          adjustedEndMinute,
+          adjustedExactEndTime
+        });
+
+        // Check if the day is in the visible range
         const isDayVisible = days.some(day => day.date === googleDate);
         if (!isDayVisible) {
           console.log(`LOV_DEBUG_PROCESSING: Skipping event ${index}, date ${googleDate} not in visible range`);
@@ -125,7 +140,7 @@ export const processGoogleEvents = (
         console.log(`LOV_DEBUG_PROCESSING: Processing hours for event ${index} from ${startHour} to ${adjustedEndHour}`);
         
         // Process each hour of the event
-        for (let h = Number(startHour); h <= Number(adjustedEndHour); h++) {
+        for (let h = parseInt(startHour); h <= parseInt(adjustedEndHour); h++) {
           const hourString = h.toString().padStart(2, '0') + ':00';
           if (!dayMap.has(hourString)) {
             console.log(`LOV_DEBUG_PROCESSING: Hour ${hourString} not in calendar for event ${index}`);
@@ -133,23 +148,23 @@ export const processGoogleEvents = (
           }
           
           // Skip the last hour if the event ends exactly at :00
-          if (h === Number(adjustedEndHour) && adjustedEndMinute === 0) {
+          if (h === parseInt(adjustedEndHour) && parseInt(adjustedEndMinute) === 0) {
             console.log(`LOV_DEBUG_PROCESSING: Skipping last hour ${hourString} for event ${index} as it ends at :00`);
             continue;
           }
           
           // Calculate if this hour is partial (for proper rendering)
-          const isFirstHour = h === Number(startHour);
-          const isLastHour = h === Number(adjustedEndHour);
+          const isFirstHour = h === parseInt(startHour);
+          const isLastHour = h === parseInt(adjustedEndHour);
           let currentStartMinute = 0;
           let currentEndMinute = 59;
           
-          if (isFirstHour && startMinute > 0) {
-            currentStartMinute = startMinute;
+          if (isFirstHour && parseInt(startMinute) > 0) {
+            currentStartMinute = parseInt(startMinute);
           }
           
-          if (isLastHour && adjustedEndMinute > 0) {
-            currentEndMinute = adjustedEndMinute;
+          if (isLastHour && parseInt(adjustedEndMinute) > 0) {
+            currentEndMinute = parseInt(adjustedEndMinute);
           }
           
           dayMap.set(hourString, {
@@ -203,17 +218,105 @@ export const createGoogleEventsMap = (googleEvents: GoogleCalendarEvent[]) => {
       return;
     }
     
-    const eventDate = new Date(event.start.dateTime);
-    const dateKey = format(eventDate, 'yyyy-MM-dd');
-    const hourKey = format(eventDate, 'HH:00');
-    const key = `${dateKey}-${hourKey}`;
-    
-    googleEventsMap.set(key, event);
-    console.log(`LOV_DEBUG_PROCESSING: Added event to map with key: ${key}`);
+    try {
+      const { date: dateKey, hour: hourKey } = getDateTimeParts(event.start.dateTime);
+      const key = `${dateKey}-${hourKey}:00`;
+      
+      googleEventsMap.set(key, event);
+      console.log(`LOV_DEBUG_PROCESSING: Added event to map with key: ${key}`);
+    } catch (error) {
+      console.error(`LOV_DEBUG_PROCESSING: Error adding event ${index} to map:`, error);
+    }
   });
   
   console.log(`LOV_DEBUG_PROCESSING: Completed Google events map with ${googleEventsMap.size} entries`);
   return googleEventsMap;
+};
+
+// New function to detect conflicting slots between Google Calendar and future sessions
+export const detectMeetingConflicts = (
+  calendarData: Map<string, Map<string, CalendarSlot>>
+) => {
+  // Store all meetings in temporary maps for conflict detection
+  const googleCalendarMeetings = new Map<string, CalendarSlot>();
+  const futureSessionMeetings = new Map<string, CalendarSlot>();
+  
+  console.log(`CONFLICT_RESOLUTION_DEBUG: Detecting meeting conflicts`);
+  
+  // First pass - identify and collect all meetings
+  calendarData.forEach((dayMap, date) => {
+    dayMap.forEach((slot, hour) => {
+      // Only check first hours of meetings to avoid duplicate conflicts
+      if ((slot.isFirstHour || !slot.isPartialHour) && isWorkMeeting(slot)) {
+        const timeKey = `${date}-${hour}`;
+        
+        if (slot.fromGoogle && !slot.fromFutureSession) {
+          googleCalendarMeetings.set(timeKey, slot);
+          console.log(`CONFLICT_RESOLUTION_DEBUG: Found Google Calendar meeting at ${timeKey}: ${slot.notes}`);
+        }
+        
+        if (slot.fromFutureSession && !slot.fromGoogle) {
+          futureSessionMeetings.set(timeKey, slot);
+          console.log(`CONFLICT_RESOLUTION_DEBUG: Found future session at ${timeKey}: ${slot.notes}`);
+        }
+      }
+    });
+  });
+  
+  // Second pass - find and mark conflicts
+  let conflictCount = 0;
+  
+  googleCalendarMeetings.forEach((googleSlot, timeKey) => {
+    if (futureSessionMeetings.has(timeKey)) {
+      const futureSessionSlot = futureSessionMeetings.get(timeKey)!;
+      conflictCount++;
+      
+      console.log(`CONFLICT_RESOLUTION_DEBUG: Found conflict at ${timeKey}:`);
+      console.log(`CONFLICT_RESOLUTION_DEBUG: - Google: ${googleSlot.notes}`);
+      console.log(`CONFLICT_RESOLUTION_DEBUG: - Future session: ${futureSessionSlot.notes}`);
+      
+      // Mark both slots as having conflicts
+      const [date, hour] = timeKey.split('-');
+      const dayMap = calendarData.get(date);
+      
+      if (dayMap && dayMap.has(hour)) {
+        const slot = dayMap.get(hour)!;
+        
+        // Update the slot with conflict information
+        dayMap.set(hour, {
+          ...slot,
+          hasConflict: true,
+          conflictSlot: futureSessionSlot
+        });
+        
+        // Also update the future session slot
+        const fsTimeKey = `${futureSessionSlot.date}-${futureSessionSlot.hour}`;
+        const [fsDate, fsHour] = fsTimeKey.split('-');
+        const fsMap = calendarData.get(fsDate);
+        
+        if (fsMap && fsMap.has(fsHour)) {
+          const fsSlot = fsMap.get(fsHour)!;
+          
+          fsMap.set(fsHour, {
+            ...fsSlot,
+            hasConflict: true,
+            conflictSlot: googleSlot
+          });
+        }
+      }
+    }
+  });
+  
+  console.log(`CONFLICT_RESOLUTION_DEBUG: Found ${conflictCount} conflicts between Google Calendar and future sessions`);
+  return calendarData;
+};
+
+// Helper function to identify work meetings
+const isWorkMeeting = (slot: CalendarSlot): boolean => {
+  return !!slot.notes && 
+         typeof slot.notes === 'string' && 
+         slot.notes.startsWith('פגישה עם') && 
+         ((slot.status as string) === 'booked' || slot.isPatientMeeting || (slot.isMeeting && (slot.status as string) === 'booked'));
 };
 
 export const processFutureSessions = (
@@ -226,77 +329,7 @@ export const processFutureSessions = (
   // Create a map for faster lookups of which booked sessions exist in future_sessions
   // This helps us identify which Google events should or shouldn't have "Add to DB" buttons
   const futureSessionsMap = new Map<string, boolean>();
-
-  // Track overlapping sessions
-  const sessionTimeRanges = new Map<string, Array<{id: string, name: string, start: Date, end: Date}>>();
-  const overlappingSessions: Array<{firstSession: string, secondSession: string, date: string}> = [];
   
-  // First pass: collect all session time ranges for overlap detection
-  bookedSlots.forEach((session) => {
-    if (!session.session_date) return;
-    
-    try {
-      const sessionDateTime = new Date(session.session_date);
-      const sessionDate = formatInTimeZone(sessionDateTime, 'Asia/Jerusalem', 'yyyy-MM-dd');
-      
-      // Calculate session end time (90 minutes after start)
-      const endTime = new Date(sessionDateTime.getTime() + 90 * 60000);
-      
-      // Store session time range by date for overlap checking
-      if (!sessionTimeRanges.has(sessionDate)) {
-        sessionTimeRanges.set(sessionDate, []);
-      }
-      
-      const patientName = session.patients?.name || 'לקוח/ה';
-      sessionTimeRanges.get(sessionDate)!.push({
-        id: session.id,
-        name: patientName,
-        start: sessionDateTime,
-        end: endTime
-      });
-    } catch (error) {
-      console.error('Error processing session date for overlap check:', error, session);
-    }
-  });
-  
-  // Check for overlaps
-  sessionTimeRanges.forEach((sessionsForDate, date) => {
-    for (let i = 0; i < sessionsForDate.length; i++) {
-      const session1 = sessionsForDate[i];
-      
-      for (let j = i + 1; j < sessionsForDate.length; j++) {
-        const session2 = sessionsForDate[j];
-        
-        // Check if sessions overlap
-        if ((session1.start <= session2.end) && (session1.end >= session2.start)) {
-          console.log(`OVERLAP_DEBUG: Found overlapping sessions on ${date}:`);
-          console.log(`  - ${session1.name} (${formatInTimeZone(session1.start, 'Asia/Jerusalem', 'HH:mm')} - ${formatInTimeZone(session1.end, 'Asia/Jerusalem', 'HH:mm')})`);
-          console.log(`  - ${session2.name} (${formatInTimeZone(session2.start, 'Asia/Jerusalem', 'HH:mm')} - ${formatInTimeZone(session2.end, 'Asia/Jerusalem', 'HH:mm')})`);
-          
-          overlappingSessions.push({
-            firstSession: session1.name,
-            secondSession: session2.name,
-            date: date
-          });
-        }
-      }
-    }
-  });
-  
-  // Display toast messages for overlaps
-  if (overlappingSessions.length > 0) {
-    import('@/components/ui/use-toast').then(({ toast }) => {
-      overlappingSessions.forEach(overlap => {
-        toast({
-          title: "התגלתה חפיפה בין פגישות!",
-          description: `ב-${overlap.date} יש חפיפה בין פגישה עם ${overlap.firstSession} לפגישה עם ${overlap.secondSession}`,
-          variant: "destructive",
-        });
-      });
-    });
-  }
-
-  // Continue with the regular session processing as before
   bookedSlots.forEach((session, index) => {
     if (!session.session_date) {
       console.log(`Session ${index} has no date:`, session);
@@ -304,44 +337,56 @@ export const processFutureSessions = (
     }
     
     try {
-      const sessionDateTime = new Date(session.session_date);
-      const israelTime = formatInTimeZone(sessionDateTime, 'Asia/Jerusalem', 'yyyy-MM-dd HH:mm:ss');
-      
-      const sessionDate = israelTime.split(' ')[0];
-      const timeParts = israelTime.split(' ')[1].split(':');
-      const sessionTime = `${timeParts[0]}:00`;
+      console.log(`LOV_DEBUG_PROCESSING: Processing future session ${index}:`, {
+        dateString: session.session_date,
+        patient: session.patients?.name || 'unknown'
+      });
+
+      // Use our new utility to safely get date/time parts
+      const { date: sessionDate, hour: sessionHour, minute: sessionMinute, fullTime } = getDateTimeParts(session.session_date);
       
       // Add to map for quick lookups
-      const sessionKey = `${sessionDate}-${sessionTime}`;
+      const sessionKey = `${sessionDate}-${sessionHour}:00`;
       futureSessionsMap.set(sessionKey, true);
       
-      console.log(`DB_BUTTON_DEBUG: Session ${index} mapped with key: ${sessionKey}, patient: ${session.patients?.name || 'unknown'}`);
+      console.log(`DB_BUTTON_DEBUG: Session ${index} mapped with key: ${sessionKey}`, {
+        patient: session.patients?.name || 'unknown',
+        fullTime,
+        minute: sessionMinute
+      });
       
-      const startMinute = parseInt(timeParts[1]);
-      
+      // Get the day map for this date
       const dayMap = calendarData.get(sessionDate);
       if (!dayMap) {
         console.log(`No day map for session date: ${sessionDate}`);
         return;
       }
       
+      const sessionTime = `${sessionHour}:00`;
       if (!dayMap.has(sessionTime)) {
         console.log(`No slot for session time: ${sessionTime}`);
         return;
       }
       
       // Always use 90 minutes (1.5 hours) for patient meetings
-      const endTime = new Date(sessionDateTime.getTime() + 90 * 60000);
-      const formattedEndTime = formatInTimeZone(endTime, 'Asia/Jerusalem', 'HH:mm');
-      const endHour = parseInt(formattedEndTime.split(':')[0]);
-      const endMinute = parseInt(formattedEndTime.split(':')[1]);
-      const hoursSpan = Math.ceil(90 / 60); // 1.5 hours
+      const sessionDateTime = new Date(session.session_date);
+      const endTime = addMinutesToDate(sessionDateTime, 90);
+      const { hour: endHour, minute: endMinute, fullTime: formattedEndTime } = getDateTimeParts(endTime);
       
+      // For 90 minutes, span is always 2
+      const hoursSpan = Math.ceil(90 / 60);
+      
+      // Check if this session exists in Google Calendar
       const eventDateHourKey = `${sessionDate}-${sessionTime}`;
       const inGoogleCalendar = googleEventsMap.has(eventDateHourKey);
       
-      console.log(`DB_BUTTON_DEBUG: Session ${index} - inGoogleCalendar: ${inGoogleCalendar}, key: ${eventDateHourKey}`);
-      console.log(`COLOR_DEBUG: Session ${index} color flags - inGoogleCalendar: ${inGoogleCalendar}, fromFutureSession: true`);
+      console.log(`DB_BUTTON_DEBUG: Session ${index} calculation results:`, {
+        inGoogleCalendar,
+        key: eventDateHourKey,
+        startTime: fullTime,
+        endTime: formattedEndTime,
+        hoursSpan
+      });
       
       let status: 'available' | 'booked' | 'completed' | 'canceled' | 'private' | 'unspecified' = 'booked';
       if (session.status === 'Completed') status = 'completed';
@@ -351,27 +396,27 @@ export const processFutureSessions = (
       const noteText = `פגישה עם ${patientName}`;
       
       // Process each hour of the event
-      for (let h = parseInt(sessionTime.split(':')[0]); h <= endHour; h++) {
+      for (let h = parseInt(sessionHour); h <= parseInt(endHour); h++) {
         const hourString = h.toString().padStart(2, '0') + ':00';
         
         // Skip the last hour if the event ends exactly at :00
-        if (h === endHour && endMinute === 0) {
+        if (h === parseInt(endHour) && parseInt(endMinute) === 0) {
           continue;
         }
         
         if (dayMap.has(hourString)) {
-          const isFirstHour = h === parseInt(sessionTime.split(':')[0]);
-          const isLastHour = h === endHour;
+          const isFirstHour = h === parseInt(sessionHour);
+          const isLastHour = h === parseInt(endHour);
           
           let currentStartMinute = 0;
           let currentEndMinute = 59;
           
           if (isFirstHour) {
-            currentStartMinute = startMinute;
+            currentStartMinute = parseInt(sessionMinute);
           }
           
           if (isLastHour) {
-            currentEndMinute = endMinute;
+            currentEndMinute = parseInt(endMinute);
           }
           
           // Check if this slot is already a Google event with the same details
@@ -384,11 +429,11 @@ export const processFutureSessions = (
             status,
             notes: noteText,
             description: session.title || '',
-            exactStartTime: `${timeParts[0]}:${timeParts[1]}`,
+            exactStartTime: fullTime,
             exactEndTime: formattedEndTime,
             startMinute: currentStartMinute,
             endMinute: currentEndMinute,
-            isPartialHour: (isFirstHour && startMinute > 0) || (isLastHour && endMinute > 0),
+            isPartialHour: (isFirstHour && parseInt(sessionMinute) > 0) || (isLastHour && parseInt(endMinute) > 0),
             isPatientMeeting: true,
             hoursSpan,
             isFirstHour,
@@ -404,12 +449,19 @@ export const processFutureSessions = (
           
           // Additional color debug logging
           if (isFirstHour) {
-            console.log(`COLOR_DEBUG: Set future session at ${sessionDate} ${hourString}, inGoogleCalendar: ${inGoogleCalendar}, fromFutureSession: true, fromGoogle: ${existingSlot?.fromGoogle || inGoogleCalendar}`);
+            console.log(`COLOR_DEBUG: Set future session at ${sessionDate} ${hourString}`, {
+              inGoogleCalendar,
+              fromFutureSession: true,
+              fromGoogle: existingSlot?.fromGoogle || inGoogleCalendar
+            });
           }
           
           // Log for debugging
           if (isFirstHour) {
-            console.log(`DB_BUTTON_DEBUG: Set future session slot for ${sessionDate} ${hourString}, patient "${patientName}", inGoogleCalendar: ${inGoogleCalendar}`);
+            console.log(`DB_BUTTON_DEBUG: Set future session slot for ${sessionDate} ${hourString}`, {
+              patient: patientName,
+              inGoogleCalendar
+            });
           }
         }
       }
@@ -451,6 +503,9 @@ export const processFutureSessions = (
       }
     });
   });
+  
+  // Detect conflicts between Google Calendar and future sessions
+  calendarData = detectMeetingConflicts(calendarData);
   
   return calendarData;
 };
