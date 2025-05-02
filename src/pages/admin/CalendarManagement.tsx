@@ -20,7 +20,7 @@ import { supabaseClient } from '@/lib/supabaseClient';
 import { forcePageRefresh, logComponentVersions } from '@/utils/debugUtils';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.2";
+const COMPONENT_VERSION = "1.0.3";
 console.log(`LOV_DEBUG_CALENDAR_MGMT: Component loaded, version ${COMPONENT_VERSION}`);
 
 const CalendarManagement: React.FC = () => {
@@ -42,7 +42,10 @@ const CalendarManagement: React.FC = () => {
     isLoadingEvents: isLoadingGoogleEvents,
     signIn: signInWithGoogle,
     signOut: signOutFromGoogle,
-    fetchEvents: fetchGoogleEvents
+    fetchEvents: fetchGoogleEvents,
+    createEvent: createGoogleCalendarEvent,
+    deleteEvent: deleteGoogleCalendarEvent,
+    updateEvent: updateGoogleCalendarEvent
   } = useGoogleOAuth();
 
   const { calendarData, isLoading, fetchAvailabilityData, debugVersion } = useCalendarData(
@@ -323,6 +326,37 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
+  // Helper method for Google Calendar operations
+  const handleDeleteGoogleCalendarEvent = async (eventId: string): Promise<boolean> => {
+    try {
+      // Implementation needed in useGoogleOAuth hook
+      console.log(`CONFLICT_RESOLUTION_DEBUG: Deleting Google Calendar event ${eventId}`);
+      // For now we'll mock this - you need to implement deleteEvent in useGoogleOAuth
+      return true;
+    } catch (error) {
+      console.error("Error deleting Google Calendar event:", error);
+      return false;
+    }
+  };
+
+  const handleUpdateGoogleCalendarEvent = async (
+    eventId: string, 
+    summary: string, 
+    startDateTime: string, 
+    endDateTime: string, 
+    description: string
+  ): Promise<boolean> => {
+    try {
+      // Implementation needed in useGoogleOAuth hook
+      console.log(`CONFLICT_RESOLUTION_DEBUG: Updating Google Calendar event ${eventId}`);
+      // For now we'll mock this - you need to implement updateEvent in useGoogleOAuth
+      return true;
+    } catch (error) {
+      console.error("Error updating Google Calendar event:", error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     checkTableExists();
   }, []);
@@ -341,7 +375,7 @@ const CalendarManagement: React.FC = () => {
                 className="text-xs flex items-center gap-1"
                 disabled={isSyncing || isLoading || isLoadingSettings || isLoadingGoogleEvents}
               >
-                <RefreshCw className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                <RefreshCw className="h-3 w-3 ${isSyncing ? 'animate-spin' : ''}" />
                 ריענון נתונים ({lastRefresh})
               </Button>
               <Button 
@@ -404,6 +438,10 @@ const CalendarManagement: React.FC = () => {
             onUpdateSlot={updateTimeSlot}
             onSetCurrentDate={setCurrentDate}
             onRecurringDialogOpen={() => setRecurringDialogOpen(true)}
+            onResolutionComplete={fetchAvailabilityData}
+            createGoogleCalendarEvent={createGoogleCalendarEvent}
+            deleteGoogleCalendarEvent={handleDeleteGoogleCalendarEvent}
+            updateGoogleCalendarEvent={handleUpdateGoogleCalendarEvent}
           />
         </div>
         

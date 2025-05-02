@@ -4,7 +4,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 
 // Debug version for tracking code execution
-const UTILS_VERSION = "1.0.4";
+const UTILS_VERSION = "1.0.5";
 console.log(`LOV_DEBUG_PROCESSING: Calendar data processing utils loaded, version ${UTILS_VERSION}`);
 
 export const generateWeekDays = (currentDate: Date) => {
@@ -217,6 +217,92 @@ export const createGoogleEventsMap = (googleEvents: GoogleCalendarEvent[]) => {
   return googleEventsMap;
 };
 
+// New function to detect conflicting slots between Google Calendar and future sessions
+export const detectMeetingConflicts = (
+  calendarData: Map<string, Map<string, CalendarSlot>>
+) => {
+  // Store all meetings in temporary maps for conflict detection
+  const googleCalendarMeetings = new Map<string, CalendarSlot>();
+  const futureSessionMeetings = new Map<string, CalendarSlot>();
+  
+  console.log(`CONFLICT_RESOLUTION_DEBUG: Detecting meeting conflicts`);
+  
+  // First pass - identify and collect all meetings
+  calendarData.forEach((dayMap, date) => {
+    dayMap.forEach((slot, hour) => {
+      // Only check first hours of meetings to avoid duplicate conflicts
+      if ((slot.isFirstHour || !slot.isPartialHour) && isWorkMeeting(slot)) {
+        const timeKey = `${date}-${hour}`;
+        
+        if (slot.fromGoogle && !slot.fromFutureSession) {
+          googleCalendarMeetings.set(timeKey, slot);
+          console.log(`CONFLICT_RESOLUTION_DEBUG: Found Google Calendar meeting at ${timeKey}: ${slot.notes}`);
+        }
+        
+        if (slot.fromFutureSession && !slot.fromGoogle) {
+          futureSessionMeetings.set(timeKey, slot);
+          console.log(`CONFLICT_RESOLUTION_DEBUG: Found future session at ${timeKey}: ${slot.notes}`);
+        }
+      }
+    });
+  });
+  
+  // Second pass - find and mark conflicts
+  let conflictCount = 0;
+  
+  googleCalendarMeetings.forEach((googleSlot, timeKey) => {
+    if (futureSessionMeetings.has(timeKey)) {
+      const futureSessionSlot = futureSessionMeetings.get(timeKey)!;
+      conflictCount++;
+      
+      console.log(`CONFLICT_RESOLUTION_DEBUG: Found conflict at ${timeKey}:`);
+      console.log(`CONFLICT_RESOLUTION_DEBUG: - Google: ${googleSlot.notes}`);
+      console.log(`CONFLICT_RESOLUTION_DEBUG: - Future session: ${futureSessionSlot.notes}`);
+      
+      // Mark both slots as having conflicts
+      const [date, hour] = timeKey.split('-');
+      const dayMap = calendarData.get(date);
+      
+      if (dayMap && dayMap.has(hour)) {
+        const slot = dayMap.get(hour)!;
+        
+        // Update the slot with conflict information
+        dayMap.set(hour, {
+          ...slot,
+          hasConflict: true,
+          conflictSlot: futureSessionSlot
+        });
+        
+        // Also update the future session slot
+        const fsTimeKey = `${futureSessionSlot.date}-${futureSessionSlot.hour}`;
+        const [fsDate, fsHour] = fsTimeKey.split('-');
+        const fsMap = calendarData.get(fsDate);
+        
+        if (fsMap && fsMap.has(fsHour)) {
+          const fsSlot = fsMap.get(fsHour)!;
+          
+          fsMap.set(fsHour, {
+            ...fsSlot,
+            hasConflict: true,
+            conflictSlot: googleSlot
+          });
+        }
+      }
+    }
+  });
+  
+  console.log(`CONFLICT_RESOLUTION_DEBUG: Found ${conflictCount} conflicts between Google Calendar and future sessions`);
+  return calendarData;
+};
+
+// Helper function to identify work meetings
+const isWorkMeeting = (slot: CalendarSlot): boolean => {
+  return !!slot.notes && 
+         typeof slot.notes === 'string' && 
+         slot.notes.startsWith('פגישה עם') && 
+         ((slot.status as string) === 'booked' || slot.isPatientMeeting || (slot.isMeeting && (slot.status as string) === 'booked'));
+};
+
 export const processFutureSessions = (
   calendarData: Map<string, Map<string, CalendarSlot>>,
   bookedSlots: any[],
@@ -382,6 +468,9 @@ export const processFutureSessions = (
       }
     });
   });
+  
+  // Detect conflicts between Google Calendar and future sessions
+  calendarData = detectMeetingConflicts(calendarData);
   
   return calendarData;
 };
