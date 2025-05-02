@@ -24,13 +24,13 @@ const SessionsList: React.FC<SessionsListProps> = ({
   const getMeetingTypeIcon = (type: string) => {
     switch (type) {
       case 'Zoom':
-        return <Monitor className="h-4 w-4 ml-2" />;
+        return <Monitor className="h-4 w-4 ml-2 flex-shrink-0" />;
       case 'Phone':
-        return <Phone className="h-4 w-4 ml-2" />;
+        return <Phone className="h-4 w-4 ml-2 flex-shrink-0" />;
       case 'In-Person':
-        return <User className="h-4 w-4 ml-2" />;
+        return <User className="h-4 w-4 ml-2 flex-shrink-0" />;
       default:
-        return <Calendar className="h-4 w-4 ml-2" />;
+        return <Calendar className="h-4 w-4 ml-2 flex-shrink-0" />;
     }
   };
 
@@ -80,9 +80,11 @@ const SessionsList: React.FC<SessionsListProps> = ({
                         to={`/admin/patients/${session.patient_id}`}
                         className="text-primary hover:underline font-medium"
                       >
-                        {searchTerm ? 
-                          highlightText(session.patients.name, searchTerm) : 
-                          session.patients.name}
+                        <div className="truncate max-w-[200px]">
+                          {searchTerm ? 
+                            highlightText(session.patients.name, searchTerm) : 
+                            session.patients.name}
+                        </div>
                       </Link>
                     </td>
                     <td className="py-4 px-6 whitespace-nowrap">
@@ -91,7 +93,7 @@ const SessionsList: React.FC<SessionsListProps> = ({
                     <td className="py-4 px-6">
                       <div className="flex items-center">
                         {getMeetingTypeIcon(session.meeting_type)}
-                        <span>{session.meeting_type === 'Zoom' ? 'זום' : 
+                        <span className="truncate">{session.meeting_type === 'Zoom' ? 'זום' : 
                                session.meeting_type === 'Phone' ? 'טלפון' : 'פגישה פרונטלית'}</span>
                       </div>
                     </td>
@@ -103,8 +105,8 @@ const SessionsList: React.FC<SessionsListProps> = ({
                           onClick={() => onEditSession(session)}
                           className="flex items-center"
                         >
-                          <Edit className="h-4 w-4 ml-2" />
-                          עריכה
+                          <Edit className="h-4 w-4 ml-2 flex-shrink-0" />
+                          <span className="whitespace-nowrap">עריכה</span>
                         </Button>
                         <Button
                           variant="ghost" 
@@ -112,8 +114,8 @@ const SessionsList: React.FC<SessionsListProps> = ({
                           onClick={() => onDeleteSession(session)}
                           className="flex items-center text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
-                          <Trash2 className="h-4 w-4 ml-2" />
-                          מחיקה
+                          <Trash2 className="h-4 w-4 ml-2 flex-shrink-0" />
+                          <span className="whitespace-nowrap">מחיקה</span>
                         </Button>
                       </div>
                     </td>
