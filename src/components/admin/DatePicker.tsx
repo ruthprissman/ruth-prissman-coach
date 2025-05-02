@@ -11,6 +11,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
+// Component version for debugging
+const COMPONENT_VERSION = "1.0.1";
+console.log(`LOV_DEBUG_DATEPICKER: Component loaded, version ${COMPONENT_VERSION}`);
+
 interface DatePickerProps {
   currentDate: Date;
   onSelect: (date: Date) => void;
@@ -36,7 +40,12 @@ export function DatePicker({ currentDate, onSelect }: DatePickerProps) {
         <Calendar
           mode="single"
           selected={currentDate}
-          onSelect={onSelect}
+          onSelect={(date) => {
+            if (date) {
+              console.log(`LOV_DEBUG_DATEPICKER: Date selected: ${date.toISOString()}`);
+              onSelect(date);
+            }
+          }}
           initialFocus
           className="p-3 pointer-events-auto"
         />

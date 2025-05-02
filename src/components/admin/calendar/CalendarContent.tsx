@@ -7,8 +7,8 @@ import { CalendarSlot } from '@/types/calendar';
 import CalendarGrid from './CalendarGrid';
 import { DatePicker } from '@/components/admin/DatePicker';
 
-// Component version for debugging
-const COMPONENT_VERSION = "1.0.1";
+// Component version for debugging - updated to reflect fixes
+const COMPONENT_VERSION = "1.0.2";
 console.log(`LOV_DEBUG_CALENDAR_CONTENT: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarContentProps {
