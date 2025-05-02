@@ -29,6 +29,7 @@ import { ThemeProvider } from './components/ui/theme-provider';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { PublicationProvider } from './contexts/PublicationContext';
+import { GoogleAuthProvider } from './contexts/GoogleAuthContext';
 import { Toaster } from './components/ui/toaster';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
@@ -54,55 +55,58 @@ function App() {
     <HelmetProvider>
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <AuthProvider>
-          <Router>
-            <ScrollToTop />
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/stories" element={<Stories />} />
-              <Route path="/articles" element={<Articles />} />
-              <Route path="/poems" element={<Poems />} />
-              <Route path="/humor" element={<Humor />} />
-              <Route path="/articles/:id" element={<ArticleView />} />
-              <Route path="/poems/:id" element={<PoemView />} />
-              <Route path="/humor/:id" element={<HumorView />} />
-              <Route path="/unsubscribe" element={<Unsubscribe />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/faq" element={<FAQ />} />
+          {/* Wrap the entire app with GoogleAuthProvider so the authentication state is preserved */}
+          <GoogleAuthProvider>
+            <Router>
+              <ScrollToTop />
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/stories" element={<Stories />} />
+                <Route path="/articles" element={<Articles />} />
+                <Route path="/poems" element={<Poems />} />
+                <Route path="/humor" element={<Humor />} />
+                <Route path="/articles/:id" element={<ArticleView />} />
+                <Route path="/poems/:id" element={<PoemView />} />
+                <Route path="/humor/:id" element={<HumorView />} />
+                <Route path="/unsubscribe" element={<Unsubscribe />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/faq" element={<FAQ />} />
 
-              {/* Admin auth routes */}
-              <Route path="/admin/login" element={<Login />} />
-              <Route path="/admin/reset-password" element={<ResetPassword />} />
-              
-              {/* Protected admin routes */}
-              <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/admin/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/admin/patients" element={<ProtectedRoute><PatientsList /></ProtectedRoute>} />
-              <Route path="/admin/patients/:id" element={<ProtectedRoute><ClientDetails /></ProtectedRoute>} />
-              <Route path="/admin/sessions" element={<ProtectedRoute><AllSessions /></ProtectedRoute>} />
-              <Route path="/admin/exercises" element={<ProtectedRoute><ExerciseManagement /></ProtectedRoute>} />
-              <Route path="/admin/calendar" element={<ProtectedRoute><CalendarManagement /></ProtectedRoute>} />
-              <Route path="/admin/stories" element={<ProtectedRoute><StoriesManagement /></ProtectedRoute>} />
-              
-              {/* Article management routes wrapped with PublicationProvider */}
-              <Route path="/admin/articles/*" element={
-                <PublicationProvider>
-                  <Routes>
-                    <Route path="/" element={<ProtectedRoute><ArticlesManagement /></ProtectedRoute>} />
-                    <Route path="/new" element={<ProtectedRoute><ArticleEditor /></ProtectedRoute>} />
-                    <Route path="/edit/:id" element={<ProtectedRoute><ArticleEditor /></ProtectedRoute>} />
-                  </Routes>
-                </PublicationProvider>
-              } />
+                {/* Admin auth routes */}
+                <Route path="/admin/login" element={<Login />} />
+                <Route path="/admin/reset-password" element={<ResetPassword />} />
+                
+                {/* Protected admin routes */}
+                <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/admin/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/admin/patients" element={<ProtectedRoute><PatientsList /></ProtectedRoute>} />
+                <Route path="/admin/patients/:id" element={<ProtectedRoute><ClientDetails /></ProtectedRoute>} />
+                <Route path="/admin/sessions" element={<ProtectedRoute><AllSessions /></ProtectedRoute>} />
+                <Route path="/admin/exercises" element={<ProtectedRoute><ExerciseManagement /></ProtectedRoute>} />
+                <Route path="/admin/calendar" element={<ProtectedRoute><CalendarManagement /></ProtectedRoute>} />
+                <Route path="/admin/stories" element={<ProtectedRoute><StoriesManagement /></ProtectedRoute>} />
+                
+                {/* Article management routes wrapped with PublicationProvider */}
+                <Route path="/admin/articles/*" element={
+                  <PublicationProvider>
+                    <Routes>
+                      <Route path="/" element={<ProtectedRoute><ArticlesManagement /></ProtectedRoute>} />
+                      <Route path="/new" element={<ProtectedRoute><ArticleEditor /></ProtectedRoute>} />
+                      <Route path="/edit/:id" element={<ProtectedRoute><ArticleEditor /></ProtectedRoute>} />
+                    </Routes>
+                  </PublicationProvider>
+                } />
 
-              {/* 404 route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-          </Router>
+                {/* 404 route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Toaster />
+            </Router>
+          </GoogleAuthProvider>
         </AuthProvider>
       </ThemeProvider>
     </HelmetProvider>

@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { addDays, format, startOfWeek, startOfDay } from 'date-fns';
-import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
+import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
 import { useCalendarSettings } from '@/hooks/useCalendarSettings';
 import { useCalendarOperations } from '@/hooks/useCalendarOperations';
 import { useCalendarData } from '@/hooks/useCalendarData';
@@ -20,7 +19,7 @@ import { supabaseClient } from '@/lib/supabaseClient';
 import { forcePageRefresh, logComponentVersions } from '@/utils/debugUtils';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.2";
+const COMPONENT_VERSION = "1.1.0";
 console.log(`LOV_DEBUG_CALENDAR_MGMT: Component loaded, version ${COMPONENT_VERSION}`);
 
 const CalendarManagement: React.FC = () => {
@@ -36,14 +35,10 @@ const CalendarManagement: React.FC = () => {
   const { tableExists, checkTableExists, createCalendarSlotsTable, applyDefaultAvailability } = useCalendarOperations();
   const { 
     isAuthenticated: isGoogleAuthenticated,
-    isAuthenticating: isGoogleAuthenticating,
-    error: googleAuthError,
     events: googleEvents,
     isLoadingEvents: isLoadingGoogleEvents,
-    signIn: signInWithGoogle,
-    signOut: signOutFromGoogle,
     fetchEvents: fetchGoogleEvents
-  } = useGoogleOAuth();
+  } = useGoogleAuth();
 
   const { calendarData, isLoading, fetchAvailabilityData, debugVersion } = useCalendarData(
     currentDate,
@@ -58,7 +53,7 @@ const CalendarManagement: React.FC = () => {
     
     // Log all component versions
     logComponentVersions();
-  }, []);
+  }, [isGoogleAuthenticated, googleEvents.length, currentDate]);
 
   const hours = Array.from({ length: 16 }, (_, i) => {
     const hour = i + 8;
@@ -175,7 +170,7 @@ const CalendarManagement: React.FC = () => {
       console.log(`LOV_DEBUG_CALENDAR_MGMT: Date changed, fetching Google events for: ${currentDate.toISOString()}`);
       fetchGoogleEvents(currentDate);
     }
-  }, [currentDate, isGoogleAuthenticated]);
+  }, [currentDate, isGoogleAuthenticated, fetchGoogleEvents]);
 
   const updateTimeSlot = async (date: string, hour: string, newStatus: 'available' | 'private' | 'unspecified') => {
     if (!tableExists) {
@@ -199,7 +194,7 @@ const CalendarManagement: React.FC = () => {
       if (currentSlot.status === 'booked') {
         toast({
           title: 'לא ניתן לשנות סטטוס',
-          description: 'לא ניתן לשנות משבצת זמן שכבר הוזמנה. יש לבטל את הפגישה תחילה.',
+          description: 'לא ניתן לשנות משבצת זמן שכב�� הוזמנה. יש לבטל את הפגישה תחילה.',
           variant: 'destructive',
         });
         return;
@@ -314,18 +309,9 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  const handleSignInGoogle = async (): Promise<void> => {
-    const success = await signInWithGoogle();
-    
-    // If sign-in was successful, fetch events starting from the current week
-    if (success) {
-      await fetchGoogleEvents(currentDate);
-    }
-  };
-
   useEffect(() => {
     checkTableExists();
-  }, []);
+  }, [checkTableExists]);
 
   return (
     <AdminLayout title="ניהול זמינות יומן">
@@ -356,14 +342,7 @@ const CalendarManagement: React.FC = () => {
           </div>
           
           <CalendarHeader 
-            isGoogleAuthenticated={isGoogleAuthenticated}
-            isGoogleAuthenticating={isGoogleAuthenticating}
-            googleAuthError={googleAuthError}
-            googleEvents={googleEvents}
             isSyncing={isSyncing}
-            isLoadingGoogleEvents={isLoadingGoogleEvents}
-            onSignInGoogle={handleSignInGoogle}
-            onSignOutGoogle={signOutFromGoogle}
             onGoogleSync={handleGoogleSync}
           />
           

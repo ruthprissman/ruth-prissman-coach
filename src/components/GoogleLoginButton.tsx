@@ -2,9 +2,9 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar, Loader2 } from 'lucide-react';
-import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
 
 export function GoogleLoginButton() {
   const { 
@@ -16,7 +16,7 @@ export function GoogleLoginButton() {
     isLoadingEvents,
     fetchEvents,
     error 
-  } = useGoogleOAuth();
+  } = useGoogleAuth();
 
   const handleClick = async () => {
     if (isAuthenticated) {
