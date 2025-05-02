@@ -39,7 +39,7 @@ export function GoogleAuthDebug() {
     <div className="border rounded-md p-3 bg-gray-50 text-xs">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <Badge variant={isAuthenticated ? "success" : "destructive"}>
+          <Badge variant={isAuthenticated ? "secondary" : "destructive"}>
             {isAuthenticated ? 'מחובר' : 'לא מחובר'}
           </Badge>
           <span>מקור: {debugInfo.authSource}</span>
