@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,6 +7,7 @@ import CalendarListView from './CalendarListView';
 import { CalendarSlot } from '@/types/calendar';
 import { GoogleCalendarEventForm } from './GoogleCalendarEventForm';
 import CalendarLegend from './CalendarLegend';
+import { Toaster } from '@/components/ui/toaster';
 
 interface CalendarContentProps {
   days: { date: string; label: string; dayNumber: number }[];

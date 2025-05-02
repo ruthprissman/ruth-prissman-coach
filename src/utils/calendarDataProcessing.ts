@@ -1,4 +1,3 @@
-
 import { format, startOfDay, addDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
@@ -227,7 +226,77 @@ export const processFutureSessions = (
   // Create a map for faster lookups of which booked sessions exist in future_sessions
   // This helps us identify which Google events should or shouldn't have "Add to DB" buttons
   const futureSessionsMap = new Map<string, boolean>();
+
+  // Track overlapping sessions
+  const sessionTimeRanges = new Map<string, Array<{id: string, name: string, start: Date, end: Date}>>();
+  const overlappingSessions: Array<{firstSession: string, secondSession: string, date: string}> = [];
   
+  // First pass: collect all session time ranges for overlap detection
+  bookedSlots.forEach((session) => {
+    if (!session.session_date) return;
+    
+    try {
+      const sessionDateTime = new Date(session.session_date);
+      const sessionDate = formatInTimeZone(sessionDateTime, 'Asia/Jerusalem', 'yyyy-MM-dd');
+      
+      // Calculate session end time (90 minutes after start)
+      const endTime = new Date(sessionDateTime.getTime() + 90 * 60000);
+      
+      // Store session time range by date for overlap checking
+      if (!sessionTimeRanges.has(sessionDate)) {
+        sessionTimeRanges.set(sessionDate, []);
+      }
+      
+      const patientName = session.patients?.name || 'לקוח/ה';
+      sessionTimeRanges.get(sessionDate)!.push({
+        id: session.id,
+        name: patientName,
+        start: sessionDateTime,
+        end: endTime
+      });
+    } catch (error) {
+      console.error('Error processing session date for overlap check:', error, session);
+    }
+  });
+  
+  // Check for overlaps
+  sessionTimeRanges.forEach((sessionsForDate, date) => {
+    for (let i = 0; i < sessionsForDate.length; i++) {
+      const session1 = sessionsForDate[i];
+      
+      for (let j = i + 1; j < sessionsForDate.length; j++) {
+        const session2 = sessionsForDate[j];
+        
+        // Check if sessions overlap
+        if ((session1.start <= session2.end) && (session1.end >= session2.start)) {
+          console.log(`OVERLAP_DEBUG: Found overlapping sessions on ${date}:`);
+          console.log(`  - ${session1.name} (${formatInTimeZone(session1.start, 'Asia/Jerusalem', 'HH:mm')} - ${formatInTimeZone(session1.end, 'Asia/Jerusalem', 'HH:mm')})`);
+          console.log(`  - ${session2.name} (${formatInTimeZone(session2.start, 'Asia/Jerusalem', 'HH:mm')} - ${formatInTimeZone(session2.end, 'Asia/Jerusalem', 'HH:mm')})`);
+          
+          overlappingSessions.push({
+            firstSession: session1.name,
+            secondSession: session2.name,
+            date: date
+          });
+        }
+      }
+    }
+  });
+  
+  // Display toast messages for overlaps
+  if (overlappingSessions.length > 0) {
+    import('@/components/ui/use-toast').then(({ toast }) => {
+      overlappingSessions.forEach(overlap => {
+        toast({
+          title: "התגלתה חפיפה בין פגישות!",
+          description: `ב-${overlap.date} יש חפיפה בין פגישה עם ${overlap.firstSession} לפגישה עם ${overlap.secondSession}`,
+          variant: "destructive",
+        });
+      });
+    });
+  }
+
+  // Continue with the regular session processing as before
   bookedSlots.forEach((session, index) => {
     if (!session.session_date) {
       console.log(`Session ${index} has no date:`, session);
