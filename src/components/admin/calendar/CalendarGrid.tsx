@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -21,10 +22,9 @@ import { format, isToday, isPast } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
 import CalendarConflictResolutionDialog from './CalendarConflictResolutionDialog';
-import { formatInTimeZone } from '@/utils/dateTimeUtils';
 
-// Component version for debugging - updated to reflect fixes
-const COMPONENT_VERSION = "1.0.12";
+// Component version for debugging
+const COMPONENT_VERSION = "1.0.11";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -392,51 +392,28 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   };
 
-  // Improved function to render multi-hour events with better rendering
+  // Improved function to render multi-hour events
   const renderPartialHourEvent = (slot: CalendarSlot) => {
     if (!slot.isPartialHour) return null;
-
-    console.log(`LOV_DEBUG_RENDER: Rendering partial hour event for ${slot.date} ${slot.hour}`, {
-      isFirstHour: slot.isFirstHour,
-      isLastHour: slot.isLastHour,
-      startMinute: slot.startMinute,
-      endMinute: slot.endMinute,
-      exactStartTime: slot.exactStartTime,
-      exactEndTime: slot.exactEndTime
-    });
     
-    // Calculate position based on minutes
-    const startPercent = slot.isFirstHour && typeof slot.startMinute === 'number' ? Math.min(Math.max((slot.startMinute / 60) * 100, 0), 100) : 0;
-    const endPercent = slot.isLastHour && typeof slot.endMinute === 'number' ? Math.min(Math.max((slot.endMinute / 60) * 100, 0), 100) : 100;
+    const startPercent = slot.isFirstHour && slot.startMinute ? (slot.startMinute / 60) * 100 : 0;
+    const endPercent = slot.isLastHour && slot.endMinute ? (slot.endMinute / 60) * 100 : 100;
     const heightPercent = endPercent - startPercent;
-    
-    if (heightPercent <= 0) {
-      console.log(`LOV_DEBUG_RENDER: Invalid height for event: ${heightPercent}%`);
-      return null;
-    }
     
     const { bg, text } = getStatusStyle(slot);
     
     return (
       <div 
-        className={`absolute left-0 right-0 ${bg} z-10 overflow-hidden`} 
+        className={`absolute left-0 right-0 ${bg}`} 
         style={{ 
           top: `${startPercent}%`,
           height: `${heightPercent}%`,
-          minHeight: '10px',
-          borderTop: slot.isFirstHour ? '1px solid rgba(0,0,0,0.1)' : 'none',
-          borderBottom: slot.isLastHour ? '1px solid rgba(0,0,0,0.1)' : 'none',
         }}
       >
         {/* Only show text in the first hour of a multi-hour event */}
         {slot.isFirstHour && slot.notes && (
-          <div className={`p-1 text-xs ${text} truncate`}>
+          <div className={`p-1 text-xs ${text}`}>
             {slot.notes}
-            {slot.exactStartTime && (
-              <div className="text-xs opacity-75 truncate">
-                {slot.exactStartTime}-{slot.exactEndTime}
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -445,16 +422,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Simplified function to render event content only in the first hour
   const renderEventContent = (slot: CalendarSlot) => {
-    // Don't show content in continuation hours
     if (!slot.isFirstHour && (slot.fromGoogle || slot.fromFutureSession)) {
-      console.log(`LOV_DEBUG_RENDER: Skipping content for continuation hour ${slot.date} ${slot.hour}`);
-      return null;
-    }
-    
-    // For events with a clear start/end time, render the time range
-    let timeDisplay = '';
-    if (slot.exactStartTime && slot.exactEndTime) {
-      timeDisplay = `${slot.exactStartTime}-${slot.exactEndTime}`;
+      return null; // Don't show content in non-first hours of multi-hour events
     }
     
     return (
@@ -462,8 +431,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         {slot.notes && (
           <div className="font-medium truncate">{slot.notes}</div>
         )}
-        {timeDisplay && (
-          <div className="text-xs opacity-75 truncate">{timeDisplay}</div>
+        {slot.exactStartTime && (
+          <div className="text-xs opacity-75">
+            {slot.exactStartTime}-{slot.exactEndTime}
+          </div>
         )}
       </div>
     );
@@ -474,13 +445,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const { bg, text, colorClass } = getStatusStyle(slot);
     const isWorkMeetingSlot = isWorkMeeting(slot);
     
-    console.log(`LOV_DEBUG_RENDER: Rendering cell ${day} ${hour}`, {
-      isWorkMeeting: isWorkMeetingSlot,
-      status: slot.status,
-      isPartialHour: slot.isPartialHour,
-      isFirstHour: slot.isFirstHour,
-      isLastHour: slot.isLastHour
-    });
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering cell ${day} ${hour}, isWorkMeeting: ${isWorkMeetingSlot}, status: ${slot.status}`);
     
     // Handle clicks on conflict cells
     const handleClick = () => {
@@ -513,7 +478,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         
         {slot.isPartialHour ? (
           renderPartialHourEvent(slot)
-        ) : (slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked')) ? (
+        ) : slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked') ? (
           renderEventContent(slot)
         ) : (
           <>
@@ -652,7 +617,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                         <p className="text-blue-300 mt-1">לא קיים ביומן Google</p>
                       )}
                       {slot.hasConflict && (
-                        <p className="text-red-500 mt-1 font-bold">התנגשו�� פגישות! לחץ לפתרון</p>
+                        <p className="text-red-500 mt-1 font-bold">התנגשות פגישות! לחץ לפתרון</p>
                       )}
                     </div>
                   );
