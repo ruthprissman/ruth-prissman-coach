@@ -2,7 +2,6 @@ import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
 import { startOfWeek, format, addMonths } from 'date-fns';
-import { persistAuthState, getPersistedAuthState } from '@/utils/cookieUtils';
 
 // OAuth2 configuration
 const CLIENT_ID = '216734901779-csrnrl4nmkilae4blbolsip8mmibsk3t.apps.googleusercontent.com';
@@ -11,7 +10,7 @@ const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.go
 const REDIRECT_URI = getDashboardRedirectUrl();
 
 // Version identifier for debugging
-const SERVICE_VERSION = "1.0.2";
+const SERVICE_VERSION = "1.1.0";
 console.log(`LOV_DEBUG_GOOGLE_OAUTH: Service initialized, version ${SERVICE_VERSION}`);
 
 export interface GoogleOAuthState {
@@ -29,8 +28,6 @@ export async function getAccessToken(): Promise<string | null> {
     
     if (session?.provider_token) {
       console.log('LOV_DEBUG_GOOGLE_OAUTH: Access token found in session');
-      // When we successfully get a token, persist this state
-      persistAuthState(true);
       return session.provider_token;
     }
     console.log('LOV_DEBUG_GOOGLE_OAUTH: No access token found');
@@ -43,17 +40,12 @@ export async function getAccessToken(): Promise<string | null> {
 
 export async function checkIfSignedIn(): Promise<boolean> {
   try {
-    // First check if we have a token in the session
+    // Check if we have a token in the session
     const token = await getAccessToken();
-    if (token) {
-      console.log(`LOV_DEBUG_GOOGLE_OAUTH: checkIfSignedIn found token, returning true`);
-      return true;
-    }
+    const isSignedIn = !!token;
     
-    // If no token in session, check our persisted state as a fallback
-    const persistedState = getPersistedAuthState();
-    console.log(`LOV_DEBUG_GOOGLE_OAUTH: checkIfSignedIn from persisted state: ${persistedState}`);
-    return persistedState;
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH: checkIfSignedIn result: ${isSignedIn}`);
+    return isSignedIn;
   } catch (error) {
     console.error('LOV_DEBUG_GOOGLE_OAUTH: Error in checkIfSignedIn:', error);
     return false;
@@ -63,7 +55,7 @@ export async function checkIfSignedIn(): Promise<boolean> {
 export async function signInWithGoogle(): Promise<boolean> {
   try {
     // Save the current environment before redirecting
-    console.log('[auth] Starting Google OAuth flow');
+    console.log('[auth] Starting Google OAuth flow with stronger token refresh settings');
     saveEnvironmentForAuth();
     
     // Use Supabase OAuth with the exact scopes and configuration
@@ -75,6 +67,7 @@ export async function signInWithGoogle(): Promise<boolean> {
         queryParams: {
           // Force re-authentication even if already authenticated
           prompt: 'consent',
+          // Request offline access for refresh token
           access_type: 'offline'
         }
       }
@@ -101,8 +94,7 @@ export async function signInWithGoogle(): Promise<boolean> {
 export async function signOutFromGoogle(): Promise<void> {
   try {
     await supabase.auth.signOut();
-    // Clear the persisted state when signing out
-    persistAuthState(false);
+    // We no longer manage persistent state here
   } catch (error) {
     console.error('Error signing out from Google:', error);
   }
@@ -155,6 +147,12 @@ export async function fetchGoogleCalendarEvents(currentDisplayDate?: Date): Prom
     if (!response.ok) {
       const errorData = await response.json();
       console.error(`LOV_DEBUG_GOOGLE_OAUTH: API response not OK: ${response.status}`, errorData);
+      
+      // Improved error handling for expired tokens
+      if (response.status === 401) {
+        throw new Error('פג תוקף הרשאות גישה ליומן Google - נדרשת התחברות מחדש');
+      }
+      
       throw new Error(errorData.error?.message || 'Failed to fetch calendar events');
     }
     

@@ -19,6 +19,11 @@ export function GoogleCalendarSync({ onSyncClick, isLoading, settingsError }: Go
     ? new Date(debugInfo.lastEventFetch).toLocaleTimeString()
     : 'לא נטען';
 
+  // Format token expiry time if available
+  const tokenExpiryTime = debugInfo.tokenExpiryTime
+    ? `תוקף הרשאות: ${new Date(debugInfo.tokenExpiryTime).toLocaleTimeString()}`
+    : '';
+
   return (
     <div className="flex flex-col items-end gap-2">
       {settingsError && (
@@ -29,6 +34,11 @@ export function GoogleCalendarSync({ onSyncClick, isLoading, settingsError }: Go
       <div className="flex flex-col items-end gap-1">
         <div className="text-xs text-gray-500">
           סנכרון אחרון: {lastFetchTime}
+          {tokenExpiryTime && (
+            <span className="mr-2 text-xs text-gray-500">
+              {tokenExpiryTime}
+            </span>
+          )}
         </div>
         <Button 
           variant="outline" 

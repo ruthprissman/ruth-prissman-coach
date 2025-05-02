@@ -20,12 +20,12 @@ import { forcePageRefresh, logComponentVersions } from '@/utils/debugUtils';
 import { GoogleAuthDebug } from '@/components/admin/GoogleAuthDebug';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.2.0";
+const COMPONENT_VERSION = "1.3.0";
 console.log(`LOV_DEBUG_CALENDAR_MGMT: Component loaded, version ${COMPONENT_VERSION}`);
 
 // Track last fetch time at component level
 let lastComponentFetchTime = 0;
-const COMPONENT_FETCH_COOLDOWN_MS = 15000; // 15 seconds cooldown
+const COMPONENT_FETCH_COOLDOWN_MS = 30000; // 30 seconds cooldown (increased)
 
 const CalendarManagement: React.FC = () => {
   const { user } = useAuth();
@@ -39,6 +39,8 @@ const CalendarManagement: React.FC = () => {
 
   const { settings, isLoading: isLoadingSettings } = useCalendarSettings();
   const { tableExists, checkTableExists, createCalendarSlotsTable, applyDefaultAvailability } = useCalendarOperations();
+  
+  // Now using useGoogleAuth from context directly
   const { 
     isAuthenticated: isGoogleAuthenticated,
     events: googleEvents,
@@ -107,7 +109,7 @@ const CalendarManagement: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  // Protected Google sync with cooldown
+  // Protected Google sync with cooldown and improved error handling
   const handleGoogleSync = useCallback(async () => {
     if (isGoogleAuthenticated) {
       try {
@@ -134,8 +136,12 @@ const CalendarManagement: React.FC = () => {
         setFetchCounter(prev => prev + 1);
         
         // Pass the current date to fetch events from the beginning of the displayed week
-        await fetchGoogleEvents(currentDate);
-        setDebugLogs(prev => [...prev, `${new Date().toISOString()} - טעינת אירועי גוגל הושלמה`]);
+        const googleEventResults = await fetchGoogleEvents(currentDate);
+        setDebugLogs(prev => [...prev, `${new Date().toISOString()} - טעינת אירועי גוגל הושלמה (${googleEventResults.length} אירועים)`]);
+        
+        if (googleEventResults.length === 0) {
+          setDebugLogs(prev => [...prev, `${new Date().toISOString()} - לא נמצאו אירועים ביומן גוגל`]);
+        }
         
         setDebugLogs(prev => [...prev, `${new Date().toISOString()} - מתחיל טעינת נתוני זמינות`]);
         await fetchAvailabilityData();
@@ -150,6 +156,12 @@ const CalendarManagement: React.FC = () => {
         setIsSyncing(false);
         // Don't auto-hide logs - let user close them manually
       }
+    } else {
+      toast({
+        title: 'לא מחובר לחשבון Google',
+        description: 'יש להתחבר תחילה לחשבון Google כדי לסנכרן אירועים',
+        variant: 'destructive',
+      });
     }
   }, [isGoogleAuthenticated, currentDate, fetchGoogleEvents, fetchAvailabilityData, fetchCounter]);
 
@@ -218,7 +230,10 @@ const CalendarManagement: React.FC = () => {
       if (now - lastComponentFetchTime >= COMPONENT_FETCH_COOLDOWN_MS) {
         console.log(`LOV_DEBUG_CALENDAR_MGMT: Initial fetch for date: ${currentDate.toISOString()}`);
         lastComponentFetchTime = now;
-        fetchGoogleEvents(currentDate);
+        fetchGoogleEvents(currentDate).catch(err => {
+          console.error('Error in initial fetch:', err);
+          // Don't throw errors from useEffect
+        });
       } else {
         console.log(`LOV_DEBUG_CALENDAR_MGMT: Skipping initial fetch, cooldown active`);
       }

@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
-import { debugAuthState } from '@/utils/cookieUtils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 export function GoogleAuthDebug() {
   const { 
@@ -19,10 +19,29 @@ export function GoogleAuthDebug() {
   const [storageDebug, setStorageDebug] = React.useState<any>(null);
   
   // Show detailed debug info
-  const showDebugInfo = () => {
-    const debug = debugAuthState();
-    setStorageDebug(debug);
-    setExpanded(true);
+  const showDebugInfo = async () => {
+    try {
+      // Get Supabase session info for debugging
+      const supabase = supabaseClient();
+      const { data } = await supabase.auth.getSession();
+      
+      const debug = {
+        session: {
+          hasSession: !!data.session,
+          hasProviderToken: !!data.session?.provider_token,
+          provider: data.session?.provider,
+          user: data.session?.user?.email || 'unknown'
+        },
+        contextDebug: debugInfo
+      };
+      
+      setStorageDebug(debug);
+      setExpanded(true);
+    } catch (e) {
+      console.error('Error in debug info:', e);
+      setStorageDebug({ error: String(e) });
+      setExpanded(true);
+    }
   };
   
   // Hide debug info
@@ -35,6 +54,11 @@ export function GoogleAuthDebug() {
     await signIn();
   };
   
+  // Format token expiry time
+  const tokenExpiryTime = debugInfo.tokenExpiryTime 
+    ? new Date(debugInfo.tokenExpiryTime).toLocaleTimeString()
+    : 'לא ידוע';
+  
   return (
     <div className="border rounded-md p-3 bg-gray-50 text-xs">
       <div className="flex justify-between items-center">
@@ -44,6 +68,9 @@ export function GoogleAuthDebug() {
           </Badge>
           <span>מקור: {debugInfo.authSource}</span>
           <span>נבדק: {new Date(debugInfo.lastChecked).toLocaleTimeString()}</span>
+          {debugInfo.tokenExpiryTime && (
+            <span>פג תוקף: {tokenExpiryTime}</span>
+          )}
         </div>
         <div className="flex gap-1">
           <Button 
