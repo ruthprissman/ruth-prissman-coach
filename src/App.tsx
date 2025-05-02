@@ -1,18 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-router-dom';
-import AdminDashboard from './pages/AdminDashboard';
-import PatientList from './components/admin/patients/PatientList';
-import PatientDetails from './components/admin/patients/PatientDetails';
-import AddPatientForm from './components/admin/patients/AddPatientForm';
-import EditPatientForm from './components/admin/patients/EditPatientForm';
-import SessionList from './components/admin/sessions/SessionList';
-import AddSessionForm from './components/admin/sessions/AddSessionForm';
-import EditSessionForm from './components/admin/sessions/EditSessionForm';
-import LoginForm from './components/auth/LoginForm';
+import Dashboard from './pages/admin/Dashboard';
 import { supabaseClient } from './lib/supabaseClient';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
-import CalendarPage from './pages/CalendarPage';
 import { Toaster } from '@/components/ui/toaster';
 
 function App() {
@@ -50,9 +40,15 @@ function App() {
           </nav>
 
           <Routes>
-            <Route path="/" element={<Navigate to="/login" />} />
+            <Route path="/" element={<Navigate to="/admin/dashboard" />} />
+            <Route path="/admin" element={<Dashboard />} />
+            <Route path="/admin/dashboard" element={<Dashboard />} />
+            {/* 
+              We're temporarily commenting out routes that reference missing components.
+              These will need to be added later or updated with proper components.
+            */}
+            {/*
             <Route path="/login" element={<LoginForm />} />
-            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/patients" element={<PatientList />} />
             <Route path="/admin/patients/:id" element={<PatientDetails />} />
             <Route path="/admin/patients/add" element={<AddPatientForm />} />
@@ -79,6 +75,7 @@ function App() {
                 )
               }
             />
+            */}
           </Routes>
         </div>
       </Router>
