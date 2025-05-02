@@ -12,6 +12,11 @@ export const setCookie = (name: string, value: string, options: { [key: string]:
     options['max-age'] = 86400; // 1 day in seconds
   }
   
+  // Always set path to root for auth cookies to ensure they're available across pages
+  if (name === 'auth_env' && !options.path) {
+    options.path = '/';
+  }
+  
   let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
   
   for (const optionKey in options) {
@@ -58,4 +63,27 @@ export const deleteCookie = (name: string, path: string = '/'): void => {
   console.log(`[cookie] Full cookie string before deletion: ${document.cookie}`);
   document.cookie = `${encodeURIComponent(name)}=; path=${path}; max-age=0`;
   console.log(`[cookie] Full cookie string after deletion: ${document.cookie}`);
+};
+
+// New function to add a persistent storage backup for auth state
+export const persistAuthState = (isAuthenticated: boolean): void => {
+  try {
+    localStorage.setItem('google_auth_state', isAuthenticated ? 'authenticated' : '');
+    console.log(`[auth] Persisted Google auth state: ${isAuthenticated}`);
+  } catch (error) {
+    console.error('[auth] Error persisting auth state:', error);
+  }
+};
+
+// New function to retrieve persistent auth state
+export const getPersistedAuthState = (): boolean => {
+  try {
+    const state = localStorage.getItem('google_auth_state');
+    const isAuthenticated = !!state;
+    console.log(`[auth] Retrieved persisted Google auth state: ${isAuthenticated}`);
+    return isAuthenticated;
+  } catch (error) {
+    console.error('[auth] Error getting persisted auth state:', error);
+    return false;
+  }
 };

@@ -29,13 +29,17 @@ export const getRedirectUrl = (path: string): string => {
 
 /**
  * Gets the appropriate dashboard redirect URL based on current environment
+ * Using the full origin ensures correct redirection across environments
  */
 export const getDashboardRedirectUrl = (): string => {
-  return getRedirectUrl('/admin/dashboard');
+  // Log the full URL for debugging
+  const redirectUrl = `${window.location.origin}/admin/dashboard`;
+  console.log('[auth] Generated dashboard redirect URL:', redirectUrl);
+  return redirectUrl;
 };
 
 /**
- * Saves the current environment (preview or production) to a cookie
+ * Saves the current environment (preview or production) to both cookie and localStorage
  * for use after OAuth redirects
  */
 export const saveEnvironmentForAuth = (): void => {
@@ -44,8 +48,16 @@ export const saveEnvironmentForAuth = (): void => {
   
   console.log('[auth] Environment detected before login:', env);
   
-  // Set cookie with 10 minute expiration
-  setCookie('auth_env', env, { path: '/', 'max-age': 600 });
+  // Set cookie with 1 day expiration and path=/
+  setCookie('auth_env', env, { path: '/', 'max-age': 86400 });
+  
+  // Also save to localStorage as backup
+  try {
+    localStorage.setItem('auth_env', env);
+    console.log('[auth] Saved environment to localStorage:', env);
+  } catch (error) {
+    console.error('[auth] Error saving to localStorage:', error);
+  }
 };
 
 /**
@@ -56,8 +68,19 @@ export const saveEnvironmentForAuth = (): void => {
  * @returns Full redirect URL for the original environment
  */
 export const getEnvironmentAwareRedirectUrl = (path: string): string => {
-  // Get saved environment from cookie
-  const env = getCookie('auth_env');
+  // Get saved environment from cookie or localStorage
+  const cookieEnv = getCookie('auth_env');
+  let env = cookieEnv;
+  
+  // If not in cookie, try localStorage
+  if (!env) {
+    try {
+      env = localStorage.getItem('auth_env');
+      console.log('[auth] Retrieved environment from localStorage:', env);
+    } catch (error) {
+      console.error('[auth] Error reading from localStorage:', error);
+    }
+  }
   
   // Ensure path starts with a slash
   const formattedPath = path.startsWith('/') ? path : `/${path}`;

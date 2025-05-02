@@ -2,6 +2,7 @@ import { GoogleCalendarEvent } from '@/types/calendar';
 import { supabase } from '@/lib/supabase';
 import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
 import { startOfWeek, format, addMonths } from 'date-fns';
+import { persistAuthState, getPersistedAuthState } from '@/utils/cookieUtils';
 
 // OAuth2 configuration
 const CLIENT_ID = '216734901779-csrnrl4nmkilae4blbolsip8mmibsk3t.apps.googleusercontent.com';
@@ -10,7 +11,7 @@ const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.go
 const REDIRECT_URI = getDashboardRedirectUrl();
 
 // Version identifier for debugging
-const SERVICE_VERSION = "1.0.1";
+const SERVICE_VERSION = "1.0.2";
 console.log(`LOV_DEBUG_GOOGLE_OAUTH: Service initialized, version ${SERVICE_VERSION}`);
 
 export interface GoogleOAuthState {
@@ -28,6 +29,8 @@ export async function getAccessToken(): Promise<string | null> {
     
     if (session?.provider_token) {
       console.log('LOV_DEBUG_GOOGLE_OAUTH: Access token found in session');
+      // When we successfully get a token, persist this state
+      persistAuthState(true);
       return session.provider_token;
     }
     console.log('LOV_DEBUG_GOOGLE_OAUTH: No access token found');
@@ -39,9 +42,22 @@ export async function getAccessToken(): Promise<string | null> {
 }
 
 export async function checkIfSignedIn(): Promise<boolean> {
-  const token = await getAccessToken();
-  console.log(`LOV_DEBUG_GOOGLE_OAUTH: checkIfSignedIn result: ${!!token}`);
-  return !!token;
+  try {
+    // First check if we have a token in the session
+    const token = await getAccessToken();
+    if (token) {
+      console.log(`LOV_DEBUG_GOOGLE_OAUTH: checkIfSignedIn found token, returning true`);
+      return true;
+    }
+    
+    // If no token in session, check our persisted state as a fallback
+    const persistedState = getPersistedAuthState();
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH: checkIfSignedIn from persisted state: ${persistedState}`);
+    return persistedState;
+  } catch (error) {
+    console.error('LOV_DEBUG_GOOGLE_OAUTH: Error in checkIfSignedIn:', error);
+    return false;
+  }
 }
 
 export async function signInWithGoogle(): Promise<boolean> {
@@ -85,6 +101,8 @@ export async function signInWithGoogle(): Promise<boolean> {
 export async function signOutFromGoogle(): Promise<void> {
   try {
     await supabase.auth.signOut();
+    // Clear the persisted state when signing out
+    persistAuthState(false);
   } catch (error) {
     console.error('Error signing out from Google:', error);
   }

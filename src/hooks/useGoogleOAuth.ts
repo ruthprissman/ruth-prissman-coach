@@ -10,10 +10,11 @@ import {
 } from '@/services/GoogleOAuthService';
 import { toast } from '@/components/ui/use-toast';
 import { GoogleCalendarEvent } from '@/types/calendar';
+import { persistAuthState, getPersistedAuthState } from '@/utils/cookieUtils';
 
 export function useGoogleOAuth() {
   const [state, setState] = useState<GoogleOAuthState>({
-    isAuthenticated: false,
+    isAuthenticated: getPersistedAuthState(), // Initialize with persisted state
     isAuthenticating: true,
     error: null
   });
@@ -49,6 +50,21 @@ export function useGoogleOAuth() {
     };
     
     initialize();
+    
+    // Add an event listener to handle page visibility changes
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[auth] Page became visible, checking Google auth state');
+        // When the page becomes visible again, check if we're still authenticated
+        initialize();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const fetchEvents = async (currentDisplayDate?: Date) => {
@@ -139,6 +155,9 @@ export function useGoogleOAuth() {
         error: success ? null : 'שגיאה בהתחברות ל-Google'
       });
       
+      // Persist authentication state
+      persistAuthState(success);
+      
       if (success) {
         toast({
           title: 'התחברת בהצלחה ליומן גוגל',
@@ -160,6 +179,9 @@ export function useGoogleOAuth() {
         isAuthenticating: false,
         error: error.message
       });
+      
+      // Clear persisted state on error
+      persistAuthState(false);
       
       const errorMessage = error.message || 'שגיאה בהתחברות ל-Google';
       
@@ -190,6 +212,9 @@ export function useGoogleOAuth() {
         isAuthenticating: false,
         error: null
       });
+      
+      // Clear persisted state
+      persistAuthState(false);
       
       toast({
         title: 'התנתקת מיומן גוגל',
