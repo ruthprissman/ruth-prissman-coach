@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
   checkIfSignedIn, 
   signInWithGoogle, 
@@ -8,10 +8,8 @@ import {
   createGoogleCalendarEvent,
 } from '@/services/GoogleOAuthService';
 import { toast } from '@/components/ui/use-toast';
-import { getPersistedAuthState } from '@/utils/cookieUtils';
+import { persistAuthState, getPersistedAuthState } from '@/utils/cookieUtils';
 import { GoogleCalendarEvent } from '@/types/calendar';
-import { supabaseClient } from '@/lib/supabaseClient';
-import { Provider } from '@supabase/supabase-js';
 
 // Define the shape of our context state
 interface GoogleAuthContextType {
@@ -31,10 +29,8 @@ interface GoogleAuthContextType {
   ) => Promise<boolean>;
   debugInfo: {
     lastChecked: string;
-    authSource: 'session' | 'none';
+    authSource: 'cookie' | 'localStorage' | 'session' | 'none';
     stateVersion: number;
-    lastEventFetch: string | null;
-    tokenExpiryTime: string | null;
   };
 }
 
@@ -50,10 +46,6 @@ export function useGoogleAuth() {
   return context;
 }
 
-// Track last fetch time globally to prevent excessive fetches
-let lastFetchTime = 0;
-const FETCH_COOLDOWN_MS = 30000; // Increased to 30 seconds cooldown
-
 // Provider component
 interface GoogleAuthProviderProps {
   children: ReactNode;
@@ -62,130 +54,24 @@ interface GoogleAuthProviderProps {
 export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
   // State for tracking auth
   const [state, setState] = useState({
-    isAuthenticated: false, // Initialize as false, we'll check with Supabase directly
+    isAuthenticated: getPersistedAuthState(),
     isAuthenticating: true,
     error: null as string | null,
     events: [] as GoogleCalendarEvent[],
     isLoadingEvents: false,
     debugInfo: {
       lastChecked: new Date().toISOString(),
-      authSource: 'none' as 'session' | 'none',
-      stateVersion: 1,
-      lastEventFetch: null as string | null,
-      tokenExpiryTime: null as string | null
+      authSource: getPersistedAuthState() ? 'localStorage' : 'none' as 'cookie' | 'localStorage' | 'session' | 'none',
+      stateVersion: 1
     }
   });
   
-  // Check token expiration and refresh if needed
-  const checkAndRefreshToken = useCallback(async (forceRefresh = false): Promise<boolean> => {
-    try {
-      console.log('[GoogleAuthContext] Checking token validity');
-      
-      // Get current session from Supabase
-      const supabase = supabaseClient();
-      const { data } = await supabase.auth.getSession();
-      
-      if (!data.session?.provider_token) {
-        console.log('[GoogleAuthContext] No provider token found in session');
-        return false;
-      }
-      
-      // If we have a token, consider the user authenticated
-      const isAuthenticated = !!data.session?.provider_token;
-      
-      if (isAuthenticated) {
-        // Check if we need to refresh the token
-        // For Google OAuth, we don't need to manually decode the token
-        // Just refresh if forced or periodically
-        if (forceRefresh) {
-          console.log('[GoogleAuthContext] Force refreshing token');
-          const { error: refreshError } = await supabase.auth.refreshSession();
-          
-          if (refreshError) {
-            console.error('[GoogleAuthContext] Error refreshing session:', refreshError);
-            throw refreshError;
-          }
-          
-          // Get updated session
-          const { data: refreshedData } = await supabase.auth.getSession();
-          
-          // Update token expiry time in debug info
-          setState(prev => ({
-            ...prev,
-            isAuthenticated: !!refreshedData.session?.provider_token,
-            debugInfo: {
-              ...prev.debugInfo,
-              lastChecked: new Date().toISOString(),
-              authSource: refreshedData.session?.provider_token ? 'session' : 'none',
-              tokenExpiryTime: new Date(Date.now() + 3600000).toISOString() // Approximate 1 hour expiry
-            }
-          }));
-          
-          return !!refreshedData.session?.provider_token;
-        }
-        
-        // Update state with info
-        setState(prev => ({
-          ...prev,
-          isAuthenticated,
-          isAuthenticating: false,
-          error: null,
-          debugInfo: {
-            ...prev.debugInfo,
-            lastChecked: new Date().toISOString(),
-            authSource: 'session',
-            tokenExpiryTime: new Date(Date.now() + 3600000).toISOString() // Approximate 1 hour expiry
-          }
-        }));
-      } else {
-        setState(prev => ({
-          ...prev,
-          isAuthenticated: false,
-          isAuthenticating: false,
-          debugInfo: {
-            ...prev.debugInfo,
-            lastChecked: new Date().toISOString(),
-            authSource: 'none',
-            tokenExpiryTime: null
-          }
-        }));
-      }
-      
-      return isAuthenticated;
-    } catch (error: any) {
-      console.error('[GoogleAuthContext] Error checking/refreshing token:', error);
-      
-      setState(prev => ({
-        ...prev,
-        isAuthenticated: false,
-        isAuthenticating: false,
-        error: `שגיאה בבדיקת הטוקן: ${error.message}`,
-        debugInfo: {
-          ...prev.debugInfo,
-          lastChecked: new Date().toISOString(),
-          authSource: 'none',
-          tokenExpiryTime: null
-        }
-      }));
-      
-      return false;
-    }
-  }, []);
-  
-  // Load auth state on mount - now using Supabase session directly
+  // Load auth state on mount
   useEffect(() => {
     console.log("[GoogleAuthContext] Initializing auth state");
     
     const checkAuthState = async () => {
       try {
-        // Check if we've checked auth recently to prevent excessive checks
-        const now = Date.now();
-        const lastCheckedTime = new Date(state.debugInfo.lastChecked).getTime();
-        if (now - lastCheckedTime < 5000 && state.debugInfo.stateVersion > 1) {
-          console.log('[GoogleAuthContext] Skipping auth check, checked recently');
-          return;
-        }
-        
         setState(prev => ({ 
           ...prev, 
           isAuthenticating: true,
@@ -196,21 +82,32 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
           }
         }));
         
-        // Use the token check function which relies directly on Supabase session
-        const isAuthenticated = await checkAndRefreshToken();
-        console.log('[GoogleAuthContext] Auth check result:', isAuthenticated);
+        const isSignedIn = await checkIfSignedIn();
+        console.log('[GoogleAuthContext] Initial auth check result:', isSignedIn);
+        
+        let authSource: 'cookie' | 'localStorage' | 'session' | 'none' = 'none';
+        if (isSignedIn) {
+          authSource = 'session';
+        } else if (getPersistedAuthState()) {
+          authSource = 'localStorage';
+        }
         
         setState(prev => ({
           ...prev,
-          isAuthenticated,
+          isAuthenticated: isSignedIn,
           isAuthenticating: false,
           error: null,
           debugInfo: {
             ...prev.debugInfo,
-            authSource: isAuthenticated ? 'session' : 'none',
+            authSource,
             lastChecked: new Date().toISOString()
           }
         }));
+        
+        if (isSignedIn) {
+          console.log('[GoogleAuthContext] User is signed in, fetching events');
+          fetchEvents();
+        }
       } catch (error: any) {
         console.error('[GoogleAuthContext] Error checking auth state:', error);
         setState(prev => ({
@@ -239,21 +136,12 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
-    // Set an interval to periodically refresh token in the background
-    const tokenRefreshInterval = setInterval(() => {
-      if (state.isAuthenticated) {
-        console.log('[GoogleAuthContext] Periodic token refresh check');
-        checkAndRefreshToken(true);
-      }
-    }, 10 * 60 * 1000); // Every 10 minutes
-    
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(tokenRefreshInterval);
     };
-  }, [checkAndRefreshToken, state.debugInfo.lastChecked, state.debugInfo.stateVersion, state.isAuthenticated]);
+  }, []);
   
-  // Sign in - modified to use Supabase session directly
+  // Sign in
   const signIn = async () => {
     try {
       setState(prev => ({ 
@@ -271,17 +159,29 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
       
       console.log('[GoogleAuthContext] Sign in result:', success);
       
-      // After sign-in, check token validity immediately
-      await checkAndRefreshToken();
+      setState(prev => ({
+        ...prev,
+        isAuthenticated: success,
+        isAuthenticating: false,
+        error: success ? null : 'שגיאה בהתחברות ל-Google',
+        debugInfo: {
+          ...prev.debugInfo,
+          authSource: success ? 'session' : 'none',
+          lastChecked: new Date().toISOString()
+        }
+      }));
       
-      if (state.isAuthenticated) {
+      // Persist authentication state
+      persistAuthState(success);
+      
+      if (success) {
         toast({
           title: 'התחברת בהצלחה ליומן גוגל',
           description: 'מתחיל בטעינת אירועי יומן...',
         });
         
-        // Don't auto-fetch events to avoid loops
-        // Let the component request them explicitly
+        // Fetch events
+        await fetchEvents();
       } else {
         toast({
           title: 'ההתחברות ליומן גוגל נכשלה',
@@ -290,7 +190,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         });
       }
       
-      return state.isAuthenticated;
+      return success;
     } catch (error: any) {
       console.error('[GoogleAuthContext] Google sign-in error:', error);
       
@@ -305,6 +205,9 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
           lastChecked: new Date().toISOString()
         }
       }));
+      
+      // Clear persisted state on error
+      persistAuthState(false);
       
       const errorMessage = error.message || 'שגיאה בהתחברות ל-Google';
       
@@ -326,7 +229,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     }
   };
   
-  // Sign out - improved to clear all state
+  // Sign out
   const signOut = async () => {
     try {
       await signOutFromGoogle();
@@ -341,10 +244,12 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
           ...prev.debugInfo,
           authSource: 'none',
           lastChecked: new Date().toISOString(),
-          stateVersion: prev.debugInfo.stateVersion + 1,
-          tokenExpiryTime: null
+          stateVersion: prev.debugInfo.stateVersion + 1
         }
       }));
+      
+      // Clear persisted state
+      persistAuthState(false);
       
       toast({
         title: 'התנתקת מיומן גוגל',
@@ -360,45 +265,14 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     }
   };
   
-  // Fetch events with debouncing and improved error handling
+  // Fetch events
   const fetchEvents = async (currentDisplayDate?: Date) => {
     try {
-      // First, make sure token is valid
-      const isValid = await checkAndRefreshToken(true);
-      
-      if (!isValid) {
-        toast({
-          title: 'אין הרשאות ליומן Google',
-          description: 'יש להתחבר מחדש לחשבון Google',
-          variant: 'destructive',
-        });
-        return [];
-      }
-      
-      // Check if we've fetched events recently to prevent excessive fetches
-      const now = Date.now();
-      if (now - lastFetchTime < FETCH_COOLDOWN_MS) {
-        console.log(`[GoogleAuthContext] Skipping fetch, cooldown active (${Math.round((FETCH_COOLDOWN_MS - (now - lastFetchTime))/1000)}s remaining)`);
-        toast({
-          title: 'בקשה נדחתה',
-          description: `יש להמתין ${Math.round((FETCH_COOLDOWN_MS - (now - lastFetchTime))/1000)} שניות בין סנכרונים`,
-        });
-        return state.events; // Return current events instead of fetching again
-      }
-      
-      setState(prev => ({ 
-        ...prev, 
-        isLoadingEvents: true,
-        debugInfo: {
-          ...prev.debugInfo,
-          lastEventFetch: new Date().toISOString()
-        }
-      }));
+      setState(prev => ({ ...prev, isLoadingEvents: true }));
       
       console.log('[GoogleAuthContext] Starting to fetch Google Calendar events', 
         currentDisplayDate ? `for date: ${currentDisplayDate.toISOString()}` : '');
       
-      lastFetchTime = now; // Update last fetch time
       const calendarEvents = await fetchGoogleCalendarEvents(currentDisplayDate);
       
       console.log(`[GoogleAuthContext] Fetched ${calendarEvents.length} Google Calendar events`);
@@ -409,8 +283,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         isLoadingEvents: false,
         debugInfo: {
           ...prev.debugInfo,
-          lastChecked: new Date().toISOString(),
-          lastEventFetch: new Date().toISOString()
+          lastChecked: new Date().toISOString()
         }
       }));
       
@@ -430,73 +303,39 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     } catch (error: any) {
       console.error('[GoogleAuthContext] Error fetching Google Calendar events:', error);
       
-      // If we get an auth error, update the auth state and try to refresh
+      // If we get an auth error, update the auth state
       if (error.message?.includes('אין הרשאות') || 
           error.message?.includes('token') ||
           error.message?.includes('unauthorized')) {
-          
-        console.log('[GoogleAuthContext] Detected auth error, attempting refresh');
-        
-        // Try to refresh the token
-        const refreshed = await checkAndRefreshToken(true);
-        
-        if (!refreshed) {
-          setState(prev => ({ 
-            ...prev, 
-            isAuthenticated: false,
-            error: 'פג תוקף ההרשאות ליומן Google. יש להתחבר מחדש.',
-            isLoadingEvents: false,
-            debugInfo: {
-              ...prev.debugInfo,
-              authSource: 'none',
-              lastChecked: new Date().toISOString(),
-              tokenExpiryTime: null
-            }
-          }));
-          
-          toast({
-            title: 'פג תוקף ההרשאות',
-            description: 'יש להתחבר שוב לחשבון Google',
-            variant: 'destructive',
-          });
-        } else {
-          // If refresh worked, try fetching again, but don't create infinite loop
-          setState(prev => ({ 
-            ...prev, 
-            isLoadingEvents: false,
-            debugInfo: {
-              ...prev.debugInfo,
-              lastEventFetch: new Date().toISOString()
-            }
-          }));
-          
-          toast({
-            title: 'רענון הרשאות',
-            description: 'ההרשאות חודשו, נסה שוב לטעון אירועים',
-          });
-        }
-      } else {
         setState(prev => ({ 
           ...prev, 
+          isAuthenticated: false,
+          error: error.message,
           isLoadingEvents: false,
           debugInfo: {
             ...prev.debugInfo,
-            lastEventFetch: new Date().toISOString()
+            authSource: 'none',
+            lastChecked: new Date().toISOString()
           }
         }));
         
-        toast({
-          title: 'שגיאה בטעינת אירועי יומן',
-          description: error.message,
-          variant: 'destructive',
-        });
+        // Clear persisted state
+        persistAuthState(false);
+      } else {
+        setState(prev => ({ ...prev, isLoadingEvents: false }));
       }
+      
+      toast({
+        title: 'שגיאה בטעינת אירועי יומן',
+        description: error.message,
+        variant: 'destructive',
+      });
       
       return [];
     }
   };
   
-  // Create event with improved token handling
+  // Create event
   const createEvent = async (
     summary: string,
     startDateTime: string,
@@ -504,18 +343,6 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     description: string = '',
   ) => {
     try {
-      // Make sure token is valid first
-      const isValid = await checkAndRefreshToken(true);
-      
-      if (!isValid) {
-        toast({
-          title: 'אין הרשאות ליומן Google',
-          description: 'יש להתחבר מחדש לחשבון Google',
-          variant: 'destructive',
-        });
-        return false;
-      }
-      
       const eventId = await createGoogleCalendarEvent(summary, startDateTime, endDateTime, description);
       if (eventId) {
         await fetchEvents();
@@ -534,41 +361,26 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
       if (error.message?.includes('אין הרשאות') || 
           error.message?.includes('token') ||
           error.message?.includes('unauthorized')) {
-          
-        // Try to refresh the token
-        const refreshed = await checkAndRefreshToken(true);
+        setState(prev => ({ 
+          ...prev, 
+          isAuthenticated: false,
+          error: error.message,
+          debugInfo: {
+            ...prev.debugInfo,
+            authSource: 'none',
+            lastChecked: new Date().toISOString()
+          }
+        }));
         
-        if (!refreshed) {
-          setState(prev => ({ 
-            ...prev, 
-            isAuthenticated: false,
-            error: error.message,
-            debugInfo: {
-              ...prev.debugInfo,
-              authSource: 'none',
-              lastChecked: new Date().toISOString(),
-              tokenExpiryTime: null
-            }
-          }));
-          
-          toast({
-            title: 'פג תוקף ההרשאות',
-            description: 'יש להתחבר שוב לחשבון Google',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'רענון הרשאות',
-            description: 'ההרשאות חודשו, נסה שוב ליצור אירוע',
-          });
-        }
-      } else {
-        toast({
-          title: 'שגיאה ביצירת האירוע',
-          description: error.message,
-          variant: 'destructive',
-        });
+        // Clear persisted state
+        persistAuthState(false);
       }
+      
+      toast({
+        title: 'שגיאה ביצירת האירוע',
+        description: error.message,
+        variant: 'destructive',
+      });
       return false;
     }
   };

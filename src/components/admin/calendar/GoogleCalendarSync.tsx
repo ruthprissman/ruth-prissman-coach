@@ -2,7 +2,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
-import { useGoogleAuth } from '@/contexts/GoogleAuthContext';
 
 interface GoogleCalendarSyncProps {
   onSyncClick: () => void;
@@ -11,19 +10,6 @@ interface GoogleCalendarSyncProps {
 }
 
 export function GoogleCalendarSync({ onSyncClick, isLoading, settingsError }: GoogleCalendarSyncProps) {
-  // Get debug info from context
-  const { debugInfo } = useGoogleAuth();
-  
-  // Format last fetch time for display if available
-  const lastFetchTime = debugInfo.lastEventFetch 
-    ? new Date(debugInfo.lastEventFetch).toLocaleTimeString()
-    : 'לא נטען';
-
-  // Format token expiry time if available
-  const tokenExpiryTime = debugInfo.tokenExpiryTime
-    ? `תוקף הרשאות: ${new Date(debugInfo.tokenExpiryTime).toLocaleTimeString()}`
-    : '';
-
   return (
     <div className="flex flex-col items-end gap-2">
       {settingsError && (
@@ -31,25 +17,15 @@ export function GoogleCalendarSync({ onSyncClick, isLoading, settingsError }: Go
           שגיאה בהגדרות יומן: {settingsError}
         </div>
       )}
-      <div className="flex flex-col items-end gap-1">
-        <div className="text-xs text-gray-500">
-          סנכרון אחרון: {lastFetchTime}
-          {tokenExpiryTime && (
-            <span className="mr-2 text-xs text-gray-500">
-              {tokenExpiryTime}
-            </span>
-          )}
-        </div>
-        <Button 
-          variant="outline" 
-          className="flex items-center" 
-          onClick={onSyncClick}
-          disabled={isLoading || !!settingsError}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>סנכרן עם Google Calendar</span>
-        </Button>
-      </div>
+      <Button 
+        variant="outline" 
+        className="flex items-center" 
+        onClick={onSyncClick}
+        disabled={isLoading || !!settingsError}
+      >
+        <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+        <span>סנכרן עם Google Calendar</span>
+      </Button>
     </div>
   );
 }
