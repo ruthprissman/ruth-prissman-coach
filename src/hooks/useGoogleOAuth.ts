@@ -12,6 +12,10 @@ import { toast } from '@/components/ui/use-toast';
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { persistAuthState, getPersistedAuthState } from '@/utils/cookieUtils';
 
+// Track last fetch time globally to prevent excessive fetches
+let lastFetchTime = 0;
+const FETCH_COOLDOWN_MS = 10000; // 10 seconds cooldown
+
 export function useGoogleOAuth() {
   const [state, setState] = useState<GoogleOAuthState>({
     isAuthenticated: getPersistedAuthState(), // Initialize with persisted state
@@ -24,10 +28,11 @@ export function useGoogleOAuth() {
   useEffect(() => {
     const initialize = async () => {
       try {
+        console.log('[useGoogleOAuth] Initializing (one-time setup)');
         setState(prev => ({ ...prev, isAuthenticating: true }));
         
         const isSignedIn = await checkIfSignedIn();
-        console.log('Google OAuth initialized, signed in:', isSignedIn);
+        console.log('[useGoogleOAuth] Initial auth check result:', isSignedIn);
         
         setState({
           isAuthenticated: isSignedIn,
@@ -36,11 +41,11 @@ export function useGoogleOAuth() {
         });
         
         if (isSignedIn) {
-          console.log('User is signed in to Google, fetching events');
+          console.log('[useGoogleOAuth] User is signed in to Google, fetching events');
           fetchEvents();
         }
       } catch (error: any) {
-        console.error('Google OAuth initialization error:', error);
+        console.error('[useGoogleOAuth] Initialization error:', error);
         setState({
           isAuthenticated: false,
           isAuthenticating: false,
@@ -51,31 +56,29 @@ export function useGoogleOAuth() {
     
     initialize();
     
-    // Add an event listener to handle page visibility changes
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('[auth] Page became visible, checking Google auth state');
-        // When the page becomes visible again, check if we're still authenticated
-        initialize();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    // IMPORTANT: Removed the visibilitychange event listener to prevent duplicate checks
+    // The GoogleAuthContext will handle visibility changes instead
+    
   }, []);
 
   const fetchEvents = async (currentDisplayDate?: Date) => {
+    // Add cooldown to prevent excessive fetches
+    const now = Date.now();
+    if (now - lastFetchTime < FETCH_COOLDOWN_MS) {
+      console.log(`[useGoogleOAuth] Skipping fetch, cooldown active (${Math.round((FETCH_COOLDOWN_MS - (now - lastFetchTime))/1000)}s remaining)`);
+      return events; // Return current events instead of fetching again
+    }
+    
     try {
       setIsLoadingEvents(true);
-      console.log('Starting to fetch Google Calendar events', currentDisplayDate ? `for date: ${currentDisplayDate.toISOString()}` : '');
+      console.log('[useGoogleOAuth] Starting to fetch Google Calendar events', 
+        currentDisplayDate ? `for date: ${currentDisplayDate.toISOString()}` : '');
       
+      lastFetchTime = now; // Update last fetch time
       const calendarEvents = await fetchGoogleCalendarEvents(currentDisplayDate);
       setEvents(calendarEvents);
       
-      console.log(`Fetched ${calendarEvents.length} Google Calendar events`);
+      console.log(`[useGoogleOAuth] Fetched ${calendarEvents.length} Google Calendar events`);
       
       if (calendarEvents.length > 0) {
         // לוג מפורט של האירועים הראשונים
@@ -93,7 +96,7 @@ export function useGoogleOAuth() {
           description: `נטענו ${calendarEvents.length} אירועים מיומן Google`,
         });
       } else {
-        console.log('No Google Calendar events found');
+        console.log('[useGoogleOAuth] No Google Calendar events found');
         toast({
           title: 'לא נמצאו אירועים',
           description: 'לא נמצאו אירועים ביומן Google',
@@ -102,7 +105,7 @@ export function useGoogleOAuth() {
       
       return calendarEvents;
     } catch (error: any) {
-      console.error('Error fetching Google Calendar events:', error);
+      console.error('[useGoogleOAuth] Error fetching Google Calendar events:', error);
       toast({
         title: 'שגיאה בטעינת אירועי יומן',
         description: error.message,

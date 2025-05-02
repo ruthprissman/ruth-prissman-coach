@@ -31,6 +31,7 @@ interface GoogleAuthContextType {
     lastChecked: string;
     authSource: 'cookie' | 'localStorage' | 'session' | 'none';
     stateVersion: number;
+    lastEventFetch: string | null;
   };
 }
 
@@ -45,6 +46,10 @@ export function useGoogleAuth() {
   }
   return context;
 }
+
+// Track last fetch time globally to prevent excessive fetches
+let lastFetchTime = 0;
+const FETCH_COOLDOWN_MS = 10000; // 10 seconds cooldown
 
 // Provider component
 interface GoogleAuthProviderProps {
@@ -62,7 +67,8 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     debugInfo: {
       lastChecked: new Date().toISOString(),
       authSource: getPersistedAuthState() ? 'localStorage' : 'none' as 'cookie' | 'localStorage' | 'session' | 'none',
-      stateVersion: 1
+      stateVersion: 1,
+      lastEventFetch: null as string | null
     }
   });
   
@@ -72,6 +78,14 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     
     const checkAuthState = async () => {
       try {
+        // Check if we've checked auth recently to prevent excessive checks
+        const now = Date.now();
+        const lastCheckedTime = new Date(state.debugInfo.lastChecked).getTime();
+        if (now - lastCheckedTime < 5000) { // 5 second cooldown
+          console.log('[GoogleAuthContext] Skipping auth check, checked recently');
+          return;
+        }
+        
         setState(prev => ({ 
           ...prev, 
           isAuthenticating: true,
@@ -83,7 +97,7 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         }));
         
         const isSignedIn = await checkIfSignedIn();
-        console.log('[GoogleAuthContext] Initial auth check result:', isSignedIn);
+        console.log('[GoogleAuthContext] Auth check result:', isSignedIn);
         
         let authSource: 'cookie' | 'localStorage' | 'session' | 'none' = 'none';
         if (isSignedIn) {
@@ -105,8 +119,9 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         }));
         
         if (isSignedIn) {
-          console.log('[GoogleAuthContext] User is signed in, fetching events');
-          fetchEvents();
+          console.log('[GoogleAuthContext] User is signed in, but NOT automatically fetching events to prevent loops');
+          // We DON'T automatically fetch events here to prevent loops
+          // The component should explicitly call fetchEvents when needed
         }
       } catch (error: any) {
         console.error('[GoogleAuthContext] Error checking auth state:', error);
@@ -265,14 +280,29 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
     }
   };
   
-  // Fetch events
+  // Fetch events with debouncing
   const fetchEvents = async (currentDisplayDate?: Date) => {
     try {
-      setState(prev => ({ ...prev, isLoadingEvents: true }));
+      // Check if we've fetched events recently to prevent excessive fetches
+      const now = Date.now();
+      if (now - lastFetchTime < FETCH_COOLDOWN_MS) {
+        console.log(`[GoogleAuthContext] Skipping fetch, cooldown active (${Math.round((FETCH_COOLDOWN_MS - (now - lastFetchTime))/1000)}s remaining)`);
+        return state.events; // Return current events instead of fetching again
+      }
+      
+      setState(prev => ({ 
+        ...prev, 
+        isLoadingEvents: true,
+        debugInfo: {
+          ...prev.debugInfo,
+          lastEventFetch: new Date().toISOString()
+        }
+      }));
       
       console.log('[GoogleAuthContext] Starting to fetch Google Calendar events', 
         currentDisplayDate ? `for date: ${currentDisplayDate.toISOString()}` : '');
       
+      lastFetchTime = now; // Update last fetch time
       const calendarEvents = await fetchGoogleCalendarEvents(currentDisplayDate);
       
       console.log(`[GoogleAuthContext] Fetched ${calendarEvents.length} Google Calendar events`);
@@ -283,7 +313,8 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         isLoadingEvents: false,
         debugInfo: {
           ...prev.debugInfo,
-          lastChecked: new Date().toISOString()
+          lastChecked: new Date().toISOString(),
+          lastEventFetch: new Date().toISOString()
         }
       }));
       
@@ -322,7 +353,14 @@ export function GoogleAuthProvider({ children }: GoogleAuthProviderProps) {
         // Clear persisted state
         persistAuthState(false);
       } else {
-        setState(prev => ({ ...prev, isLoadingEvents: false }));
+        setState(prev => ({ 
+          ...prev, 
+          isLoadingEvents: false,
+          debugInfo: {
+            ...prev.debugInfo,
+            lastEventFetch: new Date().toISOString()
+          }
+        }));
       }
       
       toast({

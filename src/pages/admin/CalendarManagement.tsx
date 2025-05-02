@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { addDays, format, startOfWeek, startOfDay } from 'date-fns';
@@ -17,10 +17,15 @@ import DebugLogPanel from '@/components/admin/calendar/DebugLogPanel';
 import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { forcePageRefresh, logComponentVersions } from '@/utils/debugUtils';
+import { GoogleAuthDebug } from '@/components/admin/GoogleAuthDebug';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.1.0";
+const COMPONENT_VERSION = "1.2.0";
 console.log(`LOV_DEBUG_CALENDAR_MGMT: Component loaded, version ${COMPONENT_VERSION}`);
+
+// Track last fetch time at component level
+let lastComponentFetchTime = 0;
+const COMPONENT_FETCH_COOLDOWN_MS = 15000; // 15 seconds cooldown
 
 const CalendarManagement: React.FC = () => {
   const { user } = useAuth();
@@ -30,6 +35,7 @@ const CalendarManagement: React.FC = () => {
   const [showDebugLogs, setShowDebugLogs] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [lastRefresh, setLastRefresh] = useState<string>(new Date().toLocaleTimeString());
+  const [fetchCounter, setFetchCounter] = useState<number>(0);
 
   const { settings, isLoading: isLoadingSettings } = useCalendarSettings();
   const { tableExists, checkTableExists, createCalendarSlotsTable, applyDefaultAvailability } = useCalendarOperations();
@@ -37,7 +43,8 @@ const CalendarManagement: React.FC = () => {
     isAuthenticated: isGoogleAuthenticated,
     events: googleEvents,
     isLoadingEvents: isLoadingGoogleEvents,
-    fetchEvents: fetchGoogleEvents
+    fetchEvents: fetchGoogleEvents,
+    debugInfo: googleAuthDebugInfo
   } = useGoogleAuth();
 
   const { calendarData, isLoading, fetchAvailabilityData, debugVersion } = useCalendarData(
@@ -100,37 +107,72 @@ const CalendarManagement: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  const handleGoogleSync = async () => {
+  // Protected Google sync with cooldown
+  const handleGoogleSync = useCallback(async () => {
     if (isGoogleAuthenticated) {
       try {
+        // Check component-level cooldown
+        const now = Date.now();
+        if (now - lastComponentFetchTime < COMPONENT_FETCH_COOLDOWN_MS) {
+          console.log(`LOV_DEBUG_CALENDAR_MGMT: Skipping sync, cooldown active (${Math.round((COMPONENT_FETCH_COOLDOWN_MS - (now - lastComponentFetchTime))/1000)}s remaining)`);
+          toast({
+            title: 'בקשה נדחתה',
+            description: `יש להמתין ${Math.round((COMPONENT_FETCH_COOLDOWN_MS - (now - lastComponentFetchTime))/1000)} שניות בין סנכרונים`,
+            variant: 'destructive',
+          });
+          return;
+        }
+        
         setIsSyncing(true);
-        setDebugLogs([]);
+        setDebugLogs([`${new Date().toISOString()} - התחלת סנכרון, פעם ${fetchCounter + 1}`]);
         setShowDebugLogs(true);
         
         console.log(`LOV_DEBUG_CALENDAR_MGMT: Starting Google sync for date: ${currentDate.toISOString()}`);
+        setDebugLogs(prev => [...prev, `${new Date().toISOString()} - מתחיל טעינת אירועי גוגל`]);
+        
+        lastComponentFetchTime = now;
+        setFetchCounter(prev => prev + 1);
         
         // Pass the current date to fetch events from the beginning of the displayed week
         await fetchGoogleEvents(currentDate);
+        setDebugLogs(prev => [...prev, `${new Date().toISOString()} - טעינת אירועי גוגל הושלמה`]);
+        
+        setDebugLogs(prev => [...prev, `${new Date().toISOString()} - מתחיל טעינת נתוני זמינות`]);
         await fetchAvailabilityData();
+        setDebugLogs(prev => [...prev, `${new Date().toISOString()} - טעינת נתוני זמינות הושלמה`]);
+        
+        setLastRefresh(new Date().toLocaleTimeString());
         
       } catch (error: any) {
         console.error('LOV_DEBUG_CALENDAR_MGMT: Error syncing with Google Calendar:', error);
+        setDebugLogs(prev => [...prev, `${new Date().toISOString()} - שגיאה: ${error.message}`]);
       } finally {
         setIsSyncing(false);
-        setTimeout(() => {
-          setShowDebugLogs(false);
-        }, 3000);
+        // Don't auto-hide logs - let user close them manually
       }
     }
-  };
+  }, [isGoogleAuthenticated, currentDate, fetchGoogleEvents, fetchAvailabilityData, fetchCounter]);
 
-  // Handle manual refresh button
-  const handleManualRefresh = async () => {
-    console.log(`LOV_DEBUG_CALENDAR_MGMT: Manual refresh requested at ${new Date().toISOString()}`);
-    setLastRefresh(new Date().toLocaleTimeString());
+  // Handle manual refresh button with cooldown protection
+  const handleManualRefresh = useCallback(async () => {
+    console.log(`REFRESH_DEBUG: Manual refresh requested at ${new Date().toISOString()}`);
+    
+    // Check component-level cooldown
+    const now = Date.now();
+    if (now - lastComponentFetchTime < COMPONENT_FETCH_COOLDOWN_MS) {
+      console.log(`REFRESH_DEBUG: Skipping refresh, cooldown active (${Math.round((COMPONENT_FETCH_COOLDOWN_MS - (now - lastComponentFetchTime))/1000)}s remaining)`);
+      toast({
+        title: 'בקשה נדחתה',
+        description: `יש להמתין ${Math.round((COMPONENT_FETCH_COOLDOWN_MS - (now - lastComponentFetchTime))/1000)} שניות בין ריענונים`,
+        variant: 'destructive',
+      });
+      return;
+    }
     
     try {
       setIsSyncing(true);
+      lastComponentFetchTime = now;
+      setFetchCounter(prev => prev + 1);
       
       // Refresh everything
       await checkTableExists();
@@ -141,12 +183,14 @@ const CalendarManagement: React.FC = () => {
       
       await fetchAvailabilityData();
       
+      setLastRefresh(new Date().toLocaleTimeString());
+      
       toast({
         title: 'יומן רוענן',
         description: `הנתונים רועננו בהצלחה בשעה ${new Date().toLocaleTimeString()}`,
       });
     } catch (error: any) {
-      console.error('LOV_DEBUG_CALENDAR_MGMT: Error during manual refresh:', error);
+      console.error('REFRESH_DEBUG: Error during manual refresh:', error);
       toast({
         title: 'שגיאה בריענון נתונים',
         description: error.message,
@@ -155,7 +199,7 @@ const CalendarManagement: React.FC = () => {
     } finally {
       setIsSyncing(false);
     }
-  };
+  }, [checkTableExists, isGoogleAuthenticated, fetchGoogleEvents, currentDate, fetchAvailabilityData]);
 
   // Force a full page reload to clear any caches
   const handleForceReload = () => {
@@ -163,14 +207,23 @@ const CalendarManagement: React.FC = () => {
     forcePageRefresh();
   };
 
-  // Update calendar data when current date changes
+  // Update calendar data when current date changes, with protection
   useEffect(() => {
-    if (isGoogleAuthenticated) {
-      // Fetch Google events from the beginning of the displayed week
-      console.log(`LOV_DEBUG_CALENDAR_MGMT: Date changed, fetching Google events for: ${currentDate.toISOString()}`);
-      fetchGoogleEvents(currentDate);
+    // Only fetch Google events automatically if:
+    // 1. We're authenticated
+    // 2. We haven't fetched recently
+    // 3. We're not already loading
+    if (isGoogleAuthenticated && !isLoadingGoogleEvents && googleEvents.length === 0) {
+      const now = Date.now();
+      if (now - lastComponentFetchTime >= COMPONENT_FETCH_COOLDOWN_MS) {
+        console.log(`LOV_DEBUG_CALENDAR_MGMT: Initial fetch for date: ${currentDate.toISOString()}`);
+        lastComponentFetchTime = now;
+        fetchGoogleEvents(currentDate);
+      } else {
+        console.log(`LOV_DEBUG_CALENDAR_MGMT: Skipping initial fetch, cooldown active`);
+      }
     }
-  }, [currentDate, isGoogleAuthenticated, fetchGoogleEvents]);
+  }, [currentDate, isGoogleAuthenticated, isLoadingGoogleEvents, googleEvents.length, fetchGoogleEvents]);
 
   const updateTimeSlot = async (date: string, hour: string, newStatus: 'available' | 'private' | 'unspecified') => {
     if (!tableExists) {
@@ -328,7 +381,7 @@ const CalendarManagement: React.FC = () => {
                 disabled={isSyncing || isLoading || isLoadingSettings || isLoadingGoogleEvents}
               >
                 <RefreshCw className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
-                ריענון נתונים ({lastRefresh})
+                ריענון נתונים ({lastRefresh}, #{fetchCounter})
               </Button>
               <Button 
                 onClick={handleForceReload}
@@ -340,6 +393,9 @@ const CalendarManagement: React.FC = () => {
               </Button>
             </div>
           </div>
+          
+          {/* Add GoogleAuthDebug component */}
+          <GoogleAuthDebug />
           
           <CalendarHeader 
             isSyncing={isSyncing}
