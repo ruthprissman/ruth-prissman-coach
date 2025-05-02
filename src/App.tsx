@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes, Link, Navigate } from 'react-ro
 import Dashboard from './pages/admin/Dashboard';
 import { supabaseClient } from './lib/supabaseClient';
 import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -19,7 +20,7 @@ function App() {
   }, [])
 
   return (
-    <>
+    <AuthProvider>
       <Router>
         <div className="container mx-auto px-4">
           <nav className="bg-white py-4">
@@ -80,7 +81,7 @@ function App() {
         </div>
       </Router>
       <Toaster />
-    </>
+    </AuthProvider>
   );
 }
 
