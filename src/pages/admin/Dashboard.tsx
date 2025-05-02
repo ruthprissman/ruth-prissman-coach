@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -311,34 +312,41 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Updated SessionItem component for horizontal layout
   const SessionItem = ({
     session
   }: {
     session: FutureSession & {
       patient_name?: string;
     };
-  }) => <div className="flex justify-between items-center border-b border-gray-100 py-3 last:border-0">
-      <div className="flex flex-col items-end">
-        <div className="flex items-center mb-1">
-          <span className="text-sm font-medium">{session.patient_name}</span>
+  }) => (
+    <div className="flex-shrink-0 w-[240px] border rounded-md p-3 bg-white shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex flex-col h-full">
+        <div className="font-medium mb-2 truncate">{session.patient_name}</div>
+        
+        <div className="flex items-center text-sm text-gray-600 mb-2">
+          <Calendar className="w-4 h-4 text-gray-600 ml-1" />
+          <span className="truncate">{formatDateTimeInIsrael(session.session_date)}</span>
         </div>
-        <div className="flex items-center">
-          <span className="text-sm text-gray-600">
-            {formatDateTimeInIsrael(session.session_date)}
-          </span>
-          <Calendar className="w-4 h-4 text-gray-600 ms-2" />
-        </div>
-        <div className="flex items-center mt-1">
-          <span className="text-xs text-gray-500 ms-1">{getMeetingTypeText(session.meeting_type)}</span>
+        
+        <div className="flex items-center mt-auto">
           {getMeetingTypeIcon(session.meeting_type)}
+          <span className="text-xs text-gray-500 mr-1">{getMeetingTypeText(session.meeting_type)}</span>
+          
+          {session.zoom_link && (
+            <a 
+              href={session.zoom_link} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-xs mr-auto text-blue-500 hover:underline"
+            >
+              לינק לזום
+            </a>
+          )}
         </div>
       </div>
-      <div className="flex flex-col items-start">
-        {session.zoom_link && <a href={session.zoom_link} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 text-blue-500 hover:underline">
-            לינק לזום
-          </a>}
-      </div>
-    </div>;
+    </div>
+  );
 
   return <div className="min-h-screen bg-gray-100">
       <header className="bg-[#4A235A] text-white shadow-md">
@@ -394,11 +402,21 @@ const Dashboard: React.FC = () => {
                   </Link>
                 </CardHeader>
                 <CardContent className="pt-4 text-right">
-                  {isSessionsLoading ? <div className="flex justify-center items-center py-8">
+                  {isSessionsLoading ? (
+                    <div className="flex justify-center items-center py-8">
                       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                    </div> : upcomingSessions.length > 0 ? <div className="space-y-1 text-right">
-                      {upcomingSessions.map(session => <SessionItem key={session.id} session={session} />)}
-                    </div> : <p className="text-center text-gray-500 py-4">אין פגישות מתוכננות בימים הקרובים</p>}
+                    </div>
+                  ) : upcomingSessions.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <div className="flex gap-3 pb-1 overflow-x-auto">
+                        {upcomingSessions.map(session => 
+                          <SessionItem key={session.id} session={session} />
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-center text-gray-500 py-4">אין פגישות מתוכננות בימים הקרובים</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
