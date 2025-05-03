@@ -22,7 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.12";
+const COMPONENT_VERSION = "1.0.13";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -528,7 +528,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const isConnectedToPrevHour = isSameEvent(slot, prevHourSlot);
                   
                   // Get color style for border
-                  const { borderColor, colorClass } = getStatusStyle(slot);
+                  const { borderColor } = getStatusStyle(slot);
                   
                   // Tooltip content for the cell
                   const tooltipContent = (
@@ -554,25 +554,20 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   return (
                     <TableCell 
                       key={`${day.date}-${hour}`}
-                      className={`p-0 border-l border-gray-200 ${
-                        isConnectedToPrevHour ? `border-t-0` : ''
-                      }`}
+                      className={`p-0 border-l border-gray-200`}
                       style={{
-                        ...(isConnectedToPrevHour ? { 
-                          borderTopWidth: '0px',
-                          borderTopColor: 'transparent'
+                        ...(isConnectedToPrevHour ? {
+                          borderTop: `1px solid ${borderColor}`,
                         } : {})
                       }}
                     >
                       <div 
-                        className={`w-full h-full ${
-                          isConnectedToPrevHour ? `border-t-0 border-t-transparent` : ''
-                        }`}
+                        className={`w-full h-full`}
                         style={{
                           ...(isConnectedToPrevHour && { 
-                            borderTop: '0px solid transparent',
-                            marginTop: '-1px',  // Compensate for the removed border
-                            height: 'calc(100% + 1px)' // Extend height to cover the gap
+                            marginTop: '-1px',  // Compensate for the border
+                            height: 'calc(100% + 1px)', // Extend height to cover the gap
+                            borderTop: `0px solid ${borderColor}`,
                           })
                         }}
                       >
