@@ -22,7 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.11";
+const COMPONENT_VERSION = "1.0.12";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -107,7 +107,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         bg: 'bg-[#9b87f5]', 
         border: 'border-[#9b87f5]', 
         text: 'text-white font-medium',
-        colorClass: 'border-[#9b87f5]'
+        colorClass: 'border-[#9b87f5]',
+        borderColor: '#9b87f5'
       };
     }
     
@@ -118,7 +119,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         bg: 'bg-[#5C4C8D]', 
         border: 'border-[#5C4C8D]', 
         text: 'text-[#CFB53B] font-medium',
-        colorClass: 'border-[#5C4C8D]'
+        colorClass: 'border-[#5C4C8D]',
+        borderColor: '#5C4C8D'
       };
     }
 
@@ -129,7 +131,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         bg: 'bg-[#D3E4FD]', 
         border: 'border-[#D3E4FD]', 
         text: 'text-gray-700',
-        colorClass: 'border-[#D3E4FD]'
+        colorClass: 'border-[#D3E4FD]',
+        borderColor: '#D3E4FD'
       };
     }
     
@@ -140,24 +143,25 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         bg: 'bg-[#D3E4FD]', 
         border: 'border-[#D3E4FD]', 
         text: 'text-gray-700',
-        colorClass: 'border-[#D3E4FD]'
+        colorClass: 'border-[#D3E4FD]',
+        borderColor: '#D3E4FD'
       };
     }
     
-    // Default statuses - unchanged
+    // Default statuses - unchanged but with added borderColor property
     switch (status) {
       case 'available':
-        return { bg: 'bg-purple-100', border: 'border-purple-100', text: 'text-purple-800', colorClass: 'border-purple-100' };
+        return { bg: 'bg-purple-100', border: 'border-purple-100', text: 'text-purple-800', colorClass: 'border-purple-100', borderColor: '#F3E8FF' };
       case 'booked':
-        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]', colorClass: 'border-[#5C4C8D]' };
+        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]', colorClass: 'border-[#5C4C8D]', borderColor: '#5C4C8D' };
       case 'completed':
-        return { bg: 'bg-gray-200', border: 'border-gray-200', text: 'text-gray-800', colorClass: 'border-gray-200' };
+        return { bg: 'bg-gray-200', border: 'border-gray-200', text: 'text-gray-800', colorClass: 'border-gray-200', borderColor: '#E5E7EB' };
       case 'canceled':
-        return { bg: 'bg-red-100', border: 'border-red-100', text: 'text-red-800', colorClass: 'border-red-100' };
+        return { bg: 'bg-red-100', border: 'border-red-100', text: 'text-red-800', colorClass: 'border-red-100', borderColor: '#FEE2E2' };
       case 'private':
-        return { bg: 'bg-amber-100', border: 'border-amber-100', text: 'text-amber-800', colorClass: 'border-amber-100' };
+        return { bg: 'bg-amber-100', border: 'border-amber-100', text: 'text-amber-800', colorClass: 'border-amber-100', borderColor: '#FEF3C7' };
       default:
-        return { bg: 'bg-gray-50', border: 'border-gray-50', text: 'text-gray-800', colorClass: 'border-gray-50' };
+        return { bg: 'bg-gray-50', border: 'border-gray-50', text: 'text-gray-800', colorClass: 'border-gray-50', borderColor: '#F9FAFB' };
     }
   };
 
@@ -382,7 +386,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   const renderCellContent = (day: string, hour: string, slot: CalendarSlot) => {
     const isCurrentCell = isCurrentTimeSlot(day, hour);
-    const { bg, text, colorClass } = getStatusStyle(slot);
+    const { bg, text, colorClass, borderColor } = getStatusStyle(slot);
     const isWorkMeetingSlot = isWorkMeeting(slot);
     
     console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering cell ${day} ${hour}, isWorkMeeting: ${isWorkMeetingSlot}, status: ${slot.status}`);
@@ -523,8 +527,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const prevHourSlot = prevHour ? dayMap?.get(prevHour) : undefined;
                   const isConnectedToPrevHour = isSameEvent(slot, prevHourSlot);
                   
-                  // Extract the colorClass for the border color
-                  const { colorClass } = getStatusStyle(slot);
+                  // Get color style for border
+                  const { borderColor, colorClass } = getStatusStyle(slot);
                   
                   // Tooltip content for the cell
                   const tooltipContent = (
@@ -551,32 +555,47 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                     <TableCell 
                       key={`${day.date}-${hour}`}
                       className={`p-0 border-l border-gray-200 ${
-                        // Apply the event color to the top border when connected to the previous hour's event
-                        isConnectedToPrevHour ? `border-t-0 ${colorClass}` : ''
+                        isConnectedToPrevHour ? `border-t-0` : ''
                       }`}
                       style={{
-                        ...(isConnectedToPrevHour ? { borderTopColor: 'transparent' } : {})
+                        ...(isConnectedToPrevHour ? { 
+                          borderTopWidth: '0px',
+                          borderTopColor: 'transparent'
+                        } : {})
                       }}
                     >
-                      {(slot.description || slot.fromGoogle || slot.fromFutureSession) ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="w-full h-full">
-                              {renderCellContent(day.date, hour, slot)}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent 
-                            side="bottom"
-                            className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded z-50"
-                          >
-                            {tooltipContent}
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <div className="w-full h-full">
-                          {renderCellContent(day.date, hour, slot)}
-                        </div>
-                      )}
+                      <div 
+                        className={`w-full h-full ${
+                          isConnectedToPrevHour ? `border-t-0 border-t-transparent` : ''
+                        }`}
+                        style={{
+                          ...(isConnectedToPrevHour && { 
+                            borderTop: '0px solid transparent',
+                            marginTop: '-1px',  // Compensate for the removed border
+                            height: 'calc(100% + 1px)' // Extend height to cover the gap
+                          })
+                        }}
+                      >
+                        {(slot.description || slot.fromGoogle || slot.fromFutureSession) ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="w-full h-full">
+                                {renderCellContent(day.date, hour, slot)}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent 
+                              side="bottom"
+                              className="max-w-xs bg-gray-900 text-white p-2 text-xs rounded z-50"
+                            >
+                              {tooltipContent}
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <div className="w-full h-full">
+                            {renderCellContent(day.date, hour, slot)}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                   );
                 })}
@@ -585,7 +604,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </TableBody>
         </Table>
         
-        {/* Dialog for adding meetings to future sessions - מעודכן לגרסה החדשה */}
+        {/* Dialog for adding meetings to future sessions */}
         <AddMeetingToFutureSessionsDialog
           open={addToFutureSessionDialogOpen}
           onOpenChange={setAddToFutureSessionDialogOpen}
