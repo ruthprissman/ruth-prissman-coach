@@ -22,7 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.10";
+const COMPONENT_VERSION = "1.0.11";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -523,6 +523,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const prevHourSlot = prevHour ? dayMap?.get(prevHour) : undefined;
                   const isConnectedToPrevHour = isSameEvent(slot, prevHourSlot);
                   
+                  // Extract the colorClass for the border color
+                  const { colorClass } = getStatusStyle(slot);
+                  
                   // Tooltip content for the cell
                   const tooltipContent = (
                     <div>
@@ -547,7 +550,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   return (
                     <TableCell 
                       key={`${day.date}-${hour}`}
-                      className="p-0 border-l border-gray-200"
+                      className={`p-0 border-l border-gray-200 ${
+                        // Apply the event color to the top border when connected to the previous hour's event
+                        isConnectedToPrevHour ? `border-t-0 ${colorClass}` : ''
+                      }`}
+                      style={{
+                        ...(isConnectedToPrevHour ? { borderTopColor: 'transparent' } : {})
+                      }}
                     >
                       {(slot.description || slot.fromGoogle || slot.fromFutureSession) ? (
                         <Tooltip>
