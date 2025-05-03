@@ -17,7 +17,7 @@ export function GoogleOAuthButton({
   onSignOut 
 }: GoogleOAuthButtonProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center justify-center gap-2 h-full">
       {isAuthenticated ? (
         <Button 
           variant="outline" 
