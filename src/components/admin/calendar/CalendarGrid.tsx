@@ -8,7 +8,7 @@ import {
   TableCell 
 } from '@/components/ui/table';
 import { CalendarSlot } from '@/types/calendar';
-import { Check, Calendar, Lock, Clock, ArrowUp, Trash2, Database, RefreshCw } from 'lucide-react';
+import { Check, Calendar, Lock, Clock, ArrowUp, Trash2, Database, RefreshCw, Pencil } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -20,9 +20,12 @@ import { Button } from '@/components/ui/button';
 import { format, isToday, isPast } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog';
+import DeleteFutureSessionDialog from '../sessions/DeleteFutureSessionDialog';
+import { toast } from '@/components/ui/use-toast';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.13";
+const COMPONENT_VERSION = "1.0.14";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -50,6 +53,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const [forceRefreshToken, setForceRefreshToken] = useState<number>(Date.now());
   const [addToFutureSessionDialogOpen, setAddToFutureSessionDialogOpen] = useState<boolean>(false);
   const [selectedMeetingSlot, setSelectedMeetingSlot] = useState<CalendarSlot | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [meetingToDelete, setMeetingToDelete] = useState<any>(null);
   
   console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering with ${days.length} days, ${hours.length} hours, loading: ${isLoading}`);
   console.log(`LOV_DEBUG_CALENDAR_GRID: Calendar data contains ${calendarData.size} days`);
@@ -213,6 +218,71 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     // This will cause the component to re-render with a new token value
   };
 
+  // Handle delete future session
+  const handleDeleteFutureSession = (slot: CalendarSlot) => {
+    console.log(`DELETE_DEBUG: Delete session requested for future session:`, slot.futureSession);
+    if (slot.futureSession?.id) {
+      setMeetingToDelete(slot.futureSession);
+      setDeleteDialogOpen(true);
+    } else {
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן למחוק את הפגישה, חסר מזהה",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Confirm delete future session
+  const confirmDeleteSession = async () => {
+    if (!meetingToDelete?.id) {
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן למחוק את הפגישה, חסר מזהה",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const supabase = await supabaseClient();
+      const { error } = await supabase
+        .from('future_sessions')
+        .delete()
+        .eq('id', meetingToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "הפגישה נמחקה בהצלחה",
+        description: "הפגישה נמחקה ממסד הנתונים",
+      });
+      
+      // Force refresh to update the calendar
+      handleForceRefresh();
+      setDeleteDialogOpen(false);
+    } catch (error: any) {
+      console.error("Error deleting future session:", error);
+      toast({
+        title: "שגיאה במחיקת הפגישה",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Format date for delete dialog
+  const formatDate = (date: string | null) => {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString('he-IL', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   // Handle add to future sessions
   const handleAddToFutureSessions = (slot: CalendarSlot, date: string) => {
     console.log(`MEETING_SAVE_DEBUG: Adding meeting to future sessions for ${date} at ${slot.hour}`);
@@ -293,24 +363,28 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               </TooltipContent>
             </Tooltip>
             
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button 
-                  onClick={(e) => e.stopPropagation()}
-                  className="bg-white p-1 rounded-full shadow hover:bg-red-50"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <p>מחק פגישה</p>
-              </TooltipContent>
-            </Tooltip>
+            {/* Only show delete button for meetings in future_sessions table */}
+            {slot.fromFutureSession && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log("Delete button clicked for future session");
+                      handleDeleteFutureSession(slot);
+                    }}
+                    className="bg-white p-1 rounded-full shadow hover:bg-red-50"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>מחק פגישה</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             
-            {/* 
-              FIX: Modified condition to only show "Add to DB" button for Google Calendar events 
-              that aren't already in the database, checking both fromGoogle and fromFutureSession flags
-            */}
+            {/* Show "Add to DB" button for Google Calendar events that aren't already in the database */}
             {slot.fromGoogle && !slot.fromFutureSession && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -605,6 +679,15 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           onOpenChange={setAddToFutureSessionDialogOpen}
           meetingData={selectedMeetingSlot}
           onCreated={handleFutureSessionCreated}
+        />
+
+        {/* Dialog for deleting future sessions */}
+        <DeleteFutureSessionDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          session={meetingToDelete}
+          onConfirm={confirmDeleteSession}
+          formatDate={formatDate}
         />
       </div>
     </TooltipProvider>
