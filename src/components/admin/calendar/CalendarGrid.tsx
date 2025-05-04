@@ -25,7 +25,7 @@ import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.17";
+const COMPONENT_VERSION = "1.0.18";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -291,19 +291,26 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     setAddToFutureSessionDialogOpen(true);
   };
 
-  // Function to check if a slot is a work meeting (starts with "פגישה עם")
+  // Function to check if a slot is a work meeting (starts with "פגישה עם" OR is a future session)
   const isWorkMeeting = (slot: CalendarSlot): boolean => {
-    // Safely check if notes exists and starts with the required prefix
+    // If it's a future session, consider it a work meeting regardless of notes
+    if (slot.fromFutureSession === true) {
+      console.log(`ICON_DEBUG: isWorkMeeting - detected future session, returning true`);
+      return true;
+    }
+    
+    // Otherwise check if notes exists and starts with the required prefix
     const notesContent = slot.notes || '';
     const isMeeting = typeof notesContent === 'string' && notesContent.startsWith('פגישה עם');
     
-    console.log(`ICON_DEBUG: isWorkMeeting check for "${notesContent}" => ${isMeeting}`);
+    console.log(`ICON_DEBUG: isWorkMeeting check for notes "${notesContent}" => ${isMeeting}, fromFutureSession: ${slot.fromFutureSession}`);
     return isMeeting;
   };
 
   // Extract client name from meeting notes
   const extractClientName = (notes: string | undefined): string => {
-    if (!notes || !notes.startsWith('פגישה עם')) return '';
+    if (!notes) return '';
+    if (!notes.startsWith('פגישה עם')) return '';
     return notes.replace('פגישה עם', '').trim();
   };
 
@@ -317,7 +324,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     // First check if this is a work meeting
     const isWorkMeetingSlot = isWorkMeeting(slot);
     if (!isWorkMeetingSlot) {
-      console.log(`ICON_DEBUG: Not rendering icons - not a work meeting: "${slot.notes || 'undefined'}"`);
+      console.log(`ICON_DEBUG: Not rendering icons - not a work meeting: "${slot.notes || 'undefined'}", fromFutureSession: ${slot.fromFutureSession}`);
       return null;
     }
 
