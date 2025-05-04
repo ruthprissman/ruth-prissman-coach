@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { 
   checkIfSignedIn, 
@@ -12,6 +11,10 @@ import { toast } from '@/components/ui/use-toast';
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { persistAuthState, getPersistedAuthState } from '@/utils/cookieUtils';
 
+// Hook version for debugging
+const HOOK_VERSION = "1.0.1";
+console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Hook loaded, version ${HOOK_VERSION}`);
+
 export function useGoogleOAuth() {
   const [state, setState] = useState<GoogleOAuthState>({
     isAuthenticated: getPersistedAuthState(), // Initialize with persisted state
@@ -20,6 +23,7 @@ export function useGoogleOAuth() {
   });
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(false);
+  const [isCreatingEvent, setIsCreatingEvent] = useState<boolean>(false);
 
   useEffect(() => {
     const initialize = async () => {
@@ -121,17 +125,25 @@ export function useGoogleOAuth() {
     description: string = '',
   ) => {
     try {
+      console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Creating event "${summary}" from ${startDateTime} to ${endDateTime}`);
+      setIsCreatingEvent(true);
+      
       const eventId = await createGoogleCalendarEvent(summary, startDateTime, endDateTime, description);
+      
       if (eventId) {
+        console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Event created with ID: ${eventId}`);
+        // Refresh events to include the newly created one
         await fetchEvents();
         
         toast({
           title: 'האירוע נוצר בהצלחה',
           description: 'האירוע נוסף ליומן Google שלך',
         });
-        return true;
+        return eventId;
+      } else {
+        console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Event creation failed, no ID returned`);
+        throw new Error('לא הצלחנו ליצור את האירוע ביומן');
       }
-      return false;
     } catch (error: any) {
       console.error('Error creating calendar event:', error);
       toast({
@@ -139,7 +151,9 @@ export function useGoogleOAuth() {
         description: error.message,
         variant: 'destructive',
       });
-      return false;
+      return null;
+    } finally {
+      setIsCreatingEvent(false);
     }
   };
 
@@ -234,6 +248,7 @@ export function useGoogleOAuth() {
     ...state,
     events,
     isLoadingEvents,
+    isCreatingEvent,
     signIn,
     signOut,
     fetchEvents,

@@ -25,7 +25,7 @@ import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.19";
+const COMPONENT_VERSION = "1.0.20";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -319,7 +319,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     navigate(`/admin/sessions?search=${encodeURIComponent(clientName)}`);
   };
 
-  // Render action icons for work meetings - Fixed to be visible only on hover
+  // Render action icons for work meetings - Updated to include "Add to Google Calendar" icon
   const renderActionIcons = (slot: CalendarSlot, date: string) => {
     // First check if this is a work meeting
     const isWorkMeetingSlot = isWorkMeeting(slot);
@@ -376,6 +376,27 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             </TooltipTrigger>
             <TooltipContent side="top">
               <p>מחק פגישה</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        
+        {/* NEW: Show "Add to Google Calendar" button for future sessions that aren't in Google Calendar */}
+        {slot.fromFutureSession && !slot.inGoogleCalendar && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log(`GOOGLE_CALENDAR_DEBUG: Add to Google Calendar button clicked for future session:`, slot.futureSession);
+                  handleAddToGoogleCalendar(slot);
+                }}
+                className="bg-white p-1 rounded-full shadow hover:bg-green-50"
+              >
+                <Calendar className="w-3.5 h-3.5 text-green-600" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>הוסף ליומן Google</p>
             </TooltipContent>
           </Tooltip>
         )}
