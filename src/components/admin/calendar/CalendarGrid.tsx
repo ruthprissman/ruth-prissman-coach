@@ -25,7 +25,7 @@ import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.18";
+const COMPONENT_VERSION = "1.0.19";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -359,14 +359,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </TooltipContent>
         </Tooltip>
         
-        {/* Show delete button for any future session that is not in the past */}
-        {!isPastMeeting && slot.fromFutureSession && (
+        {/* Show delete button for any future session, even if it's in the past */}
+        {slot.fromFutureSession && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log(`ICON_DEBUG: Delete button clicked for future session`);
+                  console.log(`ICON_DEBUG: Delete button clicked for future session, isPastMeeting: ${isPastMeeting}`);
                   handleDeleteFutureSession(slot);
                 }}
                 className="bg-white p-1 rounded-full shadow hover:bg-red-50"
