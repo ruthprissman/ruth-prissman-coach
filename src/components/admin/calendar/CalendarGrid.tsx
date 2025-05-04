@@ -25,7 +25,7 @@ import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.16";
+const COMPONENT_VERSION = "1.0.17";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -293,11 +293,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Function to check if a slot is a work meeting (starts with "פגישה עם")
   const isWorkMeeting = (slot: CalendarSlot): boolean => {
-    const isMeeting = !!slot.notes && 
-           typeof slot.notes === 'string' && 
-           slot.notes.startsWith('פגישה עם');
+    // Safely check if notes exists and starts with the required prefix
+    const notesContent = slot.notes || '';
+    const isMeeting = typeof notesContent === 'string' && notesContent.startsWith('פגישה עם');
     
-    console.log(`ICON_DEBUG: isWorkMeeting check for "${slot.notes}" => ${isMeeting}`);
+    console.log(`ICON_DEBUG: isWorkMeeting check for "${notesContent}" => ${isMeeting}`);
     return isMeeting;
   };
 
@@ -317,7 +317,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     // First check if this is a work meeting
     const isWorkMeetingSlot = isWorkMeeting(slot);
     if (!isWorkMeetingSlot) {
-      console.log(`ICON_DEBUG: Not rendering icons - not a work meeting: "${slot.notes}"`);
+      console.log(`ICON_DEBUG: Not rendering icons - not a work meeting: "${slot.notes || 'undefined'}"`);
       return null;
     }
 
@@ -330,7 +330,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     // Add detailed debugging logs with unique prefix for this issue
     console.log(`ICON_DEBUG: Rendering action icons for meeting on ${date} at ${slot.hour}`);
     console.log(`ICON_DEBUG: Meeting flags - fromGoogle: ${slot.fromGoogle}, fromFutureSession: ${slot.fromFutureSession}, inGoogleCalendar: ${slot.inGoogleCalendar}`);
-    console.log(`ICON_DEBUG: Meeting notes: "${slot.notes}", isPastMeeting: ${isPastMeeting}`);
+    console.log(`ICON_DEBUG: Meeting notes: "${slot.notes || 'undefined'}", isPastMeeting: ${isPastMeeting}`);
     
     return (
       <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
