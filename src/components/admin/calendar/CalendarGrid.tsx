@@ -25,7 +25,7 @@ import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.15";
+const COMPONENT_VERSION = "1.0.16";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -293,10 +293,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Function to check if a slot is a work meeting (starts with "פגישה עם")
   const isWorkMeeting = (slot: CalendarSlot): boolean => {
-    return !!slot.notes && 
+    const isMeeting = !!slot.notes && 
            typeof slot.notes === 'string' && 
-           slot.notes.startsWith('פגישה עם') && 
-           ((slot.status as string) === 'booked' || slot.isPatientMeeting || (slot.isMeeting && (slot.status as string) === 'booked'));
+           slot.notes.startsWith('פגישה עם');
+    
+    console.log(`ICON_DEBUG: isWorkMeeting check for "${slot.notes}" => ${isMeeting}`);
+    return isMeeting;
   };
 
   // Extract client name from meeting notes
@@ -312,16 +314,23 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Render action icons for work meetings - Fixed to be visible only on hover
   const renderActionIcons = (slot: CalendarSlot, date: string) => {
-    if (!isWorkMeeting(slot)) return null;
+    // First check if this is a work meeting
+    const isWorkMeetingSlot = isWorkMeeting(slot);
+    if (!isWorkMeetingSlot) {
+      console.log(`ICON_DEBUG: Not rendering icons - not a work meeting: "${slot.notes}"`);
+      return null;
+    }
 
+    // Get meeting date to check if it's in the past
     const meetingDate = new Date(date);
     meetingDate.setHours(parseInt(slot.hour.split(':')[0]), 0, 0, 0);
     const isPastMeeting = isPast(meetingDate);
     const clientName = extractClientName(slot.notes);
     
-    // Add debugging logs with unique prefix for this issue
-    console.log(`DB_BUTTON_DEBUG: Rendering action icons for meeting on ${date} at ${slot.hour}, is past: ${isPastMeeting}`);
-    console.log(`DB_BUTTON_DEBUG: Meeting flags - fromGoogle: ${slot.fromGoogle}, fromFutureSession: ${slot.fromFutureSession}, inGoogleCalendar: ${slot.inGoogleCalendar}, notes: ${slot.notes}`);
+    // Add detailed debugging logs with unique prefix for this issue
+    console.log(`ICON_DEBUG: Rendering action icons for meeting on ${date} at ${slot.hour}`);
+    console.log(`ICON_DEBUG: Meeting flags - fromGoogle: ${slot.fromGoogle}, fromFutureSession: ${slot.fromFutureSession}, inGoogleCalendar: ${slot.inGoogleCalendar}`);
+    console.log(`ICON_DEBUG: Meeting notes: "${slot.notes}", isPastMeeting: ${isPastMeeting}`);
     
     return (
       <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -343,14 +352,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </TooltipContent>
         </Tooltip>
         
-        {/* Only show delete button for meetings in future_sessions table */}
+        {/* Show delete button for any future session that is not in the past */}
         {!isPastMeeting && slot.fromFutureSession && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log("Delete button clicked for future session");
+                  console.log(`ICON_DEBUG: Delete button clicked for future session`);
                   handleDeleteFutureSession(slot);
                 }}
                 className="bg-white p-1 rounded-full shadow hover:bg-red-50"
@@ -455,8 +464,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         )}
         
         {/* Only show action icons for work meetings, and only in the first hour of multi-hour events */}
-        {isWorkMeetingSlot && (!slot.isPartialHour || slot.isFirstHour) && renderActionIcons(slot, day)}
+        {(!slot.isPartialHour || slot.isFirstHour) && renderActionIcons(slot, day)}
         
+        {/* ... keep existing code (rendering partial hour events and other cell content) */}
         {slot.isPartialHour ? (
           renderPartialHourEvent(slot)
         ) : slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked') ? (
@@ -509,8 +519,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   }
 
-  console.log(`MEETING_SAVE_DEBUG: Rendering calendar grid for days: ${days.map(d => d.date).join(', ')}`);
-  console.log(`MEETING_SAVE_DEBUG: Force refresh token: ${forceRefreshToken}`);
+  console.log(`ICON_DEBUG: Rendering calendar grid for days: ${days.map(d => d.date).join(', ')}`);
+  console.log(`ICON_DEBUG: Force refresh token: ${forceRefreshToken}`);
 
   return (
     <TooltipProvider>
