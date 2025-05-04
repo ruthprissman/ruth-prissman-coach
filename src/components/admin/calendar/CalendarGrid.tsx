@@ -25,7 +25,7 @@ import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.14";
+const COMPONENT_VERSION = "1.0.15";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -325,86 +325,64 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     
     return (
       <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        {isPastMeeting ? (
-          // Past meetings - only show update button that navigates to sessions page
+        {/* Update button - always shown for all meetings */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                navigateToSessions(clientName);
+              }}
+              className="bg-white p-1 rounded-full shadow hover:bg-purple-50"
+            >
+              <ArrowUp className="w-3.5 h-3.5 text-purple-800" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p>עדכן פגישה</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        {/* Only show delete button for meetings in future_sessions table */}
+        {!isPastMeeting && slot.fromFutureSession && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigateToSessions(clientName);
+                  console.log("Delete button clicked for future session");
+                  handleDeleteFutureSession(slot);
                 }}
-                className="bg-white p-1 rounded-full shadow hover:bg-purple-50"
+                className="bg-white p-1 rounded-full shadow hover:bg-red-50"
               >
-                <ArrowUp className="w-3.5 h-3.5 text-purple-800" />
+                <Trash2 className="w-3.5 h-3.5 text-red-600" />
               </button>
             </TooltipTrigger>
             <TooltipContent side="top">
-              <p>עדכן פגישה</p>
+              <p>מחק פגישה</p>
             </TooltipContent>
           </Tooltip>
-        ) : (
-          // Future meetings - show different buttons based on whether it exists in future_sessions
-          <>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigateToSessions(clientName);
-                  }}
-                  className="bg-white p-1 rounded-full shadow hover:bg-purple-50"
-                >
-                  <ArrowUp className="w-3.5 h-3.5 text-purple-800" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                <p>עדכן פגישה</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            {/* Only show delete button for meetings in future_sessions table */}
-            {slot.fromFutureSession && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log("Delete button clicked for future session");
-                      handleDeleteFutureSession(slot);
-                    }}
-                    className="bg-white p-1 rounded-full shadow hover:bg-red-50"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  <p>מחק פגישה</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-            
-            {/* Show "Add to DB" button for Google Calendar events that aren't already in the database */}
-            {slot.fromGoogle && !slot.fromFutureSession && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log(`DB_BUTTON_DEBUG: Add to DB button clicked for meeting: ${slot.notes}`);
-                      handleAddToFutureSessions(slot, date);
-                    }}
-                    className="bg-white p-1 rounded-full shadow hover:bg-blue-50"
-                  >
-                    <Database className="w-3.5 h-3.5 text-blue-600" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  <p>הוסף לטבלת פגישות</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </>
+        )}
+        
+        {/* Show "Add to DB" button for Google Calendar events that aren't already in the database */}
+        {!isPastMeeting && slot.fromGoogle && !slot.fromFutureSession && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log(`DB_BUTTON_DEBUG: Add to DB button clicked for meeting: ${slot.notes}`);
+                  handleAddToFutureSessions(slot, date);
+                }}
+                className="bg-white p-1 rounded-full shadow hover:bg-blue-50"
+              >
+                <Database className="w-3.5 h-3.5 text-blue-600" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>הוסף לטבלת פגישות</p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
     );
