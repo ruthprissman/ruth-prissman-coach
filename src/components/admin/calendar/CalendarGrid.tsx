@@ -23,9 +23,11 @@ import AddMeetingToFutureSessionsDialog from './AddMeetingToFutureSessionsDialog
 import DeleteFutureSessionDialog from '../sessions/DeleteFutureSessionDialog';
 import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
+import { addFutureSessionToGoogleCalendar } from '@/utils/googleCalendarUtils';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.20";
+const COMPONENT_VERSION = "1.0.21";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -56,8 +58,42 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [meetingToDelete, setMeetingToDelete] = useState<any>(null);
   
+  // Add the Google OAuth hook to get access to the createEvent function
+  const { createEvent } = useGoogleOAuth();
+  
   console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering with ${days.length} days, ${hours.length} hours, loading: ${isLoading}`);
   console.log(`LOV_DEBUG_CALENDAR_GRID: Calendar data contains ${calendarData.size} days`);
+
+  // New function to handle adding a future session to Google Calendar
+  const handleAddToGoogleCalendar = async (slot: CalendarSlot) => {
+    console.log(`GOOGLE_CALENDAR_DEBUG: Adding to Google Calendar:`, slot.futureSession);
+    
+    if (!slot.fromFutureSession) {
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן להוסיף ליומן, זו אינה פגישה מטבלת הפגישות",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Use the utility function to add the session to Google Calendar
+      const success = await addFutureSessionToGoogleCalendar(slot, createEvent);
+      
+      if (success) {
+        // Force refresh the calendar to show updated status
+        handleForceRefresh();
+      }
+    } catch (error: any) {
+      console.error("Error adding to Google Calendar:", error);
+      toast({
+        title: "שגיאה",
+        description: error.message || "אירעה שגיאה בהוספה ליומן Google",
+        variant: "destructive"
+      });
+    }
+  };
 
   useEffect(() => {
     const updateCurrentTime = () => {
