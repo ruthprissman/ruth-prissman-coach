@@ -71,6 +71,8 @@ export function GoogleCalendarEventForm() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isPrivateTime, setIsPrivateTime] = useState<boolean>(false);
+  const [patientsLoading, setPatientsLoading] = useState<boolean>(true);
+  const [patientsError, setPatientsError] = useState<string | null>(null);
 
   // Generate time options in 15-minute intervals
   const generateTimeOptions = (): SelectOption[] => {
@@ -104,6 +106,7 @@ export function GoogleCalendarEventForm() {
   // Watch for meeting type changes to toggle private time mode
   const meetingType = form.watch('meetingType');
   useEffect(() => {
+    console.log('Meeting type changed to:', meetingType);
     setIsPrivateTime(meetingType === 'Private');
   }, [meetingType]);
 
@@ -128,18 +131,30 @@ export function GoogleCalendarEventForm() {
   // Fetch patients when component mounts
   useEffect(() => {
     async function fetchPatients() {
+      setPatientsLoading(true);
+      setPatientsError(null);
       try {
         const supabase = await supabaseClient();
+        // Removed the is_active filter temporarily to see if there are any patients
         const { data, error } = await supabase
           .from('patients')
           .select('id, name, phone, email, notes, session_price')
-          .eq('is_active', true)
+          // .eq('is_active', true) // Commented out to get all patients
           .order('name');
 
         if (error) throw error;
         
+        console.log('Fetched patients:', data);
+        
+        if (!data || data.length === 0) {
+          console.log('No patients found in the database');
+          setPatientsError('לא נמצאו לקוחות במערכת');
+          setPatients([]);
+          return;
+        }
+        
         // Ensure all required Patient fields are present by providing defaults
-        const patientsWithDefaults = (data || []).map(patient => ({
+        const patientsWithDefaults = data.map(patient => ({
           id: patient.id,
           name: patient.name,
           phone: patient.phone || null,
@@ -149,8 +164,12 @@ export function GoogleCalendarEventForm() {
         })) as Patient[];
         
         setPatients(patientsWithDefaults);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching patients:', error);
+        setPatientsError(`שגיאה בטעינת רשימת הלקוחות: ${error.message}`);
+        setPatients([]);
+      } finally {
+        setPatientsLoading(false);
       }
     }
 
@@ -171,6 +190,8 @@ export function GoogleCalendarEventForm() {
     setIsLoading(true);
     
     try {
+      console.log('Submitting form with data:', data);
+      
       // Format date and times for Google Calendar
       const startDateTime = combineDateTime(data.date, data.startTime);
       const endDateTime = combineDateTime(data.date, data.endTime);
@@ -196,6 +217,8 @@ export function GoogleCalendarEventForm() {
           description = `סוג פגישה: ${getMeetingTypeInHebrew(data.meetingType)}\n${data.notes || ''}`;
         }
       }
+      
+      console.log('Creating event with:', { summary, startDateTime, endDateTime, description });
       
       // Create event in Google Calendar
       const eventId = await createEvent(
@@ -320,6 +343,7 @@ export function GoogleCalendarEventForm() {
                   <FormLabel>סוג פגישה</FormLabel>
                   <Select
                     onValueChange={(value) => {
+                      console.log('Selected meeting type:', value);
                       field.onChange(value);
                       // Reset patient if switching to private
                       if (value === 'Private') {
@@ -352,23 +376,37 @@ export function GoogleCalendarEventForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>פגישה עם</FormLabel>
-                    <Select
-                      onValueChange={(value) => field.onChange(parseInt(value, 10))}
-                      value={field.value?.toString() || ''}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="בחר לקוח/ה" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {patients.map((patient) => (
-                          <SelectItem key={patient.id} value={patient.id.toString()}>
-                            {patient.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {patientsLoading ? (
+                      <div className="text-center p-2">
+                        <p>טוען רשימת לקוחות...</p>
+                      </div>
+                    ) : patientsError ? (
+                      <div className="text-center p-2">
+                        <p className="text-red-500">{patientsError}</p>
+                      </div>
+                    ) : patients.length === 0 ? (
+                      <div className="text-center p-2">
+                        <p className="text-amber-500">לא נמצאו לקוחות במערכת</p>
+                      </div>
+                    ) : (
+                      <Select
+                        onValueChange={(value) => field.onChange(parseInt(value, 10))}
+                        value={field.value?.toString() || ''}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="בחר לקוח/ה" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {patients.map((patient) => (
+                            <SelectItem key={patient.id} value={patient.id.toString()}>
+                              {patient.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
