@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for working with Google Calendar integration
  */
@@ -55,7 +56,7 @@ export async function addFutureSessionToGoogleCalendar(
     
     // Create a description that includes the meeting type
     const meetingType = slot.futureSession.meeting_type || "לא צוין";
-    const description = `סוג פגישה: ${meetingType}\nפגישה שהתווספה מלוח הפגישות`;
+    const description = `סוג פגישה: ${getMeetingTypeInHebrew(meetingType)}\nפגישה שהתווספה מלוח הפגישות`;
     
     // Create the event in Google Calendar
     const eventId = await createEventFn(summary, startDateTime, endDateTime, description);
@@ -79,3 +80,17 @@ export async function addFutureSessionToGoogleCalendar(
     return false;
   }
 }
+
+/**
+ * Convert meeting type to Hebrew
+ */
+function getMeetingTypeInHebrew(type: string): string {
+  const types: Record<string, string> = {
+    'Zoom': 'זום',
+    'Phone': 'טלפון',
+    'In-Person': 'פגישה פרונטלית',
+    'Private': 'זמן פרטי'
+  };
+  return types[type] || type;
+}
+
