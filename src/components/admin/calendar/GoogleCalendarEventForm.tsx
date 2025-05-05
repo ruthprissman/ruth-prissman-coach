@@ -132,12 +132,23 @@ export function GoogleCalendarEventForm() {
         const supabase = await supabaseClient();
         const { data, error } = await supabase
           .from('patients')
-          .select('id, name')
+          .select('id, name, phone, email, notes, session_price')
           .eq('is_active', true)
           .order('name');
 
         if (error) throw error;
-        setPatients(data || []);
+        
+        // Ensure all required Patient fields are present by providing defaults
+        const patientsWithDefaults = (data || []).map(patient => ({
+          id: patient.id,
+          name: patient.name,
+          phone: patient.phone || null,
+          email: patient.email || null,
+          notes: patient.notes || null,
+          session_price: patient.session_price || null,
+        })) as Patient[];
+        
+        setPatients(patientsWithDefaults);
       } catch (error) {
         console.error('Error fetching patients:', error);
       }
