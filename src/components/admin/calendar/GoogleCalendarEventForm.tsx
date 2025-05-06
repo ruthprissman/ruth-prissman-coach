@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,7 +40,7 @@ import { Patient } from '@/types/patient';
 
 // Define schema for form validation with conditional validation for patientId
 const createEventFormSchema = () => {
-  return z.object({
+  const schema = z.object({
     meetingType: z.enum(['Zoom', 'Phone', 'In-Person', 'Private']),
     date: z.date({
       required_error: 'חובה לבחור תאריך',
@@ -57,28 +56,25 @@ const createEventFormSchema = () => {
       z.number(),
       z.string().transform((val) => parseInt(val, 10)),
       z.null(),
-    ])
-    .superRefine((patientId, ctx) => {
-      // Get meetingType from the data being validated
-      const data = ctx.path[0] ? ctx.get(ctx.path[0]) as any : undefined;
-      const meetingType = data?.meetingType;
-      
-      // Skip validation if meeting type is Private
-      if (meetingType === 'Private') {
+    ]),
+  });
+
+  // Add conditional validation based on meeting type
+  return schema.refine(
+    (data) => {
+      // If meeting type is Private, patientId can be null
+      if (data.meetingType === 'Private') {
         return true;
       }
       
-      // For non-private meetings, patientId is required
-      if (patientId === null) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "חובה לבחור לקוח/ה לפגישה",
-        });
-        return false;
-      }
-      return true;
-    })
-  });
+      // For non-private meetings, patientId is required and cannot be null
+      return data.patientId !== null;
+    },
+    {
+      message: "חובה לבחור לקוח/ה לפגישה",
+      path: ["patientId"], // This specifies which field the error belongs to
+    }
+  );
 };
 
 type EventFormValues = z.infer<ReturnType<typeof createEventFormSchema>>;
