@@ -58,16 +58,20 @@ const createEventFormSchema = () => {
       z.string().transform((val) => parseInt(val, 10)),
       z.null(),
     ])
-    // Apply conditional validation for patientId
-    .refine((patientId, ctx) => {
-      // Skip validation if meeting type is Private
+    .superRefine((patientId, ctx) => {
+      // Skip validation if meeting type is Private (meetingType will be available in ctx.parent)
       if (ctx.parent.meetingType === 'Private') {
         return true;
       }
       // For non-private meetings, patientId is required
-      return patientId !== null;
-    }, {
-      message: "חובה לבחור לקוח/ה לפגישה",
+      if (patientId === null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "חובה לבחור לקוח/ה לפגישה",
+        });
+        return false;
+      }
+      return true;
     })
   });
 };
