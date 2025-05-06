@@ -59,10 +59,15 @@ const createEventFormSchema = () => {
       z.null(),
     ])
     .superRefine((patientId, ctx) => {
-      // Skip validation if meeting type is Private (meetingType will be available in ctx.parent)
-      if (ctx.parent.meetingType === 'Private') {
+      // Get meetingType from the data being validated
+      const data = ctx.path[0] ? ctx.get(ctx.path[0]) as any : undefined;
+      const meetingType = data?.meetingType;
+      
+      // Skip validation if meeting type is Private
+      if (meetingType === 'Private') {
         return true;
       }
+      
       // For non-private meetings, patientId is required
       if (patientId === null) {
         ctx.addIssue({
