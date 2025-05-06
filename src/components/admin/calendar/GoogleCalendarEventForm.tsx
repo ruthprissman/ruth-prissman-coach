@@ -39,27 +39,40 @@ import { cn } from '@/lib/utils';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { Patient } from '@/types/patient';
 
-// Define schema for form validation
-const eventFormSchema = z.object({
-  patientId: z.union([
-    z.number(),
-    z.string().transform((val) => parseInt(val, 10)),
-    z.null(),
-  ]),
-  meetingType: z.enum(['Zoom', 'Phone', 'In-Person', 'Private']),
-  date: z.date({
-    required_error: 'חובה לבחור תאריך',
-  }),
-  startTime: z.string().min(1, {
-    message: 'חובה לבחור שעת התחלה',
-  }),
-  endTime: z.string().min(1, {
-    message: 'חובה לבחור שעת סיום',
-  }),
-  notes: z.string().optional(),
-});
+// Define schema for form validation with conditional validation for patientId
+const createEventFormSchema = () => {
+  return z.object({
+    meetingType: z.enum(['Zoom', 'Phone', 'In-Person', 'Private']),
+    date: z.date({
+      required_error: 'חובה לבחור תאריך',
+    }),
+    startTime: z.string().min(1, {
+      message: 'חובה לבחור שעת התחלה',
+    }),
+    endTime: z.string().min(1, {
+      message: 'חובה לבחור שעת סיום',
+    }),
+    notes: z.string().optional(),
+    patientId: z.union([
+      z.number(),
+      z.string().transform((val) => parseInt(val, 10)),
+      z.null(),
+    ])
+    // Apply conditional validation for patientId
+    .refine((patientId, ctx) => {
+      // Skip validation if meeting type is Private
+      if (ctx.parent.meetingType === 'Private') {
+        return true;
+      }
+      // For non-private meetings, patientId is required
+      return patientId !== null;
+    }, {
+      message: "חובה לבחור לקוח/ה לפגישה",
+    })
+  });
+};
 
-type EventFormValues = z.infer<typeof eventFormSchema>;
+type EventFormValues = z.infer<ReturnType<typeof createEventFormSchema>>;
 
 type SelectOption = {
   value: string;
@@ -73,6 +86,7 @@ export function GoogleCalendarEventForm() {
   const [isPrivateTime, setIsPrivateTime] = useState<boolean>(false);
   const [patientsLoading, setPatientsLoading] = useState<boolean>(true);
   const [patientsError, setPatientsError] = useState<string | null>(null);
+  const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
 
   // Generate time options in 15-minute intervals
   const generateTimeOptions = (): SelectOption[] => {
@@ -93,7 +107,7 @@ export function GoogleCalendarEventForm() {
   
   // Initialize form with validation schema
   const form = useForm<EventFormValues>({
-    resolver: zodResolver(eventFormSchema),
+    resolver: zodResolver(createEventFormSchema()),
     defaultValues: {
       patientId: null,
       meetingType: 'Phone',
@@ -107,8 +121,14 @@ export function GoogleCalendarEventForm() {
   const meetingType = form.watch('meetingType');
   useEffect(() => {
     console.log('Meeting type changed to:', meetingType);
-    setIsPrivateTime(meetingType === 'Private');
-  }, [meetingType]);
+    const isPrivate = meetingType === 'Private';
+    setIsPrivateTime(isPrivate);
+    
+    // If switching to private, clear the patient selection
+    if (isPrivate) {
+      form.setValue('patientId', null, { shouldValidate: false });
+    }
+  }, [meetingType, form]);
 
   // Set default times when the component loads
   useEffect(() => {
@@ -135,7 +155,7 @@ export function GoogleCalendarEventForm() {
       setPatientsError(null);
       try {
         const supabase = await supabaseClient();
-        // Removed the is_active filter temporarily to see if there are any patients
+        // Removed the is_active filter to see if there are any patients
         const { data, error } = await supabase
           .from('patients')
           .select('id, name, phone, email, notes, session_price')
@@ -175,6 +195,34 @@ export function GoogleCalendarEventForm() {
 
     fetchPatients();
   }, []);
+
+  // Reset form after successful submission
+  const resetForm = () => {
+    setFormSubmitted(true); // Flag to indicate form was just submitted successfully
+    
+    const now = new Date();
+    const minutes = Math.ceil(now.getMinutes() / 15) * 15;
+    
+    const startDate = new Date();
+    startDate.setHours(now.getHours(), minutes === 60 ? 0 : minutes, 0, 0);
+    
+    const endDate = new Date(startDate);
+    endDate.setMinutes(endDate.getMinutes() + 90);
+    
+    form.reset({
+      patientId: null,
+      meetingType: 'Phone',
+      date: now,
+      startTime: format(startDate, 'HH:mm'),
+      endTime: format(endDate, 'HH:mm'),
+      notes: '',
+    });
+    
+    // Reset submission flag after a short delay to prevent validation errors
+    setTimeout(() => {
+      setFormSubmitted(false);
+    }, 100);
+  };
 
   // Handle form submission
   async function onSubmit(data: EventFormValues) {
@@ -238,14 +286,7 @@ export function GoogleCalendarEventForm() {
           title: "האירוע נוצר בהצלחה",
           description: "האירוע נוסף ליומן Google שלך",
         });
-        form.reset({
-          patientId: null,
-          meetingType: 'Phone',
-          date: new Date(),
-          startTime: format(new Date(), 'HH:mm'),
-          endTime: format(addMinutes(new Date(), 90), 'HH:mm'),
-          notes: '',
-        });
+        resetForm();
       }
     } catch (error: any) {
       console.error("Error creating event:", error);
@@ -347,7 +388,7 @@ export function GoogleCalendarEventForm() {
                       field.onChange(value);
                       // Reset patient if switching to private
                       if (value === 'Private') {
-                        form.setValue('patientId', null);
+                        form.setValue('patientId', null, { shouldValidate: false });
                       }
                     }}
                     defaultValue={field.value}
@@ -407,7 +448,8 @@ export function GoogleCalendarEventForm() {
                         </SelectContent>
                       </Select>
                     )}
-                    <FormMessage />
+                    {/* Only show validation messages if form has been submitted and is not just reset */}
+                    {!formSubmitted && <FormMessage />}
                   </FormItem>
                 )}
               />
