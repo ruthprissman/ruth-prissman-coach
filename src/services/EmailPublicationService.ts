@@ -58,10 +58,21 @@ export class EmailPublicationService {
     if (match && match[1]) {
       // Extract the week number and create the new title format
       const weekNumber = match[1];
-      return `המשך המסע - קוד הנפש - שבוע ${weekNumber}`;
+      const transformedTitle = `המשך המסע - קוד הנפש - שבוע ${weekNumber}`;
+      
+      // Log the transformation details for debugging
+      console.log('[Email Publication] Title transformation:', {
+        original: title,
+        transformed: transformedTitle,
+        weekNumber,
+        pattern: titleRegex.toString()
+      });
+      
+      return transformedTitle;
     }
     
     // If no match, return the original title
+    console.log('[Email Publication] No title transformation needed for:', title);
     return title;
   }
 
@@ -104,8 +115,16 @@ export class EmailPublicationService {
       console.log('[Email Publication] Retrieved ' + (staticLinks?.length || 0) + ' static links for email template');
       
       // Transform the title for email if needed
-      const emailTitle = this.transformEmailTitle(article.title);
-      console.log('[Email Publication] Original title: "' + article.title + '", Email title: "' + emailTitle + '"');
+      const originalTitle = article.title;
+      const emailTitle = this.transformEmailTitle(originalTitle);
+      
+      console.log('[Email Publication] Title preparation:', {
+        originalTitle,
+        emailTitle,
+        isTitleTransformed: emailTitle !== originalTitle,
+        titleLength: emailTitle.length,
+        titleContainsSpecialChars: /[^\w\s\u0590-\u05FF\u200f\u200e\-:,.?!]/g.test(emailTitle)
+      });
       
       // 3. Generate email HTML content with transformed title
       const emailContent = this.emailGenerator.generateEmailContent({
@@ -114,7 +133,13 @@ export class EmailPublicationService {
         staticLinks: staticLinks || []
       });
       
-      console.log('[Email Publication] Generated email content, length: ' + emailContent.length);
+      // Log email content size and first/last 100 characters for debugging
+      console.log('[Email Publication] Generated email content stats:', {
+        lengthInBytes: new Blob([emailContent]).size,
+        lengthInChars: emailContent.length,
+        firstChars: emailContent.substring(0, 100) + '...',
+        lastChars: '...' + emailContent.substring(emailContent.length - 100)
+      });
       
       // 4. Validate the generated email content
       const diagnosisResult = this.emailDiagnostics.diagnoseEmailContent(
@@ -161,6 +186,26 @@ export class EmailPublicationService {
         ? subscribers.slice(0, 2) 
         : subscribers;
       
+      // Prepare the payload once for logging and reuse
+      const emailPayload = {
+        emailList: [recipientsToSend[0]], // Just for logging
+        subject: emailTitle,
+        sender: { 
+          email: "RuthPrissman@gmail.com", 
+          name: "רות פריסמן - קוד הנפש" 
+        },
+        htmlContent: emailContent
+      };
+      
+      // Log the prepared payload structure (excluding actual HTML content for brevity)
+      console.log('[Email Publication] Email payload structure:', {
+        emailListType: Array.isArray(emailPayload.emailList) ? 'array' : typeof emailPayload.emailList,
+        emailListLength: emailPayload.emailList.length,
+        subject: emailPayload.subject,
+        sender: emailPayload.sender,
+        htmlContentLength: emailPayload.htmlContent.length
+      });
+
       for (const recipientEmail of recipientsToSend) {
         try {
           console.log('[Email Publication] Preparing to send email to: ' + recipientEmail);
@@ -181,9 +226,11 @@ export class EmailPublicationService {
               throw new Error('No valid token available for edge function call');
             }
             
-            // FIX: Modified this section to properly handle the response body
-            // and prevent "Body already consumed" error
+            // Enhanced error handling and response processing
             try {
+              // Log the request being made
+              console.log('[Email Publication] Making fetch request to:', this.supabaseEdgeFunctionUrl);
+              
               const response = await fetch(this.supabaseEdgeFunctionUrl, {
                 method: 'POST',
                 headers: {
@@ -192,7 +239,7 @@ export class EmailPublicationService {
                 },
                 body: JSON.stringify({
                   emailList: [recipientEmail],
-                  subject: emailTitle, // Use transformed title for the email subject
+                  subject: emailTitle, 
                   sender: { 
                     email: "RuthPrissman@gmail.com", 
                     name: "רות פריסמן - קוד הנפש" 
@@ -201,21 +248,37 @@ export class EmailPublicationService {
                 })
               });
               
-              console.log('[Email Publication] Edge function response status: ' + response.status);
+              // Log complete response information
+              console.log('[Email Publication] Edge function response:', {
+                status: response.status,
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries()),
+                type: response.type,
+                url: response.url,
+                redirected: response.redirected
+              });
               
-              // Immediately check if response is ok before trying to read the body
+              // Handle response status
               if (!response.ok) {
-                // Read the response body once and store it
-                const errorText = await response.text();
-                console.error(`[Email Publication] Failed API response: ${response.status}, Body: ${errorText}`);
-                throw new Error(`Failed with status ${response.status}: ${errorText}`);
+                // Safely read the response body only once
+                let errorBody = '';
+                try {
+                  errorBody = await response.text();
+                } catch (textError) {
+                  errorBody = 'Could not read response body: ' + String(textError);
+                }
+                
+                console.error(`[Email Publication] Failed API response: ${response.status}, Body: ${errorBody}`);
+                throw new Error(`Failed with status ${response.status}: ${errorBody}`);
               }
               
-              // Only try to read response body if needed (and only once)
-              const responseBody = await response.text();
-              console.log('[Email Publication] Successful API response body:', responseBody);
+              // For successful responses, don't read the body unless needed
+              // Just return a success indicator instead of the response object
+              return {
+                success: true,
+                status: response.status
+              };
               
-              return response;
             } catch (fetchError: any) {
               console.error('[Email Publication] Fetch error details:', fetchError.message);
               throw fetchError;

@@ -1,4 +1,3 @@
-
 /**
  * Generator for email HTML content
  */
@@ -14,13 +13,31 @@ export class EmailGenerator {
     content: string;
     staticLinks?: Array<{id: number, fixed_text: string, url: string}>;
   }): string {
+    console.log('[EmailGenerator] Starting to generate email with title:', options.title);
+    console.log('[EmailGenerator] Content length:', options.content?.length || 0);
+    console.log('[EmailGenerator] Static links:', options.staticLinks?.length || 0);
+    
+    // Check for potential problematic characters in the title
+    const problematicCharsRegex = /[^\w\s\u0590-\u05FF\u200f\u200e\-:,.?!]/g;
+    const problematicChars = options.title.match(problematicCharsRegex);
+    if (problematicChars) {
+      console.warn('[EmailGenerator] Warning: Title contains potentially problematic characters:', 
+        problematicChars.join(', '), 
+        'at positions:', 
+        problematicChars.map(c => options.title.indexOf(c))
+      );
+    }
+    
+    // Safe title handling - ensure we have valid text
+    const safeTitle = this.escapeHtml(options.title || 'No Title');
+    
     // Using string concatenation instead of template literals to avoid issues
     let html = '<!DOCTYPE html>';
     html += '<html dir="rtl" lang="he">';
     html += '<head>';
     html += '<meta charset="UTF-8">';
     html += '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
-    html += '<title>' + this.escapeHtml(options.title) + '</title>';
+    html += '<title>' + safeTitle + '</title>';
     html += '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />';
     html += '<!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge" /><!--<![endif]-->';
     html += '<style type="text/css">';
@@ -96,9 +113,9 @@ export class EmailGenerator {
     // Container
     html += '<div class="container">';
     
-    // Header
+    // Header with safely escaped title
     html += '<div class="header">';
-    html += '<h1>' + this.escapeHtml(options.title) + '</h1>';
+    html += '<h1>' + safeTitle + '</h1>';
     html += '</div>';
     
     // Content
@@ -116,7 +133,7 @@ export class EmailGenerator {
     // Footer
     html += '<div class="footer">';
     html += '<p>נשלח באמצעות מערכת הפרסום האוטומטית.</p>';
-    html += '<p>&copy; ' + new Date().getFullYear() + ' רות פריסמן. כל הזכויות שמורות.</p>';
+    html += '<p>&copy; ' + new Date().getFullYear() + ' רות פריסמן. כל ��זכויות שמורות.</p>';
     html += '</div>';
     
     html += '</div>'; // container
@@ -135,6 +152,15 @@ export class EmailGenerator {
     
     html += '</body>';
     html += '</html>';
+    
+    // Log information about the generated HTML
+    const contentSize = new Blob([html]).size / 1024;
+    console.log(`[EmailGenerator] Generated HTML content size: ${contentSize.toFixed(2)} KB`);
+    
+    // Check for overly large content
+    if (contentSize > 100) {
+      console.warn('[EmailGenerator] Warning: Email content is quite large:', contentSize.toFixed(2), 'KB');
+    }
     
     return html;
   }
@@ -157,47 +183,61 @@ export class EmailGenerator {
     console.log(`[EmailGenerator] Processing ${links.length} links`);
     
     for (const link of links) {
-      console.log('[EmailGenerator] Processing link:', JSON.stringify(link, null, 2));
-      
-      // Skip empty links
-      if (!link.fixed_text) {
-        console.log('[EmailGenerator] Skipping link with empty text');
-        continue;
+      try {
+        console.log('[EmailGenerator] Processing link:', JSON.stringify(link, null, 2));
+        
+        // Skip empty links
+        if (!link.fixed_text) {
+          console.log('[EmailGenerator] Skipping link with empty text');
+          continue;
+        }
+        
+        // Safely escape link text
+        const safeText = this.escapeHtml(link.fixed_text);
+        
+        // Start paragraph tag with proper styling for centered links
+        linksHtml += '<p class="link-p" style="font-family: \'Alef\', Arial, sans-serif; font-size: 14px; text-align: center; margin-bottom: 20px; color: #4A148C; font-weight: bold; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); direction: rtl;">';
+        
+        // Check if it's a WhatsApp link
+        if (link.url && link.url.startsWith('https://wa.me/')) {
+          console.log('[EmailGenerator] Processing as WhatsApp link with icon');
+          // Safely escape URL
+          const safeUrl = this.escapeHtml(link.url);
+          
+          linksHtml += '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" ' +
+                      'style="display: inline-flex; align-items: center; color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Alef\', Arial, sans-serif;">' +
+                      '<svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366" style="margin-left: 5px;">' +
+                      '<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>' +
+                      '</svg>' + 
+                      safeText + '</a>';
+          console.log('[EmailGenerator] Generated WhatsApp link HTML');
+        } 
+        // Regular link with URL
+        else if (link.url) {
+          console.log('[EmailGenerator] Processing as regular link with URL:', link.url);
+          // Safely escape URL
+          const safeUrl = this.escapeHtml(link.url);
+          
+          linksHtml += '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" ' +
+                      'style="color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Alef\', Arial, sans-serif;">' +
+                      safeText + '</a>';
+          console.log('[EmailGenerator] Generated regular link HTML');
+        } 
+        // Text only (no URL - like notes or call-to-actions)
+        else {
+          console.log('[EmailGenerator] Processing as text-only (no URL)');
+          linksHtml += '<strong style="color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Alef\', Arial, sans-serif;">' + 
+                      safeText + '</strong>';
+          console.log('[EmailGenerator] Generated text-only HTML');
+        }
+        
+        // Close paragraph tag
+        linksHtml += '</p>';
+        console.log('[EmailGenerator] Completed HTML for this link');
+      } catch (linkError) {
+        console.error('[EmailGenerator] Error processing link:', linkError);
+        // Continue with next link if one fails
       }
-      
-      // Start paragraph tag with proper styling for centered links
-      linksHtml += '<p class="link-p" style="font-family: \'Alef\', Arial, sans-serif; font-size: 14px; text-align: center; margin-bottom: 20px; color: #4A148C; font-weight: bold; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); direction: rtl;">';
-      
-      // Check if it's a WhatsApp link
-      if (link.url && link.url.startsWith('https://wa.me/')) {
-        console.log('[EmailGenerator] Processing as WhatsApp link with icon');
-        linksHtml += '<a href="' + this.escapeHtml(link.url) + '" target="_blank" rel="noopener noreferrer" ' +
-                    'style="display: inline-flex; align-items: center; color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Alef\', Arial, sans-serif;">' +
-                    '<svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366" style="margin-left: 5px;">' +
-                    '<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>' +
-                    '</svg>' + 
-                    this.escapeHtml(link.fixed_text) + '</a>';
-        console.log('[EmailGenerator] Generated WhatsApp link HTML');
-      } 
-      // Regular link with URL
-      else if (link.url) {
-        console.log('[EmailGenerator] Processing as regular link with URL:', link.url);
-        linksHtml += '<a href="' + this.escapeHtml(link.url) + '" target="_blank" rel="noopener noreferrer" ' +
-                    'style="color: #4A148C; font-weight: bold; text-decoration: none; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Alef\', Arial, sans-serif;">' +
-                    this.escapeHtml(link.fixed_text) + '</a>';
-        console.log('[EmailGenerator] Generated regular link HTML');
-      } 
-      // Text only (no URL - like notes or call-to-actions)
-      else {
-        console.log('[EmailGenerator] Processing as text-only (no URL)');
-        linksHtml += '<strong style="color: #4A148C; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: \'Alef\', Arial, sans-serif;">' + 
-                    this.escapeHtml(link.fixed_text) + '</strong>';
-        console.log('[EmailGenerator] Generated text-only HTML');
-      }
-      
-      // Close paragraph tag
-      linksHtml += '</p>';
-      console.log('[EmailGenerator] Completed HTML for this link');
     }
     
     console.log('[EmailGenerator] Completed links array. Final HTML length:', linksHtml.length);
