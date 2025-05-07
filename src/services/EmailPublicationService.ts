@@ -45,6 +45,26 @@ export class EmailPublicationService {
   }
 
   /**
+   * Transform article title for email if it matches the pattern
+   * @param title Original article title
+   * @returns Transformed title for email or original if no match
+   */
+  private transformEmailTitle(title: string): string {
+    // Regular expression to match "אימון בגישה טיפולית - קוד הנפש - שבוע X" pattern
+    const titleRegex = /אימון בגישה טיפולית - קוד הנפש - שבוע (\d+)/;
+    const match = title.match(titleRegex);
+    
+    if (match && match[1]) {
+      // Extract the week number and create the new title format
+      const weekNumber = match[1];
+      return `המשך המסע - קוד הנפש - שבוע ${weekNumber}`;
+    }
+    
+    // If no match, return the original title
+    return title;
+  }
+
+  /**
    * Send email publication for an article
    * @param article The article to publish via email
    * @returns Promise<boolean> Whether the email was sent successfully
@@ -82,9 +102,13 @@ export class EmailPublicationService {
       const staticLinks = await this.databaseService.fetchStaticLinks();
       console.log('[Email Publication] Retrieved ' + (staticLinks?.length || 0) + ' static links for email template');
       
-      // 3. Generate email HTML content
+      // Transform the title for email if needed
+      const emailTitle = this.transformEmailTitle(article.title);
+      console.log('[Email Publication] Original title: "' + article.title + '", Email title: "' + emailTitle + '"');
+      
+      // 3. Generate email HTML content with transformed title
       const emailContent = this.emailGenerator.generateEmailContent({
-        title: article.title || 'No Title',
+        title: emailTitle || 'No Title', // Use transformed title
         content: article.content_markdown || '',
         staticLinks: staticLinks || []
       });
@@ -162,23 +186,16 @@ export class EmailPublicationService {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${freshToken}`
               },
-             /*body: JSON.stringify({
-                to: recipientEmail,
-                subject: article.title,
-                html: emailContent,
-                articleId: article.id
-              })
-            });*/
               body: JSON.stringify({
-              emailList: [recipientEmail],
-              subject: article.title,
-              sender: { 
-                email: "RuthPrissman@gmail.com", 
-                name: "רות פריסמן - קוד הנפש" 
-              },
-              htmlContent: emailContent
-            })
-          });
+                emailList: [recipientEmail],
+                subject: emailTitle, // Use transformed title for the email subject
+                sender: { 
+                  email: "RuthPrissman@gmail.com", 
+                  name: "רות פריסמן - קוד הנפש" 
+                },
+                htmlContent: emailContent
+              })
+            });
             
             console.log('[Email Publication] Edge function response status: ' + response.status);
             

@@ -18,13 +18,32 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   onConfirm,
   article
 }) => {
+  // Transform article title for email if it matches the pattern
+  const transformEmailTitle = (title: string): string => {
+    // Regular expression to match "אימון בגישה טיפולית - קוד הנפש - שבוע X" pattern
+    const titleRegex = /אימון בגישה טיפולית - קוד הנפש - שבוע (\d+)/;
+    const match = title.match(titleRegex);
+    
+    if (match && match[1]) {
+      // Extract the week number and create the new title format
+      const weekNumber = match[1];
+      return `המשך המסע - קוד הנפש - שבוע ${weekNumber}`;
+    }
+    
+    // If no match, return the original title
+    return title;
+  };
+  
   // Generate the email preview HTML
   const generateEmailPreview = () => {
-    const title = article.title || '';
+    const originalTitle = article.title || '';
+    // Transform the title if it matches the pattern
+    const emailTitle = transformEmailTitle(originalTitle);
     const content = article.content_markdown || '';
     
     console.log('[EmailPreviewModal] Generating email preview with:', {
-      title,
+      originalTitle,
+      emailTitle,
       contentLength: content?.length || 0,
       hasStaticLinks: !!article.staticLinks,
       staticLinksCount: article.staticLinks?.length || 0
@@ -38,7 +57,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
     return `
       <div dir="rtl" style="direction: rtl; font-family: 'Heebo', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: transparent; border-radius: 8px; overflow: hidden;">
         <div style="padding: 20px; text-align: center; border-bottom: 2px solid #eaeaea;">
-          <h1 style="color: #4A148C; margin: 0; font-size: 28px; font-weight: 700; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: 'Alef', sans-serif; text-align: center;">${title}</h1>
+          <h1 style="color: #4A148C; margin: 0; font-size: 28px; font-weight: 700; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); font-family: 'Alef', sans-serif; text-align: center;">${emailTitle}</h1>
         </div>
         
         <div style="padding: 30px 20px; text-align: center; line-height: 1.8; color: #4A148C; direction: rtl;">
