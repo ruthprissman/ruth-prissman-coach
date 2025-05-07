@@ -1,3 +1,4 @@
+
 import { supabaseClient, getFreshSupabaseClient, executeWithRetry } from '@/lib/supabaseClient';
 import { EmailDeliveryStats } from './PublicationService';
 import { DatabaseService } from './DatabaseService';
@@ -180,31 +181,45 @@ export class EmailPublicationService {
               throw new Error('No valid token available for edge function call');
             }
             
-            const response = await fetch(this.supabaseEdgeFunctionUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${freshToken}`
-              },
-              body: JSON.stringify({
-                emailList: [recipientEmail],
-                subject: emailTitle, // Use transformed title for the email subject
-                sender: { 
-                  email: "RuthPrissman@gmail.com", 
-                  name: "רות פריסמן - קוד הנפש" 
+            // FIX: Modified this section to properly handle the response body
+            // and prevent "Body already consumed" error
+            try {
+              const response = await fetch(this.supabaseEdgeFunctionUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${freshToken}`
                 },
-                htmlContent: emailContent
-              })
-            });
-            
-            console.log('[Email Publication] Edge function response status: ' + response.status);
-            
-            if (!response.ok) {
-              const errorText = await response.text();
-              throw new Error(`Failed with status ${response.status}: ${errorText}`);
+                body: JSON.stringify({
+                  emailList: [recipientEmail],
+                  subject: emailTitle, // Use transformed title for the email subject
+                  sender: { 
+                    email: "RuthPrissman@gmail.com", 
+                    name: "רות פריסמן - קוד הנפש" 
+                  },
+                  htmlContent: emailContent
+                })
+              });
+              
+              console.log('[Email Publication] Edge function response status: ' + response.status);
+              
+              // Immediately check if response is ok before trying to read the body
+              if (!response.ok) {
+                // Read the response body once and store it
+                const errorText = await response.text();
+                console.error(`[Email Publication] Failed API response: ${response.status}, Body: ${errorText}`);
+                throw new Error(`Failed with status ${response.status}: ${errorText}`);
+              }
+              
+              // Only try to read response body if needed (and only once)
+              const responseBody = await response.text();
+              console.log('[Email Publication] Successful API response body:', responseBody);
+              
+              return response;
+            } catch (fetchError: any) {
+              console.error('[Email Publication] Fetch error details:', fetchError.message);
+              throw fetchError;
             }
-            
-            return response;
           });
           
           console.log('[Email Publication] Successfully sent email to: ' + recipientEmail);
