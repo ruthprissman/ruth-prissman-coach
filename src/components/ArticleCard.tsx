@@ -6,10 +6,10 @@ import { Article } from '@/types/article';
 
 interface ArticleCardProps {
   article: Article;
-  basePath: string;
+  basePath?: string; // Making basePath optional with '?'
 }
 
-const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
+const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath }) => {
   return (
     <Card className="h-full flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1">
       {article.image_url && (
@@ -26,17 +26,18 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
           {article.title || 'ללא כותרת'}
         </div>
         <div className="text-sm text-muted-foreground line-clamp-1 text-right">
-          {new Date(article.article_publications[0].published_date).toLocaleDateString('he-IL')}
+          {article.article_publications && article.article_publications[0] && 
+            new Date(article.article_publications[0].published_date).toLocaleDateString('he-IL')}
         </div>
       </CardHeader>
       <CardContent className="flex-1">
         <div className="text-right line-clamp-3 text-gray-600 mb-4">
-          {article.description || article.content?.substring(0, 150) || 'אין תוכן'}
+          {article.content_markdown ? article.content_markdown.substring(0, 150) : 'אין תוכן'}
         </div>
       </CardContent>
       <CardFooter className="flex flex-col space-y-2">
         <div className="flex flex-wrap gap-1 justify-end min-h-[32px] w-full">
-          {article.categories && article.categories.map((category, index) => (
+          {article.categories && Array.isArray(article.categories) && article.categories.map((category, index) => (
             <Badge 
               key={index} 
               variant="outline" 
