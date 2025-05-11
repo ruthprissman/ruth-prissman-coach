@@ -85,7 +85,7 @@ const Poems = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
               {poems.map((poem) => (
-                <Link to={`/poems/${poem.id}`} key={poem.id} className="no-underline h-full">
+                <Link to={`/poems/${poem.id}`} key={poem.id} className="no-underline">
                   <ArticleCard article={poem} basePath="/poems" />
                 </Link>
               ))}
