@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -258,7 +259,7 @@ const Stories = () => {
                   </h2>
                   
                   <div 
-                    className="text-gray-700 mb-4 text-right line-clamp-3 cursor-pointer hover:text-[#4A235A]"
+                    className="text-gray-700 mb-4 text-right line-clamp-3 cursor-pointer hover:text-[#4A235A] whitespace-pre-line"
                     onClick={() => handleOpenModal(story)}
                   >
                     {story.description}
