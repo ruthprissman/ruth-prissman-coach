@@ -122,9 +122,9 @@ const Humor = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
               {humorContent.map((item) => (
-                <Link to={`/humor/${item.id}`} key={item.id} className="no-underline">
+                <div className="h-full" key={item.id}>
                   <ArticleCard article={item} basePath="/humor" />
-                </Link>
+                </div>
               ))}
             </div>
           )}
@@ -137,4 +137,3 @@ const Humor = () => {
 };
 
 export default Humor;
-

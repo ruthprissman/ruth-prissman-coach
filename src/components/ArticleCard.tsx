@@ -113,7 +113,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
     <Link 
       to={`${basePath}/${article.id}`}
       onClick={markAsRead}
-      className="block bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-[1.02] hover:shadow-lg"
+      className="block bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-[1.02] hover:shadow-lg h-full"
     >
       <div className="relative aspect-[16/9] overflow-hidden bg-gray-200">
         <img 
@@ -128,19 +128,20 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article, basePath = "/article
           </div>
         )}
       </div>
-      <div className="p-4">
+      <div className="p-4 flex flex-col h-full">
         <h2 className="text-xl font-alef font-bold text-purple-dark mb-2 line-clamp-2">{article.title}</h2>
         <div className="flex flex-col text-sm text-gray-600">
           <span className="mb-1 text-gold-dark">{hebrewDate || ''}</span>
           <span>{formatDate(publicationDate)}</span>
         </div>
-        {article.categories && (
-          <div className="mt-3">
+        {/* Tag container with minimum height to ensure consistent card height */}
+        <div className="mt-3 min-h-[28px]">
+          {article.categories && (
             <span className="inline-block bg-purple-light/10 text-purple-dark text-xs px-2 py-1 rounded-full">
               {article.categories.name}
             </span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </Link>
   );
