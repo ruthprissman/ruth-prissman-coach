@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -164,7 +163,7 @@ const Index = () => {
                     אם את מרגישה מוכנה להביט פנימה, להבין את עצמך טוב יותר ולהבהיר את המציאות שסביבך ואת מקומך בתוכה, את מוזמנת לקבוע פגישה. נעבור יחד את הדרך ברגישות ובבהירות, בדרך לחיים יציבים, מאוזנים ומדויקים.
                   </p>
                   <a 
-                    href="/appointment"
+                    href="/contact"
                     className="text-gold hover:text-gold-dark transition-colors duration-300 font-bold"
                   >
                     לקביעת פגישה
