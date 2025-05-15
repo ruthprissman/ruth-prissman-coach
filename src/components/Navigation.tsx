@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,7 +17,6 @@ const navItems = [
     )
   },
   { name: 'אודות', path: '/about' },
-  { name: 'מאמרים', path: '/articles' },
   { name: 'סיפורים קצרים', path: '/stories' },
   { name: 'שירים', path: '/poems' },
   { name: 'לצחוק ברצינות', path: '/humor' },

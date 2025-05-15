@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
@@ -31,7 +32,6 @@ export function Footer() {
             <h4 className="font-alef text-xl text-purple-dark mb-4 gold-text-shadow">קישורים</h4>
             <ul className="space-y-2">
               <li><Link to="/about" className="text-purple-dark hover:text-gold transition-colors">אודות</Link></li>
-              <li><Link to="/articles" className="text-purple-dark hover:text-gold transition-colors">מאמרים</Link></li>
               <li><Link to="/poems" className="text-purple-dark hover:text-gold transition-colors">שירים</Link></li>
               <li><Link to="/stories" className="text-purple-dark hover:text-gold transition-colors">סיפורים קצרים</Link></li>
               <li><Link to="/humor" className="text-purple-dark hover:text-gold transition-colors">לצחוק ברצינות</Link></li>

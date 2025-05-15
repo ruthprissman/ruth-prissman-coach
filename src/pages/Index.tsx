@@ -120,20 +120,6 @@ const Index = () => {
                     הכירי שיטה עמוקה המבוססת על היהדות, שתוביל אותך לאיזון פנימי של המידות. נגלה יחד איך למצוא בתוכך תשובות אמיתיות, להתחבר ולהנות מכוחות הנפש שלך, וליצור חיים של בהירות, אמונה ושלווה.
                   </p>
                   <div className="text-center space-y-2">
-                    <a 
-                      href="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_file//Code_Of_The_Soul_Guide_Ruth_Prissman.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-gold hover:text-gold-dark transition-colors duration-300 font-bold block"
-                    >
-                      לחצי כאן להורדת חוברת הסבר
-                    </a>
-                    <a 
-                      href="/articles"
-                      className="text-[#4A235A] hover:text-gold transition-colors duration-300 font-bold block"
-                    >
-                      למאמרי עומק לחצי כאן
-                    </a>
                   </div>
                 </div>
 
