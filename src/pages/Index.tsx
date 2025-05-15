@@ -2,7 +2,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { SubscriptionForm } from '@/components/SubscriptionForm';
 import { TestimonialsCarousel } from '@/components/TestimonialsCarousel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
@@ -180,22 +179,6 @@ const Index = () => {
           </section>
           
           <TestimonialsCarousel />
-          
-          <section className="py-16 px-4 relative">
-            <div className="container mx-auto max-w-2xl">
-              <div className="text-center">
-                <h2 className="text-3xl font-bold text-[#4A235A] mb-6 gold-text-shadow">
-                  בואי להיות חלק מהקהילה
-                </h2>
-                <p className="text-[#4A235A] mb-8 font-heebo leading-relaxed whitespace-normal">
-                  הצטרפי לרשימת התפוצה שלי, וקבלי מאמרים שבועיים בנושאי 'קוד הנפש' - מחשבות, כלים ותובנות שידייקו אותך למצוא בעצמך את הדרך שלך לחיים מודעים יותר.
-                  <br className="hidden md:block" />
-                  לפני חגים ייתכן שיופצו מאמרים מותאמים למהות החג.
-                </p>
-                <SubscriptionForm />
-              </div>
-            </div>
-          </section>
         </main>
         
         <Footer />
