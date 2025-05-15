@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -75,7 +76,7 @@ const Index = () => {
                         החיים שלנו הם סיפור מתמשך
                       </p>
                       
-                      <div className="text-[#4A235A] font-heebo text-lg md:text-xl leading-relaxed space-y-8 text-center mt-8">
+                      <div className="text-[#4A235A] font-heebo text-lg md:text-xl leading-relaxed text-center mt-8 space-y-4">
                         <p>
                           סיפור שמורכב מרגשות, רצונות, היגיון ובחירות.
                           סיפור שיש בו פחד ותקווה, בהירות ואיזון, יכולות, חוסרים ומתנות.
