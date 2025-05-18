@@ -205,7 +205,7 @@ const Stories = () => {
             סיפורים
           </h1>
           
-          <p className="text-lg md:text-xl text-center text-[#4A235A]/80 mb-10 italic">
+          <p className="text-lg md:text-xl font-alef text-center text-[#4A235A]/80 mb-10">
             על חיים מוכרים במבט חדש
           </p>
           
