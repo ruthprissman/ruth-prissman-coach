@@ -1,13 +1,17 @@
+
 import React, { useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { TestimonialsCarousel } from '@/components/TestimonialsCarousel';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
+import { AppInitializer } from '@/components/AppInitializer';
+
 const Index = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const logoRef = useRef(null);
+  
   useEffect(() => {
     let clickCount = 0;
     let clickTimer;
@@ -36,7 +40,12 @@ const Index = () => {
       }
     };
   }, [navigate]);
-  return <div className="min-h-screen flex flex-col">
+  
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Include the diagnostics initializer */}
+      <AppInitializer />
+      
       <div className="min-h-screen relative w-full h-full">
         <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]"></div>
         
@@ -161,6 +170,8 @@ const Index = () => {
         
         <Footer />
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
