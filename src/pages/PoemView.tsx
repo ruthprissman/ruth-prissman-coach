@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { ChevronRight } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import MarkdownPreview from '@/components/admin/articles/MarkdownPreview';
@@ -15,6 +16,7 @@ const PoemView = () => {
   const [poem, setPoemData] = useState<{
     title: string;
     content_markdown: string;
+    image_url?: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +34,7 @@ const PoemView = () => {
             id,
             title,
             content_markdown,
+            image_url,
             article_publications (*)
           `)
           .eq('id', id)
@@ -54,7 +57,8 @@ const PoemView = () => {
 
         setPoemData({
           title: data.title,
-          content_markdown: data.content_markdown
+          content_markdown: data.content_markdown,
+          image_url: data.image_url
         });
       } catch (err: any) {
         console.error('Error fetching poem:', err);
@@ -97,16 +101,40 @@ const PoemView = () => {
             </div>
           ) : poem ? (
             <div className="mb-16">
+              <div className="mb-6">
+                <Link 
+                  to="/poems" 
+                  className="inline-flex items-center text-purple-dark hover:text-gold transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                  <span>חזרה לכל השירים</span>
+                </Link>
+              </div>
+              
               <h1 className="text-3xl md:text-4xl font-alef font-bold text-purple-dark text-center mb-12 gold-text-shadow">
                 {poem.title}
               </h1>
               
-              <div className="poem-container max-w-4xl mx-auto">
-                <div className="poem-content">
-                  <MarkdownPreview 
-                    markdown={poem.content_markdown} 
-                    className="poem-text" 
-                  />
+              <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
+                {poem.image_url && (
+                  <div className="lg:w-1/3">
+                    <img 
+                      src={poem.image_url} 
+                      alt={poem.title} 
+                      className="w-full rounded-lg shadow-md object-cover max-h-[500px]"
+                    />
+                  </div>
+                )}
+                
+                <div className={`flex-1 ${poem.image_url ? 'lg:w-2/3' : 'w-full'}`}>
+                  <div className="poem-container">
+                    <div className="poem-content">
+                      <MarkdownPreview 
+                        markdown={poem.content_markdown} 
+                        className="poem-text" 
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -166,6 +194,10 @@ const PoemView = () => {
           .poem-content {
             column-count: 1;
           }
+        }
+        
+        .gold-text-shadow {
+          text-shadow: 1px 1px 2px rgba(212, 175, 55, 0.3);
         }
       `}</style>
     </>
