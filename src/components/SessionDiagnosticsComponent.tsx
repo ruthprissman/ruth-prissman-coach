@@ -15,6 +15,8 @@ export const SessionDiagnosticsComponent: React.FC = () => {
     // This effect runs when the diagnostics report changes
     if (report.issues.length > 0) {
       console.log('🔍 Session diagnostics detected issues:', report.issues);
+    } else {
+      console.log('✅ Session diagnostics completed with no issues detected');
     }
   }, [report]);
 

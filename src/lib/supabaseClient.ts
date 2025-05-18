@@ -152,7 +152,13 @@ class SupabaseClientManager {
 
   constructor() {
     // Initialize the anonymous client (used when no auth)
-    this.anonClient = createClient(supabaseUrl, supabaseAnonKey);
+    // CRITICAL FIX: Added persistSession: true to ensure session persistence
+    this.anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true, // Ensure session persistence
+        storageKey: 'supabase_auth_token' // Explicit storage key for session
+      }
+    });
     
     // Set up auth state change listener
     this.anonClient.auth.onAuthStateChange(this.handleAuthChange);
@@ -160,7 +166,7 @@ class SupabaseClientManager {
     // Initialize session on startup
     this.initSession();
     
-    console.log('[Supabase] Client manager initialized');
+    console.log('[Supabase] Client manager initialized with persistSession=true');
   }
 
   /**
@@ -225,10 +231,14 @@ class SupabaseClientManager {
     console.log('[Supabase] Creating authenticated client');
     
     // Create new authenticated client
+    // CRITICAL FIX: Added persistSession: true to ensure session persistence
     this.authClient = createClient(
       supabaseUrl, 
       supabaseAnonKey, 
       {
+        auth: {
+          persistSession: true // Ensure session persistence
+        },
         global: {
           headers: {
             Authorization: `Bearer ${accessToken}`
