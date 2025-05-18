@@ -201,9 +201,13 @@ const Stories = () => {
       
       <main className="flex-grow pt-24 pb-12 px-4 z-10">
         <div className="container mx-auto">
-          <h1 className="text-4xl md:text-5xl font-alef text-center text-[#4A235A] mb-10 gold-text-shadow">
+          <h1 className="text-4xl md:text-5xl font-alef text-center text-[#4A235A] mb-3 gold-text-shadow">
             סיפורים
           </h1>
+          
+          <p className="text-lg md:text-xl text-center text-[#4A235A]/80 mb-10 italic">
+            על חיים מוכרים במבט חדש
+          </p>
           
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-8 text-center">
