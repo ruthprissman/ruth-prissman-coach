@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,9 +17,10 @@ import DebugLogPanel from '@/components/admin/calendar/DebugLogPanel';
 import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { forcePageRefresh, logComponentVersions } from '@/utils/debugUtils';
+import { copyProfessionalMeetingsToFutureSessions } from '@/utils/googleCalendarUtils';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.2";
+const COMPONENT_VERSION = "1.0.3";
 console.log(`LOV_DEBUG_CALENDAR_MGMT: Component loaded, version ${COMPONENT_VERSION}`);
 
 const CalendarManagement: React.FC = () => {
@@ -30,6 +30,7 @@ const CalendarManagement: React.FC = () => {
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [showDebugLogs, setShowDebugLogs] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [isCopyingMeetings, setIsCopyingMeetings] = useState<boolean>(false);
   const [lastRefresh, setLastRefresh] = useState<string>(new Date().toLocaleTimeString());
 
   const { settings, isLoading: isLoadingSettings } = useCalendarSettings();
@@ -129,6 +130,50 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
+  // NEW: Handle copying professional meetings from Google Calendar
+  const handleCopyProfessionalMeetings = async () => {
+    if (!isGoogleAuthenticated || googleEvents.length === 0) {
+      toast({
+        title: "שגיאה",
+        description: "יש להתחבר ליומן Google ולסנכרן אירועים תחילה",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsCopyingMeetings(true);
+      setDebugLogs([]);
+      setShowDebugLogs(true);
+      
+      console.log(`LOV_DEBUG_CALENDAR_MGMT: Starting to copy professional meetings from Google Calendar`);
+      
+      // Call the utility function to copy meetings
+      const stats = await copyProfessionalMeetingsToFutureSessions(googleEvents);
+      
+      // Refresh data after copying
+      await fetchAvailabilityData();
+      
+      toast({
+        title: "העתקת פגישות הושלמה",
+        description: `הועתקו ${stats.added} פגישות חדשות. ${stats.skipped} פגישות דולגו.`,
+      });
+      
+    } catch (error: any) {
+      console.error('LOV_DEBUG_CALENDAR_MGMT: Error copying professional meetings:', error);
+      toast({
+        title: "שגיאה בהעתקת פגישות",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsCopyingMeetings(false);
+      setTimeout(() => {
+        setShowDebugLogs(false);
+      }, 3000);
+    }
+  };
+
   // Handle manual refresh button
   const handleManualRefresh = async () => {
     console.log(`LOV_DEBUG_CALENDAR_MGMT: Manual refresh requested at ${new Date().toISOString()}`);
@@ -199,7 +244,7 @@ const CalendarManagement: React.FC = () => {
       if (currentSlot.status === 'booked') {
         toast({
           title: 'לא ניתן לשנות סטטוס',
-          description: 'לא ניתן לשנות משבצת זמן שכבר הוזמנה. יש לבטל את הפגישה תחילה.',
+          description: 'לא ניתן לשנות משבצת זמן שכבר הוז��נה. יש לבטל את הפגישה תחילה.',
           variant: 'destructive',
         });
         return;
@@ -339,7 +384,7 @@ const CalendarManagement: React.FC = () => {
                 variant="outline"
                 size="sm" 
                 className="text-xs flex items-center gap-1"
-                disabled={isSyncing || isLoading || isLoadingSettings || isLoadingGoogleEvents}
+                disabled={isSyncing || isLoading || isLoadingSettings || isLoadingGoogleEvents || isCopyingMeetings}
               >
                 <RefreshCw className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
                 ריענון נתונים ({lastRefresh})
@@ -361,10 +406,12 @@ const CalendarManagement: React.FC = () => {
             googleAuthError={googleAuthError}
             googleEvents={googleEvents}
             isSyncing={isSyncing}
+            isCopyingMeetings={isCopyingMeetings}
             isLoadingGoogleEvents={isLoadingGoogleEvents}
             onSignInGoogle={handleSignInGoogle}
             onSignOutGoogle={signOutFromGoogle}
             onGoogleSync={handleGoogleSync}
+            onCopyProfessionalMeetings={handleCopyProfessionalMeetings}
           />
           
           <Separator className="my-4" />
@@ -399,7 +446,7 @@ const CalendarManagement: React.FC = () => {
             hours={hours}
             currentDate={currentDate}
             calendarData={calendarData}
-            isLoading={isLoading || isSyncing || isLoadingSettings || isLoadingGoogleEvents}
+            isLoading={isLoading || isSyncing || isLoadingSettings || isLoadingGoogleEvents || isCopyingMeetings}
             onNavigateWeek={navigateWeek}
             onUpdateSlot={updateTimeSlot}
             onSetCurrentDate={setCurrentDate}

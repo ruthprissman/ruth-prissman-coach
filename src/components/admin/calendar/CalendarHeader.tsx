@@ -1,92 +1,62 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Calendar as CalendarIcon, Settings, AlertCircle, RefreshCw } from 'lucide-react';
-import { GoogleOAuthButton } from './GoogleOAuthButton';
-import { Card } from '@/components/ui/card';
+import { GoogleLoginButton } from '@/components/GoogleLoginButton';
+import { GoogleCalendarSync } from './GoogleCalendarSync';
+import { GoogleCalendarEvent } from '@/types/calendar';
 
 interface CalendarHeaderProps {
   isGoogleAuthenticated: boolean;
   isGoogleAuthenticating: boolean;
   googleAuthError: string | null;
-  googleEvents: any[];
+  googleEvents: GoogleCalendarEvent[];
   isSyncing: boolean;
+  isCopyingMeetings?: boolean;
   isLoadingGoogleEvents: boolean;
   onSignInGoogle: () => Promise<void>;
   onSignOutGoogle: () => Promise<void>;
   onGoogleSync: () => Promise<void>;
+  onCopyProfessionalMeetings?: () => Promise<void>;
 }
 
-const CalendarHeader: React.FC<CalendarHeaderProps> = ({
+export default function CalendarHeader({
   isGoogleAuthenticated,
   isGoogleAuthenticating,
   googleAuthError,
   googleEvents,
   isSyncing,
+  isCopyingMeetings = false,
   isLoadingGoogleEvents,
   onSignInGoogle,
   onSignOutGoogle,
-  onGoogleSync
-}) => {
+  onGoogleSync,
+  onCopyProfessionalMeetings
+}: CalendarHeaderProps) {
   return (
-    <div className="space-y-4">
+    <div className="bg-white p-4 rounded-md shadow-sm border border-gray-100">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">ניהול זמינות יומן</h1>
-        <div className="flex items-center gap-2">
-          <GoogleOAuthButton 
-            isAuthenticated={isGoogleAuthenticated}
-            isAuthenticating={isGoogleAuthenticating}
-            onSignIn={onSignInGoogle}
-            onSignOut={onSignOutGoogle}
-          />
+        <div>
+          <h3 className="text-lg font-medium">סנכרון יומן Google</h3>
+          <p className="text-sm text-gray-500">
+            {isGoogleAuthenticated 
+              ? `${googleEvents.length} אירועים טעונים מיומן Google` 
+              : 'התחבר ליומן Google כדי לסנכרן אירועים'}
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <GoogleLoginButton />
+          
           {isGoogleAuthenticated && (
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2"
-              onClick={onGoogleSync}
-              disabled={isSyncing || isLoadingGoogleEvents}
-            >
-              <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>סנכרון ידני</span>
-            </Button>
+            <GoogleCalendarSync 
+              onSyncClick={onGoogleSync} 
+              onCopyMeetingsClick={onCopyProfessionalMeetings}
+              isLoading={isSyncing || isLoadingGoogleEvents} 
+              isCopying={isCopyingMeetings}
+              settingsError={googleAuthError} 
+            />
           )}
         </div>
       </div>
-
-      {googleAuthError && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>שגיאה בהתחברות ליומן Google</AlertTitle>
-          <AlertDescription>
-            {googleAuthError}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {isGoogleAuthenticated && googleEvents.length > 0 && (
-        <Alert className="bg-blue-50 border-blue-200">
-          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            <CalendarIcon className="h-4 w-4 text-blue-600" />
-            <AlertTitle className="text-blue-600">מצב יומן Google</AlertTitle>
-          </div>
-          <AlertDescription className="mt-2 text-sm">
-            <p>מחובר ליומן Google. נטענו {googleEvents.length} אירועים.</p>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {!isGoogleAuthenticated && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>לא התקבלה גישה ליומן הגוגל שלך</AlertTitle>
-          <AlertDescription>
-            אנא התחבר לחשבון Google שלך וספק הרשאות גישה ליומן כדי להציג את האירועים שלך.
-          </AlertDescription>
-        </Alert>
-      )}
     </div>
   );
-};
-
-export default CalendarHeader;
+}

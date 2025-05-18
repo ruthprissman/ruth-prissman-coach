@@ -1,15 +1,23 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Calendar } from 'lucide-react';
 
 interface GoogleCalendarSyncProps {
   onSyncClick: () => void;
+  onCopyMeetingsClick?: () => void;
   isLoading: boolean;
+  isCopying?: boolean;
   settingsError?: string | null;
 }
 
-export function GoogleCalendarSync({ onSyncClick, isLoading, settingsError }: GoogleCalendarSyncProps) {
+export function GoogleCalendarSync({ 
+  onSyncClick, 
+  onCopyMeetingsClick, 
+  isLoading, 
+  isCopying = false,
+  settingsError 
+}: GoogleCalendarSyncProps) {
   return (
     <div className="flex flex-col items-end gap-2">
       {settingsError && (
@@ -17,15 +25,29 @@ export function GoogleCalendarSync({ onSyncClick, isLoading, settingsError }: Go
           שגיאה בהגדרות יומן: {settingsError}
         </div>
       )}
-      <Button 
-        variant="outline" 
-        className="flex items-center" 
-        onClick={onSyncClick}
-        disabled={isLoading || !!settingsError}
-      >
-        <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-        <span>סנכרן עם Google Calendar</span>
-      </Button>
+      <div className="flex gap-2">
+        {onCopyMeetingsClick && (
+          <Button 
+            variant="outline" 
+            className="flex items-center" 
+            onClick={onCopyMeetingsClick}
+            disabled={isLoading || isCopying || !!settingsError}
+          >
+            <Calendar className={`h-4 w-4 mr-2 ${isCopying ? 'animate-pulse' : ''}`} />
+            <span>העתק פגישות מקצועיות מיומן Google</span>
+          </Button>
+        )}
+        
+        <Button 
+          variant="outline" 
+          className="flex items-center" 
+          onClick={onSyncClick}
+          disabled={isLoading || !!settingsError}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          <span>סנכרן עם Google Calendar</span>
+        </Button>
+      </div>
     </div>
   );
 }
