@@ -15,7 +15,7 @@ interface CalendarHeaderProps {
   onSignInGoogle: () => Promise<void>;
   onSignOutGoogle: () => Promise<void>;
   onGoogleSync: () => Promise<void>;
-  onCopyProfessionalMeetings?: (selectedEventIds: string[]) => Promise<void>;
+  onCopyProfessionalMeetings?: (selectedEventIds: string[], clientMapping: Record<string, number | null>) => Promise<void>;
 }
 
 export default function CalendarHeader({

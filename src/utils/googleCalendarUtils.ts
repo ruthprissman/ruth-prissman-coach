@@ -83,15 +83,38 @@ export async function addFutureSessionToGoogleCalendar(
 }
 
 /**
+ * Extract client name from Google Calendar event title
+ * 
+ * @param title The meeting title from Google Calendar
+ * @returns The extracted client name or null if not found
+ */
+export function extractClientNameFromTitle(title: string): string | null {
+  if (!title) return null;
+  
+  // Pattern 1: "פגישה עם [שם]"
+  let match = title.match(/פגישה עם\s+(.+?)($|\s*-)/i);
+  
+  // Pattern 2: "פגישה - [שם]" or "פגישה- [שם]"
+  if (!match) {
+    match = title.match(/פגישה\s*-\s*(.+?)($|\s*-)/i);
+  }
+  
+  // Return the captured name if found
+  return match ? match[1].trim() : null;
+}
+
+/**
  * Copy selected professional meetings from Google Calendar to future sessions table
  * 
  * @param googleEvents Array of Google Calendar events
  * @param selectedEventIds Array of selected event IDs to copy
+ * @param clientMapping Object mapping event IDs to client IDs
  * @returns Promise<{ added: number, skipped: number }> Count of added and skipped events
  */
 export async function copyProfessionalMeetingsToFutureSessions(
   googleEvents: GoogleCalendarEvent[],
-  selectedEventIds?: string[]
+  selectedEventIds?: string[],
+  clientMapping?: Record<string, number | null>
 ): Promise<{ added: number, skipped: number }> {
   try {
     console.log("Starting to copy professional meetings from Google Calendar", googleEvents.length);
@@ -129,7 +152,7 @@ export async function copyProfessionalMeetingsToFutureSessions(
     let professionalMeetings = googleEvents.filter(event => {
       // Check if it's a professional meeting
       const isProfessionalMeeting = event.summary && 
-        event.summary.includes("פגישה עם");
+        (event.summary.includes("פגישה עם") || event.summary.includes("פגישה -"));
       
       // Check if it's within the next two weeks
       const eventDate = event.start?.dateTime ? new Date(event.start.dateTime) : null;
@@ -175,6 +198,31 @@ export async function copyProfessionalMeetingsToFutureSessions(
         status: 'Scheduled',
       };
       
+      // Add patient_id if we have a client mapping
+      if (clientMapping && meeting.id in clientMapping) {
+        // Use the mapped client ID (could be null)
+        newSession.patient_id = clientMapping[meeting.id];
+      } else {
+        // Legacy fallback: Try to extract client name and search for patient
+        const clientName = extractClientNameFromTitle(meeting.summary || '');
+        
+        if (clientName) {
+          // Try to find the patient in the database
+          const { data: matchingPatients, error: patientError } = await supabase
+            .from('patients')
+            .select('id, name')
+            .ilike('name', `%${clientName}%`)
+            .limit(1);
+          
+          if (!patientError && matchingPatients && matchingPatients.length > 0) {
+            newSession.patient_id = matchingPatients[0].id;
+            console.log(`Patient match found for "${clientName}": ${matchingPatients[0].name} (ID: ${matchingPatients[0].id})`);
+          } else {
+            console.log(`No patient found for name "${clientName}"`);
+          }
+        }
+      }
+      
       // Try to determine meeting type from description
       if (meeting.description) {
         if (meeting.description.includes('זום') || meeting.description.includes('Zoom')) {
@@ -193,7 +241,9 @@ export async function copyProfessionalMeetingsToFutureSessions(
         console.error(`Error adding meeting to future sessions: ${insertError.message}`, meeting);
         stats.skipped++;
       } else {
-        console.log(`Added meeting to future sessions: ${meeting.summary} on ${meetingDate.toLocaleDateString()}`);
+        console.log(`Added meeting to future sessions: ${meeting.summary} on ${meetingDate.toLocaleDateString()}${
+          newSession.patient_id ? ` with patient ID: ${newSession.patient_id}` : ' without patient ID'
+        }`);
         stats.added++;
       }
     }
