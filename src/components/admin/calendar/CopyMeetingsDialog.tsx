@@ -190,7 +190,7 @@ export function CopyMeetingsDialog({
   };
 
   const handleClientChange = (eventId: string, clientId: string) => {
-    const numericClientId = clientId === "" ? null : parseInt(clientId, 10);
+    const numericClientId = clientId === "no_client" ? null : parseInt(clientId, 10);
     
     setClientMapping(prev => ({
       ...prev,
@@ -288,14 +288,14 @@ export function CopyMeetingsDialog({
                         </div>
                         
                         <Select
-                          value={clientMapping[meeting.event.id]?.toString() || ""}
+                          value={clientMapping[meeting.event.id]?.toString() || "no_client"}
                           onValueChange={(value) => handleClientChange(meeting.event.id, value)}
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="בחר לקוח" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">ללא לקוח</SelectItem>
+                            <SelectItem value="no_client">ללא לקוח</SelectItem>
                             {patients.map((patient) => (
                               <SelectItem key={patient.id} value={patient.id.toString()}>
                                 {patient.name}
@@ -325,3 +325,4 @@ export function CopyMeetingsDialog({
     </Dialog>
   );
 }
+
