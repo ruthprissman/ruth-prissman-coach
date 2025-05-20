@@ -1,14 +1,17 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Calendar } from 'lucide-react';
+import { CopyMeetingsDialog } from './CopyMeetingsDialog';
+import { GoogleCalendarEvent } from '@/types/calendar';
 
 interface GoogleCalendarSyncProps {
   onSyncClick: () => void;
-  onCopyMeetingsClick?: () => void;
+  onCopyMeetingsClick?: (selectedEventIds: string[]) => Promise<void>;
   isLoading: boolean;
   isCopying?: boolean;
   settingsError?: string | null;
+  googleEvents?: GoogleCalendarEvent[];
 }
 
 export function GoogleCalendarSync({ 
@@ -16,8 +19,15 @@ export function GoogleCalendarSync({
   onCopyMeetingsClick, 
   isLoading, 
   isCopying = false,
-  settingsError 
+  settingsError,
+  googleEvents = []
 }: GoogleCalendarSyncProps) {
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+  
+  const handleOpenCopyDialog = () => {
+    setCopyDialogOpen(true);
+  };
+  
   return (
     <div className="flex flex-col items-end gap-2">
       {settingsError && (
@@ -27,15 +37,25 @@ export function GoogleCalendarSync({
       )}
       <div className="flex gap-2">
         {onCopyMeetingsClick && (
-          <Button 
-            variant="outline" 
-            className="flex items-center" 
-            onClick={onCopyMeetingsClick}
-            disabled={isLoading || isCopying || !!settingsError}
-          >
-            <Calendar className={`h-4 w-4 mr-2 ${isCopying ? 'animate-pulse' : ''}`} />
-            <span>העתק פגישות מקצועיות מיומן Google</span>
-          </Button>
+          <>
+            <Button 
+              variant="outline" 
+              className="flex items-center" 
+              onClick={handleOpenCopyDialog}
+              disabled={isLoading || isCopying || !!settingsError}
+            >
+              <Calendar className={`h-4 w-4 mr-2 ${isCopying ? 'animate-pulse' : ''}`} />
+              <span>העתק פגישות מקצועיות מיומן Google</span>
+            </Button>
+            
+            <CopyMeetingsDialog
+              open={copyDialogOpen}
+              onOpenChange={setCopyDialogOpen}
+              googleEvents={googleEvents}
+              onCopySelected={onCopyMeetingsClick}
+              isLoading={isCopying}
+            />
+          </>
         )}
         
         <Button 

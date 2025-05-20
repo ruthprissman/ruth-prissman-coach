@@ -15,7 +15,7 @@ interface CalendarHeaderProps {
   onSignInGoogle: () => Promise<void>;
   onSignOutGoogle: () => Promise<void>;
   onGoogleSync: () => Promise<void>;
-  onCopyProfessionalMeetings?: () => Promise<void>;
+  onCopyProfessionalMeetings?: (selectedEventIds: string[]) => Promise<void>;
 }
 
 export default function CalendarHeader({
@@ -52,7 +52,8 @@ export default function CalendarHeader({
               onCopyMeetingsClick={onCopyProfessionalMeetings}
               isLoading={isSyncing || isLoadingGoogleEvents} 
               isCopying={isCopyingMeetings}
-              settingsError={googleAuthError} 
+              settingsError={googleAuthError}
+              googleEvents={googleEvents}
             />
           )}
         </div>

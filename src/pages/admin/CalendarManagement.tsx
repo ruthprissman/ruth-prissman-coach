@@ -20,7 +20,7 @@ import { forcePageRefresh, logComponentVersions } from '@/utils/debugUtils';
 import { copyProfessionalMeetingsToFutureSessions } from '@/utils/googleCalendarUtils';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.3";
+const COMPONENT_VERSION = "1.1.0";
 console.log(`LOV_DEBUG_CALENDAR_MGMT: Component loaded, version ${COMPONENT_VERSION}`);
 
 const CalendarManagement: React.FC = () => {
@@ -130,8 +130,8 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  // NEW: Handle copying professional meetings from Google Calendar
-  const handleCopyProfessionalMeetings = async () => {
+  // Modified: Handle copying professional meetings from Google Calendar
+  const handleCopyProfessionalMeetings = async (selectedEventIds: string[]) => {
     if (!isGoogleAuthenticated || googleEvents.length === 0) {
       toast({
         title: "שגיאה",
@@ -146,10 +146,10 @@ const CalendarManagement: React.FC = () => {
       setDebugLogs([]);
       setShowDebugLogs(true);
       
-      console.log(`LOV_DEBUG_CALENDAR_MGMT: Starting to copy professional meetings from Google Calendar`);
+      console.log(`LOV_DEBUG_CALENDAR_MGMT: Starting to copy selected professional meetings from Google Calendar`);
       
       // Call the utility function to copy meetings
-      const stats = await copyProfessionalMeetingsToFutureSessions(googleEvents);
+      const stats = await copyProfessionalMeetingsToFutureSessions(googleEvents, selectedEventIds);
       
       // Refresh data after copying
       await fetchAvailabilityData();

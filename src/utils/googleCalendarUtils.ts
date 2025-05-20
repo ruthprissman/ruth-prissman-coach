@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for working with Google Calendar integration
  */
@@ -84,12 +83,16 @@ export async function addFutureSessionToGoogleCalendar(
 }
 
 /**
- * Copy professional meetings from Google Calendar to future sessions table
+ * Copy selected professional meetings from Google Calendar to future sessions table
  * 
  * @param googleEvents Array of Google Calendar events
+ * @param selectedEventIds Array of selected event IDs to copy
  * @returns Promise<{ added: number, skipped: number }> Count of added and skipped events
  */
-export async function copyProfessionalMeetingsToFutureSessions(googleEvents: GoogleCalendarEvent[]): Promise<{ added: number, skipped: number }> {
+export async function copyProfessionalMeetingsToFutureSessions(
+  googleEvents: GoogleCalendarEvent[],
+  selectedEventIds?: string[]
+): Promise<{ added: number, skipped: number }> {
   try {
     console.log("Starting to copy professional meetings from Google Calendar", googleEvents.length);
     
@@ -123,7 +126,7 @@ export async function copyProfessionalMeetingsToFutureSessions(googleEvents: Goo
     const twoWeeksLater = new Date(now);
     twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
     
-    const professionalMeetings = googleEvents.filter(event => {
+    let professionalMeetings = googleEvents.filter(event => {
       // Check if it's a professional meeting
       const isProfessionalMeeting = event.summary && 
         event.summary.includes("פגישה עם");
@@ -137,7 +140,14 @@ export async function copyProfessionalMeetingsToFutureSessions(googleEvents: Goo
       return isProfessionalMeeting && isWithinTwoWeeks;
     });
     
-    console.log(`Found ${professionalMeetings.length} professional meetings within the next two weeks`);
+    // If we have selected event IDs, filter by them
+    if (selectedEventIds && selectedEventIds.length > 0) {
+      professionalMeetings = professionalMeetings.filter(meeting => 
+        selectedEventIds.includes(meeting.id)
+      );
+    }
+    
+    console.log(`Found ${professionalMeetings.length} professional meetings within the next two weeks${selectedEventIds ? ' (filtered by selection)' : ''}`);
     
     // Process each professional meeting
     for (const meeting of professionalMeetings) {
@@ -213,4 +223,3 @@ function getMeetingTypeInHebrew(type: string): string {
   };
   return types[type] || type;
 }
-
