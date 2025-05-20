@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for working with Google Calendar integration
  */
@@ -91,16 +92,22 @@ export async function addFutureSessionToGoogleCalendar(
 export function extractClientNameFromTitle(title: string): string | null {
   if (!title) return null;
   
+  console.log(`MEETING_COPY_LOG: Extracting client name from title: "${title}"`);
+  
   // Pattern 1: "פגישה עם [שם]"
   let match = title.match(/פגישה עם\s+(.+?)($|\s*-)/i);
+  console.log(`MEETING_COPY_LOG: Pattern 1 match:`, match ? match[1] : "No match");
   
   // Pattern 2: "פגישה - [שם]" or "פגישה- [שם]"
   if (!match) {
     match = title.match(/פגישה\s*-\s*(.+?)($|\s*-)/i);
+    console.log(`MEETING_COPY_LOG: Pattern 2 match:`, match ? match[1] : "No match");
   }
   
   // Return the captured name if found
-  return match ? match[1].trim() : null;
+  const result = match ? match[1].trim() : null;
+  console.log(`MEETING_COPY_LOG: Final extracted client name:`, result);
+  return result;
 }
 
 /**
@@ -117,17 +124,22 @@ export async function copyProfessionalMeetingsToFutureSessions(
   clientMapping?: Record<string, number | null>
 ): Promise<{ added: number, skipped: number }> {
   try {
-    console.log("Starting to copy professional meetings from Google Calendar", googleEvents.length);
+    console.log("MEETING_COPY_LOG: ====== STARTING COPY PROCESS ======");
+    console.log(`MEETING_COPY_LOG: Total Google events received: ${googleEvents.length}`);
+    console.log(`MEETING_COPY_LOG: Selected events count: ${selectedEventIds?.length || 'all'}`);
+    console.log(`MEETING_COPY_LOG: Client mapping received:`, clientMapping || 'none');
     
     const supabase = await supabaseClient();
     const stats = { added: 0, skipped: 0 };
     
     // Get existing future sessions to avoid duplicates
+    console.log("MEETING_COPY_LOG: Fetching existing future sessions...");
     const { data: existingSessions, error: fetchError } = await supabase
       .from('future_sessions')
       .select('session_date');
     
     if (fetchError) {
+      console.error("MEETING_COPY_LOG: Error fetching existing sessions:", fetchError);
       throw new Error(`שגיאה בטעינת פגישות קיימות: ${fetchError.message}`);
     }
     
@@ -141,7 +153,8 @@ export async function copyProfessionalMeetingsToFutureSessions(
       }) || []
     );
     
-    console.log(`Found ${existingSessionDates.size} existing future sessions`);
+    console.log(`MEETING_COPY_LOG: Found ${existingSessionDates.size} existing future sessions`);
+    console.log("MEETING_COPY_LOG: Existing dates:", Array.from(existingSessionDates));
     
     // Filter Google events that are professional meetings (contain "פגישה עם" in the title)
     // and are within the next two weeks
@@ -149,6 +162,7 @@ export async function copyProfessionalMeetingsToFutureSessions(
     const twoWeeksLater = new Date(now);
     twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
     
+    console.log("MEETING_COPY_LOG: Filtering professional meetings...");
     let professionalMeetings = googleEvents.filter(event => {
       // Check if it's a professional meeting
       const isProfessionalMeeting = event.summary && 
@@ -160,22 +174,36 @@ export async function copyProfessionalMeetingsToFutureSessions(
         eventDate >= now && 
         eventDate <= twoWeeksLater;
       
-      return isProfessionalMeeting && isWithinTwoWeeks;
+      const result = isProfessionalMeeting && isWithinTwoWeeks;
+      
+      if (isProfessionalMeeting) {
+        console.log(`MEETING_COPY_LOG: Event "${event.summary}" on ${eventDate?.toLocaleString()} - Is professional: ${isProfessionalMeeting}, Within period: ${isWithinTwoWeeks}, INCLUDE: ${result}`);
+      }
+      
+      return result;
     });
     
     // If we have selected event IDs, filter by them
     if (selectedEventIds && selectedEventIds.length > 0) {
+      console.log(`MEETING_COPY_LOG: Further filtering by ${selectedEventIds.length} selected event IDs`);
+      const beforeCount = professionalMeetings.length;
+      
       professionalMeetings = professionalMeetings.filter(meeting => 
         selectedEventIds.includes(meeting.id)
       );
+      
+      console.log(`MEETING_COPY_LOG: After filtering by selected IDs: ${professionalMeetings.length} meetings (removed ${beforeCount - professionalMeetings.length})`);
+      console.log("MEETING_COPY_LOG: Selected event IDs:", selectedEventIds);
     }
     
-    console.log(`Found ${professionalMeetings.length} professional meetings within the next two weeks${selectedEventIds ? ' (filtered by selection)' : ''}`);
+    console.log(`MEETING_COPY_LOG: Found ${professionalMeetings.length} professional meetings to process`);
     
     // Process each professional meeting
     for (const meeting of professionalMeetings) {
+      console.log(`MEETING_COPY_LOG: ---- Processing meeting: "${meeting.summary}" (ID: ${meeting.id}) ----`);
+      
       if (!meeting.start?.dateTime) {
-        console.log("Skipping meeting without start time:", meeting.summary);
+        console.log(`MEETING_COPY_LOG: SKIPPING - Meeting without start time: "${meeting.summary}"`);
         stats.skipped++;
         continue;
       }
@@ -183,10 +211,12 @@ export async function copyProfessionalMeetingsToFutureSessions(
       const meetingDate = new Date(meeting.start.dateTime);
       const meetingDateStr = meetingDate.toISOString().split('T')[0];
       
+      console.log(`MEETING_COPY_LOG: Meeting date: ${meetingDate.toLocaleString()}, date key: ${meetingDateStr}`);
+      
       // Skip if we already have a session on this date
       // This is a simple check - you might want to make it more precise by checking time too
       if (existingSessionDates.has(meetingDateStr)) {
-        console.log(`Skipping meeting on ${meetingDateStr} - session already exists`);
+        console.log(`MEETING_COPY_LOG: SKIPPING - Session already exists on date ${meetingDateStr}`);
         stats.skipped++;
         continue;
       }
@@ -198,15 +228,19 @@ export async function copyProfessionalMeetingsToFutureSessions(
         status: 'Scheduled',
       };
       
+      console.log(`MEETING_COPY_LOG: Created new session object for ${meetingDate.toLocaleString()}`);
+      
       // Add patient_id if we have a client mapping
       if (clientMapping && meeting.id in clientMapping) {
         // Use the mapped client ID (could be null)
         newSession.patient_id = clientMapping[meeting.id];
+        console.log(`MEETING_COPY_LOG: Using mapped client ID: ${newSession.patient_id} for meeting ID: ${meeting.id}`);
       } else {
         // Legacy fallback: Try to extract client name and search for patient
         const clientName = extractClientNameFromTitle(meeting.summary || '');
         
         if (clientName) {
+          console.log(`MEETING_COPY_LOG: No direct mapping, trying to find patient by extracted name: "${clientName}"`);
           // Try to find the patient in the database
           const { data: matchingPatients, error: patientError } = await supabase
             .from('patients')
@@ -214,44 +248,65 @@ export async function copyProfessionalMeetingsToFutureSessions(
             .ilike('name', `%${clientName}%`)
             .limit(1);
           
+          if (patientError) {
+            console.log(`MEETING_COPY_LOG: Error finding patient:`, patientError);
+          }
+          
           if (!patientError && matchingPatients && matchingPatients.length > 0) {
             newSession.patient_id = matchingPatients[0].id;
-            console.log(`Patient match found for "${clientName}": ${matchingPatients[0].name} (ID: ${matchingPatients[0].id})`);
+            console.log(`MEETING_COPY_LOG: Patient match found for "${clientName}": ${matchingPatients[0].name} (ID: ${matchingPatients[0].id})`);
           } else {
-            console.log(`No patient found for name "${clientName}"`);
+            console.log(`MEETING_COPY_LOG: No patient found for name "${clientName}"`);
           }
+        } else {
+          console.log(`MEETING_COPY_LOG: Could not extract client name from title: "${meeting.summary}"`);
         }
       }
       
       // Try to determine meeting type from description
       if (meeting.description) {
+        console.log(`MEETING_COPY_LOG: Checking description for meeting type hints: "${meeting.description.substring(0, 50)}..."`);
         if (meeting.description.includes('זום') || meeting.description.includes('Zoom')) {
           newSession.meeting_type = 'Zoom';
+          console.log(`MEETING_COPY_LOG: Set meeting type to Zoom based on description`);
         } else if (meeting.description.includes('טלפון') || meeting.description.includes('Phone')) {
           newSession.meeting_type = 'Phone';
+          console.log(`MEETING_COPY_LOG: Set meeting type to Phone based on description`);
         }
       }
       
+      console.log(`MEETING_COPY_LOG: Final session object before insert:`, {
+        session_date: newSession.session_date,
+        meeting_type: newSession.meeting_type,
+        status: newSession.status,
+        patient_id: newSession.patient_id
+      });
+      
       // Insert the new session
-      const { error: insertError } = await supabase
+      console.log(`MEETING_COPY_LOG: Attempting to insert session into future_sessions table...`);
+      const { error: insertError, data: insertedData } = await supabase
         .from('future_sessions')
-        .insert(newSession);
+        .insert(newSession)
+        .select();
       
       if (insertError) {
-        console.error(`Error adding meeting to future sessions: ${insertError.message}`, meeting);
+        console.error(`MEETING_COPY_LOG: ERROR INSERTING - ${insertError.message}`, insertError);
+        console.error(`MEETING_COPY_LOG: Failed session data:`, newSession);
         stats.skipped++;
       } else {
-        console.log(`Added meeting to future sessions: ${meeting.summary} on ${meetingDate.toLocaleDateString()}${
+        console.log(`MEETING_COPY_LOG: SUCCESS - Added meeting to future sessions: "${meeting.summary}" on ${meetingDate.toLocaleDateString()}${
           newSession.patient_id ? ` with patient ID: ${newSession.patient_id}` : ' without patient ID'
         }`);
+        console.log(`MEETING_COPY_LOG: Inserted row:`, insertedData);
         stats.added++;
       }
     }
     
-    console.log("Finished copying professional meetings", stats);
+    console.log(`MEETING_COPY_LOG: ====== FINISHED COPY PROCESS ======`);
+    console.log(`MEETING_COPY_LOG: Final stats - Added: ${stats.added}, Skipped: ${stats.skipped}`);
     return stats;
   } catch (error: any) {
-    console.error("Error copying professional meetings:", error);
+    console.error("MEETING_COPY_LOG: CRITICAL ERROR:", error);
     toast({
       title: "שגיאה בהעתקת פגישות",
       description: error.message,

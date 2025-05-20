@@ -146,7 +146,9 @@ const CalendarManagement: React.FC = () => {
       setDebugLogs([]);
       setShowDebugLogs(true);
       
-      console.log(`LOV_DEBUG_CALENDAR_MGMT: Starting to copy selected professional meetings from Google Calendar with client mapping`);
+      console.log(`CALENDAR_MGMT_LOG: Starting to copy selected professional meetings from Google Calendar`);
+      console.log(`CALENDAR_MGMT_LOG: Selected ${selectedEventIds.length} event IDs:`, selectedEventIds);
+      console.log(`CALENDAR_MGMT_LOG: Client mapping:`, clientMapping);
       
       // Call the utility function to copy meetings with client mapping
       const stats = await copyProfessionalMeetingsToFutureSessions(
@@ -154,6 +156,8 @@ const CalendarManagement: React.FC = () => {
         selectedEventIds,
         clientMapping
       );
+      
+      console.log(`CALENDAR_MGMT_LOG: Copy operation completed. Stats:`, stats);
       
       // Refresh data after copying
       await fetchAvailabilityData();
@@ -164,7 +168,7 @@ const CalendarManagement: React.FC = () => {
       });
       
     } catch (error: any) {
-      console.error('LOV_DEBUG_CALENDAR_MGMT: Error copying professional meetings:', error);
+      console.error('CALENDAR_MGMT_LOG: Error copying professional meetings:', error);
       toast({
         title: "שגיאה בהעתקת פגישות",
         description: error.message,

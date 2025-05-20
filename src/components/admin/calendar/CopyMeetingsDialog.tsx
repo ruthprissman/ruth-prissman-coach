@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -100,6 +99,8 @@ export function CopyMeetingsDialog({
     const twoWeeksLater = new Date(now);
     twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
     
+    console.log(`DIALOG_LOG: Starting to filter ${googleEvents.length} Google events for professional meetings`);
+    
     // Filter Google events that are professional meetings (contain "פגישה עם" in the title)
     // and are within the next two weeks
     const filteredMeetings = googleEvents.filter(event => {
@@ -113,12 +114,21 @@ export function CopyMeetingsDialog({
         eventDate >= now && 
         eventDate <= twoWeeksLater;
       
-      return isProfessionalMeeting && isWithinTwoWeeks;
+      const result = isProfessionalMeeting && isWithinTwoWeeks;
+      if (isProfessionalMeeting) {
+        console.log(`DIALOG_LOG: Event "${event.summary}" on ${eventDate?.toLocaleString()} - Is professional: ${isProfessionalMeeting}, Within period: ${isWithinTwoWeeks}, INCLUDE: ${result}`);
+      }
+      
+      return result;
     });
+    
+    console.log(`DIALOG_LOG: Found ${filteredMeetings.length} professional meetings`);
     
     // Try to identify clients in the meetings
     const meetingsWithClientInfo = filteredMeetings.map(meeting => {
       const clientName = extractClientNameFromTitle(meeting.summary || '');
+      console.log(`DIALOG_LOG: Meeting "${meeting.summary}" - Extracted client name: "${clientName}"`);
+      
       return {
         event: meeting,
         clientName,
@@ -130,12 +140,16 @@ export function CopyMeetingsDialog({
     setProfessionalMeetings(meetingsWithClientInfo);
     
     // By default, select all meetings
-    setSelectedEventIds(meetingsWithClientInfo.map(meeting => meeting.event.id));
+    const allIds = meetingsWithClientInfo.map(meeting => meeting.event.id);
+    console.log(`DIALOG_LOG: Setting ${allIds.length} events as selected by default`);
+    setSelectedEventIds(allIds);
   }, [googleEvents]);
 
   // Match client names to patients when patients are loaded
   useEffect(() => {
     if (patients.length > 0 && professionalMeetings.length > 0) {
+      console.log(`DIALOG_LOG: Matching ${professionalMeetings.length} meetings to ${patients.length} patients`);
+      
       const newMapping: Record<string, number | null> = {};
       const updatedMeetings = professionalMeetings.map(meeting => {
         if (meeting.clientName) {
@@ -152,11 +166,14 @@ export function CopyMeetingsDialog({
           
           const matchedPatient = exactMatch || partialMatch;
           if (matchedPatient) {
+            console.log(`DIALOG_LOG: Found match for "${meeting.clientName}" - ${matchedPatient.name} (ID: ${matchedPatient.id})`);
             newMapping[meeting.event.id] = matchedPatient.id;
             return {
               ...meeting,
               clientId: matchedPatient.id
             };
+          } else {
+            console.log(`DIALOG_LOG: No match found for "${meeting.clientName}"`);
           }
         }
         
@@ -164,6 +181,7 @@ export function CopyMeetingsDialog({
         return meeting;
       });
       
+      console.log(`DIALOG_LOG: Initial client mapping created:`, newMapping);
       setProfessionalMeetings(updatedMeetings);
       setClientMapping(newMapping);
     }
@@ -191,6 +209,7 @@ export function CopyMeetingsDialog({
 
   const handleClientChange = (eventId: string, clientId: string) => {
     const numericClientId = clientId === "no_client" ? null : parseInt(clientId, 10);
+    console.log(`DIALOG_LOG: Changed client for event ID ${eventId} to ${numericClientId === null ? 'null' : numericClientId}`);
     
     setClientMapping(prev => ({
       ...prev,
@@ -223,6 +242,10 @@ export function CopyMeetingsDialog({
       selectedMapping[id] = clientMapping[id];
     });
     
+    console.log(`DIALOG_LOG: Sending ${selectedEventIds.length} selected events for copying`);
+    console.log(`DIALOG_LOG: Selected event IDs:`, selectedEventIds);
+    console.log(`DIALOG_LOG: Final client mapping:`, selectedMapping);
+    
     await onCopySelected(selectedEventIds, selectedMapping);
     onOpenChange(false);
   };
@@ -233,7 +256,7 @@ export function CopyMeetingsDialog({
         <DialogHeader>
           <DialogTitle className="text-xl">העתקת פגישות מקצועיות מיומן Google</DialogTitle>
           <DialogDescription>
-            פגישות שכוללות "פגישה עם" בכותרת בטווח של השבועיים הקרובים. סמן את הפגישות שתרצה להעתיק לטבלת פגישות עתידיות וניתן לבחור לקוח מתאים לכל פגישה.
+            פגישות שכוללות "פגישה עם" בכותרת בטווח של השבועיים הקרובים. סמן את הפגישות שתרצה להעתקה לטבלת פגישות עתידיות וניתן לבחור לקוח מתאים לכל פגישה.
           </DialogDescription>
         </DialogHeader>
         
@@ -325,4 +348,3 @@ export function CopyMeetingsDialog({
     </Dialog>
   );
 }
-
