@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { AlertCircle } from 'lucide-react';
 
 interface CopyMeetingsDialogProps {
   open: boolean;
@@ -51,11 +52,18 @@ export function CopyMeetingsDialog({
   const [clientMapping, setClientMapping] = useState<Record<string, number | null>>({});
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState<boolean>(false);
+  const [copyResult, setCopyResult] = useState<{
+    added: number,
+    skipped: number,
+    reasons?: Record<string, string[]>
+  } | null>(null);
   
   // Load all patients for dropdown selection
   useEffect(() => {
     if (open) {
       fetchPatients();
+      // Reset copy result when dialog is opened
+      setCopyResult(null);
     }
   }, [open]);
 
@@ -246,8 +254,47 @@ export function CopyMeetingsDialog({
     console.log(`DIALOG_LOG: Selected event IDs:`, selectedEventIds);
     console.log(`DIALOG_LOG: Final client mapping:`, selectedMapping);
     
-    await onCopySelected(selectedEventIds, selectedMapping);
+    try {
+      // Execute the copy and store the extended result
+      const result = await onCopySelected(selectedEventIds, selectedMapping);
+      
+      // If the result includes detailed reasons, we'll update our state
+      if (result && typeof result === 'object') {
+        setCopyResult(result);
+      }
+    } catch (error) {
+      console.error("DIALOG_LOG: Error copying meetings:", error);
+      // Keep dialog open to show errors
+      return;
+    }
+    
+    // Close dialog only if there were no errors
     onOpenChange(false);
+  };
+
+  // Render skip reasons if available
+  const renderSkipReasons = () => {
+    if (!copyResult?.reasons || Object.keys(copyResult.reasons).length === 0) {
+      return null;
+    }
+    
+    return (
+      <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-md">
+        <div className="flex items-center gap-2 mb-2 text-orange-700">
+          <AlertCircle className="h-4 w-4" />
+          <h4 className="font-semibold">פגישות שדולגו ({copyResult.skipped}):</h4>
+        </div>
+        <ul className="text-xs text-orange-800 space-y-1 pr-5">
+          {Object.entries(copyResult.reasons).map(([eventId, reasons]) => (
+            <li key={eventId} className="list-disc">
+              {reasons.map((reason, idx) => (
+                <div key={`${eventId}-${idx}`}>{reason}</div>
+              ))}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
   };
 
   return (
@@ -259,6 +306,15 @@ export function CopyMeetingsDialog({
             פגישות שכוללות "פגישה עם" בכותרת בטווח של השבועיים הקרובים. סמן את הפגישות שתרצה להעתקה לטבלת פגישות עתידיות וניתן לבחור לקוח מתאים לכל פגישה.
           </DialogDescription>
         </DialogHeader>
+        
+        {copyResult && (
+          <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-blue-700">
+              הועתקו {copyResult.added} פגישות בהצלחה, {copyResult.skipped} פגישות דולגו.
+            </p>
+            {renderSkipReasons()}
+          </div>
+        )}
         
         <div className="py-4">
           <div className="flex justify-between items-center mb-2">

@@ -20,7 +20,7 @@ import { forcePageRefresh, logComponentVersions } from '@/utils/debugUtils';
 import { copyProfessionalMeetingsToFutureSessions } from '@/utils/googleCalendarUtils';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.2.0";
+const COMPONENT_VERSION = "1.3.0";
 console.log(`LOV_DEBUG_CALENDAR_MGMT: Component loaded, version ${COMPONENT_VERSION}`);
 
 const CalendarManagement: React.FC = () => {
@@ -170,10 +170,20 @@ const CalendarManagement: React.FC = () => {
       // Refresh data after copying
       await fetchAvailabilityData();
       
+      // More detailed toast message
+      let toastDescription = `הועתקו ${stats.added} פגישות חדשות.`;
+      if (stats.skipped > 0) {
+        const reasons = stats.reasons ? Object.keys(stats.reasons).length : 0;
+        toastDescription += ` ${stats.skipped} פגישות דולגו${reasons > 0 ? ' (ראה פרטים בדיאלוג)' : ''}.`;
+      }
+      
       toast({
         title: "העתקת פגישות הושלמה",
-        description: `הועתקו ${stats.added} פגישות חדשות. ${stats.skipped} פגישות דולגו.`,
+        description: toastDescription,
       });
+      
+      // Return the stats so the dialog can show detailed information
+      return stats;
       
     } catch (error: any) {
       console.error('CALENDAR_MGMT_LOG: Error copying professional meetings:', error);
@@ -182,6 +192,7 @@ const CalendarManagement: React.FC = () => {
         description: error.message,
         variant: "destructive"
       });
+      throw error;
     } finally {
       setIsCopyingMeetings(false);
       setTimeout(() => {

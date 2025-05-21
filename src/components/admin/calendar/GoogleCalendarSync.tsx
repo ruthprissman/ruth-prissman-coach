@@ -7,7 +7,7 @@ import { GoogleCalendarEvent } from '@/types/calendar';
 
 interface GoogleCalendarSyncProps {
   onSyncClick: () => void;
-  onCopyMeetingsClick?: (selectedEventIds: string[], clientMapping: Record<string, number | null>) => Promise<void>;
+  onCopyMeetingsClick?: (selectedEventIds: string[], clientMapping: Record<string, number | null>) => Promise<any>;
   isLoading: boolean;
   isCopying?: boolean;
   settingsError?: string | null;
