@@ -431,9 +431,13 @@ const CalendarManagement: React.FC = () => {
     <AdminLayout title="ניהול זמינות יומן">
       <div className="container mx-auto py-6" dir="rtl">
         <div className="flex flex-col space-y-4">
-          <div className="flex justify-between items-center">
-            <div>גרסה: {COMPONENT_VERSION} | Debug version: {debugVersion?.substring(0, 15)}</div>
-            <div className="flex gap-2">
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center mb-2">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-medium text-purple-800">ניהול יומן</h2>
+              <Badge variant="outline" className="text-xs">גרסה: {COMPONENT_VERSION}</Badge>
+              <Badge variant="outline" className="text-xs hidden md:inline-flex">Debug ID: {debugVersion?.substring(0, 8)}</Badge>
+            </div>
+            <div className="flex gap-2 mt-2 md:mt-0">
               <Button 
                 onClick={handleManualRefresh}
                 variant="outline"
@@ -442,7 +446,8 @@ const CalendarManagement: React.FC = () => {
                 disabled={isSyncing || isLoading || isLoadingSettings || isLoadingGoogleEvents || isCopyingMeetings}
               >
                 <RefreshCw className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
-                ריענון נתונים ({lastRefresh})
+                ריענון נתונים 
+                <span className="text-gray-500">({lastRefresh})</span>
               </Button>
               <Button 
                 onClick={handleForceReload}
@@ -450,7 +455,7 @@ const CalendarManagement: React.FC = () => {
                 size="sm" 
                 className="text-xs"
               >
-                איפוס מלא (רענון דף)
+                איפוס מלא
               </Button>
             </div>
           </div>

@@ -29,45 +29,38 @@ export function GoogleCalendarSync({
   };
   
   return (
-    <div className="flex flex-col items-end gap-2">
-      {settingsError && (
-        <div className="text-sm text-red-500 mb-1">
-          שגיאה בהגדרות יומן: {settingsError}
-        </div>
+    <div className="flex flex-col sm:flex-row gap-2">
+      <Button 
+        variant="outline" 
+        className="flex items-center bg-white" 
+        onClick={onSyncClick}
+        disabled={isLoading || !!settingsError}
+      >
+        <RefreshCw className={`h-4 w-4 ml-2 ${isLoading ? 'animate-spin' : ''}`} />
+        <span>סנכרן יומן</span>
+      </Button>
+
+      {onCopyMeetingsClick && (
+        <>
+          <Button 
+            variant="secondary" 
+            className="flex items-center" 
+            onClick={handleOpenCopyDialog}
+            disabled={isLoading || isCopying || !!settingsError}
+          >
+            <Calendar className={`h-4 w-4 ml-2 ${isCopying ? 'animate-pulse' : ''}`} />
+            <span>העתק פגישות</span>
+          </Button>
+          
+          <CopyMeetingsDialog
+            open={copyDialogOpen}
+            onOpenChange={setCopyDialogOpen}
+            googleEvents={googleEvents}
+            onCopySelected={onCopyMeetingsClick}
+            isLoading={isCopying}
+          />
+        </>
       )}
-      <div className="flex gap-2">
-        {onCopyMeetingsClick && (
-          <>
-            <Button 
-              variant="outline" 
-              className="flex items-center" 
-              onClick={handleOpenCopyDialog}
-              disabled={isLoading || isCopying || !!settingsError}
-            >
-              <Calendar className={`h-4 w-4 mr-2 ${isCopying ? 'animate-pulse' : ''}`} />
-              <span>העתק פגישות מקצועיות מיומן Google</span>
-            </Button>
-            
-            <CopyMeetingsDialog
-              open={copyDialogOpen}
-              onOpenChange={setCopyDialogOpen}
-              googleEvents={googleEvents}
-              onCopySelected={onCopyMeetingsClick}
-              isLoading={isCopying}
-            />
-          </>
-        )}
-        
-        <Button 
-          variant="outline" 
-          className="flex items-center" 
-          onClick={onSyncClick}
-          disabled={isLoading || !!settingsError}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          <span>סנכרן עם Google Calendar</span>
-        </Button>
-      </div>
     </div>
   );
 }
