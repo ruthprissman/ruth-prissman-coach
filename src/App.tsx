@@ -33,8 +33,12 @@ import { Toaster } from './components/ui/toaster';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
 import { ScrollToTop } from './components/ScrollToTop';
+import { runSessionDiagnostics } from './utils/SessionDiagnostics';
 
 import './index.css';
+
+// Initialize session diagnostics to help debug session issues
+runSessionDiagnostics();
 
 // Component to wrap just the article management routes with PublicationProvider
 const ArticleRoutes = () => (

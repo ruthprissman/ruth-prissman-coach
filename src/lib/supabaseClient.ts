@@ -1,6 +1,6 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import { getPersistedAuthState } from '@/utils/cookieUtils';
 
 // Define specific type for Supabase client
 type SupabaseTypedClient = SupabaseClient<any, "public", any>;
@@ -10,7 +10,7 @@ const supabaseUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3cXdsbHRyZnZva2psYXVmZ3V6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA4NjU0MjYsImV4cCI6MjA1NjQ0MTQyNn0.G2JhvsEw4Q24vgt9SS9_nOMPtOdOqTGpus8zEJ5USD8';
 
 // Token refresh settings
-const TOKEN_EXPIRY_MARGIN_MS = 5 * 60 * 1000; // 5 minutes before actual expiry
+const TOKEN_EXPIRY_MARGIN_MS = 10 * 60 * 1000; // 10 minutes before actual expiry (increased from 5)
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_BASE_MS = 1000; // Base delay for exponential backoff
 
@@ -149,14 +149,19 @@ class SupabaseClientManager {
   
   // Flag to track if we're currently refreshing the token
   private isRefreshingToken: boolean = false;
+  
+  // Auto refresh interval
+  private autoRefreshInterval: number | null = null;
 
   constructor() {
     // Initialize the anonymous client (used when no auth)
-    // CRITICAL FIX: Added persistSession: true to ensure session persistence
+    // CRITICAL: Ensure persistSession is true and increased session duration
     this.anonClient = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true, // Ensure session persistence
-        storageKey: 'supabase_auth_token' // Explicit storage key for session
+        storageKey: 'supabase_auth_token', // Explicit storage key for session
+        autoRefreshToken: true, // Enable auto refresh
+        detectSessionInUrl: true // Detect session in URL for OAuth logins
       }
     });
     
@@ -166,7 +171,10 @@ class SupabaseClientManager {
     // Initialize session on startup
     this.initSession();
     
-    console.log('[Supabase] Client manager initialized with persistSession=true');
+    console.log('[Supabase] Client manager initialized with persistSession=true and autoRefreshToken=true');
+    
+    // Setup background auto-refresh
+    this.setupAutoRefresh();
   }
 
   /**
@@ -187,11 +195,55 @@ class SupabaseClientManager {
           await this.refreshToken();
         }
       } else {
-        console.log('[Supabase] No session found during initialization');
+        console.log('[Supabase] No session found during initialization, checking localStorage');
+        
+        // Try to recover from localStorage if available
+        const { tokenData } = getPersistedAuthState();
+        if (tokenData?.refresh_token) {
+          console.log('[Supabase] Found persisted token data, attempting recovery');
+          
+          try {
+            const { data: refreshData, error } = await this.anonClient.auth.refreshSession({
+              refresh_token: tokenData.refresh_token
+            });
+            
+            if (error) {
+              console.error('[Supabase] Failed to recover session from localStorage:', error);
+            } else if (refreshData.session) {
+              console.log('[Supabase] Successfully recovered session from localStorage');
+              this.currentSession = refreshData.session;
+              this.createAuthenticatedClient(refreshData.session.access_token);
+            }
+          } catch (e) {
+            console.error('[Supabase] Error recovering session:', e);
+          }
+        }
       }
     } catch (error) {
       console.error("[Supabase] Failed to initialize Supabase session:", error);
     }
+  }
+
+  /**
+   * Setup background token refresh
+   */
+  private setupAutoRefresh(): void {
+    // Clear any existing interval
+    if (this.autoRefreshInterval !== null) {
+      window.clearInterval(this.autoRefreshInterval);
+    }
+    
+    // Set up a refresh interval every 10 minutes
+    this.autoRefreshInterval = window.setInterval(() => {
+      if (this.currentSession) {
+        console.log('[Supabase] Running scheduled token refresh');
+        this.refreshToken().catch(err => {
+          console.error('[Supabase] Scheduled token refresh failed:', err);
+        });
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+    
+    console.log('[Supabase] Auto-refresh interval set up');
   }
 
   /**
@@ -231,13 +283,13 @@ class SupabaseClientManager {
     console.log('[Supabase] Creating authenticated client');
     
     // Create new authenticated client
-    // CRITICAL FIX: Added persistSession: true to ensure session persistence
     this.authClient = createClient(
       supabaseUrl, 
       supabaseAnonKey, 
       {
         auth: {
-          persistSession: true // Ensure session persistence
+          persistSession: true, // Ensure session persistence
+          autoRefreshToken: true // Enable auto refresh
         },
         global: {
           headers: {

@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { getPersistedAuthState, isStoredTokenValid } from '@/utils/cookieUtils';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,13 +12,50 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = true }) => {
-  const { user, isLoading, isAdmin, checkIsAdmin } = useAuth();
+  const { user, isLoading, isAdmin, checkIsAdmin, session } = useAuth();
   const location = useLocation();
   const [isVerifying, setIsVerifying] = useState(false);
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
   const [verificationComplete, setVerificationComplete] = useState(false);
+  const [isRestoringSession, setIsRestoringSession] = useState(false);
   const { toast } = useToast();
 
+  // First check for persisted auth state if no user is detected
+  useEffect(() => {
+    const attemptSessionRestore = async () => {
+      if (user || isLoading || isRestoringSession) return;
+      
+      setIsRestoringSession(true);
+      try {
+        // Check if we have a persisted session that might be valid
+        const { tokenData } = getPersistedAuthState();
+        
+        if (tokenData && isStoredTokenValid(tokenData)) {
+          console.log("[ProtectedRoute] Found persisted auth data, attempting to restore session");
+          
+          // Request a fresh session from Supabase
+          const { error } = await supabaseClient().auth.refreshSession();
+          
+          if (error) {
+            console.error("[ProtectedRoute] Failed to restore session:", error);
+          } else {
+            console.log("[ProtectedRoute] Successfully restored session");
+            // No need to do anything else as the auth state change listener will handle the updated session
+          }
+        } else {
+          console.log("[ProtectedRoute] No valid persisted auth data found");
+        }
+      } catch (error) {
+        console.error("[ProtectedRoute] Error in session restoration:", error);
+      } finally {
+        setIsRestoringSession(false);
+      }
+    };
+    
+    attemptSessionRestore();
+  }, [user, isLoading, isRestoringSession]);
+
+  // Then verify admin access if needed
   useEffect(() => {
     const verifyAdmin = async () => {
       if (!user || isVerifying) return;
@@ -53,13 +92,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
 
     if (user && !isLoading && requireAdmin) {
       verifyAdmin();
-    } else if (!isLoading) {
+    } else if (!isLoading && !isRestoringSession) {
       setVerificationComplete(true);
     }
-  }, [user, isLoading, checkIsAdmin, requireAdmin, toast]);
+  }, [user, isLoading, isRestoringSession, checkIsAdmin, requireAdmin, toast]);
 
   // Show loading state while authentication is being checked
-  if (isLoading || (user && requireAdmin && !verificationComplete)) {
+  if (isLoading || isRestoringSession || (user && requireAdmin && !verificationComplete)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -68,8 +107,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
     );
   }
 
-  // Only redirect to login if isLoading is false and user is null
-  if (!isLoading && !user) {
+  // Only redirect to login if both isLoading and isRestoringSession are false and user is null
+  if (!isLoading && !isRestoringSession && !user) {
     console.log('ProtectedRoute: No user, redirecting to login');
     // Redirect to login page but save the intended destination
     return <Navigate to="/admin/login" replace state={{ from: location }} />;

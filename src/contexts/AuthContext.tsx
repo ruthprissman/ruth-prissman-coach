@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabaseClient, clearSupabaseClientCache } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { getDashboardRedirectUrl } from '@/utils/urlUtils';
+import { persistAuthState } from '@/utils/cookieUtils';
 
 type AuthContextType = {
   user: User | null;
@@ -16,24 +18,94 @@ type AuthContextType = {
   checkAdminExists: () => Promise<boolean>;
   isAdmin: boolean;
   checkIsAdmin: (email: string) => Promise<boolean>;
+  refreshSession: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Setup session refresh interval (15 minutes)
+const SESSION_REFRESH_INTERVAL = 15 * 60 * 1000; 
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const refreshTimerRef = useRef<number | null>(null);
   const { toast } = useToast();
+
+  // Function to refresh the session
+  const refreshSession = useCallback(async (): Promise<boolean> => {
+    try {
+      console.log('[Auth] Refreshing session...');
+      const { data, error } = await supabaseClient().auth.refreshSession();
+      
+      if (error) {
+        console.error('[Auth] Failed to refresh session:', error);
+        return false;
+      }
+      
+      if (data && data.session) {
+        console.log('[Auth] Session refreshed successfully');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('[Auth] Error refreshing session:', error);
+      return false;
+    }
+  }, []);
+
+  // Setup periodic session refresh
+  const setupSessionRefresh = useCallback(() => {
+    // Clear any existing timer
+    if (refreshTimerRef.current !== null) {
+      window.clearInterval(refreshTimerRef.current);
+    }
+    
+    // Only setup timer if we have a session
+    if (session) {
+      console.log('[Auth] Setting up session refresh timer');
+      
+      refreshTimerRef.current = window.setInterval(() => {
+        refreshSession().then(success => {
+          if (!success) console.warn('[Auth] Failed to refresh session automatically');
+        });
+      }, SESSION_REFRESH_INTERVAL);
+    }
+  }, [session, refreshSession]);
+
+  useEffect(() => {
+    // Setup the session refresh timer when session changes
+    setupSessionRefresh();
+    
+    // Cleanup function
+    return () => {
+      if (refreshTimerRef.current !== null) {
+        window.clearInterval(refreshTimerRef.current);
+      }
+    };
+  }, [session, setupSessionRefresh]);
 
   useEffect(() => {
     const { data: { subscription } } = supabaseClient().auth.onAuthStateChange(
       async (event, newSession) => {
-        console.log('Auth state changed:', event, newSession?.user?.id);
+        console.log('[Auth] Auth state changed:', event, newSession?.user?.id);
         
         setSession(newSession);
         setUser(newSession?.user || null);
+        
+        // Persist auth state to local storage when session changes
+        if (newSession) {
+          persistAuthState(true, {
+            access_token: newSession.access_token,
+            refresh_token: newSession.refresh_token,
+            expires_at: newSession.expires_at
+          });
+        } else if (event === 'SIGNED_OUT') {
+          persistAuthState(false);
+        }
         
         if (event === 'SIGNED_IN' && newSession?.user?.email) {
           const adminStatus = await checkIsAdmin(newSession.user.email);
@@ -50,6 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsAdmin(false);
             setUser(null);
             setSession(null);
+            persistAuthState(false);
             
             window.location.href = '/';
           }
@@ -58,6 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'SIGNED_OUT') {
           clearSupabaseClientCache();
           setIsAdmin(false);
+          persistAuthState(false);
         }
         
         setIsLoading(false);
@@ -70,9 +144,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data && data.session) {
           setSession(data.session);
           setUser(data.session.user);
+          
+          // Store session data in localStorage for persistence
+          persistAuthState(true, {
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+            expires_at: data.session.expires_at
+          });
+          
+          // Check admin status
+          if (data.session.user.email) {
+            const adminStatus = await checkIsAdmin(data.session.user.email);
+            setIsAdmin(adminStatus);
+          }
         }
       } catch (error) {
-        console.error("Error initializing auth:", error);
+        console.error("[Auth] Error initializing auth:", error);
       } finally {
         setIsLoading(false);
       }
@@ -295,8 +382,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     clearSupabaseClientCache();
     
+    // Clear the refresh timer
+    if (refreshTimerRef.current !== null) {
+      window.clearInterval(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
+    
     await supabaseClient().auth.signOut();
     setIsAdmin(false);
+    persistAuthState(false);
+    
     toast({
       title: "התנתקת בהצלחה",
       description: "להתראות בפעם הבאה",
@@ -315,7 +410,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       resetPassword,
       checkAdminExists,
       isAdmin,
-      checkIsAdmin
+      checkIsAdmin,
+      refreshSession
     }}>
       {children}
     </AuthContext.Provider>

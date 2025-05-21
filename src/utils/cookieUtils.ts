@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for handling cookies
  */
@@ -7,13 +6,13 @@
  * Sets a cookie with the specified name, value, and options
  */
 export const setCookie = (name: string, value: string, options: { [key: string]: string | number | boolean } = {}): void => {
-  // For auth_env cookie, ensure it persists by setting a longer max-age
-  if (name === 'auth_env' && !options['max-age']) {
-    options['max-age'] = 86400; // 1 day in seconds
+  // For auth related cookies, ensure they persist by setting a longer max-age (7 days instead of 1)
+  if ((name === 'auth_env' || name.startsWith('sb-')) && !options['max-age']) {
+    options['max-age'] = 7 * 24 * 60 * 60; // 7 days in seconds
   }
   
   // Always set path to root for auth cookies to ensure they're available across pages
-  if (name === 'auth_env' && !options.path) {
+  if ((name === 'auth_env' || name.startsWith('sb-')) && !options.path) {
     options.path = '/';
   }
   
@@ -65,25 +64,72 @@ export const deleteCookie = (name: string, path: string = '/'): void => {
   console.log(`[cookie] Full cookie string after deletion: ${document.cookie}`);
 };
 
-// New function to add a persistent storage backup for auth state
-export const persistAuthState = (isAuthenticated: boolean): void => {
+// Enhance persistence of auth state in localStorage
+export const persistAuthState = (isAuthenticated: boolean, tokenData?: {
+  access_token?: string,
+  refresh_token?: string,
+  expires_at?: number
+}): void => {
   try {
     localStorage.setItem('google_auth_state', isAuthenticated ? 'authenticated' : '');
-    console.log(`[auth] Persisted Google auth state: ${isAuthenticated}`);
+    
+    // Store token data for session recovery
+    if (isAuthenticated && tokenData) {
+      localStorage.setItem('supabase_auth_data', JSON.stringify({
+        ...tokenData,
+        timestamp: Date.now()
+      }));
+    } else if (!isAuthenticated) {
+      localStorage.removeItem('supabase_auth_data');
+    }
+    
+    console.log(`[auth] Persisted auth state: ${isAuthenticated}${tokenData ? ' with token data' : ''}`);
   } catch (error) {
     console.error('[auth] Error persisting auth state:', error);
   }
 };
 
-// New function to retrieve persistent auth state
-export const getPersistedAuthState = (): boolean => {
+// Enhanced function to retrieve persistent auth state
+export const getPersistedAuthState = (): {
+  isAuthenticated: boolean;
+  tokenData: {
+    access_token?: string;
+    refresh_token?: string;
+    expires_at?: number;
+    timestamp?: number;
+  } | null;
+} => {
   try {
     const state = localStorage.getItem('google_auth_state');
     const isAuthenticated = !!state;
-    console.log(`[auth] Retrieved persisted Google auth state: ${isAuthenticated}`);
-    return isAuthenticated;
+    
+    // Get persisted token data if available
+    let tokenData = null;
+    const storedData = localStorage.getItem('supabase_auth_data');
+    if (storedData) {
+      tokenData = JSON.parse(storedData);
+    }
+    
+    console.log(`[auth] Retrieved persisted auth state: ${isAuthenticated}${tokenData ? ' with token data' : ''}`);
+    return { isAuthenticated, tokenData };
   } catch (error) {
     console.error('[auth] Error getting persisted auth state:', error);
-    return false;
+    return { isAuthenticated: false, tokenData: null };
   }
+};
+
+// Check if the stored token is still valid or about to expire
+export const isStoredTokenValid = (tokenData: { expires_at?: number } | null): boolean => {
+  if (!tokenData || !tokenData.expires_at) return false;
+  
+  // Token is valid if it expires more than 5 minutes from now
+  const expiresAtMs = tokenData.expires_at * 1000; // convert to milliseconds
+  const currentTimeMs = Date.now();
+  const fiveMinutesMs = 5 * 60 * 1000;
+  
+  // Token is valid if it expires more than 5 minutes from now
+  const isValid = expiresAtMs > (currentTimeMs + fiveMinutesMs);
+  
+  console.log(`[auth] Token valid check: ${isValid}, expires in ${Math.round((expiresAtMs - currentTimeMs) / 60000)} minutes`);
+  return isValid;
 };
