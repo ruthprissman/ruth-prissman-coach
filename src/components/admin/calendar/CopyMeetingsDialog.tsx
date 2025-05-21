@@ -258,11 +258,11 @@ export function CopyMeetingsDialog({
       // Execute the copy and store the extended result
       const result = await onCopySelected(selectedEventIds, selectedMapping);
       
-      // If the result includes detailed reasons, we'll update our state
+      // Fix: Check if result exists and is an object before updating state
       if (result && typeof result === 'object') {
         setCopyResult(result);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("DIALOG_LOG: Error copying meetings:", error);
       // Keep dialog open to show errors
       return;
