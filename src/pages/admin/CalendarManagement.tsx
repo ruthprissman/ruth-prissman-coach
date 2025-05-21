@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { addDays, format, startOfWeek, startOfDay } from 'date-fns';
@@ -20,7 +20,7 @@ import { forcePageRefresh, logComponentVersions } from '@/utils/debugUtils';
 import { copyProfessionalMeetingsToFutureSessions } from '@/utils/googleCalendarUtils';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.1.0";
+const COMPONENT_VERSION = "1.2.0";
 console.log(`LOV_DEBUG_CALENDAR_MGMT: Component loaded, version ${COMPONENT_VERSION}`);
 
 const CalendarManagement: React.FC = () => {
@@ -32,6 +32,9 @@ const CalendarManagement: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [isCopyingMeetings, setIsCopyingMeetings] = useState<boolean>(false);
   const [lastRefresh, setLastRefresh] = useState<string>(new Date().toLocaleTimeString());
+  
+  // Track if we've loaded events for this date range
+  const loadedDatesRef = useRef<Set<string>>(new Set());
 
   const { settings, isLoading: isLoadingSettings } = useCalendarSettings();
   const { tableExists, checkTableExists, createCalendarSlotsTable, applyDefaultAvailability } = useCalendarOperations();
@@ -106,6 +109,7 @@ const CalendarManagement: React.FC = () => {
     setCurrentDate(newDate);
   };
 
+  // Modified: Only fetch when explicitly requested via sync button
   const handleGoogleSync = async () => {
     if (isGoogleAuthenticated) {
       try {
@@ -115,9 +119,13 @@ const CalendarManagement: React.FC = () => {
         
         console.log(`LOV_DEBUG_CALENDAR_MGMT: Starting Google sync for date: ${currentDate.toISOString()}`);
         
-        // Pass the current date to fetch events from the beginning of the displayed week
-        await fetchGoogleEvents(currentDate);
+        // Force refresh when sync button is clicked
+        await fetchGoogleEvents(currentDate, true);
         await fetchAvailabilityData();
+        
+        // Mark this date as loaded
+        const dateKey = format(currentDate, 'yyyy-MM');
+        loadedDatesRef.current.add(dateKey);
         
       } catch (error: any) {
         console.error('LOV_DEBUG_CALENDAR_MGMT: Error syncing with Google Calendar:', error);
@@ -130,7 +138,7 @@ const CalendarManagement: React.FC = () => {
     }
   };
 
-  // Modified: Handle copying professional meetings from Google Calendar
+  // Handle copying professional meetings from Google Calendar
   const handleCopyProfessionalMeetings = async (selectedEventIds: string[], clientMapping: Record<string, number | null>) => {
     if (!isGoogleAuthenticated || googleEvents.length === 0) {
       toast({
@@ -194,7 +202,8 @@ const CalendarManagement: React.FC = () => {
       await checkTableExists();
       
       if (isGoogleAuthenticated) {
-        await fetchGoogleEvents(currentDate);
+        // Force refresh when manual refresh button is clicked
+        await fetchGoogleEvents(currentDate, true);
       }
       
       await fetchAvailabilityData();
@@ -221,14 +230,39 @@ const CalendarManagement: React.FC = () => {
     forcePageRefresh();
   };
 
-  // Update calendar data when current date changes
+  // Modified: Only fetch events when date changes to a new month we haven't loaded yet
   useEffect(() => {
     if (isGoogleAuthenticated) {
-      // Fetch Google events from the beginning of the displayed week
-      console.log(`LOV_DEBUG_CALENDAR_MGMT: Date changed, fetching Google events for: ${currentDate.toISOString()}`);
-      fetchGoogleEvents(currentDate);
+      // Check if we've already loaded events for this month
+      const monthKey = format(currentDate, 'yyyy-MM');
+      
+      if (!loadedDatesRef.current.has(monthKey)) {
+        console.log(`LOV_DEBUG_CALENDAR_MGMT: Loading events for new month: ${monthKey}`);
+        
+        // Add to loaded dates before fetching to prevent duplicate calls
+        loadedDatesRef.current.add(monthKey);
+        
+        // Fetch Google events for the new month (without force refresh)
+        fetchGoogleEvents(currentDate, false);
+      } else {
+        console.log(`LOV_DEBUG_CALENDAR_MGMT: Events for month ${monthKey} already loaded`);
+      }
     }
   }, [currentDate, isGoogleAuthenticated]);
+
+  // After signing in with Google, make sure to load events
+  useEffect(() => {
+    if (isGoogleAuthenticated && googleEvents.length === 0) {
+      const monthKey = format(currentDate, 'yyyy-MM');
+      
+      // Check if we've already tried to load this month
+      if (!loadedDatesRef.current.has(monthKey)) {
+        console.log(`LOV_DEBUG_CALENDAR_MGMT: Initially loading Google events after authentication`);
+        fetchGoogleEvents(currentDate, false);
+        loadedDatesRef.current.add(monthKey);
+      }
+    }
+  }, [isGoogleAuthenticated]);
 
   const updateTimeSlot = async (date: string, hour: string, newStatus: 'available' | 'private' | 'unspecified') => {
     if (!tableExists) {
@@ -372,7 +406,9 @@ const CalendarManagement: React.FC = () => {
     
     // If sign-in was successful, fetch events starting from the current week
     if (success) {
+      const monthKey = format(currentDate, 'yyyy-MM');
       await fetchGoogleEvents(currentDate);
+      loadedDatesRef.current.add(monthKey);
     }
   };
 

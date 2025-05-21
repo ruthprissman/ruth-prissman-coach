@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useRef } from 'react';
 import { 
   checkIfSignedIn, 
   signInWithGoogle, 
@@ -10,10 +11,19 @@ import {
 import { toast } from '@/components/ui/use-toast';
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { persistAuthState, getPersistedAuthState } from '@/utils/cookieUtils';
+import { isEqual, addDays, startOfWeek } from 'date-fns';
 
 // Hook version for debugging
-const HOOK_VERSION = "1.0.1";
+const HOOK_VERSION = "1.1.0"; // Updated version
 console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Hook loaded, version ${HOOK_VERSION}`);
+
+// Cache types
+interface EventCache {
+  events: GoogleCalendarEvent[];
+  fetchDate: Date;
+  startDate: Date;
+  endDate: Date;
+}
 
 export function useGoogleOAuth() {
   const [state, setState] = useState<GoogleOAuthState>({
@@ -24,6 +34,11 @@ export function useGoogleOAuth() {
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(false);
   const [isCreatingEvent, setIsCreatingEvent] = useState<boolean>(false);
+  
+  // Event cache reference - stored in ref to persist between renders without triggering re-renders
+  const eventCacheRef = useRef<EventCache | null>(null);
+  // Track if we've done the initial fetch
+  const hasInitialFetchRef = useRef<boolean>(false);
 
   useEffect(() => {
     const initialize = async () => {
@@ -39,8 +54,10 @@ export function useGoogleOAuth() {
           error: null
         });
         
-        if (isSignedIn) {
-          console.log('User is signed in to Google, fetching events');
+        // Only fetch events on initial load, without checking the cache
+        if (isSignedIn && !hasInitialFetchRef.current) {
+          console.log('User is signed in to Google, doing initial event fetch');
+          hasInitialFetchRef.current = true;
           fetchEvents();
         }
       } catch (error: any) {
@@ -55,12 +72,16 @@ export function useGoogleOAuth() {
     
     initialize();
     
-    // Add an event listener to handle page visibility changes
+    // Modify visibility change handler to not automatically fetch events
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log('[auth] Page became visible, checking Google auth state');
-        // When the page becomes visible again, check if we're still authenticated
-        initialize();
+        console.log('[auth] Page became visible, checking Google auth state (but NOT refetching events)');
+        // Only check authentication status, don't fetch events
+        checkIfSignedIn().then((isSignedIn) => {
+          if (state.isAuthenticated !== isSignedIn) {
+            setState(prev => ({ ...prev, isAuthenticated: isSignedIn }));
+          }
+        });
       }
     };
 
@@ -71,15 +92,83 @@ export function useGoogleOAuth() {
     };
   }, []);
 
-  const fetchEvents = async (currentDisplayDate?: Date) => {
+  // Check if the requested date range is already in cache
+  const isDateInCache = (requestDate?: Date): boolean => {
+    if (!eventCacheRef.current || !requestDate) return false;
+    
+    const cache = eventCacheRef.current;
+    
+    // If cache is less than 15 minutes old, use it
+    const cacheAge = new Date().getTime() - cache.fetchDate.getTime();
+    const cacheMaxAge = 15 * 60 * 1000; // 15 minutes
+    if (cacheAge > cacheMaxAge) {
+      console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Cache expired, will fetch new data');
+      return false;
+    }
+    
+    // Get the week range for the requested date
+    const weekStart = startOfWeek(requestDate, { weekStartsOn: 0 });
+    const weekEnd = addDays(weekStart, 7);
+    
+    // Check if this range is within our cached range
+    const isWithinCache = weekStart >= cache.startDate && weekEnd <= cache.endDate;
+    
+    if (isWithinCache) {
+      console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Requested date range is in cache', {
+        requestedWeekStart: weekStart,
+        requestedWeekEnd: weekEnd,
+        cacheStart: cache.startDate,
+        cacheEnd: cache.endDate
+      });
+    } else {
+      console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Requested date range is NOT in cache', {
+        requestedWeekStart: weekStart,
+        requestedWeekEnd: weekEnd,
+        cacheStart: cache.startDate,
+        cacheEnd: cache.endDate
+      });
+    }
+    
+    return isWithinCache;
+  };
+
+  const fetchEvents = async (currentDisplayDate?: Date, forceRefresh: boolean = false) => {
     try {
+      // Check if we already have data for this date range in cache
+      if (!forceRefresh && isDateInCache(currentDisplayDate)) {
+        console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Using cached events');
+        return eventCacheRef.current?.events || [];
+      }
+      
       setIsLoadingEvents(true);
-      console.log('Starting to fetch Google Calendar events', currentDisplayDate ? `for date: ${currentDisplayDate.toISOString()}` : '');
+      console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Starting to fetch Google Calendar events', 
+        currentDisplayDate ? `for date: ${currentDisplayDate.toISOString()}` : '', 
+        forceRefresh ? '(force refresh)' : '');
       
       const calendarEvents = await fetchGoogleCalendarEvents(currentDisplayDate);
       setEvents(calendarEvents);
       
-      console.log(`Fetched ${calendarEvents.length} Google Calendar events`);
+      // Update the cache
+      if (currentDisplayDate) {
+        const weekStart = startOfWeek(currentDisplayDate, { weekStartsOn: 0 });
+        const twoMonthsLater = addDays(weekStart, 60); // Approximately 2 months
+        
+        eventCacheRef.current = {
+          events: calendarEvents,
+          fetchDate: new Date(),
+          startDate: weekStart,
+          endDate: twoMonthsLater
+        };
+        
+        console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Updated event cache:', {
+          eventCount: calendarEvents.length,
+          fetchDate: new Date().toISOString(),
+          startDate: weekStart.toISOString(),
+          endDate: twoMonthsLater.toISOString()
+        });
+      }
+      
+      console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Fetched ${calendarEvents.length} Google Calendar events`);
       
       if (calendarEvents.length > 0) {
         // לוג מפורט של האירועים הראשונים
@@ -132,8 +221,8 @@ export function useGoogleOAuth() {
       
       if (eventId) {
         console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Event created with ID: ${eventId}`);
-        // Refresh events to include the newly created one
-        await fetchEvents();
+        // Refresh events to include the newly created one, with force refresh
+        await fetchEvents(undefined, true);
         
         toast({
           title: 'האירוע נוצר בהצלחה',
@@ -227,8 +316,9 @@ export function useGoogleOAuth() {
         error: null
       });
       
-      // Clear persisted state
+      // Clear persisted state and cache
       persistAuthState(false);
+      eventCacheRef.current = null;
       
       toast({
         title: 'התנתקת מיומן גוגל',
