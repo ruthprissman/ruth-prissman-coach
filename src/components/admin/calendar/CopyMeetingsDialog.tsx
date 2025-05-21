@@ -29,7 +29,7 @@ interface CopyMeetingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   googleEvents: GoogleCalendarEvent[];
-  onCopySelected: (selectedEventIds: string[], clientMapping: Record<string, number | null>) => Promise<void>;
+  onCopySelected: (selectedEventIds: string[], clientMapping: Record<string, number | null>) => Promise<any>;
   isLoading: boolean;
 }
 
