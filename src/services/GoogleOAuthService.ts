@@ -52,8 +52,8 @@ export async function checkIfSignedIn(): Promise<boolean> {
     
     // If no token in session, check our persisted state as a fallback
     const persistedState = getPersistedAuthState();
-    console.log(`LOV_DEBUG_GOOGLE_OAUTH: checkIfSignedIn from persisted state: ${persistedState}`);
-    return persistedState;
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH: checkIfSignedIn from persisted state: ${persistedState.isAuthenticated}`);
+    return persistedState.isAuthenticated;
   } catch (error) {
     console.error('LOV_DEBUG_GOOGLE_OAUTH: Error in checkIfSignedIn:', error);
     return false;

@@ -27,7 +27,7 @@ interface EventCache {
 
 export function useGoogleOAuth() {
   const [state, setState] = useState<GoogleOAuthState>({
-    isAuthenticated: getPersistedAuthState(), // Initialize with persisted state
+    isAuthenticated: getPersistedAuthState().isAuthenticated, // Extract the boolean from the object
     isAuthenticating: true,
     error: null
   });
