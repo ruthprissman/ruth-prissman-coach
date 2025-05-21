@@ -45,7 +45,7 @@ export function CopyMeetingsDialog({
   onOpenChange,
   googleEvents,
   onCopySelected,
-  isLoading
+  isLoading: isLoadingProp
 }: CopyMeetingsDialogProps) {
   const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
   const [professionalMeetings, setProfessionalMeetings] = useState<MeetingWithClientInfo[]>([]);
@@ -423,7 +423,7 @@ export function CopyMeetingsDialog({
     );
   };
 
-  const isLoading = isLoadingPatients || isCheckingExistingSessions;
+  const isDialogLoading = isLoadingPatients || isCheckingExistingSessions || isLoadingProp;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -459,7 +459,7 @@ export function CopyMeetingsDialog({
           
           <Separator className="my-2" />
           
-          {isLoading ? (
+          {isDialogLoading ? (
             <div className="text-center py-6 text-gray-500">
               טוען נתונים...
             </div>
@@ -528,7 +528,7 @@ export function CopyMeetingsDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
           <Button 
             onClick={handleCopySelected} 
-            disabled={selectedEventIds.length === 0 || isLoading}
+            disabled={selectedEventIds.length === 0 || isDialogLoading}
           >
             העתק {selectedEventIds.length} פגישות
           </Button>
