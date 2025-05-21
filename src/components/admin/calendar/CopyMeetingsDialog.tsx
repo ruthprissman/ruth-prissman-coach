@@ -49,19 +49,23 @@ export function CopyMeetingsDialog({
 }: CopyMeetingsDialogProps) {
   const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
   const [professionalMeetings, setProfessionalMeetings] = useState<MeetingWithClientInfo[]>([]);
+  const [filteredMeetings, setFilteredMeetings] = useState<MeetingWithClientInfo[]>([]);
   const [clientMapping, setClientMapping] = useState<Record<string, number | null>>({});
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoadingPatients, setIsLoadingPatients] = useState<boolean>(false);
+  const [isCheckingExistingSessions, setIsCheckingExistingSessions] = useState<boolean>(false);
+  const [existingSessions, setExistingSessions] = useState<Map<string, boolean>>(new Map());
   const [copyResult, setCopyResult] = useState<{
     added: number,
     skipped: number,
     reasons?: Record<string, string[]>
   } | null>(null);
   
-  // Load all patients for dropdown selection
+  // Load all patients for dropdown selection and existing sessions for filtering
   useEffect(() => {
     if (open) {
       fetchPatients();
+      fetchExistingSessions();
       // Reset copy result when dialog is opened
       setCopyResult(null);
     }
@@ -98,6 +102,64 @@ export function CopyMeetingsDialog({
       });
     } finally {
       setIsLoadingPatients(false);
+    }
+  };
+  
+  // Fetch existing sessions to filter out meetings that already exist
+  const fetchExistingSessions = async () => {
+    try {
+      setIsCheckingExistingSessions(true);
+      console.log("DIALOG_LOG: Fetching existing sessions to filter duplicate meetings");
+      
+      const now = new Date();
+      const twoWeeksLater = new Date(now);
+      twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
+      
+      const supabase = await supabaseClient();
+      const { data, error } = await supabase
+        .from('future_sessions')
+        .select('session_date, patient_id')
+        .gte('session_date', now.toISOString())
+        .lte('session_date', twoWeeksLater.toISOString());
+      
+      if (error) throw error;
+      
+      // Create a map of existing sessions by date and hour
+      const sessionsMap = new Map<string, boolean>();
+      
+      if (data) {
+        data.forEach(session => {
+          const sessionDate = new Date(session.session_date);
+          // Create a key in format "YYYY-MM-DD HH:00" to match with Google events
+          const key = `${sessionDate.getFullYear()}-${String(sessionDate.getMonth() + 1).padStart(2, '0')}-${String(sessionDate.getDate()).padStart(2, '0')} ${String(sessionDate.getHours()).padStart(2, '0')}:00`;
+          
+          // Also add keys for 30 minutes before and after to cover overlapping sessions
+          const beforeDate = new Date(sessionDate);
+          beforeDate.setMinutes(beforeDate.getMinutes() - 30);
+          const beforeKey = `${beforeDate.getFullYear()}-${String(beforeDate.getMonth() + 1).padStart(2, '0')}-${String(beforeDate.getDate()).padStart(2, '0')} ${String(beforeDate.getHours()).padStart(2, '0')}:${String(beforeDate.getMinutes()).padStart(2, '0')}`;
+          
+          const afterDate = new Date(sessionDate);
+          afterDate.setMinutes(afterDate.getMinutes() + 30);
+          const afterKey = `${afterDate.getFullYear()}-${String(afterDate.getMonth() + 1).padStart(2, '0')}-${String(afterDate.getDate()).padStart(2, '0')} ${String(afterDate.getHours()).padStart(2, '0')}:${String(afterDate.getMinutes()).padStart(2, '0')}`;
+          
+          sessionsMap.set(key, true);
+          sessionsMap.set(beforeKey, true);
+          sessionsMap.set(afterKey, true);
+          
+          // Add patient_id to the key to show sessions with different patients
+          if (session.patient_id) {
+            sessionsMap.set(`${key}_${session.patient_id}`, true);
+          }
+        });
+      }
+      
+      console.log(`DIALOG_LOG: Found ${sessionsMap.size} existing session time slots`);
+      setExistingSessions(sessionsMap);
+      
+    } catch (error) {
+      console.error('Error fetching existing sessions:', error);
+    } finally {
+      setIsCheckingExistingSessions(false);
     }
   };
   
@@ -192,8 +254,64 @@ export function CopyMeetingsDialog({
       console.log(`DIALOG_LOG: Initial client mapping created:`, newMapping);
       setProfessionalMeetings(updatedMeetings);
       setClientMapping(newMapping);
+      
+      // Filter meetings based on existing sessions
+      filterExistingMeetings(updatedMeetings, newMapping);
     }
-  }, [patients, professionalMeetings.length]);
+  }, [patients, professionalMeetings.length, existingSessions]);
+  
+  // Filter meetings based on existing sessions
+  const filterExistingMeetings = (meetings: MeetingWithClientInfo[], mapping: Record<string, number | null>) => {
+    if (!existingSessions.size) {
+      // If we don't have existing sessions data yet, show all meetings
+      setFilteredMeetings(meetings);
+      return;
+    }
+    
+    const filtered = meetings.filter(meeting => {
+      // If no start date, include the meeting (shouldn't happen)
+      if (!meeting.event.start?.dateTime) return true;
+      
+      const eventDate = new Date(meeting.event.start.dateTime);
+      // Create key in same format as existingSessions map
+      const key = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}-${String(eventDate.getDate()).padStart(2, '0')} ${String(eventDate.getHours()).padStart(2, '0')}:00`;
+      
+      const clientId = mapping[meeting.event.id];
+      
+      // If client is identified, check if there's already a session for this client at this time
+      if (clientId !== null) {
+        const keyWithClient = `${key}_${clientId}`;
+        if (existingSessions.has(keyWithClient)) {
+          console.log(`DIALOG_LOG: Filtering out meeting "${meeting.event.summary}" as it already exists for client ID ${clientId}`);
+          return false;
+        }
+      }
+      
+      // Check if there's any session at this time (regardless of client)
+      if (existingSessions.has(key)) {
+        console.log(`DIALOG_LOG: Filtering out meeting "${meeting.event.summary}" as there's already a session at this time`);
+        return false;
+      }
+      
+      return true;
+    });
+    
+    console.log(`DIALOG_LOG: Filtered meetings from ${meetings.length} to ${filtered.length} after removing existing sessions`);
+    setFilteredMeetings(filtered);
+    
+    // Update selected events
+    setSelectedEventIds(prev => {
+      // Keep only IDs that are still in the filtered list
+      const filteredIds = filtered.map(m => m.event.id);
+      return prev.filter(id => filteredIds.includes(id));
+    });
+  };
+  
+  // Re-check for existing sessions when client selection changes
+  // This ensures that if a user selects a client that already has a session, it's filtered out
+  useEffect(() => {
+    filterExistingMeetings(professionalMeetings, clientMapping);
+  }, [clientMapping, existingSessions]);
 
   const handleToggleEvent = (eventId: string) => {
     setSelectedEventIds(prev => {
@@ -206,12 +324,12 @@ export function CopyMeetingsDialog({
   };
 
   const handleToggleAll = () => {
-    if (selectedEventIds.length === professionalMeetings.length) {
+    if (selectedEventIds.length === filteredMeetings.length) {
       // Deselect all
       setSelectedEventIds([]);
     } else {
       // Select all
-      setSelectedEventIds(professionalMeetings.map(meeting => meeting.event.id));
+      setSelectedEventIds(filteredMeetings.map(meeting => meeting.event.id));
     }
   };
 
@@ -232,6 +350,14 @@ export function CopyMeetingsDialog({
           : meeting
       )
     );
+    
+    // Re-filter to check if this selection creates a conflict
+    setTimeout(() => {
+      filterExistingMeetings(professionalMeetings, {
+        ...clientMapping,
+        [eventId]: numericClientId
+      });
+    }, 0);
   };
 
   const handleCopySelected = async () => {
@@ -297,13 +423,15 @@ export function CopyMeetingsDialog({
     );
   };
 
+  const isLoading = isLoadingPatients || isCheckingExistingSessions;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent dir="rtl" className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">העתקת פגישות מקצועיות מיומן Google</DialogTitle>
           <DialogDescription>
-            פגישות שכוללות "פגישה עם" בכותרת בטווח של השבועיים הקרובים. סמן את הפגישות שתרצה להעתקה לטבלת פגישות עתידיות וניתן לבחור לקוח מתאים לכל פגישה.
+            פגישות שכוללות "פגישה עם" בכותרת בטווח של השבועיים הקרובים. מוצגות רק פגישות שאין כבר פגישה באותה שעה בטבלת הפגישות העתידיות.
           </DialogDescription>
         </DialogHeader>
         
@@ -318,25 +446,30 @@ export function CopyMeetingsDialog({
         
         <div className="py-4">
           <div className="flex justify-between items-center mb-2">
-            <div className="text-sm text-gray-500">נמצאו {professionalMeetings.length} פגישות</div>
+            <div className="text-sm text-gray-500">נמצאו {filteredMeetings.length} פגישות זמינות להעתקה</div>
             <Button 
               variant="outline" 
               size="sm" 
               onClick={handleToggleAll}
+              disabled={filteredMeetings.length === 0}
             >
-              {selectedEventIds.length === professionalMeetings.length ? 'בטל בחירה של הכל' : 'בחר הכל'}
+              {selectedEventIds.length === filteredMeetings.length ? 'בטל בחירה של הכל' : 'בחר הכל'}
             </Button>
           </div>
           
           <Separator className="my-2" />
           
-          {professionalMeetings.length === 0 ? (
+          {isLoading ? (
             <div className="text-center py-6 text-gray-500">
-              לא נמצאו פגישות מקצועיות בטווח התאריכים
+              טוען נתונים...
+            </div>
+          ) : filteredMeetings.length === 0 ? (
+            <div className="text-center py-6 text-gray-500">
+              לא נמצאו פגישות מקצועיות זמינות להעתקה בטווח התאריכים
             </div>
           ) : (
             <div className="space-y-3">
-              {professionalMeetings.map(meeting => {
+              {filteredMeetings.map(meeting => {
                 const meetingDate = meeting.event.start?.dateTime ? new Date(meeting.event.start.dateTime) : null;
                 const formattedDate = meetingDate ? format(meetingDate, 'dd/MM/yyyy') : 'תאריך לא ידוע';
                 const formattedTime = meetingDate ? format(meetingDate, 'HH:mm') : '';
@@ -395,7 +528,7 @@ export function CopyMeetingsDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
           <Button 
             onClick={handleCopySelected} 
-            disabled={selectedEventIds.length === 0 || isLoading || isLoadingPatients}
+            disabled={selectedEventIds.length === 0 || isLoading}
           >
             העתק {selectedEventIds.length} פגישות
           </Button>
