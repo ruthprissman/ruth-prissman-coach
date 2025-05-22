@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { he } from 'date-fns/locale/he';
+import { he } from 'date-fns/locale';
 import { FutureSession } from '@/types/session';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

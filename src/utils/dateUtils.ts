@@ -1,8 +1,7 @@
-
 import { format } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { HebrewCalendar, HDate, months, gematriya } from '@hebcal/core';
-import { he } from 'date-fns/locale/he';
+import { he } from 'date-fns/locale';
 
 /**
  * Creates a Hebrew date string from a JavaScript Date
