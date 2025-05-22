@@ -8,56 +8,51 @@ import { DateRange, Expense } from '@/types/finances';
 import AddExpenseModal from './AddExpenseModal';
 import { ExpenseFilters } from './ExpenseFilters';
 
-// Dummy data - in a real app this would come from an API
-const generateDummyExpenseData = (): Expense[] => {
-  return [
-    {
-      id: 1,
-      date: new Date(2023, 5, 8),
-      amount: 2500,
-      category: 'שכירות',
-      payee: 'משכיר הנכס',
-      description: 'שכירות חודשית למשרד',
-      payment_method: 'העברה בנקאית',
-      reference_number: '654321',
-      attachment_url: 'https://example.com/receipt1.pdf',
-      status: 'מאושר',
-      type: 'expense'
-    },
-    {
-      id: 2,
-      date: new Date(2023, 5, 12),
-      amount: 350,
-      category: 'ציוד משרדי',
-      payee: 'אופיס דיפו',
-      description: 'רכישת ציוד משרדי',
-      payment_method: 'אשראי',
-      reference_number: '987654',
-      attachment_url: null,
-      status: 'טיוטה',
-      type: 'expense'
-    },
-    // Add more dummy data as needed
-  ];
-};
-
 interface ExpensesTableProps {
   dateRange: DateRange;
+  data: Expense[];
+  isLoading: boolean;
+  onRefresh: () => void;
+  onEdit?: (expense: Expense) => void;
+  onDelete?: (id: number) => void;
 }
 
-const ExpensesTable: React.FC<ExpensesTableProps> = ({ dateRange }) => {
+const ExpensesTable: React.FC<ExpensesTableProps> = ({ 
+  dateRange,
+  data,
+  isLoading,
+  onRefresh,
+  onEdit,
+  onDelete
+}) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [data] = useState<Expense[]>(generateDummyExpenseData);
 
   const filteredData = data.filter(item => 
-    item.payee.includes(searchTerm) ||
-    item.category.includes(searchTerm) ||
-    item.description.includes(searchTerm) ||
-    item.payment_method.includes(searchTerm) ||
+    (item.payee && item.payee.includes(searchTerm)) ||
+    (item.category && item.category.includes(searchTerm)) ||
+    (item.description && item.description.includes(searchTerm)) ||
+    (item.payment_method && item.payment_method.includes(searchTerm)) ||
     (item.reference_number && item.reference_number.includes(searchTerm))
   );
+
+  const handleAddSuccess = () => {
+    setShowAddModal(false);
+    onRefresh();
+  };
+
+  const handleEdit = (expense: Expense) => {
+    if (onEdit) {
+      onEdit(expense);
+    }
+  };
+
+  const handleDelete = (id: number) => {
+    if (onDelete) {
+      onDelete(id);
+    }
+  };
 
   return (
     <div className="p-4">
@@ -112,10 +107,19 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ dateRange }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.length > 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-6">
+                    <div className="flex justify-center">
+                      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+                    </div>
+                    <div className="mt-2">טוען נתונים...</div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredData.length > 0 ? (
                 filteredData.map((row) => (
                   <TableRow key={row.id}>
-                    <TableCell>{row.date.toLocaleDateString('he-IL')}</TableCell>
+                    <TableCell>{row.date instanceof Date ? row.date.toLocaleDateString('he-IL') : new Date(row.date).toLocaleDateString('he-IL')}</TableCell>
                     <TableCell className="font-medium">₪{row.amount.toLocaleString()}</TableCell>
                     <TableCell>{row.category}</TableCell>
                     <TableCell>{row.payee}</TableCell>
@@ -138,10 +142,20 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ dateRange }) => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 w-7 p-0"
+                          onClick={() => handleEdit(row)}
+                        >
                           <FileEdit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 w-7 p-0"
+                          onClick={() => handleDelete(row.id)}
+                        >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
@@ -163,6 +177,7 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ dateRange }) => {
       <AddExpenseModal
         open={showAddModal}
         onOpenChange={setShowAddModal}
+        onSuccess={handleAddSuccess}
       />
     </div>
   );

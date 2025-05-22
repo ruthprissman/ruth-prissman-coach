@@ -7,43 +7,28 @@ import { DateRange, PeriodType } from '@/types/finances';
 import { format } from 'date-fns';
 import { ChartContainer } from '@/components/ui/chart';
 
-// Dummy data - in a real app this would come from an API call
-const generateDummyData = (startDate: Date, endDate: Date) => {
-  const data = [];
-  let currentDate = new Date(startDate);
-  
-  while (currentDate <= endDate) {
-    const month = format(currentDate, 'MMM');
-    const income = Math.floor(Math.random() * 10000) + 5000;
-    const expenses = Math.floor(Math.random() * 6000) + 2000;
-    
-    data.push({
-      name: month,
-      הכנסות: income,
-      הוצאות: expenses,
-      רווח: income - expenses,
-    });
-    
-    // Move to next month
-    currentDate.setMonth(currentDate.getMonth() + 1);
-  }
-  
-  return data;
-};
+interface ChartData {
+  name: string;
+  הכנסות: number;
+  הוצאות: number;
+  רווח: number;
+}
 
 interface FinancialChartProps {
   dateRange: DateRange;
   onPeriodChange: (period: PeriodType) => void;
   currentPeriod: PeriodType;
+  data: ChartData[];
+  isLoading: boolean;
 }
 
 const FinancialChart: React.FC<FinancialChartProps> = ({ 
   dateRange, 
   onPeriodChange,
-  currentPeriod
+  currentPeriod,
+  data,
+  isLoading
 }) => {
-  const data = generateDummyData(dateRange.start, dateRange.end);
-  
   // Chart configuration for RTL support
   const config = {
     הכנסות: { color: "#4ade80" },
@@ -77,24 +62,33 @@ const FinancialChart: React.FC<FinancialChartProps> = ({
         <div className="text-xs text-muted-foreground mb-2 text-right">
           {format(dateRange.start, 'dd/MM/yyyy')} - {format(dateRange.end, 'dd/MM/yyyy')}
         </div>
-        <div style={{ direction: "ltr", height: "300px" }}>
-          <ChartContainer config={config} className="h-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value) => new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS' }).format(Number(value))}
-                />
-                <Legend wrapperStyle={{ paddingTop: "10px" }} />
-                <Bar dataKey="הכנסות" fill="#4ade80" />
-                <Bar dataKey="הוצאות" fill="#f87171" />
-                <Bar dataKey="רווח" fill="#60a5fa" />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-[300px]">
+            <div className="text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+              <div className="mt-2">טוען נתונים...</div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ direction: "ltr", height: "300px" }}>
+            <ChartContainer config={config} className="h-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value) => new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS' }).format(Number(value))}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: "10px" }} />
+                  <Bar dataKey="הכנסות" fill="#4ade80" />
+                  <Bar dataKey="הוצאות" fill="#f87171" />
+                  <Bar dataKey="רווח" fill="#60a5fa" />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

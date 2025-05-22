@@ -8,61 +8,52 @@ import { DateRange, Transaction } from '@/types/finances';
 import AddIncomeModal from './AddIncomeModal';
 import { IncomeFilters } from './IncomeFilters';
 
-// Dummy data - in a real app this would come from an API
-const generateDummyIncomeData = (): Transaction[] => {
-  return [
-    {
-      id: 1,
-      date: new Date(2023, 5, 10),
-      amount: 500,
-      source: 'פגישה טיפולית',
-      category: 'טיפולים',
-      client_name: 'ישראל ישראלי',
-      client_id: 123,
-      payment_method: 'אשראי',
-      reference_number: '123456',
-      receipt_number: 'R-1001',
-      session_id: 5001,
-      status: 'מאושר',
-      type: 'income'
-    },
-    {
-      id: 2,
-      date: new Date(2023, 5, 15),
-      amount: 350,
-      source: 'ייעוץ טלפוני',
-      category: 'ייעוץ',
-      client_name: 'יעל כהן',
-      client_id: 124,
-      payment_method: 'העברה בנקאית',
-      reference_number: '789012',
-      receipt_number: 'R-1002',
-      session_id: null,
-      status: 'טיוטה',
-      type: 'income'
-    },
-    // Add more dummy data as needed
-  ];
-};
-
 interface IncomeTableProps {
   dateRange: DateRange;
+  data: Transaction[];
+  isLoading: boolean;
+  onRefresh: () => void;
+  onEdit?: (transaction: Transaction) => void;
+  onDelete?: (id: number) => void;
 }
 
-const IncomeTable: React.FC<IncomeTableProps> = ({ dateRange }) => {
+const IncomeTable: React.FC<IncomeTableProps> = ({ 
+  dateRange,
+  data,
+  isLoading,
+  onRefresh,
+  onEdit,
+  onDelete
+}) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [data] = useState<Transaction[]>(generateDummyIncomeData);
 
   const filteredData = data.filter(item => 
-    item.client_name.includes(searchTerm) ||
-    item.source.includes(searchTerm) ||
-    item.category.includes(searchTerm) ||
-    item.payment_method.includes(searchTerm) ||
+    (item.client_name && item.client_name.includes(searchTerm)) ||
+    (item.source && item.source.includes(searchTerm)) ||
+    (item.category && item.category.includes(searchTerm)) ||
+    (item.payment_method && item.payment_method.includes(searchTerm)) ||
     (item.reference_number && item.reference_number.includes(searchTerm)) ||
     (item.receipt_number && item.receipt_number.includes(searchTerm))
   );
+
+  const handleAddSuccess = () => {
+    setShowAddModal(false);
+    onRefresh();
+  };
+
+  const handleEdit = (transaction: Transaction) => {
+    if (onEdit) {
+      onEdit(transaction);
+    }
+  };
+
+  const handleDelete = (id: number) => {
+    if (onDelete) {
+      onDelete(id);
+    }
+  };
 
   return (
     <div className="p-4">
@@ -118,10 +109,19 @@ const IncomeTable: React.FC<IncomeTableProps> = ({ dateRange }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.length > 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-6">
+                    <div className="flex justify-center">
+                      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+                    </div>
+                    <div className="mt-2">טוען נתונים...</div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredData.length > 0 ? (
                 filteredData.map((row) => (
                   <TableRow key={row.id}>
-                    <TableCell>{row.date.toLocaleDateString('he-IL')}</TableCell>
+                    <TableCell>{row.date instanceof Date ? row.date.toLocaleDateString('he-IL') : new Date(row.date).toLocaleDateString('he-IL')}</TableCell>
                     <TableCell className="font-medium">₪{row.amount.toLocaleString()}</TableCell>
                     <TableCell>{row.source}</TableCell>
                     <TableCell>{row.category}</TableCell>
@@ -145,10 +145,20 @@ const IncomeTable: React.FC<IncomeTableProps> = ({ dateRange }) => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 w-7 p-0"
+                          onClick={() => handleEdit(row)}
+                        >
                           <FileEdit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 w-7 p-0"
+                          onClick={() => handleDelete(row.id)}
+                        >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
@@ -170,6 +180,7 @@ const IncomeTable: React.FC<IncomeTableProps> = ({ dateRange }) => {
       <AddIncomeModal
         open={showAddModal}
         onOpenChange={setShowAddModal}
+        onSuccess={handleAddSuccess}
       />
     </div>
   );
