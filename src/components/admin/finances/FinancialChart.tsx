@@ -3,7 +3,7 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DateRange } from '@/types/finances';
+import { DateRange, PeriodType } from '@/types/finances';
 import { format } from 'date-fns';
 import { ChartContainer } from '@/components/ui/chart';
 
@@ -33,8 +33,8 @@ const generateDummyData = (startDate: Date, endDate: Date) => {
 
 interface FinancialChartProps {
   dateRange: DateRange;
-  onPeriodChange: (period: 'month' | 'quarter' | 'year') => void;
-  currentPeriod: string;
+  onPeriodChange: (period: PeriodType) => void;
+  currentPeriod: PeriodType;
 }
 
 const FinancialChart: React.FC<FinancialChartProps> = ({ 
@@ -59,7 +59,7 @@ const FinancialChart: React.FC<FinancialChartProps> = ({
           <span className="text-sm text-muted-foreground ml-2">טווח זמן:</span>
           <Select
             value={currentPeriod}
-            onValueChange={(value: 'month' | 'quarter' | 'year') => onPeriodChange(value)}
+            onValueChange={(value: PeriodType) => onPeriodChange(value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="בחר טווח זמן" />

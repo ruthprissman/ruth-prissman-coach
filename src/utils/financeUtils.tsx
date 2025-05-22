@@ -1,8 +1,8 @@
 
-import { DateRange } from "@/types/finances";
+import { DateRange, PeriodType } from "@/types/finances";
 import { addMonths, endOfMonth, startOfMonth, subMonths } from "date-fns";
 
-export const getDateRangeForPeriod = (period: string): DateRange => {
+export const getDateRangeForPeriod = (period: PeriodType | string): DateRange => {
   const now = new Date();
   
   switch (period) {
