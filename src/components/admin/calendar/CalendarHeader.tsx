@@ -39,10 +39,10 @@ export default function CalendarHeader({
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row">
           {/* סטטוס מידע */}
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 md:w-1/3 border-b md:border-b-0 md:border-l border-gray-200">
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-3 md:w-1/3 border-b md:border-b-0 md:border-l border-gray-200">
             <div className="flex items-center mb-1">
-              <CalendarIcon className="h-5 w-5 text-purple-600 ml-2" />
-              <h3 className="text-base font-medium text-purple-800">סנכרון יומן Google</h3>
+              <CalendarIcon className="h-4 w-4 text-purple-600 ml-1.5" />
+              <h3 className="text-sm font-medium text-purple-800">סנכרון יומן Google</h3>
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
@@ -66,17 +66,17 @@ export default function CalendarHeader({
           </div>
           
           {/* כפתורים */}
-          <div className="p-4 md:w-2/3 flex flex-col justify-between">
-            <div className="mb-2">
-              <h3 className="text-base font-medium text-gray-700">פעולות יומן</h3>
+          <div className="p-3 md:w-2/3 flex flex-col justify-between">
+            <div className="mb-1">
+              <h3 className="text-sm font-medium text-gray-700">פעולות יומן</h3>
               <p className="text-xs text-gray-500">
                 {isGoogleAuthenticated 
-                  ? 'סנכרן אירועים או העתק פגישות מקצועיות ליומן המערכת' 
+                  ? 'סנכרן אירועים או העתק פגישות ליומן המערכת' 
                   : 'התחבר תחילה ליומן Google כדי לסנכרן אירועים'}
               </p>
             </div>
             
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2 mt-1">
               <GoogleLoginButton />
               
               {isGoogleAuthenticated && (
