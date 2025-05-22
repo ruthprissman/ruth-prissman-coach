@@ -1,4 +1,3 @@
-
 import { supabaseClient } from '@/lib/supabaseClient';
 import { ArticlePublication } from '@/types/article';
 import { FutureSession } from '@/types/session';
@@ -326,6 +325,193 @@ export class DatabaseService {
     } catch (err) {
       console.error(`MEETING_SAVE_DEBUG: Error checking auth:`, err);
       return false;
+    }
+  }
+
+  /**
+   * Get all finance categories
+   */
+  public async getFinanceCategories(): Promise<any[]> {
+    try {
+      const client = supabaseClient();
+      
+      const { data, error } = await client
+        .from('finance_categories')
+        .select('*')
+        .order('type', { ascending: true })
+        .order('name', { ascending: true });
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data || [];
+    } catch (err) {
+      console.error('Error getting finance categories:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Create a new finance category
+   */
+  public async createFinanceCategory(name: string, type: 'income' | 'expense'): Promise<any> {
+    try {
+      const client = supabaseClient();
+      
+      const { data, error } = await client
+        .from('finance_categories')
+        .insert({ name, type })
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data;
+    } catch (err) {
+      console.error('Error creating finance category:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Update a finance category
+   */
+  public async updateFinanceCategory(id: number, name: string, type: 'income' | 'expense'): Promise<any> {
+    try {
+      const client = supabaseClient();
+      
+      const { data, error } = await client
+        .from('finance_categories')
+        .update({ name, type })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data;
+    } catch (err) {
+      console.error('Error updating finance category:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Delete a finance category
+   */
+  public async deleteFinanceCategory(id: number): Promise<void> {
+    try {
+      const client = supabaseClient();
+      
+      const { error } = await client
+        .from('finance_categories')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+    } catch (err) {
+      console.error('Error deleting finance category:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Get all payment methods
+   */
+  public async getPaymentMethods(): Promise<any[]> {
+    try {
+      const client = supabaseClient();
+      
+      const { data, error } = await client
+        .from('payment_methods')
+        .select('*')
+        .order('name', { ascending: true });
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data || [];
+    } catch (err) {
+      console.error('Error getting payment methods:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Create a new payment method
+   */
+  public async createPaymentMethod(name: string): Promise<any> {
+    try {
+      const client = supabaseClient();
+      
+      const { data, error } = await client
+        .from('payment_methods')
+        .insert({ name })
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data;
+    } catch (err) {
+      console.error('Error creating payment method:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Update a payment method
+   */
+  public async updatePaymentMethod(id: number, name: string): Promise<any> {
+    try {
+      const client = supabaseClient();
+      
+      const { data, error } = await client
+        .from('payment_methods')
+        .update({ name })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data;
+    } catch (err) {
+      console.error('Error updating payment method:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Delete a payment method
+   */
+  public async deletePaymentMethod(id: number): Promise<void> {
+    try {
+      const client = supabaseClient();
+      
+      const { error } = await client
+        .from('payment_methods')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+    } catch (err) {
+      console.error('Error deleting payment method:', err);
+      throw err;
     }
   }
 }

@@ -27,6 +27,7 @@ import CalendarManagement from './pages/admin/CalendarManagement';
 import StoriesManagement from './pages/admin/StoriesManagement';
 import FinancesManagement from './pages/admin/FinancesManagement';
 import FinancialAnalytics from './pages/admin/FinancialAnalytics';
+import FinancialSettings from './pages/admin/FinancialSettings';
 import { ThemeProvider } from './components/ui/theme-provider';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -94,6 +95,7 @@ function App() {
               <Route path="/admin/stories" element={<ProtectedRoute><StoriesManagement /></ProtectedRoute>} />
               <Route path="/admin/finances" element={<ProtectedRoute><FinancesManagement /></ProtectedRoute>} />
               <Route path="/admin/financial-analytics" element={<ProtectedRoute><FinancialAnalytics /></ProtectedRoute>} />
+              <Route path="/admin/financial-settings" element={<ProtectedRoute><FinancialSettings /></ProtectedRoute>} />
               
               {/* Article management routes wrapped with PublicationProvider */}
               <Route path="/admin/articles/*" element={
