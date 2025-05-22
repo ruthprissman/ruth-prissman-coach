@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -431,15 +430,16 @@ const CalendarManagement: React.FC = () => {
 
   return (
     <AdminLayout title="ניהול זמינות יומן">
-      <div className="container mx-auto py-6" dir="rtl">
-        <div className="flex flex-col space-y-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center mb-2">
-            <div className="flex items-center gap-2">
+      <div className="container mx-auto py-4" dir="rtl">
+        <div className="flex flex-col space-y-3">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-2 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 mb-2 md:mb-0">
               <h2 className="text-lg font-medium text-purple-800">ניהול יומן</h2>
               <Badge variant="outline" className="text-xs">גרסה: {COMPONENT_VERSION}</Badge>
               <Badge variant="outline" className="text-xs hidden md:inline-flex">Debug ID: {debugVersion?.substring(0, 8)}</Badge>
             </div>
-            <div className="flex gap-2 mt-2 md:mt-0">
+            
+            <div className="flex gap-2">
               <Button 
                 onClick={handleManualRefresh}
                 variant="outline"
@@ -449,8 +449,9 @@ const CalendarManagement: React.FC = () => {
               >
                 <RefreshCw className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
                 ריענון נתונים 
-                <span className="text-gray-500">({lastRefresh})</span>
+                <span className="text-gray-500 text-xs">({lastRefresh})</span>
               </Button>
+              
               <Button 
                 onClick={handleForceReload}
                 variant="destructive"
