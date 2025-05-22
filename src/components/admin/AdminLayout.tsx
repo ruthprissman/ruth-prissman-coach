@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home, Users, Calendar, ChevronRight, ChevronLeft, Menu, FileText, BookOpenText, BookIcon, Clock } from 'lucide-react';
+import { LogOut, Home, Users, Calendar, ChevronRight, ChevronLeft, Menu, FileText, BookOpenText, BookIcon, Clock, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -37,6 +37,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
     { label: 'לקוחות', icon: <Users className="ml-2 h-5 w-5" />, path: '/admin/patients' },
     { label: 'כל הפגישות', icon: <Calendar className="ml-2 h-5 w-5" />, path: '/admin/sessions' },
     { label: 'ניהול זמינות', icon: <Clock className="ml-2 h-5 w-5" />, path: '/admin/calendar' },
+    { label: 'ניהול כספים', icon: <CreditCard className="ml-2 h-5 w-5" />, path: '/admin/finances' },
     { label: 'ניהול תרגילים', icon: <FileText className="ml-2 h-5 w-5" />, path: '/admin/exercises' },
     { label: 'ניהול מאמרים', icon: <BookOpenText className="ml-2 h-5 w-5" />, path: '/admin/articles' },
     { label: 'ניהול סיפורים', icon: <BookIcon className="ml-2 h-5 w-5" />, path: '/admin/stories' },
