@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { format, startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, subQuarters } from 'date-fns';
 import { supabaseClient } from '@/lib/supabaseClient';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -15,7 +15,10 @@ import ProfitTrendChart from '@/components/admin/analytics/ProfitTrendChart';
 import TopClientsChart from '@/components/admin/analytics/TopClientsChart';
 import { useToast } from '@/hooks/use-toast';
 
-const FinancialAnalytics: React.FC = () => {
+// Create a QueryClient instance
+const queryClient = new QueryClient();
+
+const FinancialAnalyticsContent: React.FC = () => {
   const { toast } = useToast();
   const [period, setPeriod] = useState<PeriodType>("month");
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -274,6 +277,14 @@ const FinancialAnalytics: React.FC = () => {
         </Tabs>
       </div>
     </AdminLayout>
+  );
+};
+
+const FinancialAnalytics: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <FinancialAnalyticsContent />
+    </QueryClientProvider>
   );
 };
 
