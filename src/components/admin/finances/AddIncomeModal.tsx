@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,15 +14,17 @@ import { cn } from '@/lib/utils';
 interface AddIncomeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
-const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange }) => {
+const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange, onSuccess }) => {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [isConfirmed, setIsConfirmed] = React.useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Handle form submission logic here
+    onSuccess();
     onOpenChange(false);
   };
 

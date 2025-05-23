@@ -15,6 +15,10 @@ const FinancesManagement = () => {
 
   const [period, setPeriod] = useState<PeriodType>('3months');
 
+  // Mock data - will be replaced with real API calls
+  const mockChartData = [];
+  const isLoading = false;
+
   const handlePeriodChange = (newPeriod: PeriodType) => {
     setPeriod(newPeriod);
     setDateRange(getDateRangeForPeriod(newPeriod));
@@ -27,7 +31,13 @@ const FinancesManagement = () => {
       </Helmet>
 
       <div className="space-y-6">
-        <FinancialChart dateRange={dateRange} onPeriodChange={handlePeriodChange} currentPeriod={period} />
+        <FinancialChart 
+          dateRange={dateRange} 
+          onPeriodChange={handlePeriodChange} 
+          currentPeriod={period}
+          data={mockChartData}
+          isLoading={isLoading}
+        />
         <FinancialTabs dateRange={dateRange} />
       </div>
     </AdminLayout>
