@@ -13,13 +13,12 @@ const queryClient = new QueryClient();
 
 const FinancesManagementContent = () => {
   const [dateRange, setDateRange] = useState<DateRange>(() => {
-    // Default range: from beginning of last month to end of next month
     return getDateRangeForPeriod('3months');
   });
 
   const [period, setPeriod] = useState<PeriodType>('3months');
 
-  // Mock data - will be replaced with real API calls
+  // Mock data for chart - will be replaced with real API calls
   const mockChartData = [];
   const isLoading = false;
 

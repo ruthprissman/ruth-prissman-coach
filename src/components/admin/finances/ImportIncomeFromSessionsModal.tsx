@@ -146,6 +146,7 @@ const ImportIncomeFromSessionsModal: React.FC<ImportIncomeFromSessionsModalProps
         title: "הייבוא הושלם בהצלחה",
         description: `יובאו ${importedCount} רשומות הכנסה מפגישות`,
       });
+      // Invalidate both transactions and incomeData queries
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['incomeData'] });
       onSuccess?.();

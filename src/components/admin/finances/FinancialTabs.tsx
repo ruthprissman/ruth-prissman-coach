@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import IncomeTable from './IncomeTable';
 import ExpensesTable from './ExpensesTable';
 import { DateRange, Transaction, Expense } from '@/types/finances';
+import { useIncomeData } from '@/hooks/useIncomeData';
 
 interface FinancialTabsProps {
   dateRange: DateRange;
@@ -13,22 +14,29 @@ interface FinancialTabsProps {
 const FinancialTabs: React.FC<FinancialTabsProps> = ({ dateRange }) => {
   const [activeTab, setActiveTab] = useState("income");
 
-  // Mock data - will be replaced with real API calls
-  const mockIncomeData: Transaction[] = [];
+  // Use the real income data hook
+  const {
+    incomeData,
+    isLoading: isIncomeLoading,
+    handleEdit: handleIncomeEdit,
+    handleDelete: handleIncomeDelete,
+    handleRefresh: handleIncomeRefresh
+  } = useIncomeData(dateRange);
+
+  // Mock data for expenses - will be replaced with real data later
   const mockExpenseData: Expense[] = [];
-  const isLoading = false;
+  const isExpenseLoading = false;
 
-  const handleRefresh = () => {
-    // Placeholder for refresh logic
-    console.log('Refreshing data...');
+  const handleExpenseRefresh = () => {
+    console.log('Refreshing expense data...');
   };
 
-  const handleEdit = (item: Transaction | Expense) => {
-    console.log('Edit item:', item);
+  const handleExpenseEdit = (item: Expense) => {
+    console.log('Edit expense:', item);
   };
 
-  const handleDelete = (id: number) => {
-    console.log('Delete item:', id);
+  const handleExpenseDelete = (id: number) => {
+    console.log('Delete expense:', id);
   };
 
   return (
@@ -48,11 +56,11 @@ const FinancialTabs: React.FC<FinancialTabsProps> = ({ dateRange }) => {
         <TabsContent value="income" className="p-0 border-none">
           <IncomeTable 
             dateRange={dateRange}
-            data={mockIncomeData}
-            isLoading={isLoading}
-            onRefresh={handleRefresh}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
+            data={incomeData}
+            isLoading={isIncomeLoading}
+            onRefresh={handleIncomeRefresh}
+            onEdit={handleIncomeEdit}
+            onDelete={handleIncomeDelete}
           />
         </TabsContent>
         
@@ -60,10 +68,10 @@ const FinancialTabs: React.FC<FinancialTabsProps> = ({ dateRange }) => {
           <ExpensesTable 
             dateRange={dateRange}
             data={mockExpenseData}
-            isLoading={isLoading}
-            onRefresh={handleRefresh}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
+            isLoading={isExpenseLoading}
+            onRefresh={handleExpenseRefresh}
+            onEdit={handleExpenseEdit}
+            onDelete={handleExpenseDelete}
           />
         </TabsContent>
       </Tabs>
