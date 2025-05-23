@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
-import { Plus, Search, FileEdit, Trash2, Filter, ExternalLink } from 'lucide-react';
+import { Plus, Search, FileEdit, Trash2, Filter, ExternalLink, Import } from 'lucide-react';
 import { DateRange, Transaction } from '@/types/finances';
 import AddIncomeModal from './AddIncomeModal';
+import ImportIncomeFromSessionsModal from './ImportIncomeFromSessionsModal';
 import { IncomeFilters } from './IncomeFilters';
 
 interface IncomeTableProps {
@@ -26,6 +27,7 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
   onDelete
 }) => {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -40,6 +42,11 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
 
   const handleAddSuccess = () => {
     setShowAddModal(false);
+    onRefresh();
+  };
+
+  const handleImportSuccess = () => {
+    setShowImportModal(false);
     onRefresh();
   };
 
@@ -58,13 +65,23 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
   return (
     <div className="p-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-        <Button 
-          className="bg-green-600 hover:bg-green-700 text-white" 
-          onClick={() => setShowAddModal(true)}
-        >
-          <Plus className="ml-1 h-4 w-4" />
-          הוספת הכנסה
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            className="bg-green-600 hover:bg-green-700 text-white" 
+            onClick={() => setShowAddModal(true)}
+          >
+            <Plus className="ml-1 h-4 w-4" />
+            הוספת הכנסה
+          </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={() => setShowImportModal(true)}
+          >
+            <Import className="ml-1 h-4 w-4" />
+            ייבוא הכנסות מפגישות
+          </Button>
+        </div>
         
         <div className="flex gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:flex-none sm:w-64">
@@ -181,6 +198,12 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
         open={showAddModal}
         onOpenChange={setShowAddModal}
         onSuccess={handleAddSuccess}
+      />
+
+      <ImportIncomeFromSessionsModal
+        open={showImportModal}
+        onOpenChange={setShowImportModal}
+        onSuccess={handleImportSuccess}
       />
     </div>
   );
