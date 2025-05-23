@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { supabaseClient } from '@/lib/supabaseClient';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,9 +26,12 @@ interface PaymentMethod {
   name: string;
 }
 
-const FinancialSettings: React.FC = () => {
+// Create a QueryClient instance
+const queryClient = new QueryClient();
+
+const FinancialSettingsContent: React.FC = () => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const localQueryClient = useQueryClient();
   
   // State for dialogs
   const [isCategoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -117,7 +119,7 @@ const FinancialSettings: React.FC = () => {
         title: "נשמר בהצלחה",
         description: "הקטגוריה נשמרה בהצלחה",
       });
-      queryClient.invalidateQueries({ queryKey: ['financeCategories'] });
+      localQueryClient.invalidateQueries({ queryKey: ['financeCategories'] });
       setCategoryDialogOpen(false);
       setCurrentCategory(null);
     },
@@ -161,7 +163,7 @@ const FinancialSettings: React.FC = () => {
         title: "נשמר בהצלחה",
         description: "אמצעי התשלום נשמר בהצלחה",
       });
-      queryClient.invalidateQueries({ queryKey: ['paymentMethods'] });
+      localQueryClient.invalidateQueries({ queryKey: ['paymentMethods'] });
       setPaymentMethodDialogOpen(false);
       setCurrentPaymentMethod(null);
     },
@@ -195,7 +197,7 @@ const FinancialSettings: React.FC = () => {
         description: `${itemType} נמחק בהצלחה`,
       });
       
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      localQueryClient.invalidateQueries({ queryKey: [queryKey] });
       setDeleteDialogOpen(false);
       setItemToDelete(null);
     },
@@ -524,6 +526,14 @@ const FinancialSettings: React.FC = () => {
         </AlertDialog>
       </div>
     </AdminLayout>
+  );
+};
+
+const FinancialSettings: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <FinancialSettingsContent />
+    </QueryClientProvider>
   );
 };
 
