@@ -26,6 +26,34 @@ interface EditIncomeModalProps {
 
 const financeService = new FinanceService();
 
+// מיפוי בין עברית לאנגלית
+const categoryMapping = {
+  'טיפולים': 'therapy',
+  'ייעוץ': 'consultation',
+  'סדנאות': 'workshop',
+  'אחר': 'other'
+};
+
+const paymentMethodMapping = {
+  'מזומן': 'cash',
+  'ביט': 'bit',
+  'העברה': 'transfer'
+};
+
+// מיפוי הפוך - מאנגלית לעברית
+const reverseCategoryMapping = {
+  'therapy': 'טיפולים',
+  'consultation': 'ייעוץ',
+  'workshop': 'סדנאות',
+  'other': 'אחר'
+};
+
+const reversePaymentMethodMapping = {
+  'cash': 'מזומן',
+  'bit': 'ביט',
+  'transfer': 'העברה'
+};
+
 const EditIncomeModal: React.FC<EditIncomeModalProps> = ({ 
   open, 
   onOpenChange, 
@@ -79,8 +107,9 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
       setDate(transaction.date);
       setAmount(transaction.amount.toString());
       setSource(transaction.source || '');
-      setCategory(transaction.category);
-      setPaymentMethod(transaction.payment_method);
+      // המר מאנגלית לעברית לתצוגה
+      setCategory(reverseCategoryMapping[transaction.category as keyof typeof reverseCategoryMapping] || transaction.category);
+      setPaymentMethod(reversePaymentMethodMapping[transaction.payment_method as keyof typeof reversePaymentMethodMapping] || transaction.payment_method);
       setReferenceNumber(transaction.reference_number || '');
       setReceiptNumber(transaction.receipt_number || '');
       setSessionId(transaction.session_id?.toString() || '');
@@ -111,10 +140,11 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
       date: new Date(date), // Convert to Date object
       amount: parseFloat(amount),
       source,
-      category,
+      // המר מעברית לאנגלית לשמירה במסד הנתונים
+      category: categoryMapping[category as keyof typeof categoryMapping] || category,
       client_id: clientId === 'other' ? null : (clientId ? parseInt(clientId) : null),
       client_name: clientId === 'other' ? customClientName : (selectedPatient?.name || customClientName),
-      payment_method: paymentMethod,
+      payment_method: paymentMethodMapping[paymentMethod as keyof typeof paymentMethodMapping] || paymentMethod,
       reference_number: referenceNumber || null,
       receipt_number: receiptNumber || null,
       session_id: sessionId ? parseInt(sessionId) : null,
@@ -192,10 +222,10 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
                   <SelectValue placeholder="בחר קטגוריה" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="therapy">טיפולים</SelectItem>
-                  <SelectItem value="consultation">ייעוץ</SelectItem>
-                  <SelectItem value="workshop">סדנאות</SelectItem>
-                  <SelectItem value="other">אחר</SelectItem>
+                  <SelectItem value="טיפולים">טיפולים</SelectItem>
+                  <SelectItem value="ייעוץ">ייעוץ</SelectItem>
+                  <SelectItem value="סדנאות">סדנאות</SelectItem>
+                  <SelectItem value="אחר">אחר</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -242,9 +272,9 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
                   <SelectValue placeholder="בחר אמצעי תשלום" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cash">מזומן</SelectItem>
-                  <SelectItem value="bit">ביט</SelectItem>
-                  <SelectItem value="transfer">העברה</SelectItem>
+                  <SelectItem value="מזומן">מזומן</SelectItem>
+                  <SelectItem value="ביט">ביט</SelectItem>
+                  <SelectItem value="העברה">העברה</SelectItem>
                 </SelectContent>
               </Select>
             </div>
