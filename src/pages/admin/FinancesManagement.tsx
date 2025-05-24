@@ -7,6 +7,7 @@ import FinancialChart from '@/components/admin/finances/FinancialChart';
 import FinancialTabs from '@/components/admin/finances/FinancialTabs';
 import { DateRange, PeriodType } from '@/types/finances';
 import { getDateRangeForPeriod } from '@/utils/financeUtils';
+import { useFinancialChartData } from '@/hooks/useFinancialChartData';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient();
@@ -18,9 +19,8 @@ const FinancesManagementContent = () => {
 
   const [period, setPeriod] = useState<PeriodType>('3months');
 
-  // Mock data for chart - will be replaced with real API calls
-  const mockChartData = [];
-  const isLoading = false;
+  // Use real chart data
+  const { data: chartData = [], isLoading } = useFinancialChartData(dateRange);
 
   const handlePeriodChange = (newPeriod: PeriodType) => {
     setPeriod(newPeriod);
@@ -38,7 +38,7 @@ const FinancesManagementContent = () => {
           dateRange={dateRange} 
           onPeriodChange={handlePeriodChange} 
           currentPeriod={period}
-          data={mockChartData}
+          data={chartData}
           isLoading={isLoading}
         />
         <FinancialTabs dateRange={dateRange} />

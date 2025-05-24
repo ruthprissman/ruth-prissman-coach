@@ -1,4 +1,3 @@
-
 import { supabaseClient } from '@/lib/supabaseClient';
 import { Transaction, Expense, DateRange } from '@/types/finances';
 
@@ -132,6 +131,92 @@ export class FinanceService {
       }
     } catch (err) {
       console.error('Error deleting transaction:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Get aggregated financial data for chart display
+   */
+  public async getFinancialChartData(dateRange: DateRange): Promise<any[]> {
+    try {
+      const client = supabaseClient();
+      
+      // Get income data grouped by month
+      const { data: incomeData, error: incomeError } = await client
+        .from('transactions')
+        .select('date, amount')
+        .eq('type', 'income')
+        .gte('date', dateRange.start.toISOString().split('T')[0])
+        .lte('date', dateRange.end.toISOString().split('T')[0]);
+      
+      if (incomeError) {
+        throw incomeError;
+      }
+      
+      // Get expense data grouped by month
+      const { data: expenseData, error: expenseError } = await client
+        .from('transactions')
+        .select('date, amount')
+        .eq('type', 'expense')
+        .gte('date', dateRange.start.toISOString().split('T')[0])
+        .lte('date', dateRange.end.toISOString().split('T')[0]);
+      
+      if (expenseError) {
+        throw expenseError;
+      }
+      
+      // Group data by month
+      const monthlyData = new Map();
+      
+      // Process income data
+      (incomeData || []).forEach((transaction: any) => {
+        const date = new Date(transaction.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const monthName = date.toLocaleDateString('he-IL', { year: 'numeric', month: 'short' });
+        
+        if (!monthlyData.has(monthKey)) {
+          monthlyData.set(monthKey, {
+            name: monthName,
+            הכנסות: 0,
+            הוצאות: 0,
+            רווח: 0
+          });
+        }
+        
+        const current = monthlyData.get(monthKey);
+        current.הכנסות += transaction.amount;
+        current.רווח = current.הכנסות - current.הוצאות;
+      });
+      
+      // Process expense data
+      (expenseData || []).forEach((transaction: any) => {
+        const date = new Date(transaction.date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const monthName = date.toLocaleDateString('he-IL', { year: 'numeric', month: 'short' });
+        
+        if (!monthlyData.has(monthKey)) {
+          monthlyData.set(monthKey, {
+            name: monthName,
+            הכנסות: 0,
+            הוצאות: 0,
+            רווח: 0
+          });
+        }
+        
+        const current = monthlyData.get(monthKey);
+        current.הוצאות += transaction.amount;
+        current.רווח = current.הכנסות - current.הוצאות;
+      });
+      
+      // Convert to array and sort by date
+      const result = Array.from(monthlyData.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([, data]) => data);
+      
+      return result;
+    } catch (err) {
+      console.error('Error fetching financial chart data:', err);
       throw err;
     }
   }
