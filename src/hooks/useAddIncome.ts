@@ -25,6 +25,12 @@ export const useAddIncome = () => {
     mutationFn: async (data: AddIncomeData) => {
       const client = supabaseClient();
       
+      // המרה מעברית לאנגלית לסטטוס
+      const statusMapping = {
+        'מאושר': 'confirmed',
+        'טיוטה': 'draft'
+      };
+      
       const transactionData = {
         date: data.date.toISOString().split('T')[0],
         amount: data.amount,
@@ -37,8 +43,10 @@ export const useAddIncome = () => {
         reference_number: data.reference_number || null,
         receipt_number: data.receipt_number || null,
         session_id: data.session_id || null,
-        status: data.status
+        status: statusMapping[data.status as keyof typeof statusMapping] || 'draft'
       };
+
+      console.log('Sending transaction data:', transactionData);
 
       const { data: result, error } = await client
         .from('transactions')
@@ -47,6 +55,7 @@ export const useAddIncome = () => {
         .single();
 
       if (error) {
+        console.error('Database error:', error);
         throw error;
       }
 
@@ -61,6 +70,7 @@ export const useAddIncome = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Add income error:', error);
       toast({
         title: "שגיאה בהוספת הכנסה",
         description: error.message,
