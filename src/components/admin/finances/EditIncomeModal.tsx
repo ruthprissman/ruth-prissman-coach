@@ -108,7 +108,7 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
     const selectedPatient = patients.find(p => p.id.toString() === clientId);
     
     const updates = {
-      date: date.toISOString().split('T')[0],
+      date: new Date(date), // Convert to Date object
       amount: parseFloat(amount),
       source,
       category,
