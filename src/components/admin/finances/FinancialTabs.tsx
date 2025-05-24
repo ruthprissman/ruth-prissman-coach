@@ -18,7 +18,6 @@ const FinancialTabs: React.FC<FinancialTabsProps> = ({ dateRange }) => {
   const {
     incomeData,
     isLoading: isIncomeLoading,
-    handleEdit: handleIncomeEdit,
     handleDelete: handleIncomeDelete,
     handleRefresh: handleIncomeRefresh
   } = useIncomeData(dateRange);
@@ -59,7 +58,6 @@ const FinancialTabs: React.FC<FinancialTabsProps> = ({ dateRange }) => {
             data={incomeData}
             isLoading={isIncomeLoading}
             onRefresh={handleIncomeRefresh}
-            onEdit={handleIncomeEdit}
             onDelete={handleIncomeDelete}
           />
         </TabsContent>

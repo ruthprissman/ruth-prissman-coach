@@ -22,31 +22,12 @@ export const useIncomeData = (dateRange: DateRange) => {
     enabled: !!dateRange.start && !!dateRange.end
   });
 
-  // Mutation for updating a transaction
-  const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: number; updates: Partial<Transaction> }) =>
-      financeService.updateTransaction(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['incomeData'] });
-      toast({
-        title: "עודכן בהצלחה",
-        description: "הרשומה עודכנה בהצלחה",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "שגיאה בעדכון",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
   // Mutation for deleting a transaction
   const deleteMutation = useMutation({
     mutationFn: (id: number) => financeService.deleteTransaction(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['incomeData'] });
+      queryClient.invalidateQueries({ queryKey: ['financialChartData'] });
       toast({
         title: "נמחק בהצלחה",
         description: "הרשומה נמחקה בהצלחה",
@@ -60,11 +41,6 @@ export const useIncomeData = (dateRange: DateRange) => {
       });
     }
   });
-
-  const handleEdit = (transaction: Transaction) => {
-    // This will be implemented when edit modal is created
-    console.log('Edit transaction:', transaction);
-  };
 
   const handleDelete = (id: number) => {
     if (window.confirm('האם אתה בטוח שברצונך למחוק רשומה זו?')) {
@@ -80,11 +56,8 @@ export const useIncomeData = (dateRange: DateRange) => {
     incomeData,
     isLoading,
     error,
-    handleEdit,
     handleDelete,
     handleRefresh,
-    updateTransaction: updateMutation.mutate,
-    isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending
   };
 };

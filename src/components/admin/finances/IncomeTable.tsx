@@ -6,6 +6,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Plus, Search, FileEdit, Trash2, Filter, ExternalLink, Import } from 'lucide-react';
 import { DateRange, Transaction } from '@/types/finances';
 import AddIncomeModal from './AddIncomeModal';
+import EditIncomeModal from './EditIncomeModal';
 import ImportIncomeFromSessionsModal from './ImportIncomeFromSessionsModal';
 import { IncomeFilters } from './IncomeFilters';
 
@@ -27,6 +28,8 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
   onDelete
 }) => {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -45,15 +48,20 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
     onRefresh();
   };
 
+  const handleEditSuccess = () => {
+    setShowEditModal(false);
+    setSelectedTransaction(null);
+    onRefresh();
+  };
+
   const handleImportSuccess = () => {
     setShowImportModal(false);
     onRefresh();
   };
 
   const handleEdit = (transaction: Transaction) => {
-    if (onEdit) {
-      onEdit(transaction);
-    }
+    setSelectedTransaction(transaction);
+    setShowEditModal(true);
   };
 
   const handleDelete = (id: number) => {
@@ -155,9 +163,9 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
                     </TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        row.status === 'מאושר' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                        row.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
                       }`}>
-                        {row.status}
+                        {row.status === 'confirmed' ? 'מאושר' : 'טיוטה'}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -198,6 +206,13 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
         open={showAddModal}
         onOpenChange={setShowAddModal}
         onSuccess={handleAddSuccess}
+      />
+
+      <EditIncomeModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        transaction={selectedTransaction}
+        onSuccess={handleEditSuccess}
       />
 
       <ImportIncomeFromSessionsModal
