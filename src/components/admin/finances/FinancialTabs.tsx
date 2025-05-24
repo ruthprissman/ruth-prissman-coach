@@ -4,8 +4,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import IncomeTable from './IncomeTable';
 import ExpensesTable from './ExpensesTable';
-import { DateRange, Transaction, Expense } from '@/types/finances';
+import { DateRange } from '@/types/finances';
 import { useIncomeData } from '@/hooks/useIncomeData';
+import { useExpenseData } from '@/hooks/useExpenseData';
 
 interface FinancialTabsProps {
   dateRange: DateRange;
@@ -22,20 +23,17 @@ const FinancialTabs: React.FC<FinancialTabsProps> = ({ dateRange }) => {
     handleRefresh: handleIncomeRefresh
   } = useIncomeData(dateRange);
 
-  // Mock data for expenses - will be replaced with real data later
-  const mockExpenseData: Expense[] = [];
-  const isExpenseLoading = false;
+  // Use the real expense data hook
+  const {
+    expenseData,
+    isLoading: isExpenseLoading,
+    handleDelete: handleExpenseDelete,
+    handleRefresh: handleExpenseRefresh
+  } = useExpenseData(dateRange);
 
-  const handleExpenseRefresh = () => {
-    console.log('Refreshing expense data...');
-  };
-
-  const handleExpenseEdit = (item: Expense) => {
-    console.log('Edit expense:', item);
-  };
-
-  const handleExpenseDelete = (id: number) => {
-    console.log('Delete expense:', id);
+  const handleExpenseEdit = (expense: any) => {
+    console.log('Edit expense:', expense);
+    // TODO: Implement edit functionality for expenses
   };
 
   return (
@@ -65,7 +63,7 @@ const FinancialTabs: React.FC<FinancialTabsProps> = ({ dateRange }) => {
         <TabsContent value="expenses" className="p-0 border-none">
           <ExpensesTable 
             dateRange={dateRange}
-            data={mockExpenseData}
+            data={expenseData}
             isLoading={isExpenseLoading}
             onRefresh={handleExpenseRefresh}
             onEdit={handleExpenseEdit}

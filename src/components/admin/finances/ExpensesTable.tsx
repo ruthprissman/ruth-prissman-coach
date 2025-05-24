@@ -17,6 +17,12 @@ interface ExpensesTableProps {
   onDelete?: (id: number) => void;
 }
 
+// מיפוי סטטוס מאנגלית לעברית
+const statusMapping = {
+  'confirmed': 'מאושר',
+  'draft': 'טיוטה'
+};
+
 const ExpensesTable: React.FC<ExpensesTableProps> = ({ 
   dateRange,
   data,
@@ -135,9 +141,9 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
                     </TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        row.status === 'מאושר' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                        row.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
                       }`}>
-                        {row.status}
+                        {statusMapping[row.status as keyof typeof statusMapping] || row.status}
                       </span>
                     </TableCell>
                     <TableCell>
