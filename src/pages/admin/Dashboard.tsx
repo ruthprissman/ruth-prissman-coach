@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -467,7 +466,10 @@ const Dashboard: React.FC = () => {
               <Card className="w-full">
                 <CardHeader className="flex items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xl font-bold text-right">סטטיסטיקות תשלומים</CardTitle>
-                  <div className="w-6"></div>
+                  <Link to="/admin/finances" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                    <span>לניהול כספים</span>
+                    <ArrowUpRight className="w-4 h-4 ms-1" />
+                  </Link>
                 </CardHeader>
                 <CardContent className="pt-4 text-right">
                   {paymentStats.loading ? <div className="flex justify-center items-center py-8">
