@@ -81,38 +81,7 @@ const FinancialChart: React.FC<FinancialChartProps> = ({
         </div>
         
         <div className="flex gap-4">
-          {/* Chart Section */}
-          <div className="flex-1">
-            {isLoading ? (
-              <div className="flex justify-center items-center h-[300px]">
-                <div className="text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-                  <div className="mt-2">טוען נתונים...</div>
-                </div>
-              </div>
-            ) : (
-              <div style={{ direction: "ltr", height: "300px" }}>
-                <ChartContainer config={config} className="h-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip 
-                        formatter={(value) => new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS' }).format(Number(value))}
-                      />
-                      <Legend wrapperStyle={{ paddingTop: "10px" }} />
-                      <Bar dataKey="הכנסות" fill="#4ade80" />
-                      <Bar dataKey="הוצאות" fill="#f87171" />
-                      <Bar dataKey="רווח" fill="#60a5fa" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </div>
-            )}
-          </div>
-
-          {/* Summary Section - Compact Side Panel */}
+          {/* Summary Section - Right Side */}
           <div className="w-48 space-y-3">
             <h4 className="text-sm font-semibold text-muted-foreground mb-3 text-right">סיכום כללי</h4>
             
@@ -159,6 +128,37 @@ const FinancialChart: React.FC<FinancialChartProps> = ({
                   </div>
                 </div>
               </>
+            )}
+          </div>
+
+          {/* Chart Section - Left Side */}
+          <div className="flex-1">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-[300px]">
+                <div className="text-center">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                  <div className="mt-2">טוען נתונים...</div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ direction: "ltr", height: "300px" }}>
+                <ChartContainer config={config} className="h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value) => new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS' }).format(Number(value))}
+                      />
+                      <Legend wrapperStyle={{ paddingTop: "10px" }} />
+                      <Bar dataKey="הכנסות" fill="#4ade80" />
+                      <Bar dataKey="הוצאות" fill="#f87171" />
+                      <Bar dataKey="רווח" fill="#60a5fa" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
             )}
           </div>
         </div>
