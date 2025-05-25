@@ -143,6 +143,52 @@ export class FinanceService {
   }
 
   /**
+   * Get financial summary for a date range
+   */
+  public async getFinancialSummary(dateRange: DateRange): Promise<{ totalIncome: number; totalExpenses: number; netProfit: number }> {
+    try {
+      const client = supabaseClient();
+      
+      // Get total income
+      const { data: incomeData, error: incomeError } = await client
+        .from('transactions')
+        .select('amount')
+        .eq('type', 'income')
+        .gte('date', dateRange.start.toISOString().split('T')[0])
+        .lte('date', dateRange.end.toISOString().split('T')[0]);
+      
+      if (incomeError) {
+        throw incomeError;
+      }
+      
+      // Get total expenses
+      const { data: expenseData, error: expenseError } = await client
+        .from('transactions')
+        .select('amount')
+        .eq('type', 'expense')
+        .gte('date', dateRange.start.toISOString().split('T')[0])
+        .lte('date', dateRange.end.toISOString().split('T')[0]);
+      
+      if (expenseError) {
+        throw expenseError;
+      }
+      
+      const totalIncome = (incomeData || []).reduce((sum, item) => sum + item.amount, 0);
+      const totalExpenses = (expenseData || []).reduce((sum, item) => sum + item.amount, 0);
+      const netProfit = totalIncome - totalExpenses;
+      
+      return {
+        totalIncome,
+        totalExpenses,
+        netProfit
+      };
+    } catch (err) {
+      console.error('Error fetching financial summary:', err);
+      throw err;
+    }
+  }
+
+  /**
    * Get aggregated financial data for chart display
    */
   public async getFinancialChartData(dateRange: DateRange): Promise<any[]> {

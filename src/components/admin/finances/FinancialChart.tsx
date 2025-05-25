@@ -54,6 +54,7 @@ const FinancialChart: React.FC<FinancialChartProps> = ({
               <SelectItem value="quarter">רבעון</SelectItem>
               <SelectItem value="3months">3 חודשים</SelectItem>
               <SelectItem value="year">שנה</SelectItem>
+              <SelectItem value="alltime">מתחילת הנתונים</SelectItem>
             </SelectContent>
           </Select>
         </div>

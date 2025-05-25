@@ -31,6 +31,12 @@ export const getDateRangeForPeriod = (period: PeriodType | string): DateRange =>
         end: endOfMonth(now)
       };
       
+    case 'alltime':
+      return {
+        start: new Date('2020-01-01'), // Start from a very early date
+        end: endOfMonth(now)
+      };
+      
     default:
       return {
         start: startOfMonth(subMonths(now, 1)),

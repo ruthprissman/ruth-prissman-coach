@@ -1,10 +1,9 @@
-
 export interface DateRange {
   start: Date;
   end: Date;
 }
 
-export type PeriodType = 'month' | 'quarter' | '3months' | 'year';
+export type PeriodType = 'month' | 'quarter' | '3months' | 'year' | 'alltime';
 
 export interface Transaction {
   id: number;
