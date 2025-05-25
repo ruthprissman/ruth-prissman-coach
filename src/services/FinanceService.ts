@@ -52,6 +52,8 @@ export class FinanceService {
     try {
       const client = supabaseClient();
       
+      console.log('Fetching expense transactions from:', dateRange.start.toISOString().split('T')[0], 'to:', dateRange.end.toISOString().split('T')[0]);
+      
       const { data, error } = await client
         .from('transactions')
         .select(`
@@ -59,11 +61,10 @@ export class FinanceService {
           date,
           amount,
           category,
-          payee,
-          description,
+          client_name,
+          source,
           payment_method,
           reference_number,
-          attachment_url,
           status,
           type
         `)
@@ -73,12 +74,18 @@ export class FinanceService {
         .order('date', { ascending: false });
       
       if (error) {
+        console.error('Database error fetching expenses:', error);
         throw error;
       }
       
+      console.log('Raw expense data from DB:', data);
+      
+      // Map the data to match the Expense interface
       return (data || []).map(expense => ({
         ...expense,
-        date: new Date(expense.date)
+        date: new Date(expense.date),
+        payee: expense.client_name || expense.source || 'לא צוין', // Use client_name or source as payee
+        description: `${expense.category || ''} - ${expense.source || ''}`.trim().replace(/^-\s*|-\s*$/, '') || 'ללא תיאור' // Create description from available fields
       })) as Expense[];
     } catch (err) {
       console.error('Error fetching expense transactions:', err);
