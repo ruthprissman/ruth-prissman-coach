@@ -19,6 +19,20 @@ interface IncomeTableProps {
   onDelete?: (id: number) => void;
 }
 
+// מיפוי לתצוגה בעברית
+const categoryDisplayMapping = {
+  'therapy': 'טיפולים',
+  'consultation': 'ייעוץ',
+  'workshop': 'סדנאות',
+  'other': 'אחר'
+};
+
+const paymentMethodDisplayMapping = {
+  'cash': 'מזומן',
+  'bit': 'ביט',
+  'transfer': 'העברה'
+};
+
 const IncomeTable: React.FC<IncomeTableProps> = ({ 
   dateRange,
   data,
@@ -149,9 +163,9 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
                     <TableCell>{row.date instanceof Date ? row.date.toLocaleDateString('he-IL') : new Date(row.date).toLocaleDateString('he-IL')}</TableCell>
                     <TableCell className="font-medium">₪{row.amount.toLocaleString()}</TableCell>
                     <TableCell>{row.source}</TableCell>
-                    <TableCell>{row.category}</TableCell>
+                    <TableCell>{categoryDisplayMapping[row.category as keyof typeof categoryDisplayMapping] || row.category}</TableCell>
                     <TableCell>{row.client_name}</TableCell>
-                    <TableCell>{row.payment_method}</TableCell>
+                    <TableCell>{paymentMethodDisplayMapping[row.payment_method as keyof typeof paymentMethodDisplayMapping] || row.payment_method}</TableCell>
                     <TableCell>{row.reference_number || '-'}</TableCell>
                     <TableCell>{row.receipt_number || '-'}</TableCell>
                     <TableCell>

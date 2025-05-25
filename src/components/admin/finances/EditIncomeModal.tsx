@@ -104,12 +104,18 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
   // טען נתונים קיימים כשהמודל נפתח
   useEffect(() => {
     if (transaction && open) {
+      console.log('Loading transaction data:', transaction);
       setDate(transaction.date);
       setAmount(transaction.amount.toString());
       setSource(transaction.source || '');
-      // המר מאנגלית לעברית לתצוגה
-      setCategory(reverseCategoryMapping[transaction.category as keyof typeof reverseCategoryMapping] || transaction.category);
-      setPaymentMethod(reversePaymentMethodMapping[transaction.payment_method as keyof typeof reversePaymentMethodMapping] || transaction.payment_method);
+      
+      // המר מאנגלית לעברית לתצוגה - עם בדיקה שהערך קיים
+      const categoryInHebrew = reverseCategoryMapping[transaction.category as keyof typeof reverseCategoryMapping];
+      setCategory(categoryInHebrew || transaction.category);
+      
+      const paymentMethodInHebrew = reversePaymentMethodMapping[transaction.payment_method as keyof typeof reversePaymentMethodMapping];
+      setPaymentMethod(paymentMethodInHebrew || transaction.payment_method);
+      
       setReferenceNumber(transaction.reference_number || '');
       setReceiptNumber(transaction.receipt_number || '');
       setSessionId(transaction.session_id?.toString() || '');
@@ -124,6 +130,9 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
         setClientId('other');
         setCustomClientName(transaction.client_name || '');
       }
+      
+      console.log('Category set to:', categoryInHebrew || transaction.category);
+      console.log('Payment method set to:', paymentMethodInHebrew || transaction.payment_method);
     }
   }, [transaction, open, patients]);
 
@@ -136,15 +145,20 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
 
     const selectedPatient = patients.find(p => p.id.toString() === clientId);
     
+    // המר מעברית לאנגלית לשמירה במסד הנתונים
+    const categoryInEnglish = categoryMapping[category as keyof typeof categoryMapping] || category;
+    const paymentMethodInEnglish = paymentMethodMapping[paymentMethod as keyof typeof paymentMethodMapping] || paymentMethod;
+    
+    console.log('Submitting updates with category:', categoryInEnglish, 'payment method:', paymentMethodInEnglish);
+    
     const updates = {
       date: new Date(date), // Convert to Date object
       amount: parseFloat(amount),
       source,
-      // המר מעברית לאנגלית לשמירה במסד הנתונים
-      category: categoryMapping[category as keyof typeof categoryMapping] || category,
+      category: categoryInEnglish,
       client_id: clientId === 'other' ? null : (clientId ? parseInt(clientId) : null),
       client_name: clientId === 'other' ? customClientName : (selectedPatient?.name || customClientName),
-      payment_method: paymentMethodMapping[paymentMethod as keyof typeof paymentMethodMapping] || paymentMethod,
+      payment_method: paymentMethodInEnglish,
       reference_number: referenceNumber || null,
       receipt_number: receiptNumber || null,
       session_id: sessionId ? parseInt(sessionId) : null,
