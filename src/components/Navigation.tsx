@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -49,8 +50,8 @@ export function Navigation() {
       scrolled ? "bg-white/90 backdrop-blur-sm shadow-md" : "bg-transparent"
     )}>
       <div className="container mx-auto px-4 py-3">
-        <div className="flex flex-wrap justify-between items-center">
-          <div className="md:hidden order-1">
+        <div className="flex justify-between items-center">
+          <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="text-[#4A235A] p-2 focus:outline-none"
@@ -59,7 +60,7 @@ export function Navigation() {
             </button>
           </div>
           
-          <div className="hidden md:flex items-center space-x-6 space-x-reverse order-2">
+          <div className="hidden md:flex items-center space-x-6 space-x-reverse">
             {navItems.map((item) => (
               <Link
                 key={item.name}
@@ -73,12 +74,6 @@ export function Navigation() {
                 {item.icon ? item.icon : item.name}
               </Link>
             ))}
-          </div>
-
-          {/* Copyright notice - updated with line break after the dash */}
-          <div className="text-[#4A235A] text-xxs md:text-xxs order-3 w-full md:w-auto md:order-3 mt-2 md:mt-0 text-right">
-            © כל הזכויות על השיטה שמורות לשמחה אביטן - <br className="hidden xs:inline" />
-            מפתחת השיטה קוד הנפש
           </div>
         </div>
 
