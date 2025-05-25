@@ -6,6 +6,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@
 import { Plus, Search, FileEdit, Trash2, Filter, Paperclip } from 'lucide-react';
 import { DateRange, Expense } from '@/types/finances';
 import AddExpenseModal from './AddExpenseModal';
+import EditExpenseModal from './EditExpenseModal';
 import { ExpenseFilters } from './ExpenseFilters';
 
 interface ExpensesTableProps {
@@ -16,6 +17,23 @@ interface ExpensesTableProps {
   onEdit?: (expense: Expense) => void;
   onDelete?: (id: number) => void;
 }
+
+// מיפוי לתצוגה בעברית
+const categoryDisplayMapping = {
+  'rent': 'שכירות',
+  'supplies': 'ציוד משרדי',
+  'services': 'שירותים מקצועיים',
+  'taxes': 'מסים',
+  'utilities': 'חשבונות',
+  'other': 'אחר'
+};
+
+const paymentMethodDisplayMapping = {
+  'credit': 'אשראי',
+  'transfer': 'העברה בנקאית',
+  'cash': 'מזומן',
+  'check': 'צ\'ק'
+};
 
 // מיפוי סטטוס מאנגלית לעברית
 const statusMapping = {
@@ -32,6 +50,8 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
   onDelete
 }) => {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -48,10 +68,16 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
     onRefresh();
   };
 
+  const handleEditSuccess = () => {
+    setShowEditModal(false);
+    setSelectedExpense(null);
+    onRefresh();
+  };
+
   const handleEdit = (expense: Expense) => {
-    if (onEdit) {
-      onEdit(expense);
-    }
+    console.log('Edit expense clicked:', expense);
+    setSelectedExpense(expense);
+    setShowEditModal(true);
   };
 
   const handleDelete = (id: number) => {
@@ -127,10 +153,10 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
                   <TableRow key={row.id}>
                     <TableCell>{row.date instanceof Date ? row.date.toLocaleDateString('he-IL') : new Date(row.date).toLocaleDateString('he-IL')}</TableCell>
                     <TableCell className="font-medium">₪{row.amount.toLocaleString()}</TableCell>
-                    <TableCell>{row.category}</TableCell>
+                    <TableCell>{categoryDisplayMapping[row.category as keyof typeof categoryDisplayMapping] || row.category}</TableCell>
                     <TableCell>{row.payee}</TableCell>
                     <TableCell>{row.description}</TableCell>
-                    <TableCell>{row.payment_method}</TableCell>
+                    <TableCell>{paymentMethodDisplayMapping[row.payment_method as keyof typeof paymentMethodDisplayMapping] || row.payment_method}</TableCell>
                     <TableCell>{row.reference_number || '-'}</TableCell>
                     <TableCell>
                       {row.attachment_url ? (
@@ -184,6 +210,13 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
         open={showAddModal}
         onOpenChange={setShowAddModal}
         onSuccess={handleAddSuccess}
+      />
+
+      <EditExpenseModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        expense={selectedExpense}
+        onSuccess={handleEditSuccess}
       />
     </div>
   );
