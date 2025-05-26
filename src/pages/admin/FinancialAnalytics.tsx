@@ -14,6 +14,7 @@ import MonthlyFinanceChart from '@/components/admin/analytics/MonthlyFinanceChar
 import ProfitTrendChart from '@/components/admin/analytics/ProfitTrendChart';
 import TopClientsChart from '@/components/admin/analytics/TopClientsChart';
 import { useToast } from '@/hooks/use-toast';
+import { useFinancialChartData } from '@/hooks/useFinancialChartData';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient();
@@ -48,6 +49,10 @@ const FinancialAnalyticsContent: React.FC = () => {
         start = startOfMonth(subMonths(now, 12));
         end = endOfMonth(now);
         break;
+      case "alltime":
+        start = new Date(2020, 0, 1); // Start from 2020
+        end = endOfMonth(now);
+        break;
       default:
         start = startOfMonth(subMonths(now, 1));
         end = endOfMonth(now);
@@ -56,42 +61,33 @@ const FinancialAnalyticsContent: React.FC = () => {
     setDateRange({ start, end });
   }, [period]);
 
-  // Fetch monthly summary data
-  const { data: monthlySummaryData, isLoading: isLoadingMonthlySummary } = useQuery({
-    queryKey: ['financialSummary', 'monthly'],
-    queryFn: async () => {
-      try {
-        const supabase = await supabaseClient();
-        // Implement actual data fetching from the transactions table
-        // This would typically join with categories and group by month
-        // For now, return placeholder structure that will be replaced with real data
-        return Array.from({ length: 12 }, (_, i) => ({
-          name: format(subMonths(new Date(), 11 - i), 'MMM'),
-          הכנסות: 0,
-          הוצאות: 0,
-          רווח: 0
-        }));
-      } catch (error: any) {
-        console.error('Error fetching monthly summary:', error);
-        toast({
-          title: "שגיאה בטעינת נתונים",
-          description: error.message,
-          variant: "destructive",
-        });
-        return [];
-      }
-    }
-  });
+  // Use the existing financial chart data hook
+  const { data: monthlySummaryData = [], isLoading: isLoadingMonthlySummary } = useFinancialChartData(dateRange);
 
   // Fetch income categories data
   const { data: incomeCategoriesData, isLoading: isLoadingIncomeCategories } = useQuery({
-    queryKey: ['incomeCategories'],
+    queryKey: ['incomeCategories', dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       try {
-        const supabase = await supabaseClient();
-        // Implement actual data fetching from transactions joined with categories
-        // Group by category and sum amounts where type = 'income'
-        return [];
+        const supabase = supabaseClient();
+        
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('category, amount')
+          .eq('type', 'income')
+          .gte('date', dateRange.start.toISOString().split('T')[0])
+          .lte('date', dateRange.end.toISOString().split('T')[0]);
+        
+        if (error) throw error;
+        
+        // Group by category and sum amounts
+        const categoryTotals = (data || []).reduce((acc: Record<string, number>, transaction) => {
+          const category = transaction.category || 'אחר';
+          acc[category] = (acc[category] || 0) + transaction.amount;
+          return acc;
+        }, {});
+        
+        return Object.entries(categoryTotals).map(([name, value]) => ({ name, value }));
       } catch (error: any) {
         console.error('Error fetching income categories:', error);
         toast({
@@ -106,13 +102,28 @@ const FinancialAnalyticsContent: React.FC = () => {
 
   // Fetch expense categories data
   const { data: expenseCategoriesData, isLoading: isLoadingExpenseCategories } = useQuery({
-    queryKey: ['expenseCategories'],
+    queryKey: ['expenseCategories', dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       try {
-        const supabase = await supabaseClient();
-        // Implement actual data fetching from transactions joined with categories
-        // Group by category and sum amounts where type = 'expense'
-        return [];
+        const supabase = supabaseClient();
+        
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('category, amount')
+          .eq('type', 'expense')
+          .gte('date', dateRange.start.toISOString().split('T')[0])
+          .lte('date', dateRange.end.toISOString().split('T')[0]);
+        
+        if (error) throw error;
+        
+        // Group by category and sum amounts
+        const categoryTotals = (data || []).reduce((acc: Record<string, number>, transaction) => {
+          const category = transaction.category || 'אחר';
+          acc[category] = (acc[category] || 0) + transaction.amount;
+          return acc;
+        }, {});
+        
+        return Object.entries(categoryTotals).map(([name, value]) => ({ name, value }));
       } catch (error: any) {
         console.error('Error fetching expense categories:', error);
         toast({
@@ -130,10 +141,43 @@ const FinancialAnalyticsContent: React.FC = () => {
     queryKey: ['profitTrend'],
     queryFn: async () => {
       try {
-        const supabase = await supabaseClient();
-        // Implement actual data fetching for profit trends
-        // Calculate monthly profit (income - expenses) for last 12 months
-        return [];
+        const supabase = supabaseClient();
+        const last12Months = subMonths(new Date(), 12);
+        
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('date, amount, type')
+          .gte('date', last12Months.toISOString().split('T')[0])
+          .lte('date', new Date().toISOString().split('T')[0]);
+        
+        if (error) throw error;
+        
+        // Group by month and calculate profit
+        const monthlyData = new Map();
+        
+        (data || []).forEach((transaction: any) => {
+          const date = new Date(transaction.date);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          const monthName = date.toLocaleDateString('he-IL', { year: 'numeric', month: 'short' });
+          
+          if (!monthlyData.has(monthKey)) {
+            monthlyData.set(monthKey, { name: monthName, income: 0, expenses: 0 });
+          }
+          
+          const current = monthlyData.get(monthKey);
+          if (transaction.type === 'income') {
+            current.income += transaction.amount;
+          } else {
+            current.expenses += transaction.amount;
+          }
+        });
+        
+        return Array.from(monthlyData.entries())
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([, data]) => ({
+            name: data.name,
+            רווח: data.income - data.expenses
+          }));
       } catch (error: any) {
         console.error('Error fetching profit trend:', error);
         toast({
@@ -148,14 +192,32 @@ const FinancialAnalyticsContent: React.FC = () => {
 
   // Fetch top clients data
   const { data: topClientsData, isLoading: isLoadingTopClients } = useQuery({
-    queryKey: ['topClients'],
+    queryKey: ['topClients', dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
       try {
-        const supabase = await supabaseClient();
-        // Implement actual data fetching for top clients
-        // Group by client_name and sum amounts where type = 'income'
-        // Order by sum desc and limit to 10
-        return [];
+        const supabase = supabaseClient();
+        
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('client_name, amount')
+          .eq('type', 'income')
+          .gte('date', dateRange.start.toISOString().split('T')[0])
+          .lte('date', dateRange.end.toISOString().split('T')[0])
+          .not('client_name', 'is', null);
+        
+        if (error) throw error;
+        
+        // Group by client and sum amounts
+        const clientTotals = (data || []).reduce((acc: Record<string, number>, transaction) => {
+          const clientName = transaction.client_name || 'לא צוין';
+          acc[clientName] = (acc[clientName] || 0) + transaction.amount;
+          return acc;
+        }, {});
+        
+        return Object.entries(clientTotals)
+          .map(([name, הכנסות]) => ({ name, הכנסות }))
+          .sort((a, b) => b.הכנסות - a.הכנסות)
+          .slice(0, 10);
       } catch (error: any) {
         console.error('Error fetching top clients:', error);
         toast({
