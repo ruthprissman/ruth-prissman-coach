@@ -100,7 +100,8 @@ const RecurringSessionDialog: React.FC<RecurringSessionDialogProps> = ({
       for (let i = 0; i < recurringCount; i++) {
         // Create a new session date for each recurring instance
         const sessionDate = new Date(startDate);
-        sessionDate.setDate(sessionDate.getDate() + (i * 7)); // Weekly sessions
+        // Add weeks instead of days - this is the fix!
+        sessionDate.setDate(sessionDate.getDate() + (i * 7)); 
         sessionDate.setHours(hours, minutes); // Set the time component
         
         // Convert local date to ISO string
@@ -108,7 +109,8 @@ const RecurringSessionDialog: React.FC<RecurringSessionDialogProps> = ({
         
         console.log(`Recurring Session ${i+1} - Date:`, {
           original: sessionDate.toString(),
-          iso: isoDate
+          iso: isoDate,
+          weekNumber: i + 1
         });
 
         sessions.push({
@@ -128,7 +130,7 @@ const RecurringSessionDialog: React.FC<RecurringSessionDialogProps> = ({
 
       toast({
         title: "פגישות חוזרות נוצרו בהצלחה",
-        description: `נוצרו ${recurringCount} פגישות בלוח הזמנים`,
+        description: `נוצרו ${recurringCount} פגישות שבועיות בלוח הזמנים`,
       });
 
       if (onCreated) onCreated();
