@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,21 +59,21 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
 
     if (searchTerm && !textMatch) return false;
 
-    // סינון תאריך
-    if (filters.date) {
+    // סינון טווח תאריכים
+    if (filters.startDate || filters.endDate) {
       const itemDate = new Date(item.date);
-      const filterDate = new Date(filters.date);
-      if (itemDate.toDateString() !== filterDate.toDateString()) return false;
+      if (filters.startDate && itemDate < filters.startDate) return false;
+      if (filters.endDate && itemDate > filters.endDate) return false;
     }
 
     // סינון קטגוריה
-    if (filters.category && item.category !== filters.category) return false;
+    if (filters.category && filters.category !== 'all' && item.category !== filters.category) return false;
 
     // סינון אמצעי תשלום
-    if (filters.paymentMethod && item.payment_method !== filters.paymentMethod) return false;
+    if (filters.paymentMethod && filters.paymentMethod !== 'all' && item.payment_method !== filters.paymentMethod) return false;
 
     // סינון לקוח
-    if (filters.client && item.client_name && !item.client_name.includes(filters.client)) return false;
+    if (filters.client && filters.client !== 'all' && item.client_name !== filters.client) return false;
 
     return true;
   });

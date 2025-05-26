@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,15 +65,15 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
 
     if (searchTerm && !textMatch) return false;
 
-    // סינון תאריך
-    if (filters.date) {
+    // סינון טווח תאריכים
+    if (filters.startDate || filters.endDate) {
       const itemDate = new Date(item.date);
-      const filterDate = new Date(filters.date);
-      if (itemDate.toDateString() !== filterDate.toDateString()) return false;
+      if (filters.startDate && itemDate < filters.startDate) return false;
+      if (filters.endDate && itemDate > filters.endDate) return false;
     }
 
     // סינון קטגוריה
-    if (filters.category && item.category !== filters.category) return false;
+    if (filters.category && filters.category !== 'all' && item.category !== filters.category) return false;
 
     // סינון טווח סכום
     if (filters.minAmount && item.amount < filters.minAmount) return false;

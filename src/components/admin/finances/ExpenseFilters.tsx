@@ -9,10 +9,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useFinanceCategories } from '@/hooks/useFinanceCategories';
 
 interface ExpenseFiltersProps {
   onFiltersChange?: (filters: {
-    date?: Date;
+    startDate?: Date;
+    endDate?: Date;
     category?: string;
     minAmount?: number;
     maxAmount?: number;
@@ -21,26 +23,32 @@ interface ExpenseFiltersProps {
 }
 
 export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange }) => {
-  const [date, setDate] = React.useState<Date>();
+  const [startDate, setStartDate] = React.useState<Date>();
+  const [endDate, setEndDate] = React.useState<Date>();
   const [category, setCategory] = React.useState<string>('');
   const [minAmount, setMinAmount] = React.useState<string>('');
   const [maxAmount, setMaxAmount] = React.useState<string>('');
   const [payee, setPayee] = React.useState<string>('');
 
+  // Fetch expense categories from database
+  const { data: categories = [] } = useFinanceCategories('expense');
+
   const handleFilterChange = React.useCallback(() => {
     if (onFiltersChange) {
       onFiltersChange({
-        date,
+        startDate,
+        endDate,
         category,
         minAmount: minAmount ? parseFloat(minAmount) : undefined,
         maxAmount: maxAmount ? parseFloat(maxAmount) : undefined,
         payee
       });
     }
-  }, [date, category, minAmount, maxAmount, payee, onFiltersChange]);
+  }, [startDate, endDate, category, minAmount, maxAmount, payee, onFiltersChange]);
 
   const handleClearFilters = () => {
-    setDate(undefined);
+    setStartDate(undefined);
+    setEndDate(undefined);
     setCategory('');
     setMinAmount('');
     setMaxAmount('');
@@ -57,27 +65,54 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange 
   
   return (
     <Card className="mb-4">
-      <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="flex flex-col">
-          <label className="text-sm text-muted-foreground mb-2">תאריך</label>
+          <label className="text-sm text-muted-foreground mb-2">מתאריך</label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant={"outline"}
                 className={cn(
                   "w-full justify-start text-right font-normal",
-                  !date && "text-muted-foreground"
+                  !startDate && "text-muted-foreground"
                 )}
               >
                 <CalendarIcon className="ml-2 h-4 w-4" />
-                {date ? format(date, "dd/MM/yyyy") : <span>בחר תאריך</span>}
+                {startDate ? format(startDate, "dd/MM/yyyy") : <span>בחר תאריך התחלה</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={date}
-                onSelect={setDate}
+                selected={startDate}
+                onSelect={setStartDate}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-sm text-muted-foreground mb-2">עד תאריך</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-full justify-start text-right font-normal",
+                  !endDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="ml-2 h-4 w-4" />
+                {endDate ? format(endDate, "dd/MM/yyyy") : <span>בחר תאריך סיום</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={setEndDate}
                 initialFocus
                 className="p-3 pointer-events-auto"
               />
@@ -92,13 +127,12 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange 
               <SelectValue placeholder="כל הקטגוריות" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">כל הקטגוריות</SelectItem>
-              <SelectItem value="rent">שכירות</SelectItem>
-              <SelectItem value="supplies">ציוד משרדי</SelectItem>
-              <SelectItem value="services">שירותים מקצועיים</SelectItem>
-              <SelectItem value="taxes">מסים</SelectItem>
-              <SelectItem value="utilities">חשבונות</SelectItem>
-              <SelectItem value="other">אחר</SelectItem>
+              <SelectItem value="all">כל הקטגוריות</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.name}>
+                  {cat.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
