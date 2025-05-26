@@ -11,8 +11,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { usePatients } from '@/hooks/usePatients';
 import { useAddIncome } from '@/hooks/useAddIncome';
+import { useFinanceCategories } from '@/hooks/useFinanceCategories';
+import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 
 interface AddIncomeModalProps {
   open: boolean;
@@ -25,68 +26,53 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange, onS
   const [amount, setAmount] = React.useState('');
   const [source, setSource] = React.useState('');
   const [category, setCategory] = React.useState('');
-  const [clientId, setClientId] = React.useState<string>('');
-  const [customClientName, setCustomClientName] = React.useState('');
+  const [clientName, setClientName] = React.useState('');
   const [paymentMethod, setPaymentMethod] = React.useState('');
   const [referenceNumber, setReferenceNumber] = React.useState('');
   const [receiptNumber, setReceiptNumber] = React.useState('');
-  const [sessionId, setSessionId] = React.useState('');
   const [isConfirmed, setIsConfirmed] = React.useState(false);
 
-  const { data: patients = [], isLoading: isPatientsLoading } = usePatients();
   const addIncomeMutation = useAddIncome();
-
-  const resetForm = () => {
-    setDate(new Date());
-    setAmount('');
-    setSource('');
-    setCategory('');
-    setClientId('');
-    setCustomClientName('');
-    setPaymentMethod('');
-    setReferenceNumber('');
-    setReceiptNumber('');
-    setSessionId('');
-    setIsConfirmed(false);
-  };
+  const { data: incomeCategories, isLoading: categoriesLoading } = useFinanceCategories('income');
+  const { data: paymentMethods, isLoading: paymentMethodsLoading } = usePaymentMethods();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!date || !amount || !source || !category || !paymentMethod) {
+    if (!date || !amount || !source || !paymentMethod) {
       return;
     }
 
-    const selectedPatient = patients.find(p => p.id.toString() === clientId);
-    
     const incomeData = {
       date,
       amount: parseFloat(amount),
       source,
-      category,
-      client_id: clientId === 'other' ? undefined : (clientId ? parseInt(clientId) : undefined),
-      client_name: clientId === 'other' ? customClientName : (selectedPatient?.name || customClientName),
+      category: category || 'other',
+      client_name: clientName,
       payment_method: paymentMethod,
-      reference_number: referenceNumber || undefined,
-      receipt_number: receiptNumber || undefined,
-      session_id: sessionId ? parseInt(sessionId) : undefined,
+      reference_number: referenceNumber,
+      receipt_number: receiptNumber,
       status: isConfirmed ? 'מאושר' : 'טיוטה'
     };
 
     addIncomeMutation.mutate(incomeData, {
       onSuccess: () => {
+        // Reset form
+        setAmount('');
+        setSource('');
+        setCategory('');
+        setClientName('');
+        setPaymentMethod('');
+        setReferenceNumber('');
+        setReceiptNumber('');
+        setIsConfirmed(false);
+        setDate(new Date());
+        
         onSuccess();
         onOpenChange(false);
-        resetForm();
       }
     });
   };
-
-  React.useEffect(() => {
-    if (!open) {
-      resetForm();
-    }
-  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -137,7 +123,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange, onS
             </div>
 
             <div className="flex flex-col space-y-2">
-              <Label htmlFor="source">מקור *</Label>
+              <Label htmlFor="source">מקור הכנסה *</Label>
               <Input 
                 id="source" 
                 placeholder="הזן מקור הכנסה" 
@@ -148,54 +134,40 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange, onS
             </div>
 
             <div className="flex flex-col space-y-2">
-              <Label htmlFor="category">קטגוריה *</Label>
-              <Select value={category} onValueChange={setCategory} required>
+              <Label htmlFor="category">קטגוריה</Label>
+              <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger id="category">
                   <SelectValue placeholder="בחר קטגוריה" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="therapy">טיפולים</SelectItem>
-                  <SelectItem value="consultation">ייעוץ</SelectItem>
-                  <SelectItem value="workshop">סדנאות</SelectItem>
-                  <SelectItem value="other">אחר</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="client">שם משלם</Label>
-              <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger id="client">
-                  <SelectValue placeholder="בחר לקוח או אחר" />
-                </SelectTrigger>
-                <SelectContent>
-                  {isPatientsLoading ? (
-                    <SelectItem value="" disabled>טוען לקוחות...</SelectItem>
+                  {categoriesLoading ? (
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      טוען קטגוריות...
+                    </div>
+                  ) : incomeCategories && incomeCategories.length > 0 ? (
+                    incomeCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </SelectItem>
+                    ))
                   ) : (
-                    <>
-                      {patients.map((patient) => (
-                        <SelectItem key={patient.id} value={patient.id.toString()}>
-                          {patient.name}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="other">אחר</SelectItem>
-                    </>
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      לא נמצאו קטגוריות הכנסה
+                    </div>
                   )}
                 </SelectContent>
               </Select>
             </div>
 
-            {clientId === 'other' && (
-              <div className="flex flex-col space-y-2">
-                <Label htmlFor="customClient">שם משלם מותאם אישית</Label>
-                <Input 
-                  id="customClient" 
-                  placeholder="הזן שם משלם" 
-                  value={customClientName}
-                  onChange={(e) => setCustomClientName(e.target.value)}
-                />
-              </div>
-            )}
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="client_name">שם משלם</Label>
+              <Input 
+                id="client_name" 
+                placeholder="הזן שם משלם" 
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+              />
+            </div>
 
             <div className="flex flex-col space-y-2">
               <Label htmlFor="payment_method">אמצעי תשלום *</Label>
@@ -204,9 +176,21 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange, onS
                   <SelectValue placeholder="בחר אמצעי תשלום" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cash">מזומן</SelectItem>
-                  <SelectItem value="bit">ביט</SelectItem>
-                  <SelectItem value="transfer">העברה</SelectItem>
+                  {paymentMethodsLoading ? (
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      טוען אמצעי תשלום...
+                    </div>
+                  ) : paymentMethods && paymentMethods.length > 0 ? (
+                    paymentMethods.map((method) => (
+                      <SelectItem key={method.id} value={method.name}>
+                        {method.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      לא נמצאו אמצעי תשלום
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -215,7 +199,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange, onS
               <Label htmlFor="reference">מספר אסמכתא</Label>
               <Input 
                 id="reference" 
-                placeholder="הזן מספר אסמכתא" 
+                placeholder="הזן מספר אסמכתא"
                 value={referenceNumber}
                 onChange={(e) => setReferenceNumber(e.target.value)}
               />
@@ -225,20 +209,9 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange, onS
               <Label htmlFor="receipt">מספר קבלה</Label>
               <Input 
                 id="receipt" 
-                placeholder="הזן מספר קבלה" 
+                placeholder="הזן מספר קבלה"
                 value={receiptNumber}
                 onChange={(e) => setReceiptNumber(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col space-y-2">
-              <Label htmlFor="session">קישור לפגישה</Label>
-              <Input 
-                id="session" 
-                type="number"
-                placeholder="מספר פגישה (אופציונלי)" 
-                value={sessionId}
-                onChange={(e) => setSessionId(e.target.value)}
               />
             </div>
 

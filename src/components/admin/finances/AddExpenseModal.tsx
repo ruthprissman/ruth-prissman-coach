@@ -13,6 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAddExpense } from '@/hooks/useAddExpense';
+import { useFinanceCategories } from '@/hooks/useFinanceCategories';
+import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 
 interface AddExpenseModalProps {
   open: boolean;
@@ -31,6 +33,8 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
   const [isConfirmed, setIsConfirmed] = React.useState(false);
 
   const addExpenseMutation = useAddExpense();
+  const { data: expenseCategories, isLoading: categoriesLoading } = useFinanceCategories('expense');
+  const { data: paymentMethods, isLoading: paymentMethodsLoading } = usePaymentMethods();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,12 +127,21 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
                   <SelectValue placeholder="בחר קטגוריה" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="שכירות">שכירות</SelectItem>
-                  <SelectItem value="ציוד משרדי">ציוד משרדי</SelectItem>
-                  <SelectItem value="שירותים מקצועיים">שירותים מקצועיים</SelectItem>
-                  <SelectItem value="מסים">מסים</SelectItem>
-                  <SelectItem value="חשבונות">חשבונות</SelectItem>
-                  <SelectItem value="אחר">אחר</SelectItem>
+                  {categoriesLoading ? (
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      טוען קטגוריות...
+                    </div>
+                  ) : expenseCategories && expenseCategories.length > 0 ? (
+                    expenseCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      לא נמצאו קטגוריות הוצאה
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -161,10 +174,21 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
                   <SelectValue placeholder="בחר אמצעי תשלום" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="אשראי">אשראי</SelectItem>
-                  <SelectItem value="העברה בנקאית">העברה בנקאית</SelectItem>
-                  <SelectItem value="מזומן">מזומן</SelectItem>
-                  <SelectItem value="צ'ק">צ'ק</SelectItem>
+                  {paymentMethodsLoading ? (
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      טוען אמצעי תשלום...
+                    </div>
+                  ) : paymentMethods && paymentMethods.length > 0 ? (
+                    paymentMethods.map((method) => (
+                      <SelectItem key={method.id} value={method.name}>
+                        {method.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      לא נמצאו אמצעי תשלום
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
