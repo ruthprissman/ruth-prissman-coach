@@ -12,6 +12,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { usePatients } from '@/hooks/usePatients';
+import { useFinanceCategories } from '@/hooks/useFinanceCategories';
+import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 import { Transaction } from '@/types/finances';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FinanceService } from '@/services/FinanceService';
@@ -25,34 +27,6 @@ interface EditIncomeModalProps {
 }
 
 const financeService = new FinanceService();
-
-// מיפוי בין עברית לאנגלית
-const categoryMapping = {
-  'טיפולים': 'therapy',
-  'ייעוץ': 'consultation',
-  'סדנאות': 'workshop',
-  'אחר': 'other'
-};
-
-const paymentMethodMapping = {
-  'מזומן': 'cash',
-  'ביט': 'bit',
-  'העברה': 'transfer'
-};
-
-// מיפוי הפוך - מאנגלית לעברית
-const reverseCategoryMapping = {
-  'therapy': 'טיפולים',
-  'consultation': 'ייעוץ',
-  'workshop': 'סדנאות',
-  'other': 'אחר'
-};
-
-const reversePaymentMethodMapping = {
-  'cash': 'מזומן',
-  'bit': 'ביט',
-  'transfer': 'העברה'
-};
 
 const EditIncomeModal: React.FC<EditIncomeModalProps> = ({ 
   open, 
@@ -73,6 +47,8 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
   const [isConfirmed, setIsConfirmed] = React.useState(false);
 
   const { data: patients = [], isLoading: isPatientsLoading } = usePatients();
+  const { data: incomeCategories, isLoading: categoriesLoading } = useFinanceCategories('income');
+  const { data: paymentMethods, isLoading: paymentMethodsLoading } = usePaymentMethods();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -108,14 +84,8 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
       setDate(transaction.date);
       setAmount(transaction.amount.toString());
       setSource(transaction.source || '');
-      
-      // המר מאנגלית לעברית לתצוגה - עם בדיקה שהערך קיים
-      const categoryInHebrew = reverseCategoryMapping[transaction.category as keyof typeof reverseCategoryMapping];
-      setCategory(categoryInHebrew || transaction.category);
-      
-      const paymentMethodInHebrew = reversePaymentMethodMapping[transaction.payment_method as keyof typeof reversePaymentMethodMapping];
-      setPaymentMethod(paymentMethodInHebrew || transaction.payment_method);
-      
+      setCategory(transaction.category);
+      setPaymentMethod(transaction.payment_method);
       setReferenceNumber(transaction.reference_number || '');
       setReceiptNumber(transaction.receipt_number || '');
       setSessionId(transaction.session_id?.toString() || '');
@@ -130,9 +100,6 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
         setClientId('other');
         setCustomClientName(transaction.client_name || '');
       }
-      
-      console.log('Category set to:', categoryInHebrew || transaction.category);
-      console.log('Payment method set to:', paymentMethodInHebrew || transaction.payment_method);
     }
   }, [transaction, open, patients]);
 
@@ -145,20 +112,14 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
 
     const selectedPatient = patients.find(p => p.id.toString() === clientId);
     
-    // המר מעברית לאנגלית לשמירה במסד הנתונים
-    const categoryInEnglish = categoryMapping[category as keyof typeof categoryMapping] || category;
-    const paymentMethodInEnglish = paymentMethodMapping[paymentMethod as keyof typeof paymentMethodMapping] || paymentMethod;
-    
-    console.log('Submitting updates with category:', categoryInEnglish, 'payment method:', paymentMethodInEnglish);
-    
     const updates = {
-      date: new Date(date), // Convert to Date object
+      date: new Date(date),
       amount: parseFloat(amount),
       source,
-      category: categoryInEnglish,
+      category,
       client_id: clientId === 'other' ? null : (clientId ? parseInt(clientId) : null),
       client_name: clientId === 'other' ? customClientName : (selectedPatient?.name || customClientName),
-      payment_method: paymentMethodInEnglish,
+      payment_method: paymentMethod,
       reference_number: referenceNumber || null,
       receipt_number: receiptNumber || null,
       session_id: sessionId ? parseInt(sessionId) : null,
@@ -230,16 +191,27 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
             </div>
 
             <div className="flex flex-col space-y-2">
-              <Label htmlFor="category">קטגוריה *</Label>
-              <Select value={category} onValueChange={setCategory} required>
+              <Label htmlFor="category">קטגוריה</Label>
+              <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger id="category">
                   <SelectValue placeholder="בחר קטגוריה" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="טיפולים">טיפולים</SelectItem>
-                  <SelectItem value="ייעוץ">ייעוץ</SelectItem>
-                  <SelectItem value="סדנאות">סדנאות</SelectItem>
-                  <SelectItem value="אחר">אחר</SelectItem>
+                  {categoriesLoading ? (
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      טוען קטגוריות...
+                    </div>
+                  ) : incomeCategories && incomeCategories.length > 0 ? (
+                    incomeCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      לא נמצאו קטגוריות הכנסה
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -286,9 +258,21 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
                   <SelectValue placeholder="בחר אמצעי תשלום" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="מזומן">מזומן</SelectItem>
-                  <SelectItem value="ביט">ביט</SelectItem>
-                  <SelectItem value="העברה">העברה</SelectItem>
+                  {paymentMethodsLoading ? (
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      טוען אמצעי תשלום...
+                    </div>
+                  ) : paymentMethods && paymentMethods.length > 0 ? (
+                    paymentMethods.map((method) => (
+                      <SelectItem key={method.id} value={method.name}>
+                        {method.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-4 text-center text-muted-foreground">
+                      לא נמצאו אמצעי תשלום
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
