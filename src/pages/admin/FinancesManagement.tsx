@@ -3,11 +3,10 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AdminLayout from '@/components/admin/AdminLayout';
-import FinancialChart from '@/components/admin/finances/FinancialChart';
+import FinancialSummary from '@/components/admin/finances/FinancialSummary';
 import FinancialTabs from '@/components/admin/finances/FinancialTabs';
 import { DateRange, PeriodType } from '@/types/finances';
 import { getDateRangeForPeriod } from '@/utils/financeUtils';
-import { useFinancialChartData } from '@/hooks/useFinancialChartData';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient();
@@ -18,9 +17,6 @@ const FinancesManagementContent = () => {
   });
 
   const [period, setPeriod] = useState<PeriodType>('3months');
-
-  // Use real chart data
-  const { data: chartData = [], isLoading } = useFinancialChartData(dateRange);
 
   const handlePeriodChange = (newPeriod: PeriodType) => {
     setPeriod(newPeriod);
@@ -34,13 +30,7 @@ const FinancesManagementContent = () => {
       </Helmet>
 
       <div className="space-y-6">
-        <FinancialChart 
-          dateRange={dateRange} 
-          onPeriodChange={handlePeriodChange} 
-          currentPeriod={period}
-          data={chartData}
-          isLoading={isLoading}
-        />
+        <FinancialSummary />
         <FinancialTabs dateRange={dateRange} />
       </div>
     </AdminLayout>
