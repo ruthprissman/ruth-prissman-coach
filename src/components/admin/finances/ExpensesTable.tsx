@@ -54,14 +54,37 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<any>({});
 
-  const filteredData = data.filter(item => 
-    (item.payee && item.payee.includes(searchTerm)) ||
-    (item.category && item.category.includes(searchTerm)) ||
-    (item.description && item.description.includes(searchTerm)) ||
-    (item.payment_method && item.payment_method.includes(searchTerm)) ||
-    (item.reference_number && item.reference_number.includes(searchTerm))
-  );
+  const filteredData = data.filter(item => {
+    // סינון טקסט
+    const textMatch = (item.payee && item.payee.includes(searchTerm)) ||
+      (item.category && item.category.includes(searchTerm)) ||
+      (item.description && item.description.includes(searchTerm)) ||
+      (item.payment_method && item.payment_method.includes(searchTerm)) ||
+      (item.reference_number && item.reference_number.includes(searchTerm));
+
+    if (searchTerm && !textMatch) return false;
+
+    // סינון תאריך
+    if (filters.date) {
+      const itemDate = new Date(item.date);
+      const filterDate = new Date(filters.date);
+      if (itemDate.toDateString() !== filterDate.toDateString()) return false;
+    }
+
+    // סינון קטגוריה
+    if (filters.category && item.category !== filters.category) return false;
+
+    // סינון טווח סכום
+    if (filters.minAmount && item.amount < filters.minAmount) return false;
+    if (filters.maxAmount && item.amount > filters.maxAmount) return false;
+
+    // סינון למי שולם
+    if (filters.payee && item.payee && !item.payee.includes(filters.payee)) return false;
+
+    return true;
+  });
 
   const handleAddSuccess = () => {
     setShowAddModal(false);
@@ -84,6 +107,10 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
     if (onDelete) {
       onDelete(id);
     }
+  };
+
+  const handleFiltersChange = (newFilters: any) => {
+    setFilters(newFilters);
   };
 
   return (
@@ -119,7 +146,7 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
         </div>
       </div>
 
-      {showFilters && <ExpenseFilters />}
+      {showFilters && <ExpenseFilters onFiltersChange={handleFiltersChange} />}
 
       <div className="rounded-md border overflow-hidden">
         <div className="overflow-x-auto">

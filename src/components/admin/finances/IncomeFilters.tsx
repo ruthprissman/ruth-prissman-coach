@@ -10,8 +10,46 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-export const IncomeFilters = () => {
+interface IncomeFiltersProps {
+  onFiltersChange?: (filters: {
+    date?: Date;
+    category?: string;
+    paymentMethod?: string;
+    client?: string;
+  }) => void;
+}
+
+export const IncomeFilters: React.FC<IncomeFiltersProps> = ({ onFiltersChange }) => {
   const [date, setDate] = React.useState<Date>();
+  const [category, setCategory] = React.useState<string>('');
+  const [paymentMethod, setPaymentMethod] = React.useState<string>('');
+  const [client, setClient] = React.useState<string>('');
+
+  const handleFilterChange = React.useCallback(() => {
+    if (onFiltersChange) {
+      onFiltersChange({
+        date,
+        category,
+        paymentMethod,
+        client
+      });
+    }
+  }, [date, category, paymentMethod, client, onFiltersChange]);
+
+  const handleClearFilters = () => {
+    setDate(undefined);
+    setCategory('');
+    setPaymentMethod('');
+    setClient('');
+    
+    if (onFiltersChange) {
+      onFiltersChange({});
+    }
+  };
+
+  const handleApplyFilters = () => {
+    handleFilterChange();
+  };
   
   return (
     <Card className="mb-4">
@@ -45,12 +83,12 @@ export const IncomeFilters = () => {
         
         <div className="flex flex-col">
           <label className="text-sm text-muted-foreground mb-2">קטגוריה</label>
-          <Select>
+          <Select value={category} onValueChange={setCategory}>
             <SelectTrigger>
               <SelectValue placeholder="כל הקטגוריות" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">כל הקטגוריות</SelectItem>
+              <SelectItem value="">כל הקטגוריות</SelectItem>
               <SelectItem value="therapy">טיפולים</SelectItem>
               <SelectItem value="consultation">ייעוץ</SelectItem>
               <SelectItem value="workshop">סדנאות</SelectItem>
@@ -61,12 +99,12 @@ export const IncomeFilters = () => {
         
         <div className="flex flex-col">
           <label className="text-sm text-muted-foreground mb-2">אמצעי תשלום</label>
-          <Select>
+          <Select value={paymentMethod} onValueChange={setPaymentMethod}>
             <SelectTrigger>
               <SelectValue placeholder="כל אמצעי התשלום" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">הכל</SelectItem>
+              <SelectItem value="">הכל</SelectItem>
               <SelectItem value="credit">אשראי</SelectItem>
               <SelectItem value="transfer">העברה בנקאית</SelectItem>
               <SelectItem value="cash">מזומן</SelectItem>
@@ -77,22 +115,16 @@ export const IncomeFilters = () => {
         
         <div className="flex flex-col">
           <label className="text-sm text-muted-foreground mb-2">לקוח</label>
-          <Select>
-            <SelectTrigger>
-              <SelectValue placeholder="כל הלקוחות" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">כל הלקוחות</SelectItem>
-              <SelectItem value="123">ישראל ישראלי</SelectItem>
-              <SelectItem value="124">יעל כהן</SelectItem>
-              <SelectItem value="125">דוד לוי</SelectItem>
-            </SelectContent>
-          </Select>
+          <Input 
+            placeholder="חיפוש לקוח..." 
+            value={client}
+            onChange={(e) => setClient(e.target.value)}
+          />
         </div>
         
         <div className="col-span-full flex justify-end gap-2 mt-2">
-          <Button variant="outline">נקה הכל</Button>
-          <Button>החל סינון</Button>
+          <Button variant="outline" onClick={handleClearFilters}>נקה הכל</Button>
+          <Button onClick={handleApplyFilters}>החל סינון</Button>
         </div>
       </CardContent>
     </Card>

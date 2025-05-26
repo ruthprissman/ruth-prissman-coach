@@ -47,15 +47,37 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
   const [showImportModal, setShowImportModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<any>({});
 
-  const filteredData = data.filter(item => 
-    (item.client_name && item.client_name.includes(searchTerm)) ||
-    (item.source && item.source.includes(searchTerm)) ||
-    (item.category && item.category.includes(searchTerm)) ||
-    (item.payment_method && item.payment_method.includes(searchTerm)) ||
-    (item.reference_number && item.reference_number.includes(searchTerm)) ||
-    (item.receipt_number && item.receipt_number.includes(searchTerm))
-  );
+  const filteredData = data.filter(item => {
+    // סינון טקסט
+    const textMatch = (item.client_name && item.client_name.includes(searchTerm)) ||
+      (item.source && item.source.includes(searchTerm)) ||
+      (item.category && item.category.includes(searchTerm)) ||
+      (item.payment_method && item.payment_method.includes(searchTerm)) ||
+      (item.reference_number && item.reference_number.includes(searchTerm)) ||
+      (item.receipt_number && item.receipt_number.includes(searchTerm));
+
+    if (searchTerm && !textMatch) return false;
+
+    // סינון תאריך
+    if (filters.date) {
+      const itemDate = new Date(item.date);
+      const filterDate = new Date(filters.date);
+      if (itemDate.toDateString() !== filterDate.toDateString()) return false;
+    }
+
+    // סינון קטגוריה
+    if (filters.category && item.category !== filters.category) return false;
+
+    // סינון אמצעי תשלום
+    if (filters.paymentMethod && item.payment_method !== filters.paymentMethod) return false;
+
+    // סינון לקוח
+    if (filters.client && item.client_name && !item.client_name.includes(filters.client)) return false;
+
+    return true;
+  });
 
   const handleAddSuccess = () => {
     setShowAddModal(false);
@@ -82,6 +104,10 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
     if (onDelete) {
       onDelete(id);
     }
+  };
+
+  const handleFiltersChange = (newFilters: any) => {
+    setFilters(newFilters);
   };
 
   return (
@@ -127,7 +153,7 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
         </div>
       </div>
 
-      {showFilters && <IncomeFilters />}
+      {showFilters && <IncomeFilters onFiltersChange={handleFiltersChange} />}
 
       <div className="rounded-md border overflow-hidden">
         <div className="overflow-x-auto">

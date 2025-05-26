@@ -10,8 +10,50 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
-export const ExpenseFilters = () => {
+interface ExpenseFiltersProps {
+  onFiltersChange?: (filters: {
+    date?: Date;
+    category?: string;
+    minAmount?: number;
+    maxAmount?: number;
+    payee?: string;
+  }) => void;
+}
+
+export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange }) => {
   const [date, setDate] = React.useState<Date>();
+  const [category, setCategory] = React.useState<string>('');
+  const [minAmount, setMinAmount] = React.useState<string>('');
+  const [maxAmount, setMaxAmount] = React.useState<string>('');
+  const [payee, setPayee] = React.useState<string>('');
+
+  const handleFilterChange = React.useCallback(() => {
+    if (onFiltersChange) {
+      onFiltersChange({
+        date,
+        category,
+        minAmount: minAmount ? parseFloat(minAmount) : undefined,
+        maxAmount: maxAmount ? parseFloat(maxAmount) : undefined,
+        payee
+      });
+    }
+  }, [date, category, minAmount, maxAmount, payee, onFiltersChange]);
+
+  const handleClearFilters = () => {
+    setDate(undefined);
+    setCategory('');
+    setMinAmount('');
+    setMaxAmount('');
+    setPayee('');
+    
+    if (onFiltersChange) {
+      onFiltersChange({});
+    }
+  };
+
+  const handleApplyFilters = () => {
+    handleFilterChange();
+  };
   
   return (
     <Card className="mb-4">
@@ -45,12 +87,12 @@ export const ExpenseFilters = () => {
         
         <div className="flex flex-col">
           <label className="text-sm text-muted-foreground mb-2">קטגוריה</label>
-          <Select>
+          <Select value={category} onValueChange={setCategory}>
             <SelectTrigger>
               <SelectValue placeholder="כל הקטגוריות" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">כל הקטגוריות</SelectItem>
+              <SelectItem value="">כל הקטגוריות</SelectItem>
               <SelectItem value="rent">שכירות</SelectItem>
               <SelectItem value="supplies">ציוד משרדי</SelectItem>
               <SelectItem value="services">שירותים מקצועיים</SelectItem>
@@ -64,20 +106,36 @@ export const ExpenseFilters = () => {
         <div className="flex flex-col">
           <label className="text-sm text-muted-foreground mb-2">טווח סכום</label>
           <div className="flex gap-2 items-center">
-            <Input type="number" placeholder="מינימום" className="w-full" />
+            <Input 
+              type="number" 
+              placeholder="מינימום" 
+              className="w-full" 
+              value={minAmount}
+              onChange={(e) => setMinAmount(e.target.value)}
+            />
             <span className="text-muted-foreground">-</span>
-            <Input type="number" placeholder="מקסימום" className="w-full" />
+            <Input 
+              type="number" 
+              placeholder="מקסימום" 
+              className="w-full" 
+              value={maxAmount}
+              onChange={(e) => setMaxAmount(e.target.value)}
+            />
           </div>
         </div>
         
         <div className="flex flex-col">
           <label className="text-sm text-muted-foreground mb-2">למי שולם</label>
-          <Input placeholder="חיפוש ספק..." />
+          <Input 
+            placeholder="חיפוש ספק..." 
+            value={payee}
+            onChange={(e) => setPayee(e.target.value)}
+          />
         </div>
         
         <div className="col-span-full flex justify-end gap-2 mt-2">
-          <Button variant="outline">נקה הכל</Button>
-          <Button>החל סינון</Button>
+          <Button variant="outline" onClick={handleClearFilters}>נקה הכל</Button>
+          <Button onClick={handleApplyFilters}>החל סינון</Button>
         </div>
       </CardContent>
     </Card>
