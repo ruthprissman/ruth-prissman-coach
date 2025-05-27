@@ -1,6 +1,14 @@
-
 import { supabaseClient } from '@/lib/supabaseClient';
 import { Transaction, Expense, DateRange } from '@/types/finances';
+
+interface ExpenseFilters {
+  startDate?: Date;
+  endDate?: Date;
+  category?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  payee?: string;
+}
 
 export class FinanceService {
   /**
@@ -47,9 +55,9 @@ export class FinanceService {
   }
 
   /**
-   * Get expense transactions within a date range
+   * Get expense transactions within a date range with optional filters
    */
-  public async getExpenseTransactions(dateRange: DateRange): Promise<Expense[]> {
+  public async getExpenseTransactions(dateRange: DateRange, filters?: ExpenseFilters): Promise<Expense[]> {
     try {
       const client = supabaseClient();
       
@@ -58,23 +66,11 @@ export class FinanceService {
       
       console.log('=== EXPENSE FETCH DEBUG ===');
       console.log('Date range - Start:', startDate, 'End:', endDate);
+      console.log('Additional filters:', filters);
       console.log('Supabase client initialized:', !!client);
       
-      // First, let's check what data exists in the table with type 'expense'
-      const { data: allExpenses, error: allExpensesError } = await client
-        .from('transactions')
-        .select('*')
-        .eq('type', 'expense');
-        
-      console.log('All expenses in DB (no date filter):', allExpenses);
-      console.log('All expenses count:', allExpenses?.length || 0);
-      
-      if (allExpensesError) {
-        console.error('Error fetching all expenses:', allExpensesError);
-      }
-      
-      // Now fetch with date range
-      const { data, error } = await client
+      // Build the query
+      let query = client
         .from('transactions')
         .select(`
           id,
@@ -90,8 +86,33 @@ export class FinanceService {
         `)
         .eq('type', 'expense')
         .gte('date', startDate)
-        .lte('date', endDate)
-        .order('date', { ascending: false });
+        .lte('date', endDate);
+
+      // Apply additional filters
+      if (filters?.category && filters.category !== 'all') {
+        console.log('Applying category filter:', filters.category);
+        query = query.eq('category', filters.category);
+      }
+
+      if (filters?.minAmount !== undefined) {
+        console.log('Applying min amount filter:', filters.minAmount);
+        query = query.gte('amount', filters.minAmount);
+      }
+
+      if (filters?.maxAmount !== undefined) {
+        console.log('Applying max amount filter:', filters.maxAmount);
+        query = query.lte('amount', filters.maxAmount);
+      }
+
+      if (filters?.payee) {
+        console.log('Applying payee filter:', filters.payee);
+        // Search in both client_name and source fields
+        query = query.or(`client_name.ilike.%${filters.payee}%,source.ilike.%${filters.payee}%`);
+      }
+
+      query = query.order('date', { ascending: false });
+
+      const { data, error } = await query;
       
       console.log('Filtered expenses query result:', data);
       console.log('Filtered expenses count:', data?.length || 0);

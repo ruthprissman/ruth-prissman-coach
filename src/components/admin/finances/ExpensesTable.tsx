@@ -15,6 +15,7 @@ interface ExpensesTableProps {
   onRefresh: () => void;
   onEdit?: (expense: Expense) => void;
   onDelete?: (id: number) => void;
+  onFiltersChange?: (filters: any) => void;
 }
 
 // מיפוי לתצוגה בעברית
@@ -46,7 +47,8 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
   isLoading,
   onRefresh,
   onEdit,
-  onDelete
+  onDelete,
+  onFiltersChange
 }) => {
   console.log('ExpensesTable: Received props - data:', data, 'isLoading:', isLoading, 'dateRange:', dateRange);
 
@@ -55,36 +57,18 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<any>({});
 
+  // Only apply local search filter now, since DB filters are handled by the parent
   const filteredData = data.filter(item => {
-    // סינון טקסט
+    if (!searchTerm) return true;
+    
     const textMatch = (item.payee && item.payee.includes(searchTerm)) ||
       (item.category && item.category.includes(searchTerm)) ||
       (item.description && item.description.includes(searchTerm)) ||
       (item.payment_method && item.payment_method.includes(searchTerm)) ||
       (item.reference_number && item.reference_number.includes(searchTerm));
 
-    if (searchTerm && !textMatch) return false;
-
-    // סינון טווח תאריכים
-    if (filters.startDate || filters.endDate) {
-      const itemDate = new Date(item.date);
-      if (filters.startDate && itemDate < filters.startDate) return false;
-      if (filters.endDate && itemDate > filters.endDate) return false;
-    }
-
-    // סינון קטגוריה
-    if (filters.category && filters.category !== 'all' && item.category !== filters.category) return false;
-
-    // סינון טווח סכום
-    if (filters.minAmount && item.amount < filters.minAmount) return false;
-    if (filters.maxAmount && item.amount > filters.maxAmount) return false;
-
-    // סינון למי שולם
-    if (filters.payee && item.payee && !item.payee.includes(filters.payee)) return false;
-
-    return true;
+    return textMatch;
   });
 
   console.log('ExpensesTable: Filtered data:', filteredData);
@@ -113,7 +97,10 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
   };
 
   const handleFiltersChange = (newFilters: any) => {
-    setFilters(newFilters);
+    console.log('ExpensesTable: Filters changed:', newFilters);
+    if (onFiltersChange) {
+      onFiltersChange(newFilters);
+    }
   };
 
   return (

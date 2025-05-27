@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FinanceService } from '@/services/FinanceService';
 import { Expense, DateRange } from '@/types/finances';
@@ -5,14 +6,30 @@ import { useToast } from '@/hooks/use-toast';
 
 const financeService = new FinanceService();
 
-export const useExpenseData = (dateRange: DateRange) => {
+interface ExpenseFilters {
+  startDate?: Date;
+  endDate?: Date;
+  category?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  payee?: string;
+}
+
+export const useExpenseData = (dateRange: DateRange, filters?: ExpenseFilters) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   console.log('=== useExpenseData HOOK DEBUG ===');
   console.log('Hook called with dateRange:', dateRange);
-  console.log('DateRange start:', dateRange.start);
-  console.log('DateRange end:', dateRange.end);
+  console.log('Hook called with filters:', filters);
+
+  // Use filter dates if provided, otherwise use dateRange
+  const effectiveDateRange = {
+    start: filters?.startDate || dateRange.start,
+    end: filters?.endDate || dateRange.end
+  };
+
+  console.log('Effective date range:', effectiveDateRange);
 
   // Query for expense data
   const {
@@ -21,12 +38,13 @@ export const useExpenseData = (dateRange: DateRange) => {
     error,
     refetch
   } = useQuery({
-    queryKey: ['expenseData', dateRange.start.toISOString(), dateRange.end.toISOString()],
+    queryKey: ['expenseData', effectiveDateRange.start.toISOString(), effectiveDateRange.end.toISOString(), filters],
     queryFn: async () => {
       console.log('useExpenseData: Query function executing...');
-      console.log('useExpenseData: Fetching expenses for date range:', dateRange);
+      console.log('useExpenseData: Fetching expenses for date range:', effectiveDateRange);
+      console.log('useExpenseData: With filters:', filters);
       try {
-        const result = await financeService.getExpenseTransactions(dateRange);
+        const result = await financeService.getExpenseTransactions(effectiveDateRange, filters);
         console.log('useExpenseData: Received expenses from service:', result);
         console.log('useExpenseData: Number of expenses received:', result.length);
         return result;
@@ -35,7 +53,7 @@ export const useExpenseData = (dateRange: DateRange) => {
         throw error;
       }
     },
-    enabled: !!dateRange.start && !!dateRange.end,
+    enabled: !!effectiveDateRange.start && !!effectiveDateRange.end,
     retry: 1,
     retryDelay: 1000
   });
