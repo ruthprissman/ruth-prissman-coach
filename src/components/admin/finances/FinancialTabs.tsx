@@ -6,7 +6,6 @@ import IncomeTable from './IncomeTable';
 import ExpensesTable from './ExpensesTable';
 import { DateRange } from '@/types/finances';
 import { useIncomeData } from '@/hooks/useIncomeData';
-import { useExpenseData } from '@/hooks/useExpenseData';
 
 interface FinancialTabsProps {
   dateRange: DateRange;
@@ -22,19 +21,6 @@ const FinancialTabs: React.FC<FinancialTabsProps> = ({ dateRange }) => {
     handleDelete: handleIncomeDelete,
     handleRefresh: handleIncomeRefresh
   } = useIncomeData(dateRange);
-
-  // Use the real expense data hook
-  const {
-    expenseData,
-    isLoading: isExpenseLoading,
-    handleDelete: handleExpenseDelete,
-    handleRefresh: handleExpenseRefresh
-  } = useExpenseData(dateRange);
-
-  const handleExpenseEdit = (expense: any) => {
-    console.log('Edit expense:', expense);
-    // TODO: Implement edit functionality for expenses
-  };
 
   return (
     <Card className="w-full">
@@ -63,11 +49,6 @@ const FinancialTabs: React.FC<FinancialTabsProps> = ({ dateRange }) => {
         <TabsContent value="expenses" className="p-0 border-none">
           <ExpensesTable 
             dateRange={dateRange}
-            data={expenseData}
-            isLoading={isExpenseLoading}
-            onRefresh={handleExpenseRefresh}
-            onEdit={handleExpenseEdit}
-            onDelete={handleExpenseDelete}
           />
         </TabsContent>
       </Tabs>
