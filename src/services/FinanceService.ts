@@ -1,3 +1,4 @@
+
 import { supabaseClient } from '@/lib/supabaseClient';
 import { Transaction, Expense, DateRange } from '@/types/finances';
 
@@ -52,8 +53,27 @@ export class FinanceService {
     try {
       const client = supabaseClient();
       
-      console.log('Fetching expense transactions from:', dateRange.start.toISOString().split('T')[0], 'to:', dateRange.end.toISOString().split('T')[0]);
+      const startDate = dateRange.start.toISOString().split('T')[0];
+      const endDate = dateRange.end.toISOString().split('T')[0];
       
+      console.log('=== EXPENSE FETCH DEBUG ===');
+      console.log('Date range - Start:', startDate, 'End:', endDate);
+      console.log('Supabase client initialized:', !!client);
+      
+      // First, let's check what data exists in the table with type 'expense'
+      const { data: allExpenses, error: allExpensesError } = await client
+        .from('transactions')
+        .select('*')
+        .eq('type', 'expense');
+        
+      console.log('All expenses in DB (no date filter):', allExpenses);
+      console.log('All expenses count:', allExpenses?.length || 0);
+      
+      if (allExpensesError) {
+        console.error('Error fetching all expenses:', allExpensesError);
+      }
+      
+      // Now fetch with date range
       const { data, error } = await client
         .from('transactions')
         .select(`
@@ -69,9 +89,13 @@ export class FinanceService {
           type
         `)
         .eq('type', 'expense')
-        .gte('date', dateRange.start.toISOString().split('T')[0])
-        .lte('date', dateRange.end.toISOString().split('T')[0])
+        .gte('date', startDate)
+        .lte('date', endDate)
         .order('date', { ascending: false });
+      
+      console.log('Filtered expenses query result:', data);
+      console.log('Filtered expenses count:', data?.length || 0);
+      console.log('Query error:', error);
       
       if (error) {
         console.error('Database error fetching expenses:', error);
@@ -81,14 +105,23 @@ export class FinanceService {
       console.log('Raw expense data from DB:', data);
       
       // Map the data to match the Expense interface
-      return (data || []).map(expense => ({
-        ...expense,
-        date: new Date(expense.date),
-        // Use client_name or source as payee
-        payee: expense.client_name || expense.source || 'לא צוין',
-        // Create description from available fields
-        description: `${expense.category || ''} - ${expense.source || ''}`.trim().replace(/^-\s*|-\s*$/, '') || 'ללא תיאור'
-      })) as Expense[];
+      const mappedExpenses = (data || []).map(expense => {
+        const mapped = {
+          ...expense,
+          date: new Date(expense.date),
+          // Use client_name or source as payee
+          payee: expense.client_name || expense.source || 'לא צוין',
+          // Create description from available fields
+          description: `${expense.category || ''} - ${expense.source || ''}`.trim().replace(/^-\s*|-\s*$/, '') || 'ללא תיאור'
+        };
+        console.log('Mapped expense:', mapped);
+        return mapped;
+      }) as Expense[];
+      
+      console.log('Final mapped expenses:', mappedExpenses);
+      console.log('=== END EXPENSE FETCH DEBUG ===');
+      
+      return mappedExpenses;
     } catch (err) {
       console.error('Error fetching expense transactions:', err);
       throw err;

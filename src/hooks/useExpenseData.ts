@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FinanceService } from '@/services/FinanceService';
 import { Expense, DateRange } from '@/types/finances';
@@ -10,6 +9,11 @@ export const useExpenseData = (dateRange: DateRange) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  console.log('=== useExpenseData HOOK DEBUG ===');
+  console.log('Hook called with dateRange:', dateRange);
+  console.log('DateRange start:', dateRange.start);
+  console.log('DateRange end:', dateRange.end);
+
   // Query for expense data
   const {
     data: expenseData = [],
@@ -19,13 +23,28 @@ export const useExpenseData = (dateRange: DateRange) => {
   } = useQuery({
     queryKey: ['expenseData', dateRange.start.toISOString(), dateRange.end.toISOString()],
     queryFn: async () => {
+      console.log('useExpenseData: Query function executing...');
       console.log('useExpenseData: Fetching expenses for date range:', dateRange);
-      const result = await financeService.getExpenseTransactions(dateRange);
-      console.log('useExpenseData: Received expenses:', result);
-      return result;
+      try {
+        const result = await financeService.getExpenseTransactions(dateRange);
+        console.log('useExpenseData: Received expenses from service:', result);
+        console.log('useExpenseData: Number of expenses received:', result.length);
+        return result;
+      } catch (error) {
+        console.error('useExpenseData: Error in query function:', error);
+        throw error;
+      }
     },
-    enabled: !!dateRange.start && !!dateRange.end
+    enabled: !!dateRange.start && !!dateRange.end,
+    retry: 1,
+    retryDelay: 1000
   });
+
+  console.log('useExpenseData: Current query state:');
+  console.log('- data:', expenseData);
+  console.log('- isLoading:', isLoading);
+  console.log('- error:', error);
+  console.log('- data length:', expenseData?.length || 0);
 
   // Mutation for deleting an expense
   const deleteMutation = useMutation({
@@ -58,7 +77,8 @@ export const useExpenseData = (dateRange: DateRange) => {
     refetch();
   };
 
-  console.log('useExpenseData: Current state - data:', expenseData, 'loading:', isLoading, 'error:', error);
+  console.log('useExpenseData: Returning state - data length:', expenseData?.length || 0, 'loading:', isLoading, 'error:', error);
+  console.log('=== END useExpenseData HOOK DEBUG ===');
 
   return {
     expenseData,
