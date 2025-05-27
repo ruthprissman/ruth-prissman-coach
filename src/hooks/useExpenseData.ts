@@ -18,7 +18,12 @@ export const useExpenseData = (dateRange: DateRange) => {
     refetch
   } = useQuery({
     queryKey: ['expenseData', dateRange.start.toISOString(), dateRange.end.toISOString()],
-    queryFn: () => financeService.getExpenseTransactions(dateRange),
+    queryFn: async () => {
+      console.log('useExpenseData: Fetching expenses for date range:', dateRange);
+      const result = await financeService.getExpenseTransactions(dateRange);
+      console.log('useExpenseData: Received expenses:', result);
+      return result;
+    },
     enabled: !!dateRange.start && !!dateRange.end
   });
 
@@ -49,8 +54,11 @@ export const useExpenseData = (dateRange: DateRange) => {
   };
 
   const handleRefresh = () => {
+    console.log('useExpenseData: Refreshing expense data');
     refetch();
   };
+
+  console.log('useExpenseData: Current state - data:', expenseData, 'loading:', isLoading, 'error:', error);
 
   return {
     expenseData,

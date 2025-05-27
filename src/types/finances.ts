@@ -1,3 +1,4 @@
+
 export interface DateRange {
   start: Date;
   end: Date;
@@ -35,6 +36,9 @@ export interface Expense {
   attachment_url?: string | null;
   status: string;
   type: 'expense';
+  // Additional fields that might come from the database
+  client_name?: string;
+  source?: string;
 }
 
 export interface FinancialSummary {

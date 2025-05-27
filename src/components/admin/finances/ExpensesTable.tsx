@@ -48,6 +48,8 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
   onEdit,
   onDelete
 }) => {
+  console.log('ExpensesTable: Received props - data:', data, 'isLoading:', isLoading, 'dateRange:', dateRange);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
@@ -84,6 +86,8 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
 
     return true;
   });
+
+  console.log('ExpensesTable: Filtered data:', filteredData);
 
   const handleAddSuccess = () => {
     setShowAddModal(false);
@@ -223,7 +227,7 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
               ) : (
                 <TableRow>
                   <TableCell colSpan={10} className="text-center py-6 text-muted-foreground">
-                    לא נמצאו רשומות מתאימות
+                    {data.length === 0 && !isLoading ? 'לא נמצאו הוצאות בטווח התאריכים הנבחר' : 'לא נמצאו רשומות מתאימות'}
                   </TableCell>
                 </TableRow>
               )}
@@ -231,6 +235,16 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
           </Table>
         </div>
       </div>
+
+      {/* Debug info */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-4 p-2 bg-gray-100 text-xs">
+          <div>Total data items: {data.length}</div>
+          <div>Filtered items: {filteredData.length}</div>
+          <div>Is loading: {isLoading.toString()}</div>
+          <div>Date range: {dateRange.start.toISOString()} - {dateRange.end.toISOString()}</div>
+        </div>
+      )}
 
       <AddExpenseModal
         open={showAddModal}
