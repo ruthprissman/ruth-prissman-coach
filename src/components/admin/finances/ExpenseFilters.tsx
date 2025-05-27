@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,6 +24,8 @@ interface ExpenseFiltersProps {
 export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange }) => {
   const [startDate, setStartDate] = React.useState<Date>();
   const [endDate, setEndDate] = React.useState<Date>();
+  const [startDateInput, setStartDateInput] = React.useState<string>('');
+  const [endDateInput, setEndDateInput] = React.useState<string>('');
   const [category, setCategory] = React.useState<string>('');
   const [minAmount, setMinAmount] = React.useState<string>('');
   const [maxAmount, setMaxAmount] = React.useState<string>('');
@@ -45,12 +46,44 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange 
 
   const handleStartDateChange = (date?: Date) => {
     setStartDate(date);
+    if (date) {
+      setStartDateInput(format(date, 'yyyy-MM-dd'));
+    }
     validateDateRange(date, endDate);
   };
 
   const handleEndDateChange = (date?: Date) => {
     setEndDate(date);
+    if (date) {
+      setEndDateInput(format(date, 'yyyy-MM-dd'));
+    }
     validateDateRange(startDate, date);
+  };
+
+  const handleStartDateInputChange = (value: string) => {
+    setStartDateInput(value);
+    if (value) {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        setStartDate(date);
+        validateDateRange(date, endDate);
+      }
+    } else {
+      setStartDate(undefined);
+    }
+  };
+
+  const handleEndDateInputChange = (value: string) => {
+    setEndDateInput(value);
+    if (value) {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        setEndDate(date);
+        validateDateRange(startDate, date);
+      }
+    } else {
+      setEndDate(undefined);
+    }
   };
 
   const handleFilterChange = React.useCallback(() => {
@@ -73,6 +106,8 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange 
   const handleClearFilters = () => {
     setStartDate(undefined);
     setEndDate(undefined);
+    setStartDateInput('');
+    setEndDateInput('');
     setCategory('');
     setMinAmount('');
     setMaxAmount('');
@@ -98,56 +133,74 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
           <div className="flex flex-col space-y-1">
             <label className="text-xs text-muted-foreground">מתאריך</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-right font-normal h-8 text-xs",
-                    !startDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="ml-1 h-3 w-3" />
-                  {startDate ? format(startDate, "dd/MM/yyyy") : <span>בחר תאריך התחלה</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={handleStartDateChange}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <div className="space-y-1">
+              <Input
+                type="date"
+                value={startDateInput}
+                onChange={(e) => handleStartDateInputChange(e.target.value)}
+                className="h-8 text-xs"
+                placeholder="yyyy-mm-dd"
+              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-right font-normal h-8 text-xs",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="ml-1 h-3 w-3" />
+                    {startDate ? format(startDate, "dd/MM/yyyy") : <span>בחר בקלנדר</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={handleStartDateChange}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
 
           <div className="flex flex-col space-y-1">
             <label className="text-xs text-muted-foreground">עד תאריך</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-right font-normal h-8 text-xs",
-                    !endDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="ml-1 h-3 w-3" />
-                  {endDate ? format(endDate, "dd/MM/yyyy") : <span>בחר תאריך סיום</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={handleEndDateChange}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <div className="space-y-1">
+              <Input
+                type="date"
+                value={endDateInput}
+                onChange={(e) => handleEndDateInputChange(e.target.value)}
+                className="h-8 text-xs"
+                placeholder="yyyy-mm-dd"
+              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-right font-normal h-8 text-xs",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="ml-1 h-3 w-3" />
+                    {endDate ? format(endDate, "dd/MM/yyyy") : <span>בחר בקלנדר</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={handleEndDateChange}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
           
           <div className="flex flex-col space-y-1">
