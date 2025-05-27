@@ -1,4 +1,3 @@
-
 import { supabaseClient } from '@/lib/supabaseClient';
 import { Transaction, Expense, DateRange } from '@/types/finances';
 
@@ -67,9 +66,7 @@ export class FinanceService {
           payment_method,
           reference_number,
           status,
-          type,
-          payee,
-          description
+          type
         `)
         .eq('type', 'expense')
         .gte('date', dateRange.start.toISOString().split('T')[0])
@@ -87,10 +84,10 @@ export class FinanceService {
       return (data || []).map(expense => ({
         ...expense,
         date: new Date(expense.date),
-        // Use payee if available, otherwise fallback to client_name or source
-        payee: expense.payee || expense.client_name || expense.source || 'לא צוין',
-        // Use description if available, otherwise create from available fields
-        description: expense.description || `${expense.category || ''} - ${expense.source || ''}`.trim().replace(/^-\s*|-\s*$/, '') || 'ללא תיאור'
+        // Use client_name or source as payee
+        payee: expense.client_name || expense.source || 'לא צוין',
+        // Create description from available fields
+        description: `${expense.category || ''} - ${expense.source || ''}`.trim().replace(/^-\s*|-\s*$/, '') || 'ללא תיאור'
       })) as Expense[];
     } catch (err) {
       console.error('Error fetching expense transactions:', err);
