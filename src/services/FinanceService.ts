@@ -61,10 +61,12 @@ export class FinanceService {
     try {
       const client = supabaseClient();
       
+      // תיקון: משתמש בתאריכים מה-dateRange שמועבר (שכבר כולל את הפילטרים)
       const startDate = dateRange.start.toISOString().split('T')[0];
       const endDate = dateRange.end.toISOString().split('T')[0];
       
-      console.log('=== EXPENSE FETCH DEBUG ===');
+      console.log('=== EXPENSE FETCH DEBUG (FinanceService) ===');
+      console.log('Input dateRange:', dateRange);
       console.log('Date range - Start:', startDate, 'End:', endDate);
       console.log('Additional filters:', filters);
       console.log('Supabase client initialized:', !!client);
@@ -88,23 +90,25 @@ export class FinanceService {
         .gte('date', startDate)
         .lte('date', endDate);
 
-      // Apply additional filters
-      if (filters?.category && filters.category !== 'all') {
+      console.log('Base query built with dates:', startDate, 'to', endDate);
+
+      // Apply additional filters (not date filters - those are already in dateRange)
+      if (filters?.category && filters.category !== 'all' && filters.category !== '') {
         console.log('Applying category filter:', filters.category);
         query = query.eq('category', filters.category);
       }
 
-      if (filters?.minAmount !== undefined) {
+      if (filters?.minAmount !== undefined && filters.minAmount > 0) {
         console.log('Applying min amount filter:', filters.minAmount);
         query = query.gte('amount', filters.minAmount);
       }
 
-      if (filters?.maxAmount !== undefined) {
+      if (filters?.maxAmount !== undefined && filters.maxAmount > 0) {
         console.log('Applying max amount filter:', filters.maxAmount);
         query = query.lte('amount', filters.maxAmount);
       }
 
-      if (filters?.payee) {
+      if (filters?.payee && filters.payee.trim() !== '') {
         console.log('Applying payee filter:', filters.payee);
         // Search in both client_name and source fields
         query = query.or(`client_name.ilike.%${filters.payee}%,source.ilike.%${filters.payee}%`);
@@ -112,6 +116,7 @@ export class FinanceService {
 
       query = query.order('date', { ascending: false });
 
+      console.log('Final query will be executed...');
       const { data, error } = await query;
       
       console.log('Filtered expenses query result:', data);
@@ -140,7 +145,7 @@ export class FinanceService {
       }) as Expense[];
       
       console.log('Final mapped expenses:', mappedExpenses);
-      console.log('=== END EXPENSE FETCH DEBUG ===');
+      console.log('=== END EXPENSE FETCH DEBUG (FinanceService) ===');
       
       return mappedExpenses;
     } catch (err) {

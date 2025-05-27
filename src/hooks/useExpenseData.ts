@@ -24,12 +24,16 @@ export const useExpenseData = (dateRange: DateRange, filters?: ExpenseFilters) =
   console.log('Hook called with filters:', filters);
 
   // Use filter dates if provided, otherwise use dateRange
+  // תיקון: בודק אם יש startDate או endDate בפילטרים ומשתמש בהם במקום ב-dateRange
   const effectiveDateRange = {
     start: filters?.startDate || dateRange.start,
     end: filters?.endDate || dateRange.end
   };
 
-  console.log('Effective date range:', effectiveDateRange);
+  console.log('Effective date range BEFORE query:', effectiveDateRange);
+  console.log('Filters startDate:', filters?.startDate);
+  console.log('Filters endDate:', filters?.endDate);
+  console.log('Original dateRange:', dateRange);
 
   // Query for expense data
   const {
@@ -41,8 +45,16 @@ export const useExpenseData = (dateRange: DateRange, filters?: ExpenseFilters) =
     queryKey: ['expenseData', effectiveDateRange.start.toISOString(), effectiveDateRange.end.toISOString(), filters],
     queryFn: async () => {
       console.log('useExpenseData: Query function executing...');
-      console.log('useExpenseData: Fetching expenses for date range:', effectiveDateRange);
-      console.log('useExpenseData: With filters:', filters);
+      console.log('useExpenseData: Final effective date range for query:', effectiveDateRange);
+      console.log('useExpenseData: Start date ISO:', effectiveDateRange.start.toISOString());
+      console.log('useExpenseData: End date ISO:', effectiveDateRange.end.toISOString());
+      console.log('useExpenseData: With additional filters:', {
+        category: filters?.category,
+        minAmount: filters?.minAmount,
+        maxAmount: filters?.maxAmount,
+        payee: filters?.payee
+      });
+      
       try {
         const result = await financeService.getExpenseTransactions(effectiveDateRange, filters);
         console.log('useExpenseData: Received expenses from service:', result);
