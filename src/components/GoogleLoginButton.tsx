@@ -34,7 +34,7 @@ export function GoogleLoginButton() {
   return (
     <div className="flex flex-col">
       <Button 
-        className="flex items-center gap-1 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-6 px-2 text-xs"
+        className="flex items-center gap-1 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-7 px-2 text-xs"
         onClick={handleClick}
         disabled={isAuthenticating}
         size="sm"
