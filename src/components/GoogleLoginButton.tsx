@@ -34,20 +34,20 @@ export function GoogleLoginButton() {
   return (
     <div className="flex flex-col">
       <Button 
-        className="flex items-center gap-2 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-8 px-3 text-xs"
+        className="flex items-center gap-1 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-6 px-2 text-xs"
         onClick={handleClick}
         disabled={isAuthenticating}
         size="sm"
       >
-        <Calendar className="h-3.5 w-3.5 text-blue-600" />
+        <Calendar className="h-3 w-3 text-blue-600" />
         <span>{isAuthenticated ? 'התנתק מיומן Google' : 'התחבר עם גוגל'}</span>
         {isAuthenticating && (
-          <Loader2 className="ml-1 h-3.5 w-3.5 animate-spin" />
+          <Loader2 className="ml-1 h-3 w-3 animate-spin" />
         )}
       </Button>
       
       {!isAuthenticated && error && (
-        <Alert variant="destructive" className="mt-2 p-2">
+        <Alert variant="destructive" className="mt-1 p-1.5">
           <AlertCircle className="h-3 w-3" />
           <AlertTitle className="text-xs">שגיאה בהתחברות</AlertTitle>
           <AlertDescription className="text-xs">
@@ -57,10 +57,10 @@ export function GoogleLoginButton() {
       )}
       
       {isAuthenticated && (
-        <div className="text-xs text-center mt-1 text-green-600">
+        <div className="text-xs text-center mt-0.5 text-green-600">
           {isLoadingEvents ? (
             <span className="flex items-center gap-1 justify-center">
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="h-2.5 w-2.5 animate-spin" />
               טוען אירועים...
             </span>
           ) : (
