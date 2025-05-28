@@ -298,7 +298,7 @@ const CalendarManagement: React.FC = () => {
       if (currentSlot.status === 'booked') {
         toast({
           title: 'לא ניתן לשנות סטטוס',
-          description: 'לא ניתן לשנות משבצת זמן שכבר הוז��נה. יש לבטל את הפגישה תחילה.',
+          description: 'לא ניתן לשנות משבצת זמן שכבר הוזמנה. יש לבטל את הפגישה תחילה.',
           variant: 'destructive',
         });
         return;
@@ -430,9 +430,9 @@ const CalendarManagement: React.FC = () => {
 
   return (
     <AdminLayout title="ניהול זמינות יומן">
-      <div className="container mx-auto py-4" dir="rtl">
-        <div className="flex flex-col space-y-3">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-2 bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+      <div className="container mx-auto py-2" dir="rtl">
+        <div className="flex flex-col space-y-2">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-2 bg-white p-2 rounded-lg shadow-sm border border-gray-100">
             <div className="flex items-center gap-2 mb-2 md:mb-0">
               <h2 className="text-lg font-medium text-purple-800">ניהול יומן</h2>
               <Badge variant="outline" className="text-xs">גרסה: {COMPONENT_VERSION}</Badge>
@@ -476,8 +476,6 @@ const CalendarManagement: React.FC = () => {
             onGoogleSync={handleGoogleSync}
             onCopyProfessionalMeetings={handleCopyProfessionalMeetings}
           />
-          
-          <Separator className="my-4" />
           
           {showDebugLogs && (
             <DebugLogPanel 

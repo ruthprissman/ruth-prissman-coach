@@ -33,12 +33,12 @@ export function GoogleCalendarSync({
       <Button 
         variant="outline" 
         size="sm"
-        className="bg-white flex items-center gap-1 h-8 px-2.5" 
+        className="bg-white flex items-center gap-1.5 h-8 px-3 text-xs" 
         onClick={onSyncClick}
         disabled={isLoading || !!settingsError}
       >
         <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-        <span className="text-xs">סנכרן יומן</span>
+        <span>סנכרן יומן</span>
       </Button>
 
       {onCopyMeetingsClick && (
@@ -46,12 +46,12 @@ export function GoogleCalendarSync({
           <Button 
             variant="secondary"
             size="sm"
-            className="flex items-center gap-1 h-8 px-2.5" 
+            className="flex items-center gap-1.5 h-8 px-3 text-xs" 
             onClick={handleOpenCopyDialog}
             disabled={isLoading || isCopying || !!settingsError}
           >
             <Calendar className={`h-3.5 w-3.5 ${isCopying ? 'animate-pulse' : ''}`} />
-            <span className="text-xs">העתק פגישות</span>
+            <span>העתק פגישות</span>
           </Button>
           
           <CopyMeetingsDialog

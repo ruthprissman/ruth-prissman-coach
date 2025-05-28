@@ -32,38 +32,39 @@ export function GoogleLoginButton() {
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col">
       <Button 
-        className="flex items-center gap-2 bg-white text-gray-700 border border-gray-300 hover:bg-gray-100 mb-2"
+        className="flex items-center gap-2 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-8 px-3 text-xs"
         onClick={handleClick}
         disabled={isAuthenticating}
+        size="sm"
       >
-        <Calendar className="h-4 w-4 text-blue-600" />
-        <span>{isAuthenticated ? 'התנתק מיומן Google' : 'התחבר עם גוגל (כולל הרשאות יומן)'}</span>
+        <Calendar className="h-3.5 w-3.5 text-blue-600" />
+        <span>{isAuthenticated ? 'התנתק מיומן Google' : 'התחבר עם גוגל'}</span>
         {isAuthenticating && (
-          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+          <Loader2 className="ml-1 h-3.5 w-3.5 animate-spin" />
         )}
       </Button>
       
       {!isAuthenticated && error && (
-        <Alert variant="destructive" className="mt-2">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>לא התקבלה הרשאה ליומן הגוגל שלך</AlertTitle>
-          <AlertDescription>
+        <Alert variant="destructive" className="mt-2 p-2">
+          <AlertCircle className="h-3 w-3" />
+          <AlertTitle className="text-xs">שגיאה בהתחברות</AlertTitle>
+          <AlertDescription className="text-xs">
             {error}
           </AlertDescription>
         </Alert>
       )}
       
       {isAuthenticated && (
-        <div className="text-sm text-center mt-1 text-green-600">
+        <div className="text-xs text-center mt-1 text-green-600">
           {isLoadingEvents ? (
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 justify-center">
               <Loader2 className="h-3 w-3 animate-spin" />
               טוען אירועים...
             </span>
           ) : (
-            <span>{events.length > 0 ? `${events.length} אירועים נטענו מיומן Google` : 'אין אירועים ביומן'}</span>
+            <span>{events.length > 0 ? `${events.length} אירועים נטענו` : 'אין אירועים'}</span>
           )}
         </div>
       )}
