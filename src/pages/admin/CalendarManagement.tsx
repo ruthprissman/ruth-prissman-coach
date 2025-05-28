@@ -430,25 +430,25 @@ const CalendarManagement: React.FC = () => {
 
   return (
     <AdminLayout title="ניהול זמינות יומן">
-      <div className="container mx-auto py-2" dir="rtl">
-        <div className="flex flex-col space-y-2">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-2 bg-white p-2 rounded-lg shadow-sm border border-gray-100">
-            <div className="flex items-center gap-2 mb-2 md:mb-0">
-              <h2 className="text-lg font-medium text-purple-800">ניהול יומן</h2>
-              <Badge variant="outline" className="text-xs">גרסה: {COMPONENT_VERSION}</Badge>
-              <Badge variant="outline" className="text-xs hidden md:inline-flex">Debug ID: {debugVersion?.substring(0, 8)}</Badge>
+      <div className="container mx-auto py-1" dir="rtl">
+        <div className="flex flex-col space-y-1">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-1 bg-white p-1.5 rounded-lg shadow-sm border border-gray-100">
+            <div className="flex items-center gap-1.5 mb-1 md:mb-0">
+              <h2 className="text-base font-medium text-purple-800">ניהול יומן</h2>
+              <Badge variant="outline" className="text-xs h-4 px-1">גרסה: {COMPONENT_VERSION}</Badge>
+              <Badge variant="outline" className="text-xs h-4 px-1 hidden md:inline-flex">Debug ID: {debugVersion?.substring(0, 8)}</Badge>
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <Button 
                 onClick={handleManualRefresh}
                 variant="outline"
                 size="sm" 
-                className="text-xs flex items-center gap-1"
+                className="text-xs flex items-center gap-1 h-7 px-2"
                 disabled={isSyncing || isLoading || isLoadingSettings || isLoadingGoogleEvents || isCopyingMeetings}
               >
                 <RefreshCw className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
-                ריענון נתונים 
+                ריענון 
                 <span className="text-gray-500 text-xs">({lastRefresh})</span>
               </Button>
               
@@ -456,7 +456,7 @@ const CalendarManagement: React.FC = () => {
                 onClick={handleForceReload}
                 variant="destructive"
                 size="sm" 
-                className="text-xs"
+                className="text-xs h-7 px-2"
               >
                 איפוס מלא
               </Button>

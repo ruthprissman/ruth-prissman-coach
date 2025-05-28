@@ -35,30 +35,30 @@ export default function CalendarHeader({
   onCopyProfessionalMeetings
 }: CalendarHeaderProps) {
   return (
-    <Card className="mb-2 overflow-hidden shadow-sm">
-      <CardContent className="p-2">
-        <div className="flex flex-col lg:flex-row gap-2 min-h-[60px]">
+    <Card className="mb-1 overflow-hidden shadow-sm">
+      <CardContent className="p-1.5">
+        <div className="flex flex-col lg:flex-row gap-1.5 min-h-[32px]">
           {/* סטטוס מידע */}
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-2 lg:w-1/3 rounded-md border border-purple-100">
-            <div className="flex items-center mb-1">
-              <CalendarIcon className="h-3.5 w-3.5 text-purple-600 ml-1" />
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-1.5 lg:w-1/3 rounded-md border border-purple-100">
+            <div className="flex items-center mb-0.5">
+              <CalendarIcon className="h-3 w-3 text-purple-600 ml-1" />
               <h3 className="text-xs font-medium text-purple-800">סנכרון יומן Google</h3>
             </div>
             
             <div className="flex flex-wrap items-center gap-1">
-              <Badge variant={isGoogleAuthenticated ? "default" : "outline"} className="text-xs h-5 px-1.5">
+              <Badge variant={isGoogleAuthenticated ? "default" : "outline"} className="text-xs h-4 px-1">
                 {isGoogleAuthenticated ? 'מחובר' : 'לא מחובר'}
               </Badge>
               
               {isGoogleAuthenticated && (
-                <Badge variant="secondary" className="text-xs h-5 px-1.5">
+                <Badge variant="secondary" className="text-xs h-4 px-1">
                   {googleEvents.length} אירועים
                 </Badge>
               )}
               
               {googleAuthError && (
-                <div className="flex items-start mt-1 w-full">
-                  <InfoIcon className="h-3 w-3 text-red-500 mt-0.5 ml-1 flex-shrink-0" />
+                <div className="flex items-start mt-0.5 w-full">
+                  <InfoIcon className="h-2.5 w-2.5 text-red-500 mt-0.5 ml-1 flex-shrink-0" />
                   <p className="text-xs text-red-500 leading-tight">{googleAuthError}</p>
                 </div>
               )}
@@ -67,7 +67,7 @@ export default function CalendarHeader({
           
           {/* כפתורים */}
           <div className="lg:w-2/3 flex flex-col justify-center">
-            <div className="mb-1">
+            <div className="mb-0.5">
               <h3 className="text-xs font-medium text-gray-700 mb-0.5">פעולות יומן</h3>
               <p className="text-xs text-gray-500 leading-tight">
                 {isGoogleAuthenticated 
@@ -76,7 +76,7 @@ export default function CalendarHeader({
               </p>
             </div>
             
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1">
               <GoogleLoginButton />
               
               {isGoogleAuthenticated && (
