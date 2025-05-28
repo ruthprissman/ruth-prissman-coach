@@ -35,7 +35,7 @@ export default function CalendarHeader({
   onCopyProfessionalMeetings
 }: CalendarHeaderProps) {
   return (
-    <Card className="mb-1 overflow-hidden shadow-sm">
+    <Card className="mb-1 overflow-hidden shadow-sm min-h-fit">
       <CardContent className="p-1.5">
         <div className="flex flex-col lg:flex-row gap-1.5 min-h-[32px]">
           {/* סטטוס מידע */}
