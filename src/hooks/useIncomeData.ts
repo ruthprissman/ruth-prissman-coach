@@ -6,9 +6,23 @@ import { useToast } from '@/hooks/use-toast';
 
 const financeService = new FinanceService();
 
-export const useIncomeData = (dateRange: DateRange) => {
+interface IncomeFilters {
+  startDate?: Date;
+  endDate?: Date;
+  category?: string;
+  paymentMethod?: string;
+  client?: string;
+}
+
+export const useIncomeData = (dateRange: DateRange, filters?: IncomeFilters) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Use filters if provided, otherwise use dateRange
+  const effectiveDateRange = {
+    start: filters?.startDate || dateRange.start,
+    end: filters?.endDate || dateRange.end
+  };
 
   // Query for income data
   const {
@@ -17,9 +31,37 @@ export const useIncomeData = (dateRange: DateRange) => {
     error,
     refetch
   } = useQuery({
-    queryKey: ['incomeData', dateRange.start.toISOString(), dateRange.end.toISOString()],
-    queryFn: () => financeService.getIncomeTransactions(dateRange),
-    enabled: !!dateRange.start && !!dateRange.end
+    queryKey: [
+      'incomeData', 
+      effectiveDateRange.start.toISOString(), 
+      effectiveDateRange.end.toISOString(),
+      filters?.category,
+      filters?.paymentMethod,
+      filters?.client
+    ],
+    queryFn: async () => {
+      console.log('Fetching income data with filters:', filters);
+      console.log('Effective date range:', effectiveDateRange);
+      
+      let data = await financeService.getIncomeTransactions(effectiveDateRange);
+      
+      // Apply additional filters on the server results
+      if (filters?.category && filters.category !== 'all' && filters.category !== '') {
+        data = data.filter(item => item.category === filters.category);
+      }
+
+      if (filters?.paymentMethod && filters.paymentMethod !== 'all' && filters.paymentMethod !== '') {
+        data = data.filter(item => item.payment_method === filters.paymentMethod);
+      }
+
+      if (filters?.client && filters.client !== 'all' && filters.client !== '') {
+        data = data.filter(item => item.client_name === filters.client);
+      }
+
+      console.log('Filtered income data:', data);
+      return data;
+    },
+    enabled: !!effectiveDateRange.start && !!effectiveDateRange.end
   });
 
   // Mutation for deleting a transaction

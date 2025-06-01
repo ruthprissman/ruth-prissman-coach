@@ -16,6 +16,7 @@ interface IncomeTableProps {
   onRefresh: () => void;
   onEdit?: (transaction: Transaction) => void;
   onDelete?: (id: number) => void;
+  onFiltersChange?: (filters: any) => void;
 }
 
 // מיפוי לתצוגה בעברית
@@ -38,7 +39,8 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
   isLoading,
   onRefresh,
   onEdit,
-  onDelete
+  onDelete,
+  onFiltersChange
 }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -46,10 +48,11 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
   const [showImportModal, setShowImportModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<any>({});
 
+  // Filter data only by search term (other filters are handled by the hook)
   const filteredData = data.filter(item => {
-    // סינון טקסט
+    if (!searchTerm) return true;
+    
     const textMatch = (item.client_name && item.client_name.includes(searchTerm)) ||
       (item.source && item.source.includes(searchTerm)) ||
       (item.category && item.category.includes(searchTerm)) ||
@@ -57,25 +60,7 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
       (item.reference_number && item.reference_number.includes(searchTerm)) ||
       (item.receipt_number && item.receipt_number.includes(searchTerm));
 
-    if (searchTerm && !textMatch) return false;
-
-    // סינון טווח תאריכים
-    if (filters.startDate || filters.endDate) {
-      const itemDate = new Date(item.date);
-      if (filters.startDate && itemDate < filters.startDate) return false;
-      if (filters.endDate && itemDate > filters.endDate) return false;
-    }
-
-    // סינון קטגוריה
-    if (filters.category && filters.category !== 'all' && item.category !== filters.category) return false;
-
-    // סינון אמצעי תשלום
-    if (filters.paymentMethod && filters.paymentMethod !== 'all' && item.payment_method !== filters.paymentMethod) return false;
-
-    // סינון לקוח
-    if (filters.client && filters.client !== 'all' && item.client_name !== filters.client) return false;
-
-    return true;
+    return textMatch;
   });
 
   const handleAddSuccess = () => {
@@ -106,7 +91,10 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
   };
 
   const handleFiltersChange = (newFilters: any) => {
-    setFilters(newFilters);
+    console.log('Filters changed in IncomeTable:', newFilters);
+    if (onFiltersChange) {
+      onFiltersChange(newFilters);
+    }
   };
 
   return (
