@@ -1,6 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
+import { ArrowLeft, User, Phone, Mail, Calendar, Plus, FileText, BadgeDollarSign, Edit, Trash2 } from 'lucide-react';
+import { supabaseClient } from '@/lib/supabaseClient';
+import { useToast } from '@/hooks/use-toast';
+import { Patient } from '@/types/patient';
+import { Session } from '@/types/patient';
+
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -14,8 +21,6 @@ import {
 import AddSessionDialog from '@/components/admin/AddSessionDialog';
 import SessionEditDialog from '@/components/admin/SessionEditDialog';
 import AddExerciseDialog from '@/components/admin/AddExerciseDialog';
-import { format } from 'date-fns';
-import { he } from 'date-fns/locale/he';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,6 +56,7 @@ const PatientProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [futureSessions, setFutureSessions] = useState<Session[]>([]);
   const [filteredSessions, setFilteredSessions] = useState<Session[]>([]);
   const [expandedSessionId, setExpandedSessionId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,33 +88,44 @@ const PatientProfile: React.FC = () => {
     
     setIsLoading(true);
     try {
+      const supabase = supabaseClient();
+      
+      // Fetch patient details
       const { data: patientData, error: patientError } = await supabase
         .from('patients')
         .select('*')
         .eq('id', id)
         .single();
-      
+
       if (patientError) throw patientError;
-      
+
       setPatient(patientData);
-      setEditFormData(patientData);
-      
+
+      // Fetch sessions
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
         .select('*')
         .eq('patient_id', id)
         .order('session_date', { ascending: false });
-      
+
       if (sessionsError) throw sessionsError;
-      
+
       setSessions(sessionsData || []);
-      setFilteredSessions(sessionsData || []);
-      
-      updatePatientFinancialStatus(Number(id), sessionsData || []);
+
+      // Fetch future sessions
+      const { data: futureSessionsData, error: futureSessionsError } = await supabase
+        .from('future_sessions')
+        .select('*')
+        .eq('patient_id', id)
+        .order('session_date', { ascending: true });
+
+      if (futureSessionsError) throw futureSessionsError;
+
+      setFutureSessions(futureSessionsData || []);
     } catch (error: any) {
       console.error('Error fetching patient data:', error);
       toast({
-        title: "שגיאה בטעינת נתוני מטופל",
+        title: "שגיאה בטעינת נתוני המטופל",
         description: error.message || "אנא נסה שוב מאוחר יותר",
         variant: "destructive",
       });
@@ -310,40 +327,50 @@ const PatientProfile: React.FC = () => {
   };
 
   const handleDeletePatient = async () => {
-    if (!id || !patient) return;
-    
-    setIsSubmitting(true);
+    if (!patient || !window.confirm('האם אתה בטוח שברצונך למחוק את המטופל? פעולה זו תמחק גם את כל הפגישות שלו ואינה ניתנת לביטול.')) {
+      return;
+    }
+
     try {
+      const supabase = supabaseClient();
+      
+      // Delete future sessions first
+      const { error: futureSessionsError } = await supabase
+        .from('future_sessions')
+        .delete()
+        .eq('patient_id', patient.id);
+
+      if (futureSessionsError) throw futureSessionsError;
+
+      // Delete sessions
       const { error: sessionsError } = await supabase
         .from('sessions')
         .delete()
-        .eq('patient_id', id);
-      
+        .eq('patient_id', patient.id);
+
       if (sessionsError) throw sessionsError;
-      
+
+      // Delete the patient
       const { error: patientError } = await supabase
         .from('patients')
         .delete()
-        .eq('id', id);
-      
+        .eq('id', patient.id);
+
       if (patientError) throw patientError;
-      
+
       toast({
-        title: "מטופל נמחק בהצלחה",
-        description: `${patient.name} נמחק/ה מהמערכת`,
+        title: "המטופל נמחק בהצלחה",
+        description: "המטופל וכל הפגישות שלו נמחקו מהמערכת",
       });
-      
+
       navigate('/admin/patients');
     } catch (error: any) {
       console.error('Error deleting patient:', error);
       toast({
-        title: "שגיאה במחיקת מטופל",
+        title: "שגיאה במחיקת המטופל",
         description: error.message || "אנא נסה שוב מאוחר יותר",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
-      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -500,7 +527,7 @@ const PatientProfile: React.FC = () => {
         <div className="text-center space-y-4 p-10">
           <p className="text-lg font-medium">מטופל לא נמצא</p>
           <Button onClick={() => navigate('/admin/patients')}>
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowLeft className="ml-2 h-4 w-4" />
             חזרה לרשימת המטופלים
           </Button>
         </div>
@@ -511,7 +538,7 @@ const PatientProfile: React.FC = () => {
             onClick={() => navigate('/admin/patients')}
             className="mb-4"
           >
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowLeft className="ml-2 h-4 w-4" />
             חזרה לרשימת המטופלים
           </Button>
           
@@ -804,6 +831,232 @@ const PatientProfile: React.FC = () => {
             )}
           </div>
           
+          {/* Future sessions section */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => setIsAddExerciseDialogOpen(true)}
+                >
+                  ניהול מאגר תרגילים
+                </Button>
+                <Button onClick={() => setIsSessionDialogOpen(true)} className="bg-primary">
+                  <CalendarPlus className="h-4 w-4 ml-2" />
+                  הוספת פגישה חדשה
+                </Button>
+              </div>
+              <h3 className="text-xl font-bold">פגישות נוכחות</h3>
+            </div>
+            
+            <PatientSessionFilters
+              meetingTypeFilter={meetingTypeFilter}
+              setMeetingTypeFilter={setMeetingTypeFilter}
+              paymentStatusFilter={paymentStatusFilter}
+              setPaymentStatusFilter={setPaymentStatusFilter}
+              dateRangeFilter={dateRangeFilter}
+              setDateRangeFilter={setDateRangeFilter}
+              resetFilters={resetFilters}
+            />
+
+            {futureSessions.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <p className="text-gray-500">אין פגישות נוכחות.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>תאריך</TableHead>
+                      <TableHead>סוג פגישה</TableHead>
+                      <TableHead>סטטוס תשלום</TableHead>
+                      <TableHead>פעולות</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {futureSessions.map((session) => (
+                      <React.Fragment key={session.id}>
+                        <TableRow 
+                          className="cursor-pointer hover:bg-gray-50"
+                          onClick={() => toggleExpandSession(session.id)}
+                        >
+                          <TableCell className="font-medium">
+                            <div className="flex items-center">
+                              <Calendar className="h-4 w-4 ml-2" />
+                              {formatDate(session.session_date)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              {getMeetingTypeIcon(session.meeting_type)}
+                              <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {getPaymentStatusBadge(session.payment_status)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2 space-x-reverse">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditSession(session);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 ml-1" />
+                                ערוך
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdatePayment(session);
+                                }}
+                              >
+                                <BadgeDollarSign className="h-4 w-4 ml-1" />
+                                עדכן תשלום
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {expandedSessionId === session.id ? 
+                              <ChevronUp className="h-4 w-4" /> : 
+                              <ChevronDown className="h-4 w-4" />
+                            }
+                          </TableCell>
+                        </TableRow>
+                        
+                        {expandedSessionId === session.id && (
+                          <TableRow className="bg-gray-50">
+                            <TableCell colSpan={5} className="p-0">
+                              <div className="p-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div className="space-y-4">
+                                    <div>
+                                      <h4 className="font-medium mb-2 flex items-center">
+                                        <Info className="h-4 w-4 ml-2" />
+                                        סיכום פגישה
+                                      </h4>
+                                      <div className="bg-white p-3 rounded border min-h-[100px]">
+                                        {session.summary || 'אין סיכום'}
+                                      </div>
+                                    </div>
+                                    
+                                    <div>
+                                      <div className="flex items-center mb-2">
+                                        <h4 className="font-medium">נשלחו תרגילים?</h4>
+                                        <div className="flex items-center mr-4">
+                                          {session.sent_exercises ? (
+                                            <>
+                                              <Check className="h-4 w-4 text-green-500 ml-1" />
+                                              <span className="text-green-600">כן</span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <X className="h-4 w-4 text-red-500 ml-1" />
+                                              <span className="text-red-600">לא</span>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <div>
+                                    <h4 className="font-medium mb-2">תרגילים שניתנו</h4>
+                                    {session.exercise_list && session.exercise_list.length > 0 ? (
+                                      <div className="bg-white p-3 rounded border">
+                                        <ul className="list-disc list-inside space-y-1">
+                                          {session.exercise_list.map((exercise, index) => (
+                                            <li key={index}>{exercise}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    ) : (
+                                      <div className="bg-white p-3 rounded border min-h-[100px]">
+                                        לא ניתנו תרגילים
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="mt-4">
+                                  <h4 className="font-medium mb-2 flex items-center">
+                                    <BadgeDollarSign className="h-4 w-4 ml-2" />
+                                    פרטי תשלום
+                                  </h4>
+                                  <div className="bg-white p-3 rounded border">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div>
+                                        <div className="flex justify-between border-b pb-2">
+                                          <span className="font-medium text-gray-600">סטטוס תשלום:</span>
+                                          <span>{getPaymentStatusBadge(session.payment_status)}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b py-2">
+                                          <span className="font-medium text-gray-600">סכום ששולם:</span>
+                                          <span className={session.payment_status === 'paid' ? 'text-green-600 font-medium' : ''}>
+                                            ₪{session.paid_amount || 0}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between border-b py-2">
+                                          <span className="font-medium text-gray-600">סכום לתשלום:</span>
+                                          <span className={session.payment_status === 'unpaid' ? 'text-red-600 font-medium' : ''}>
+                                            {patient.session_price && session.paid_amount
+                                              ? session.payment_status === 'paid'
+                                                ? '₪0'
+                                                : `₪${patient.session_price - (session.paid_amount || 0)}`
+                                              : `₪${patient.session_price || 0}`}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <div className="flex justify-between border-b pb-2">
+                                          <span className="font-medium text-gray-600">אמצעי תשלום:</span>
+                                          <span>{getPaymentMethodText(session.payment_method)}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b py-2">
+                                          <span className="font-medium text-gray-600">תאריך תשלום:</span>
+                                          <span>{formatDateOnly(session.payment_date)}</span>
+                                        </div>
+                                        <div className="flex justify-between py-2">
+                                          <span className="font-medium text-gray-600">הערות תשלום:</span>
+                                          <span>{session.payment_notes || '-'}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="mt-4 flex justify-end">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-500 hover:bg-red-50 hover:text-red-700"
+                                    onClick={() => handleDeleteSessionConfirm(session)}
+                                  >
+                                    <Trash2 className="h-4 w-4 ml-2" />
+                                    מחק פגישה
+                                  </Button>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
+          </div>
+          
           {/* Dialogs */}
           <AddSessionDialog 
             isOpen={isSessionDialogOpen} 
@@ -856,42 +1109,6 @@ const PatientProfile: React.FC = () => {
                 <Button 
                   variant="outline" 
                   onClick={() => setIsDeleteDialogOpen(false)}
-                >
-                  ביטול
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          
-          {/* Delete session dialog */}
-          <Dialog open={isDeleteSessionDialogOpen} onOpenChange={setIsDeleteSessionDialogOpen}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-center">מחיקת פגישה</DialogTitle>
-              </DialogHeader>
-              
-              <div className="py-4">
-                <p className="text-center">
-                  האם אתה בטוח שברצונך למחוק את הפגישה 
-                  {sessionToDelete && 
-                    ` מתאריך ${formatDate(sessionToDelete.session_date)}`}?
-                </p>
-                <p className="text-center text-muted-foreground mt-2">
-                  פעולה זו אינה ניתנת לביטול.
-                </p>
-              </div>
-              
-              <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
-                <Button 
-                  variant="destructive" 
-                  onClick={handleDeleteSession}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'מוחק...' : 'כן, מחק'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsDeleteSessionDialogOpen(false)}
                 >
                   ביטול
                 </Button>

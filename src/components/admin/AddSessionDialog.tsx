@@ -1,563 +1,505 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { z } from 'zod';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Session, Exercise } from '@/types/patient';
-import { supabase } from '@/lib/supabase';
-import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
+import { Calendar, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { NewSessionFormData } from '@/types/session';
+import { Patient } from '@/types/patient';
+import { supabaseClient } from '@/lib/supabaseClient';
+import { convertLocalToUTC } from '@/utils/dateUtils';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Switch } from "@/components/ui/switch";
+} from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
-import { convertLocalToUTC } from '@/utils/dateUtils';
 
 interface AddSessionDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddSession: (session: Omit<Session, 'id'>) => Promise<boolean>;
-  patientId: number;
+  patient: Patient;
+  onSessionAdded: () => void;
   sessionPrice?: number | null;
 }
 
-const SessionSchema = z.object({
-  session_date: z.date(),
-  meeting_type: z.enum(['Zoom', 'Phone', 'In-Person']),
-  sent_exercises: z.boolean(),
-  exercise_list: z.array(z.string()).nullable(),
-  summary: z.string().nullable().optional(),
-  paid_amount: z.number().nullable(),
-  payment_method: z.enum(['cash', 'bit', 'transfer']).nullable(),
-  payment_status: z.enum(['paid', 'partially_paid', 'unpaid']),
-  payment_date: z.date().nullable(),
-  payment_notes: z.string().nullable().optional(),
-});
-
-type SessionFormValues = z.infer<typeof SessionSchema>;
-
-const AddSessionDialog: React.FC<AddSessionDialogProps> = ({ 
-  isOpen, 
-  onClose, 
-  onAddSession, 
-  patientId,
-  sessionPrice = 0
+const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
+  isOpen,
+  onClose,
+  patient,
+  onSessionAdded,
+  sessionPrice,
 }) => {
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [isFormInitialized, setIsFormInitialized] = useState(false);
-
-  const defaultValues = {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [exercises, setExercises] = useState<{ id: number; name: string }[]>([]);
+  const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
+  
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [time, setTime] = useState<string>('12:00');
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(undefined);
+  
+  const [formData, setFormData] = useState<NewSessionFormData>({
     session_date: new Date(),
-    meeting_type: 'In-Person' as const,
+    meeting_type: 'Zoom',
+    summary: '',
     sent_exercises: false,
     exercise_list: [],
-    summary: '',
-    paid_amount: sessionPrice,
-    payment_method: null,
-    payment_status: 'unpaid' as const,
+    paid_amount: sessionPrice || 0,
+    payment_status: 'unpaid',
+    payment_method: 'cash',
     payment_date: null,
     payment_notes: '',
-  };
-
-  const form = useForm<SessionFormValues>({
-    resolver: zodResolver(SessionSchema),
-    defaultValues,
   });
 
-  useEffect(() => {
-    if (isOpen) {
-      form.reset({
-        ...defaultValues,
-        paid_amount: sessionPrice || 0,
-      });
-      setIsFormInitialized(true);
-    }
-  }, [isOpen, sessionPrice, form]);
-
-  const exerciseList = form.watch('exercise_list');
-  const paymentStatus = form.watch('payment_status');
-  const paymentAmount = form.watch('paid_amount');
-
-  useEffect(() => {
-    if (!isFormInitialized) return;
-
-    if (paymentStatus === 'paid' && sessionPrice) {
-      form.setValue('paid_amount', sessionPrice);
-      form.setValue('payment_date', new Date());
-    } else if (paymentStatus === 'unpaid') {
-      form.setValue('paid_amount', 0);
-      form.setValue('payment_method', null);
-      form.setValue('payment_date', null);
-    }
-  }, [paymentStatus, sessionPrice, form, isFormInitialized]);
-
-  useEffect(() => {
-    if (!isFormInitialized) return;
-
-    if (form.formState.dirtyFields.paid_amount) {
-      if (paymentAmount === null || paymentAmount === 0) {
-        if (form.getValues('payment_status') !== 'unpaid') {
-          form.setValue('payment_status', 'unpaid');
-        }
-      } else if (sessionPrice && paymentAmount < sessionPrice) {
-        if (form.getValues('payment_status') !== 'partially_paid') {
-          form.setValue('payment_status', 'partially_paid');
-        }
-      } else if (sessionPrice && paymentAmount >= sessionPrice) {
-        if (form.getValues('payment_status') !== 'paid') {
-          form.setValue('payment_status', 'paid');
-        }
-      }
-    }
-  }, [paymentAmount, form, sessionPrice, isFormInitialized]);
-
-  useEffect(() => {
-    if (!isFormInitialized) return;
-
-    if (exerciseList && exerciseList.length > 0 && !form.getValues('sent_exercises')) {
-      form.setValue('sent_exercises', true);
-    }
-  }, [exerciseList, form, isFormInitialized]);
-
+  // Fetch available exercises
   useEffect(() => {
     const fetchExercises = async () => {
       try {
+        const supabase = supabaseClient();
         const { data, error } = await supabase
           .from('exercises')
-          .select('*')
-          .order('exercise_name');
-        
+          .select('id, name')
+          .order('name');
+          
         if (error) throw error;
         
         setExercises(data || []);
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error fetching exercises:', error);
       }
     };
-
+    
     fetchExercises();
   }, []);
 
-  const onSubmit = async (data: SessionFormValues) => {
-    if (data.exercise_list && data.exercise_list.length > 0) {
-      data.sent_exercises = true;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const numValue = value === '' ? null : Number(value);
+    
+    setFormData((prev) => ({ ...prev, [name]: numValue }));
+    
+    // Update payment status based on paid amount
+    if (name === 'paid_amount') {
+      if (sessionPrice) {
+        if (numValue === null || numValue === 0) {
+          setFormData(prev => ({ ...prev, payment_status: 'unpaid' }));
+        } else if (numValue < sessionPrice) {
+          setFormData(prev => ({ ...prev, payment_status: 'partially_paid' }));
+        } else {
+          setFormData(prev => ({ ...prev, payment_status: 'paid' }));
+        }
+      }
+    }
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Reset payment_date if payment_status is "unpaid"
+    if (name === 'payment_status' && value === 'unpaid') {
+      setFormData((prev) => ({ ...prev, payment_date: null }));
+      setPaymentDate(undefined);
     }
     
-    if (data.payment_status === 'unpaid') {
-      data.paid_amount = 0;
-      data.payment_method = null;
-      data.payment_date = null;
-    } else if (data.payment_method === null && (data.payment_status === 'paid' || data.payment_status === 'partially_paid')) {
-      data.payment_method = 'cash';
+    // Set payment_date to today if payment_status changed to "paid" or "partially_paid" and there's no date
+    if (name === 'payment_status' && (value === 'paid' || value === 'partially_paid') && !formData.payment_date) {
+      const today = new Date();
+      setFormData((prev) => ({ ...prev, payment_date: today }));
+      setPaymentDate(today);
+    }
+  };
+
+  const handleCheckboxChange = (checked: boolean) => {
+    setFormData((prev) => ({ ...prev, sent_exercises: checked }));
+    
+    // If unchecked, clear selected exercises
+    if (!checked) {
+      setSelectedExercises([]);
+      setFormData((prev) => ({ ...prev, exercise_list: [] }));
+    }
+  };
+
+  const handleExerciseSelect = (exerciseName: string) => {
+    let updatedExercises: string[];
+    
+    if (selectedExercises.includes(exerciseName)) {
+      updatedExercises = selectedExercises.filter(e => e !== exerciseName);
+    } else {
+      updatedExercises = [...selectedExercises, exerciseName];
     }
     
-    const success = await onAddSession({
-      patient_id: patientId,
-      session_date: convertLocalToUTC(data.session_date),
-      meeting_type: data.meeting_type,
-      sent_exercises: data.sent_exercises,
-      exercise_list: data.exercise_list,
-      summary: data.summary,
-      paid_amount: data.paid_amount,
-      payment_method: data.payment_method,
-      payment_status: data.payment_status,
-      payment_date: data.payment_date ? convertLocalToUTC(data.payment_date) : null,
-      payment_notes: data.payment_notes
+    setSelectedExercises(updatedExercises);
+    setFormData((prev) => ({ ...prev, exercise_list: updatedExercises }));
+  };
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTime(e.target.value);
+    
+    // Update session_date with new time
+    if (date) {
+      const [hours, minutes] = e.target.value.split(':').map(Number);
+      const newDate = new Date(date);
+      newDate.setHours(hours, minutes);
+      setFormData((prev) => ({ ...prev, session_date: newDate }));
+    }
+  };
+
+  const handleDateChange = (newDate: Date | undefined) => {
+    if (newDate) {
+      setDate(newDate);
+      
+      // Preserve the selected time
+      if (time) {
+        const [hours, minutes] = time.split(':').map(Number);
+        newDate.setHours(hours, minutes);
+      }
+      
+      setFormData((prev) => ({ ...prev, session_date: newDate }));
+    }
+  };
+
+  const handlePaymentDateChange = (newDate: Date | undefined) => {
+    setPaymentDate(newDate);
+    setFormData((prev) => ({ ...prev, payment_date: newDate || null }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      session_date: new Date(),
+      meeting_type: 'Zoom',
+      summary: '',
+      sent_exercises: false,
+      exercise_list: [],
+      paid_amount: sessionPrice || 0,
+      payment_status: 'unpaid',
+      payment_method: 'cash',
+      payment_date: null,
+      payment_notes: '',
     });
-    
-    if (success) {
-      form.reset(defaultValues);
-      setIsFormInitialized(false);
+    setDate(new Date());
+    setTime('12:00');
+    setPaymentDate(undefined);
+    setSelectedExercises([]);
+    setIsSubmitting(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!date) {
+      toast({
+        title: "שגיאה",
+        description: "יש לבחור תאריך",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Format the combined date and time for database
+      const combinedDate = date;
+      if (time) {
+        const [hours, minutes] = time.split(':').map(Number);
+        combinedDate.setHours(hours, minutes);
+      }
+
+      // Convert to UTC before saving to database
+      const isoDate = convertLocalToUTC(combinedDate);
+
+      const supabase = supabaseClient();
+      const { error } = await supabase
+        .from('sessions')
+        .insert({
+          patient_id: patient.id,
+          session_date: isoDate,
+          meeting_type: formData.meeting_type,
+          summary: formData.summary,
+          sent_exercises: formData.sent_exercises,
+          exercise_list: formData.sent_exercises ? formData.exercise_list : [],
+          paid_amount: formData.paid_amount,
+          payment_status: formData.payment_status,
+          payment_method: formData.payment_method,
+          payment_date: formData.payment_date ? convertLocalToUTC(formData.payment_date) : null,
+          payment_notes: formData.payment_notes,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "פגישה נוצרה בהצלחה",
+        description: "הפגישה נוספה לפרופיל המטופל",
+      });
+
+      onSessionAdded();
+      resetForm();
       onClose();
+    } catch (error: any) {
+      console.error('Error creating session:', error);
+      toast({
+        title: "שגיאה ביצירת פגישה",
+        description: error.message || "אנא נסה שוב מאוחר יותר",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[90%] max-w-[800px] max-h-[90vh] overflow-hidden p-6">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-center">הוספת פגישה חדשה</DialogTitle>
+          <DialogTitle className="text-center text-purple-800">
+            הוספת פגישה חדשה
+          </DialogTitle>
         </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
-            <div className="overflow-auto max-h-[65vh] pr-2 -mr-2">
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="session_date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>תאריך פגישה</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full pl-3 text-right font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "dd/MM/yyyy HH:mm", { locale: he })
-                              ) : (
-                                <span>בחר תאריך ושעה</span>
-                              )}
-                              <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={(date) => {
-                              if (date) {
-                                const newDate = new Date(date);
-                                newDate.setHours(field.value.getHours());
-                                newDate.setMinutes(field.value.getMinutes());
-                                field.onChange(newDate);
-                              }
-                            }}
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                          <div className="p-3 border-t border-border">
-                            <label className="text-sm font-medium">שעה:</label>
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                              <select
-                                className="p-2 border rounded"
-                                value={field.value.getHours()}
-                                onChange={(e) => {
-                                  const newDate = new Date(field.value);
-                                  newDate.setHours(parseInt(e.target.value));
-                                  field.onChange(newDate);
-                                }}
-                              >
-                                {Array.from({ length: 24 }, (_, i) => (
-                                  <option key={i} value={i}>
-                                    {i.toString().padStart(2, '0')}
-                                  </option>
-                                ))}
-                              </select>
-                              <select
-                                className="p-2 border rounded"
-                                value={field.value.getMinutes()}
-                                onChange={(e) => {
-                                  const newDate = new Date(field.value);
-                                  newDate.setMinutes(parseInt(e.target.value));
-                                  field.onChange(newDate);
-                                }}
-                              >
-                                {Array.from({ length: 60 }, (_, i) => (
-                                  <option key={i} value={i}>
-                                    {i.toString().padStart(2, '0')}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="meeting_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>סוג פגישה</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
+
+        <div className="space-y-4 py-2" dir="rtl">
+          <div className="space-y-2">
+            <Label htmlFor="date" className="text-purple-700">תאריך ושעה</Label>
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "border-purple-200 justify-start text-right font-normal flex-1",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="ml-2 h-4 w-4 text-purple-600" />
+                    {date ? format(date, "dd/MM/yyyy", { locale: he }) : "בחר תאריך"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={date}
+                    onSelect={handleDateChange}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Input
+                id="time"
+                type="time"
+                value={time}
+                onChange={handleTimeChange}
+                className="max-w-[120px] border-purple-200 focus-visible:ring-purple-500"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="meeting_type" className="text-purple-700">סוג פגישה</Label>
+            <Select
+              value={formData.meeting_type}
+              onValueChange={(value) => handleSelectChange('meeting_type', value)}
+            >
+              <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
+                <SelectValue placeholder="בחר סוג פגישה" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Zoom">זום</SelectItem>
+                <SelectItem value="Phone">טלפון</SelectItem>
+                <SelectItem value="In-Person">פגישה פרונטית</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="summary" className="text-purple-700">סיכום פגישה</Label>
+            <Textarea
+              id="summary"
+              name="summary"
+              placeholder="הזן סיכום פגישה..."
+              value={formData.summary}
+              onChange={handleInputChange}
+              className="min-h-[100px] border-purple-200 focus-visible:ring-purple-500"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="sent_exercises"
+                checked={formData.sent_exercises}
+                onCheckedChange={(checked) => {
+                  handleCheckboxChange(!!checked);
+                }}
+              />
+              <Label htmlFor="sent_exercises" className="text-purple-700">
+                נשלחו תרגילים
+              </Label>
+            </div>
+
+            {formData.sent_exercises && (
+              <div className="pl-6 space-y-2">
+                <Label className="text-purple-700">בחר תרגילים</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-purple-200 rounded-md p-2">
+                  {exercises.map((exercise) => (
+                    <div key={exercise.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`exercise-${exercise.id}`}
+                        checked={selectedExercises.includes(exercise.name)}
+                        onCheckedChange={() => handleExerciseSelect(exercise.name)}
+                      />
+                      <Label
+                        htmlFor={`exercise-${exercise.id}`}
+                        className="font-normal"
                       >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="בחר סוג פגישה" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Zoom">זום</SelectItem>
-                          <SelectItem value="Phone">טלפון</SelectItem>
-                          <SelectItem value="In-Person">פגישה פרונטלית</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="space-y-4 border p-4 rounded-lg">
-                  <h3 className="font-medium text-center">פרטי תשלום</h3>
-                  
-                  <FormField
-                    control={form.control}
-                    name="payment_status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>סטטוס תשלום</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="בחר סטטוס תשלום" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="paid">שולם</SelectItem>
-                            <SelectItem value="partially_paid">שולם חלקית</SelectItem>
-                            <SelectItem value="unpaid">ממתין לתשלום</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="paid_amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>סכום ששולם (₪)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            value={field.value === null ? '' : field.value}
-                            onChange={(e) => field.onChange(e.target.value === '' ? null : Number(e.target.value))}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  {form.watch('payment_status') !== 'unpaid' && (
-                    <FormField
-                      control={form.control}
-                      name="payment_method"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>אמצעי תשלום</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value || ''}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="בחר אמצעי תשלום" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="cash">מזומן</SelectItem>
-                              <SelectItem value="bit">ביט</SelectItem>
-                              <SelectItem value="transfer">העברה בנקאית</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  
-                  {form.watch('payment_status') !== 'unpaid' && (
-                    <FormField
-                      control={form.control}
-                      name="payment_date"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>תאריך תשלום</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full pl-3 text-right font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value ? (
-                                    format(field.value, "dd/MM/yyyy", { locale: he })
-                                  ) : (
-                                    <span>בחר תאריך תשלום</span>
-                                  )}
-                                  <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value || undefined}
-                                onSelect={field.onChange}
-                                initialFocus
-                                className={cn("p-3 pointer-events-auto")}
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                  
-                  <FormField
-                    control={form.control}
-                    name="payment_notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>הערות לתשלום</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            {...field} 
-                            value={field.value || ''}
-                            placeholder="הערות נוספות לגבי התשלום"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                        {exercise.name}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
-                
-                <FormField
-                  control={form.control}
-                  name="sent_exercises"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">נשלחו תרגילים?</FormLabel>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="exercise_list"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>רשימת תרגילים</FormLabel>
-                      <div className="space-y-2">
-                        <Controller
-                          control={form.control}
-                          name="exercise_list"
-                          render={({ field }) => (
-                            <Select
-                              onValueChange={(value) => {
-                                const currentList = field.value || [];
-                                if (!currentList.includes(value)) {
-                                  field.onChange([...currentList, value]);
-                                }
-                              }}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="הוסף תרגיל" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {exercises.map((exercise) => (
-                                  <SelectItem 
-                                    key={exercise.id} 
-                                    value={exercise.exercise_name}
-                                  >
-                                    {exercise.exercise_name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                        {form.watch('exercise_list') && form.watch('exercise_list')!.length > 0 && (
-                          <div className="mt-2 space-y-2">
-                            {form.watch('exercise_list')!.map((exercise, index) => (
-                              <div 
-                                key={index}
-                                className="flex items-center justify-between p-2 bg-muted rounded"
-                              >
-                                <span>{exercise}</span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    const updatedList = [...form.watch('exercise_list')!];
-                                    updatedList.splice(index, 1);
-                                    form.setValue('exercise_list', updatedList);
-                                  }}
-                                >
-                                  הסר
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="summary"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>סיכום הפגישה</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          value={field.value || ''}
-                          placeholder="תיאור הפגישה, בעיות שהועלו, התקדמות וכו'"
-                          className="min-h-[100px]"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+              </div>
+            )}
+          </div>
+
+          <Separator className="my-4" />
+
+          <h3 className="text-lg font-semibold text-purple-700">פרטי תשלום</h3>
+
+          <div className="space-y-2">
+            <Label htmlFor="paid_amount" className="text-purple-700">סכום ששולם (₪)</Label>
+            <Input
+              id="paid_amount"
+              name="paid_amount"
+              type="number"
+              value={formData.paid_amount === null ? '' : formData.paid_amount}
+              onChange={handleNumberChange}
+              className="border-purple-200 focus-visible:ring-purple-500"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="payment_status" className="text-purple-700">סטטוס תשלום</Label>
+            <Select
+              value={formData.payment_status}
+              onValueChange={(value) => handleSelectChange('payment_status', value)}
+            >
+              <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
+                <SelectValue placeholder="בחר סטטוס תשלום" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="paid">שולם</SelectItem>
+                <SelectItem value="partially_paid">שולם חלקית</SelectItem>
+                <SelectItem value="unpaid">ממתין לתשלום</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {(formData.payment_status === 'paid' || formData.payment_status === 'partially_paid') && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="payment_method" className="text-purple-700">אמצעי תשלום</Label>
+                <Select
+                  value={formData.payment_method}
+                  onValueChange={(value) => handleSelectChange('payment_method', value)}
+                >
+                  <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
+                    <SelectValue placeholder="בחר אמצעי תשלום" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">מזומן</SelectItem>
+                    <SelectItem value="bit">ביט</SelectItem>
+                    <SelectItem value="transfer">העברה בנקאית</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payment_date" className="text-purple-700">תאריך תשלום</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "border-purple-200 justify-start text-right font-normal w-full",
+                        !paymentDate && "text-muted-foreground"
+                      )}
+                    >
+                      <Calendar className="ml-2 h-4 w-4 text-purple-600" />
+                      {paymentDate ? format(paymentDate, "dd/MM/yyyy", { locale: he }) : "בחר תאריך תשלום"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={paymentDate}
+                      onSelect={handlePaymentDateChange}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payment_notes" className="text-purple-700">הערות לתשלום</Label>
+                <Textarea
+                  id="payment_notes"
+                  name="payment_notes"
+                  placeholder="הזן הערות לתשלום..."
+                  value={formData.payment_notes}
+                  onChange={handleInputChange}
+                  className="border-purple-200 focus-visible:ring-purple-500"
                 />
               </div>
-            </div>
-            
-            <DialogFooter className="sticky bottom-0 bg-background pt-4 mt-4 border-t flex flex-row-reverse gap-2 sm:gap-0">
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'מוסיף...' : 'הוסף פגישה'}
-              </Button>
-              <Button variant="outline" onClick={onClose} type="button">ביטול</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            </>
+          )}
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                יוצר פגישה...
+              </div>
+            ) : 'צור פגישה'}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="border-purple-200 text-purple-700 hover:bg-purple-50"
+          >
+            ביטול
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

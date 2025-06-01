@@ -1,622 +1,343 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
-import AdminLayout from '@/components/admin/AdminLayout';
-import ClientInfoCard from '@/components/admin/ClientInfoCard';
-import ClientStatisticsCard from '@/components/admin/ClientStatisticsCard';
-import { Patient, Session } from '@/types/patient';
-import { ClientStatistics, FutureSession } from '@/types/session';
-import { formatDateTimeInIsrael, formatDateOnlyInIsrael } from '@/utils/dateUtils';
-import { toast } from '@/components/ui/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabaseClient } from '@/lib/supabaseClient';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Plus, Repeat, Pencil, Trash2, RefreshCw } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import DeleteFutureSessionDialog from '@/components/admin/sessions/DeleteFutureSessionDialog';
-import EditFutureSessionDialog from '@/components/admin/sessions/EditFutureSessionDialog';
-import ConvertSessionDialog from '@/components/admin/sessions/ConvertSessionDialog';
-import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog';
-import NewFutureSessionDialog from '@/components/admin/sessions/NewFutureSessionDialog';
-import RecurringSessionDialog from '@/components/admin/sessions/RecurringSessionDialog';
-import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistoricalSessionDialog';
-import SessionEditDialog from '@/components/admin/SessionEditDialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Mail, Phone, Calendar, Trash2, Edit } from 'lucide-react';
+import AdminLayout from '@/components/admin/AdminLayout';
+import EditClientDialog from '@/components/admin/clients/EditClientDialog';
+import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
 
-const ClientDetails = () => {
-  const { id } = useParams();
-  const patientId = parseInt(id || '0');
+interface Client {
+  id: number;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  created_at: string;
+  notes: string | null;
+}
+
+interface Session {
+  id: number;
+  patient_id: number;
+  session_date: string;
+  meeting_type: string;
+  summary: string | null;
+  payment_status: string;
+  paid_amount: number | null;
+}
+
+const ClientDetails: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
-  const [loading, setLoading] = useState(true);
-  const [patient, setPatient] = useState<Patient | null>(null);
-  const [statistics, setStatistics] = useState<ClientStatistics | null>(null);
-  const [futureSessions, setFutureSessions] = useState<FutureSession[]>([]);
-  const [historicalSessions, setHistoricalSessions] = useState<Session[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("future_sessions");
-
-  const [deleteSessionDialog, setDeleteSessionDialog] = useState<{open: boolean, session: Session | null}>({
-    open: false,
-    session: null
-  });
-  const [deleteFutureSessionDialog, setDeleteFutureSessionDialog] = useState<{open: boolean, session: FutureSession | null}>({
-    open: false,
-    session: null
-  });
-  const [editFutureSessionDialog, setEditFutureSessionDialog] = useState<{open: boolean, session: FutureSession | null}>({
-    open: false,
-    session: null
-  });
-  const [convertSessionDialog, setConvertSessionDialog] = useState<{open: boolean, session: FutureSession | null}>({
-    open: false,
-    session: null
-  });
-  const [newFutureSessionDialog, setNewFutureSessionDialog] = useState<boolean>(false);
-  const [recurringSessionDialog, setRecurringSessionDialog] = useState<boolean>(false);
-  const [newHistoricalSessionDialog, setNewHistoricalSessionDialog] = useState<boolean>(false);
-  const [editHistoricalSessionDialog, setEditHistoricalSessionDialog] = useState<{open: boolean, session: Session | null}>({
-    open: false,
-    session: null
-  });
+  const [client, setClient] = useState<Client | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (patientId) {
-      fetchClientData();
-    }
-  }, [patientId]);
+    fetchClientDetails();
+  }, [id]);
 
-  const fetchClientData = async () => {
-    if (!patientId) return;
+  const fetchClientDetails = async () => {
+    if (!id) return;
     
-    setLoading(true);
+    setIsLoading(true);
     try {
-      const { data: patientData, error: patientError } = await supabase
+      const supabase = supabaseClient();
+      
+      // Fetch client details
+      const { data: clientData, error: clientError } = await supabase
         .from('patients')
         .select('*')
-        .eq('id', patientId)
+        .eq('id', id)
         .single();
 
-      if (patientError) throw patientError;
-      
-      setPatient(patientData as Patient);
+      if (clientError) throw clientError;
 
+      setClient(clientData);
+
+      // Fetch sessions
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
         .select('*')
-        .eq('patient_id', patientId);
+        .eq('patient_id', id)
+        .order('session_date', { ascending: false });
 
       if (sessionsError) throw sessionsError;
-      
-      setHistoricalSessions(sessionsData as Session[]);
-      
-      const oneDayAgo = new Date();
-      oneDayAgo.setHours(oneDayAgo.getHours() - 24);
-      
-      const { data: futureSessionsData, error: futureSessionsError } = await supabase
-        .from('future_sessions')
-        .select('*')
-        .eq('patient_id', patientId)
-        .gt('session_date', oneDayAgo.toISOString())
-        .order('session_date', { ascending: true });
 
-      if (futureSessionsError) throw futureSessionsError;
-      
-      console.log('Future sessions from DB:', futureSessionsData);
-      setFutureSessions(futureSessionsData as FutureSession[]);
-
-      const { data: nextSessionData, error: nextSessionError } = await supabase
-        .from('future_sessions')
-        .select('*')
-        .eq('patient_id', patientId)
-        .gt('session_date', oneDayAgo.toISOString())
-        .order('session_date', { ascending: true })
-        .limit(1);
-
-      if (nextSessionError) throw nextSessionError;
-
-      const session_price = patientData.session_price || 0;
-      const totalDebt = sessionsData.reduce((sum: number, session: Session) => {
-        if (session.payment_status === 'unpaid') {
-          return sum + (session.paid_amount ? session_price - session.paid_amount : session_price);
-        } else if (session.payment_status === 'partially_paid') {
-          return sum + (session.paid_amount ? session_price - session.paid_amount : 0);
-        }
-        return sum;
-      }, 0);
-      
-      const sortedSessions = [...sessionsData].sort((a, b) => 
-        new Date(b.session_date).getTime() - new Date(a.session_date).getTime()
-      );
-      
-      const lastSessionDate = sortedSessions.length > 0 ? sortedSessions[0].session_date : null;
-      const nextSessionDate = nextSessionData.length > 0 ? nextSessionData[0].session_date : null;
-
-      setStatistics({
-        total_sessions: sessionsData.length,
-        total_debt: totalDebt,
-        last_session: lastSessionDate,
-        next_session: nextSessionDate
-      });
-
+      setSessions(sessionsData || []);
     } catch (error: any) {
-      console.error('Error fetching client data:', error);
+      console.error('Error fetching client details:', error);
       toast({
-        title: "שגיאה בטעינת נתונים",
-        description: "לא ניתן לטעון את נתוני הלקוח",
-        variant: "destructive"
+        title: "שגיאה בטעינת פרטי הלקוח",
+        description: error.message || "אנא נסה שוב מאוחר יותר",
+        variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const formatDateOnly = (date: string | null) => {
-    if (!date) return 'אין מידע';
-    return formatDateOnlyInIsrael(date);
-  };
-
-  const formatDateTime = (date: string | null) => {
-    if (!date) return 'אין מידע';
-    console.log('Formatting date to Israel timezone:', date);
-    const formatted = formatDateTimeInIsrael(date);
-    console.log('Formatted date in Israel timezone:', formatted);
-    return formatted;
-  };
-
-  const handleEditFutureSession = (session: FutureSession) => {
-    setEditFutureSessionDialog({
-      open: true,
-      session
-    });
-  };
-
-  const handleDeleteFutureSession = (session: FutureSession) => {
-    setDeleteFutureSessionDialog({
-      open: true,
-      session
-    });
-  };
-
-  const handleConvertSession = (session: FutureSession) => {
-    setConvertSessionDialog({
-      open: true,
-      session
-    });
-  };
-
-  const handleDeleteHistoricalSession = (session: Session) => {
-    setDeleteSessionDialog({
-      open: true,
-      session
-    });
-  };
-
-  const handleEditHistoricalSession = (session: Session) => {
-    setEditHistoricalSessionDialog({
-      open: true,
-      session
-    });
-    setActiveTab("historical_sessions");
-  };
-
-  const confirmDeleteFutureSession = async () => {
-    if (!deleteFutureSessionDialog.session) return;
-    
-    try {
-      const { error } = await supabase
-        .from('future_sessions')
-        .delete()
-        .eq('id', deleteFutureSessionDialog.session.id);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "פגישה נמחקה",
-        description: "הפגישה העתידית נמחקה בהצלחה",
-      });
-      
-      fetchClientData();
-    } catch (error) {
-      console.error('Error deleting future session:', error);
-      toast({
-        title: "שגיאה במחיקת פגישה",
-        description: "לא ניתן למחוק את הפגישה",
-        variant: "destructive"
-      });
-    } finally {
-      setDeleteFutureSessionDialog({ open: false, session: null });
+  const handleDeleteClient = async () => {
+    if (!client || !window.confirm('האם אתה בטוח שברצונך למחוק את הלקוח? פעולה זו אינה ניתנת לביטול.')) {
+      return;
     }
-  };
 
-  const confirmDeleteHistoricalSession = async () => {
-    if (!deleteSessionDialog.session) return;
-    
     try {
-      const { error } = await supabase
+      const supabase = supabaseClient();
+      
+      // Delete all sessions first
+      const { error: sessionsError } = await supabase
         .from('sessions')
         .delete()
-        .eq('id', deleteSessionDialog.session.id);
-      
-      if (error) throw error;
-      
+        .eq('patient_id', client.id);
+
+      if (sessionsError) throw sessionsError;
+
+      // Delete the client
+      const { error: clientError } = await supabase
+        .from('patients')
+        .delete()
+        .eq('id', client.id);
+
+      if (clientError) throw clientError;
+
       toast({
-        title: "פגישה נמחקה",
-        description: "הפגישה נמחקה בהצלחה",
+        title: "הלקוח נמחק בהצלחה",
+        description: "הלקוח וכל הפגישות שלו נמחקו מהמערכת",
       });
-      
-      fetchClientData();
-    } catch (error) {
-      console.error('Error deleting session:', error);
+
+      navigate('/admin/patients');
+    } catch (error: any) {
+      console.error('Error deleting client:', error);
       toast({
-        title: "שגיאה במחיקת פגישה",
-        description: "לא ניתן למחוק את הפגישה",
-        variant: "destructive"
+        title: "שגיאה במחיקת הלקוח",
+        description: error.message || "אנא נסה שוב מאוחר יותר",
+        variant: "destructive",
       });
-    } finally {
-      setDeleteSessionDialog({ open: false, session: null });
     }
   };
 
-  const getMeetingTypeLabel = (type: string) => {
-    switch (type) {
-      case 'Zoom': return 'זום';
-      case 'Phone': return 'טלפון';
-      case 'In-Person': return 'פרונטלי';
-      default: return type;
+  const handleClientUpdated = (updatedClient: Client) => {
+    setClient(updatedClient);
+    toast({
+      title: "פרטי הלקוח עודכנו בהצלחה",
+      description: "הפרטים נשמרו במערכת",
+    });
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy', { locale: he });
+    } catch (e) {
+      return dateString;
     }
   };
 
-  const getPaymentStatusLabel = (status: string) => {
-    switch (status) {
-      case 'paid': return 'שולם';
-      case 'partially_paid': return 'שולם חלקית';
-      case 'unpaid': return 'לא שולם';
-      default: return status;
-    }
-  };
-
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case 'paid': return 'bg-green-100 text-green-800';
-      case 'partially_paid': return 'bg-yellow-100 text-yellow-800';
-      case 'unpaid': 
-      case 'pending': 
-        return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getFutureSessionStatusLabel = (status: string) => {
-    switch (status) {
-      case 'Scheduled': return 'מתוכנן';
-      case 'Completed': return 'הושלם';
-      case 'Cancelled': return 'בוטל';
-      default: return status;
-    }
-  };
-
-  const getFutureSessionStatusClass = (status: string) => {
-    switch (status) {
-      case 'Scheduled': return 'bg-blue-100 text-blue-800';
-      case 'Completed': return 'bg-green-100 text-green-800';
-      case 'Cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <AdminLayout title="פרטי לקוח">
         <div className="flex justify-center items-center h-64">
-          <div className="text-purple-600 text-xl animate-pulse">טוען נתונים...</div>
+          <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
       </AdminLayout>
     );
   }
 
-  if (!patient) {
+  if (!client) {
     return (
       <AdminLayout title="פרטי לקוח">
-        <div className="flex flex-col justify-center items-center h-64">
-          <div className="text-red-600 text-xl mb-4">לקוח לא נמצא</div>
-          <p className="text-gray-600">הלקוח המבוקש אינו קיים במערכת</p>
+        <div className="text-center py-10">
+          <h2 className="text-2xl font-bold text-gray-700">לקוח לא נמצא</h2>
+          <p className="text-gray-500 mt-2">הלקוח המבוקש אינו קיים במערכת</p>
+          <Button 
+            onClick={() => navigate('/admin/patients')}
+            className="mt-4"
+            variant="outline"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            חזרה לרשימת הלקוחות
+          </Button>
         </div>
       </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout title={`${patient.name} - פרטי לקוח`}>
-      <div className="grid gap-6 md:grid-cols-2 mb-6">
-        <ClientInfoCard 
-          patient={patient} 
-          onPatientUpdated={fetchClientData}
-        />
-        <ClientStatisticsCard 
-          statistics={statistics}
-          formatDateOnly={formatDateOnly}
-        />
-      </div>
-
-      <div className="bg-white rounded-lg shadow">
-        <Tabs 
-          value={activeTab} 
-          onValueChange={setActiveTab} 
-          dir="rtl"
-        >
-          <div className="p-4 border-b">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="future_sessions" className="text-base">פגישות עתידיות</TabsTrigger>
-              <TabsTrigger value="historical_sessions" className="text-base">היסטוריית פגישות</TabsTrigger>
-            </TabsList>
+    <AdminLayout title={`פרטי לקוח - ${client.name}`}>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Button 
+            onClick={() => navigate('/admin/patients')}
+            variant="outline"
+            className="flex items-center"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            חזרה לרשימת הלקוחות
+          </Button>
+          
+          <div className="flex space-x-2 space-x-reverse">
+            <Button 
+              onClick={() => setIsEditDialogOpen(true)}
+              variant="outline"
+              className="flex items-center"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              עריכת פרטים
+            </Button>
+            
+            <Button 
+              onClick={handleDeleteClient}
+              variant="destructive"
+              className="flex items-center"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              מחיקת לקוח
+            </Button>
           </div>
-
-          <TabsContent value="future_sessions" className="p-4">
-            <div className="flex justify-between mb-6">
-              <Button 
-                className="bg-purple-600 hover:bg-purple-700 mr-2"
-                onClick={() => setNewFutureSessionDialog(true)}
-              >
-                <Plus className="h-4 w-4 ml-1" />
-                יצירת פגישה חדשה
-              </Button>
-              <Button 
-                variant="outline" 
-                className="border-purple-200 text-purple-700"
-                onClick={() => setRecurringSessionDialog(true)}
-              >
-                <Repeat className="h-4 w-4 ml-1" />
-                יצירת פגישה חוזרת
-              </Button>
-            </div>
-
-            {futureSessions.length === 0 ? (
-              <div className="text-center py-10 text-gray-500">
-                אין פגישות עתידיות מתוכננות
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {futureSessions.map((session) => (
-                  <Card key={session.id} className="border-purple-100 shadow-sm hover:shadow bg-purple-50">
-                    <div className="p-4">
-                      <div className="flex justify-between items-center mb-3">
-                        <div className="flex items-center">
-                          <Calendar className="h-5 w-5 text-purple-600 ml-2" />
-                          <span className="font-medium text-purple-800">
-                            {formatDateTime(session.session_date)}
-                          </span>
-                        </div>
-                        <span className={`text-sm px-2 py-1 rounded-full ${getFutureSessionStatusClass(session.status)}`}>
-                          {getFutureSessionStatusLabel(session.status)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center text-gray-700 mb-2">
-                        <Clock className="h-4 w-4 text-purple-500 ml-2" />
-                        <span>{getMeetingTypeLabel(session.meeting_type)}</span>
-                      </div>
-
-                      {session.zoom_link && (
-                        <div className="mb-3">
-                          <a 
-                            href={session.zoom_link} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline text-sm"
-                          >
-                            קישור לזום
-                          </a>
-                        </div>
-                      )}
-
-                      <div className="flex justify-end space-x-2 space-x-reverse mt-4">
-                        <TooltipProvider delayDuration={300}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => handleEditFutureSession(session)}
-                                className="text-green-600 hover:text-green-800 hover:bg-green-100"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent dir="rtl">
-                              <p>עריכת פגישה</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        <TooltipProvider delayDuration={300}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => handleConvertSession(session)}
-                                className="text-purple-600 hover:text-purple-800 hover:bg-purple-100"
-                              >
-                                <RefreshCw className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent dir="rtl">
-                              <p>העבר לפגישה היסטורית</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-
-                        <TooltipProvider delayDuration={300}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => handleDeleteFutureSession(session)}
-                                className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent dir="rtl">
-                              <p>מחיקת פגישה</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-purple-800">פרטי לקוח</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-24">שם מלא:</span>
+                  <span className="font-medium">{client.name}</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-24">אימייל:</span>
+                  {client.email ? (
+                    <div className="flex items-center">
+                      <Mail className="h-4 w-4 text-gray-400 mr-1" />
+                      <a href={`mailto:${client.email}`} className="text-purple-600 hover:underline">
+                        {client.email}
+                      </a>
                     </div>
-                  </Card>
-                ))}
+                  ) : (
+                    <span className="text-gray-400">לא הוזן</span>
+                  )}
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-24">טלפון:</span>
+                  {client.phone ? (
+                    <div className="flex items-center">
+                      <Phone className="h-4 w-4 text-gray-400 mr-1" />
+                      <a href={`tel:${client.phone}`} className="text-purple-600 hover:underline">
+                        {client.phone}
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">לא הוזן</span>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-24">תאריך הוספה:</span>
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 text-gray-400 mr-1" />
+                    <span>{formatDate(client.created_at)}</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-24">סטטוס:</span>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    פעיל
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-24">מספר פגישות:</span>
+                  <span>{sessions.length}</span>
+                </div>
+              </div>
+            </div>
+            
+            {client.notes && (
+              <div className="pt-4 border-t border-gray-100">
+                <h3 className="font-medium text-gray-700 mb-2">הערות:</h3>
+                <p className="text-gray-600 whitespace-pre-wrap">{client.notes}</p>
               </div>
             )}
-          </TabsContent>
-
-          <TabsContent value="historical_sessions" className="p-4">
-            <div className="flex justify-end mb-6">
-              <Button 
-                className="bg-purple-600 hover:bg-purple-700"
-                onClick={() => setNewHistoricalSessionDialog(true)}
-              >
-                <Plus className="h-4 w-4 ml-1" />
-                יצירת פגישה היסטורית חדשה
-              </Button>
-            </div>
-
-            {historicalSessions.length === 0 ? (
-              <div className="text-center py-10 text-gray-500">
-                אין פגישות היסטוריות
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-purple-800">היסטוריית פגישות</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {sessions.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-gray-500">אין פגישות קודמות עם לקוח זה</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>תאריך ושעה</TableHead>
-                      <TableHead>סוג פגישה</TableHead>
-                      <TableHead>סטטוס תשלום</TableHead>
-                      <TableHead>סכום ששולם</TableHead>
-                      <TableHead>תרגילים</TableHead>
-                      <TableHead className="text-left">פעולות</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {historicalSessions.map((session) => (
-                      <TableRow key={session.id}>
-                        <TableCell className="font-medium">{formatDateTime(session.session_date)}</TableCell>
-                        <TableCell>{getMeetingTypeLabel(session.meeting_type)}</TableCell>
-                        <TableCell>
-                          <span className={`text-sm px-2 py-1 rounded-full ${getStatusBadgeClass(session.payment_status)}`}>
-                            {getPaymentStatusLabel(session.payment_status)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {session.paid_amount ? `₪${session.paid_amount}` : 'לא שולם'}
-                        </TableCell>
-                        <TableCell>
-                          {session.sent_exercises && session.exercise_list && session.exercise_list.length > 0 ? (
-                            <span className="text-purple-600">
-                              {session.exercise_list.length} תרגילים
-                            </span>
-                          ) : (
-                            <span className="text-gray-500 text-sm">אין תרגילים</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2 space-x-reverse">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-purple-600 hover:text-purple-800 hover:bg-purple-100"
-                              onClick={() => handleEditHistoricalSession(session)}
-                            >
-                              עריכה
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleDeleteHistoricalSession(session)}
-                              className="text-red-600 hover:text-red-800 hover:bg-red-100"
-                            >
-                              מחיקה
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="py-2 px-4 text-right">תאריך</th>
+                      <th className="py-2 px-4 text-right">סוג פגישה</th>
+                      <th className="py-2 px-4 text-right">סטטוס תשלום</th>
+                      <th className="py-2 px-4 text-right">סכום</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sessions.map((session) => (
+                      <tr key={session.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4">{formatDate(session.session_date)}</td>
+                        <td className="py-3 px-4">{session.meeting_type}</td>
+                        <td className="py-3 px-4">
+                          <Badge 
+                            variant="outline" 
+                            className={
+                              session.payment_status === 'paid' 
+                                ? 'bg-green-50 text-green-700 border-green-200' 
+                                : session.payment_status === 'partially_paid'
+                                ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                : 'bg-red-50 text-red-700 border-red-200'
+                            }
+                          >
+                            {session.payment_status === 'paid' 
+                              ? 'שולם' 
+                              : session.payment_status === 'partially_paid'
+                              ? 'שולם חלקית'
+                              : 'לא שולם'}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4">
+                          {session.paid_amount ? `₪${session.paid_amount}` : '-'}
+                        </td>
+                      </tr>
                     ))}
-                  </TableBody>
-                </Table>
+                  </tbody>
+                </table>
               </div>
             )}
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
       </div>
-
-      <DeleteFutureSessionDialog
-        open={deleteFutureSessionDialog.open}
-        onOpenChange={(open) => setDeleteFutureSessionDialog({ ...deleteFutureSessionDialog, open })}
-        session={deleteFutureSessionDialog.session}
-        onConfirm={confirmDeleteFutureSession}
-        formatDate={formatDateTime}
-      />
-
-      <DeleteSessionDialog
-        open={deleteSessionDialog.open}
-        onOpenChange={(open) => setDeleteSessionDialog({ ...deleteSessionDialog, open })}
-        session={deleteSessionDialog.session}
-        onConfirm={confirmDeleteHistoricalSession}
-        formatDate={formatDateTime}
-      />
-
-      <EditFutureSessionDialog
-        open={editFutureSessionDialog.open}
-        onOpenChange={(open) => setEditFutureSessionDialog({ ...editFutureSessionDialog, open })}
-        session={editFutureSessionDialog.session}
-        patientId={patientId}
-        onUpdated={fetchClientData}
-      />
-
-      <ConvertSessionDialog
-        open={convertSessionDialog.open}
-        onOpenChange={(open) => setConvertSessionDialog({ ...convertSessionDialog, open })}
-        session={convertSessionDialog.session}
-        patientId={patientId}
-        onConverted={fetchClientData}
-      />
-
-      <NewFutureSessionDialog
-        open={newFutureSessionDialog}
-        onOpenChange={setNewFutureSessionDialog}
-        patientId={patientId}
-        patientName={patient.name}
-        onCreated={fetchClientData}
-      />
-
-      <RecurringSessionDialog
-        open={recurringSessionDialog}
-        onOpenChange={setRecurringSessionDialog}
-        patientId={patientId}
-        patientName={patient.name}
-        onCreated={fetchClientData}
-      />
-
-      <NewHistoricalSessionDialog
-        open={newHistoricalSessionDialog}
-        onOpenChange={setNewHistoricalSessionDialog}
-        patientId={patientId}
-        patient={patient}
-        onSessionCreated={fetchClientData}
-      />
-
-      {editHistoricalSessionDialog.session && (
-        <SessionEditDialog
-          isOpen={editHistoricalSessionDialog.open}
-          onClose={() => setEditHistoricalSessionDialog({ open: false, session: null })}
-          session={editHistoricalSessionDialog.session}
-          onSessionUpdated={() => {
-            fetchClientData();
-            setActiveTab("historical_sessions");
-            setEditHistoricalSessionDialog({ open: false, session: null });
-          }}
-          sessionPrice={patient?.session_price || null}
+      
+      {isEditDialogOpen && (
+        <EditClientDialog 
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+          client={client}
+          onClientUpdated={handleClientUpdated}
         />
       )}
     </AdminLayout>

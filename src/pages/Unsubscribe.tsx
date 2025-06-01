@@ -4,7 +4,7 @@ import { Mail, AlertCircle, CheckCircle, ArrowRight, Home } from 'lucide-react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { Helmet } from 'react-helmet-async';
 
@@ -64,6 +64,8 @@ const UnsubscribePage: React.FC = () => {
     try {
       let isAlreadyUnsubscribed = false;
       let emailExists = false;
+      
+      const supabase = supabaseClient();
       
       if (values.listType === 'general' || values.listType === 'all') {
         const { data: generalData } = await supabase
@@ -156,6 +158,8 @@ const UnsubscribePage: React.FC = () => {
     const values = form.getValues();
     
     try {
+      const supabase = supabaseClient();
+      
       if (values.listType === 'general' || values.listType === 'all') {
         const { data, error } = await supabase
           .from('content_subscribers')
@@ -204,11 +208,12 @@ const UnsubscribePage: React.FC = () => {
         }
       }
       
-      toast.success('נרשמת בהצלחה לרשימת התפוצה!');
       setStep('resubscribed');
+      toast.success('נרשמת מחדש בהצלחה!');
+      
     } catch (error) {
       console.error('Error resubscribing:', error);
-      toast.error('אירעה שגיאה בתהליך ההרשמה');
+      toast.error('אירעה שגיאה בתהליך הרישום מחדש');
     } finally {
       setIsSubmitting(false);
     }

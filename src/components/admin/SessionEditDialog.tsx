@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Session } from '@/types/patient';
 import { formatDateInIsraelTimeZone, convertLocalToUTC } from '@/utils/dateUtils';
@@ -265,6 +265,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
 
       console.log('Updating session data:', sessionData);
 
+      const supabase = supabaseClient();
       const { error } = await supabase
         .from('sessions')
         .update(sessionData)

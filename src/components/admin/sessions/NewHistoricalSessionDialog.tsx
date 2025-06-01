@@ -3,10 +3,9 @@ import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { NewHistoricalSessionFormData, FutureSession } from '@/types/session';
-import { Patient } from '@/types/patient';
-import { supabase } from '@/lib/supabase';
-import { formatDateInIsraelTimeZone, convertLocalToUTC } from '@/utils/dateUtils';
+import { NewSessionFormData } from '@/types/session';
+import { supabaseClient } from '@/lib/supabaseClient';
+import { convertLocalToUTC } from '@/utils/dateUtils';
 
 import {
   Dialog,
@@ -40,20 +39,20 @@ interface NewHistoricalSessionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   patientId: number;
-  patient: Patient | null;
-  onSessionCreated: () => void;
-  fromFutureSession?: FutureSession;
-  onDeleteFutureSession?: () => Promise<void>;
+  patientName?: string;
+  onCreated?: () => void;
+  onSessionCreated?: () => void;
+  sessionPrice?: number | null;
 }
 
 const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   open,
   onOpenChange,
   patientId,
-  patient,
+  patientName,
+  onCreated,
   onSessionCreated,
-  fromFutureSession,
-  onDeleteFutureSession,
+  sessionPrice,
 }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,24 +61,29 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string>('12:00');
-  const [paymentDate, setPaymentDate] = useState<Date | undefined>(new Date());
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(undefined);
   
-  const [formData, setFormData] = useState<NewHistoricalSessionFormData>({
+  const [formData, setFormData] = useState<NewSessionFormData>({
     session_date: new Date(),
     meeting_type: 'Zoom',
-    summary: null,
+    summary: '',
     sent_exercises: false,
     exercise_list: [],
-    paid_amount: patient?.session_price || null,
-    payment_status: 'pending',
-    payment_method: null,
+    paid_amount: sessionPrice || 0,
+    payment_status: 'unpaid',
+    payment_method: 'cash',
     payment_date: null,
-    payment_notes: null,
+    payment_notes: '',
   });
+
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, paid_amount: sessionPrice || 0 }));
+  }, [sessionPrice]);
 
   useEffect(() => {
     const fetchExercises = async () => {
       try {
+        const supabase = supabaseClient();
         const { data, error } = await supabase
           .from('exercises')
           .select('id, name')
@@ -96,61 +100,9 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     fetchExercises();
   }, []);
 
-  useEffect(() => {
-    if (open) {
-      if (fromFutureSession) {
-        const sessionDate = new Date(fromFutureSession.session_date);
-        
-        setDate(sessionDate);
-        setTime(
-          sessionDate.getHours().toString().padStart(2, '0') + 
-          ':' + 
-          sessionDate.getMinutes().toString().padStart(2, '0')
-        );
-        
-        setFormData({
-          session_date: sessionDate,
-          meeting_type: fromFutureSession.meeting_type,
-          summary: null,
-          sent_exercises: false,
-          exercise_list: [],
-          paid_amount: patient?.session_price || null,
-          payment_status: 'pending',
-          payment_method: null,
-          payment_date: null,
-          payment_notes: null,
-        });
-      } else {
-        const now = new Date();
-        setDate(now);
-        setTime(
-          now.getHours().toString().padStart(2, '0') + 
-          ':' + 
-          now.getMinutes().toString().padStart(2, '0')
-        );
-        setPaymentDate(now);
-        
-        setFormData({
-          session_date: now,
-          meeting_type: 'Zoom',
-          summary: null,
-          sent_exercises: false,
-          exercise_list: [],
-          paid_amount: patient?.session_price || null,
-          payment_status: 'pending',
-          payment_method: null,
-          payment_date: null,
-          payment_notes: null,
-        });
-      }
-      
-      setSelectedExercises([]);
-    }
-  }, [open, fromFutureSession, patient]);
-
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value || null }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,15 +111,14 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     
     setFormData((prev) => ({ ...prev, [name]: numValue }));
     
-    if (name === 'paid_amount') {
-      if (patient?.session_price) {
-        if (numValue === null || numValue === 0) {
-          setFormData(prev => ({ ...prev, payment_status: 'pending' }));
-        } else if (numValue < patient.session_price) {
-          setFormData(prev => ({ ...prev, payment_status: 'partial' }));
-        } else {
-          setFormData(prev => ({ ...prev, payment_status: 'paid' }));
-        }
+    // Update payment status based on paid amount
+    if (sessionPrice) {
+      if (numValue === null || numValue === 0) {
+        setFormData(prev => ({ ...prev, payment_status: 'unpaid' }));
+      } else if (numValue < sessionPrice) {
+        setFormData(prev => ({ ...prev, payment_status: 'partially_paid' }));
+      } else {
+        setFormData(prev => ({ ...prev, payment_status: 'paid' }));
       }
     }
   };
@@ -175,12 +126,14 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     
-    if (name === 'payment_status' && value === 'pending') {
+    // Reset payment_date if payment_status is "unpaid"
+    if (name === 'payment_status' && value === 'unpaid') {
       setFormData((prev) => ({ ...prev, payment_date: null }));
       setPaymentDate(undefined);
     }
     
-    if (name === 'payment_status' && (value === 'paid' || value === 'partial') && !formData.payment_date) {
+    // Set payment_date to today if payment_status changed to "paid" or "partially_paid" and there's no date
+    if (name === 'payment_status' && (value === 'paid' || value === 'partially_paid') && !formData.payment_date) {
       const today = new Date();
       setFormData((prev) => ({ ...prev, payment_date: today }));
       setPaymentDate(today);
@@ -190,6 +143,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   const handleCheckboxChange = (checked: boolean) => {
     setFormData((prev) => ({ ...prev, sent_exercises: checked }));
     
+    // If unchecked, clear selected exercises
     if (!checked) {
       setSelectedExercises([]);
       setFormData((prev) => ({ ...prev, exercise_list: [] }));
@@ -212,6 +166,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTime(e.target.value);
     
+    // Update session_date with new time
     if (date) {
       const [hours, minutes] = e.target.value.split(':').map(Number);
       const newDate = new Date(date);
@@ -224,6 +179,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     if (newDate) {
       setDate(newDate);
       
+      // Preserve the selected time
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
         newDate.setHours(hours, minutes);
@@ -239,28 +195,21 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   };
 
   const resetForm = () => {
-    const now = new Date();
-    setDate(now);
-    setTime(
-      now.getHours().toString().padStart(2, '0') + 
-      ':' + 
-      now.getMinutes().toString().padStart(2, '0')
-    );
-    setPaymentDate(now);
-    
     setFormData({
-      session_date: now,
+      session_date: new Date(),
       meeting_type: 'Zoom',
-      summary: null,
+      summary: '',
       sent_exercises: false,
       exercise_list: [],
-      paid_amount: patient?.session_price || null,
-      payment_status: 'pending',
-      payment_method: null,
+      paid_amount: sessionPrice || 0,
+      payment_status: 'unpaid',
+      payment_method: 'cash',
       payment_date: null,
-      payment_notes: null,
+      payment_notes: '',
     });
-    
+    setDate(new Date());
+    setTime('12:00');
+    setPaymentDate(undefined);
     setSelectedExercises([]);
     setIsSubmitting(false);
   };
@@ -275,71 +224,44 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
       return;
     }
 
-    if (!['paid', 'partial', 'pending'].includes(formData.payment_status)) {
-      setFormData(prev => ({ ...prev, payment_status: 'pending' }));
-    }
-
     setIsSubmitting(true);
     try {
+      // Format the combined date and time for database
       const combinedDate = date;
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
         combinedDate.setHours(hours, minutes);
       }
 
+      // Convert to UTC before saving to database
       const isoDate = convertLocalToUTC(combinedDate);
-      
-      console.log('Creating new historical session with date:', {
-        original: combinedDate.toString(),
-        iso: isoDate,
-        timeInput: time
-      });
 
-      const sessionData = {
-        patient_id: patientId,
-        session_date: isoDate,
-        meeting_type: formData.meeting_type,
-        summary: formData.summary,
-        sent_exercises: formData.sent_exercises,
-        exercise_list: formData.sent_exercises ? formData.exercise_list : [],
-        paid_amount: formData.paid_amount,
-        payment_status: formData.payment_status,
-        payment_method: formData.payment_method,
-        payment_date: formData.payment_date ? convertLocalToUTC(formData.payment_date) : null,
-        payment_notes: formData.payment_notes,
-      };
-
-      console.log('Saving historical session data:', sessionData);
-
+      const supabase = supabaseClient();
       const { error } = await supabase
         .from('sessions')
-        .insert([sessionData]);
+        .insert({
+          patient_id: patientId,
+          session_date: isoDate,
+          meeting_type: formData.meeting_type,
+          summary: formData.summary,
+          sent_exercises: formData.sent_exercises,
+          exercise_list: formData.sent_exercises ? formData.exercise_list : [],
+          paid_amount: formData.paid_amount,
+          payment_status: formData.payment_status,
+          payment_method: formData.payment_method,
+          payment_date: formData.payment_date ? convertLocalToUTC(formData.payment_date) : null,
+          payment_notes: formData.payment_notes,
+        });
 
       if (error) throw error;
 
       toast({
         title: "פגישה היסטורית נוצרה בהצלחה",
-        description: "הפגישה נוספה להיסטוריית הפגישות",
+        description: "הפגישה נוספה לפרופיל המטופל",
       });
 
-      if (fromFutureSession && onDeleteFutureSession) {
-        try {
-          await onDeleteFutureSession();
-          toast({
-            title: "פגישה עתידית הועברה בהצלחה",
-            description: "הפגישה הועברה מהפגישות העתידיות להיסטוריה",
-          });
-        } catch (error) {
-          console.error('Error deleting future session:', error);
-          toast({
-            title: "שגיאה במחיקת פגישה עתידית",
-            description: "הפגישה ההיסטורית נוצרה אך הפגישה העתידית לא נמחקה",
-            variant: "destructive",
-          });
-        }
-      }
-
-      onSessionCreated();
+      if (onCreated) onCreated();
+      if (onSessionCreated) onSessionCreated();
       resetForm();
       onOpenChange(false);
     } catch (error: any) {
@@ -359,7 +281,9 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-purple-800">
-            {fromFutureSession ? 'העברת פגישה להיסטוריה' : 'יצירת פגישה היסטורית חדשה'}
+            {patientName 
+              ? `יצירת פגישה היסטורית חדשה עבור ${patientName}` 
+              : "יצירת פגישה היסטורית חדשה"}
           </DialogTitle>
         </DialogHeader>
 
@@ -424,8 +348,8 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
               id="summary"
               name="summary"
               placeholder="הזן סיכום פגישה..."
-              value={formData.summary || ''}
-              onChange={handleTextChange}
+              value={formData.summary}
+              onChange={handleInputChange}
               className="min-h-[100px] border-purple-200 focus-visible:ring-purple-500"
             />
           </div>
@@ -435,7 +359,9 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
               <Checkbox
                 id="sent_exercises"
                 checked={formData.sent_exercises}
-                onCheckedChange={handleCheckboxChange}
+                onCheckedChange={(checked) => {
+                  handleCheckboxChange(!!checked);
+                }}
               />
               <Label htmlFor="sent_exercises" className="text-purple-700">
                 נשלחו תרגילים
@@ -493,18 +419,18 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="paid">שולם</SelectItem>
-                <SelectItem value="partial">שולם חלקית</SelectItem>
-                <SelectItem value="pending">ממתין לתשלום</SelectItem>
+                <SelectItem value="partially_paid">שולם חלקית</SelectItem>
+                <SelectItem value="unpaid">ממתין לתשלום</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {(formData.payment_status === 'paid' || formData.payment_status === 'partial') && (
+          {(formData.payment_status === 'paid' || formData.payment_status === 'partially_paid') && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="payment_method" className="text-purple-700">אמצעי תשלום</Label>
                 <Select
-                  value={formData.payment_method || ''}
+                  value={formData.payment_method}
                   onValueChange={(value) => handleSelectChange('payment_method', value)}
                 >
                   <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
@@ -551,8 +477,8 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
                   id="payment_notes"
                   name="payment_notes"
                   placeholder="הזן הערות לתשלום..."
-                  value={formData.payment_notes || ''}
-                  onChange={handleTextChange}
+                  value={formData.payment_notes}
+                  onChange={handleInputChange}
                   className="border-purple-200 focus-visible:ring-purple-500"
                 />
               </div>
@@ -566,7 +492,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
             disabled={isSubmitting}
             className="bg-purple-600 hover:bg-purple-700"
           >
-            {isSubmitting ? 'מעבד...' : fromFutureSession ? 'העבר להיסטוריה' : 'צור פגישה'}
+            {isSubmitting ? 'יוצר פגישה...' : 'צור פגישה'}
           </Button>
           <Button
             variant="outline"
