@@ -33,8 +33,10 @@ export function GoogleLoginButton() {
 
   return (
     <div className="flex flex-col">
-      <button 
-        className="flex items-center gap-1 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-7 px-2 text-xs min-h-0 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-7 px-2 text-xs gap-1 bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
         onClick={handleClick}
         disabled={isAuthenticating}
       >
@@ -43,7 +45,7 @@ export function GoogleLoginButton() {
         {isAuthenticating && (
           <Loader2 className="ml-1 h-3 w-3 animate-spin" />
         )}
-      </button>
+      </Button>
       
       {!isAuthenticated && error && (
         <Alert variant="destructive" className="mt-1 p-1.5">
