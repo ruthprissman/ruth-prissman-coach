@@ -8,10 +8,14 @@ import { DateRange, Expense } from '@/types/finances';
 import AddExpenseModal from './AddExpenseModal';
 import EditExpenseModal from './EditExpenseModal';
 import { ExpenseFilters } from './ExpenseFilters';
-import { useExpenseData } from '@/hooks/useExpenseData';
 
 interface ExpensesTableProps {
   dateRange: DateRange;
+  data: Expense[];
+  isLoading: boolean;
+  onRefresh: () => void;
+  onDelete: (id: number) => void;
+  onFiltersChange: (filters: any) => void;
 }
 
 // מיפוי לתצוגה בעברית
@@ -37,31 +41,25 @@ const statusMapping = {
   'draft': 'טיוטה'
 };
 
-const ExpensesTable: React.FC<ExpensesTableProps> = ({ dateRange }) => {
+const ExpensesTable: React.FC<ExpensesTableProps> = ({ 
+  dateRange, 
+  data, 
+  isLoading, 
+  onRefresh, 
+  onDelete, 
+  onFiltersChange 
+}) => {
   console.log('ExpensesTable: Received dateRange:', dateRange);
+  console.log('ExpensesTable: Received data:', data);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [appliedFilters, setAppliedFilters] = useState<any>({});
-
-  // Use the expense data hook with filters
-  const { 
-    expenseData, 
-    isLoading, 
-    error, 
-    handleDelete, 
-    handleRefresh,
-    isDeleting 
-  } = useExpenseData(dateRange, appliedFilters);
-
-  console.log('ExpensesTable: Applied filters:', appliedFilters);
-  console.log('ExpensesTable: Expense data:', expenseData);
 
   // Only apply local search filter now, since DB filters are handled by the hook
-  const filteredData = expenseData.filter(item => {
+  const filteredData = data.filter(item => {
     if (!searchTerm) return true;
     
     const textMatch = (item.payee && item.payee.includes(searchTerm)) ||
@@ -77,13 +75,13 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ dateRange }) => {
 
   const handleAddSuccess = () => {
     setShowAddModal(false);
-    handleRefresh();
+    onRefresh();
   };
 
   const handleEditSuccess = () => {
     setShowEditModal(false);
     setSelectedExpense(null);
-    handleRefresh();
+    onRefresh();
   };
 
   const handleEdit = (expense: Expense) => {
@@ -92,9 +90,17 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ dateRange }) => {
     setShowEditModal(true);
   };
 
+  const handleDelete = (id: number) => {
+    if (onDelete) {
+      onDelete(id);
+    }
+  };
+
   const handleFiltersChange = (newFilters: any) => {
     console.log('ExpensesTable: Filters changed to:', newFilters);
-    setAppliedFilters(newFilters);
+    if (onFiltersChange) {
+      onFiltersChange(newFilters);
+    }
   };
 
   return (
@@ -198,7 +204,6 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ dateRange }) => {
                           size="sm" 
                           className="h-7 w-7 p-0"
                           onClick={() => handleDelete(row.id)}
-                          disabled={isDeleting}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -209,7 +214,7 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ dateRange }) => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={10} className="text-center py-6 text-muted-foreground">
-                    {expenseData.length === 0 && !isLoading ? 'לא נמצאו הוצאות בטווח התאריכים הנבחר' : 'לא נמצאו רשומות מתאימות'}
+                    {data.length === 0 && !isLoading ? 'לא נמצאו הוצאות בטווח התאריכים הנבחר' : 'לא נמצאו רשומות מתאימות'}
                   </TableCell>
                 </TableRow>
               )}
@@ -221,10 +226,9 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({ dateRange }) => {
       {/* Debug info */}
       {process.env.NODE_ENV === 'development' && (
         <div className="mt-4 p-2 bg-gray-100 text-xs">
-          <div>Total data items: {expenseData.length}</div>
+          <div>Total data items: {data.length}</div>
           <div>Filtered items: {filteredData.length}</div>
           <div>Is loading: {isLoading.toString()}</div>
-          <div>Applied filters: {JSON.stringify(appliedFilters)}</div>
           <div>Date range: {dateRange.start.toISOString()} - {dateRange.end.toISOString()}</div>
         </div>
       )}
