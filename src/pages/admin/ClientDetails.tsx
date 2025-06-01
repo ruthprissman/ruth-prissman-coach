@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabaseClient } from '@/lib/supabaseClient';
@@ -10,15 +11,7 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import EditClientDialog from '@/components/admin/clients/EditClientDialog';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
-
-interface Client {
-  id: number;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  created_at: string;
-  notes: string | null;
-}
+import { Patient } from '@/types/patient';
 
 interface Session {
   id: number;
@@ -35,7 +28,7 @@ const ClientDetails: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [client, setClient] = useState<Client | null>(null);
+  const [client, setClient] = useState<Patient | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -124,8 +117,8 @@ const ClientDetails: React.FC = () => {
     }
   };
 
-  const handleClientUpdated = (updatedClient: Client) => {
-    setClient(updatedClient);
+  const handleClientUpdated = (updatedPatient: Patient) => {
+    setClient(updatedPatient);
     toast({
       title: "פרטי הלקוח עודכנו בהצלחה",
       description: "הפרטים נשמרו במערכת",
@@ -246,11 +239,8 @@ const ClientDetails: React.FC = () => {
               
               <div className="space-y-2">
                 <div className="flex items-center">
-                  <span className="text-gray-500 w-24">תאריך הוספה:</span>
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 text-gray-400 mr-1" />
-                    <span>{formatDate(client.created_at)}</span>
-                  </div>
+                  <span className="text-gray-500 w-24">מחיר פגישה:</span>
+                  <span>{client.session_price ? `₪${client.session_price}` : 'לא הוגדר'}</span>
                 </div>
                 
                 <div className="flex items-center">
@@ -335,7 +325,7 @@ const ClientDetails: React.FC = () => {
       {isEditDialogOpen && (
         <EditClientDialog 
           open={isEditDialogOpen}
-          onOpenChange={() => setIsEditDialogOpen(false)}
+          onOpenChange={setIsEditDialogOpen}
           patient={client}
           onPatientUpdated={handleClientUpdated}
         />

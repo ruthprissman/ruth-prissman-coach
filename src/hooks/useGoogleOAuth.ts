@@ -14,7 +14,7 @@ import { persistAuthState, getPersistedAuthState } from '@/utils/cookieUtils';
 import { isEqual, addDays, startOfWeek } from 'date-fns';
 
 // Hook version for debugging
-const HOOK_VERSION = "1.2.0"; // Updated version with security fixes
+const HOOK_VERSION = "1.2.1"; // Updated version with fixes
 const isDevelopment = import.meta.env.DEV;
 
 // Only log in development mode
