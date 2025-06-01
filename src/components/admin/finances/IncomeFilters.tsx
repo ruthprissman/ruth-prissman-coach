@@ -81,6 +81,10 @@ export const IncomeFilters: React.FC<IncomeFiltersProps> = ({ onFiltersChange })
       case 'custom':
         // לא משנה כלום - המשתמש יכול להזין ידנית
         break;
+      case 'none':
+        setStartDate('');
+        setEndDate('');
+        break;
       default:
         setStartDate('');
         setEndDate('');
@@ -108,9 +112,9 @@ export const IncomeFilters: React.FC<IncomeFiltersProps> = ({ onFiltersChange })
       onFiltersChange({
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
-        category,
-        paymentMethod,
-        client
+        category: category === 'all' ? undefined : category,
+        paymentMethod: paymentMethod === 'all' ? undefined : paymentMethod,
+        client: client === 'all' ? undefined : client
       });
     }
   }, [startDate, endDate, category, paymentMethod, client, onFiltersChange]);
@@ -148,7 +152,7 @@ export const IncomeFilters: React.FC<IncomeFiltersProps> = ({ onFiltersChange })
                 <SelectValue placeholder="בחר טווח" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">ללא סינון תאריכים</SelectItem>
+                <SelectItem value="none">ללא סינון תאריכים</SelectItem>
                 <SelectItem value="current-month">החודש הנוכחי</SelectItem>
                 <SelectItem value="last-month">החודש הקודם</SelectItem>
                 <SelectItem value="current-year">מתחילת השנה הנוכחית</SelectItem>
