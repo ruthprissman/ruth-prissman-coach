@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 
@@ -27,6 +26,8 @@ export function SubscriptionForm() {
     setLoading(true);
     
     try {
+      const supabase = supabaseClient();
+      
       // Check if email already exists
       const { data: existingData } = await supabase
         .from('content_subscribers')

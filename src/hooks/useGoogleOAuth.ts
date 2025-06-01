@@ -8,7 +8,7 @@ import {
   createGoogleCalendarEvent,
   GoogleOAuthState
 } from '@/services/GoogleOAuthService';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { persistAuthState, getPersistedAuthState } from '@/utils/cookieUtils';
 import { isEqual, addDays, startOfWeek } from 'date-fns';
@@ -46,6 +46,8 @@ export function useGoogleOAuth() {
   const eventCacheRef = useRef<EventCache | null>(null);
   // Track if we've done the initial fetch
   const hasInitialFetchRef = useRef<boolean>(false);
+  
+  const { toast } = useToast();
 
   useEffect(() => {
     const initialize = async () => {

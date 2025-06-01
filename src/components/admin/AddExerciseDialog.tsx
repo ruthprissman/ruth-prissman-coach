@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -81,6 +80,7 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
 
   const uploadFile = async (file: File): Promise<string | null> => {
     try {
+      const supabase = supabaseClient();
       // Create a unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
@@ -130,6 +130,7 @@ const AddExerciseDialog: React.FC<AddExerciseDialogProps> = ({
       }
 
       // Insert exercise into database without patient_id
+      const supabase = supabaseClient();
       const { error } = await supabase.from('exercises').insert({
         exercise_name: values.exercise_name,
         description: values.description || null,

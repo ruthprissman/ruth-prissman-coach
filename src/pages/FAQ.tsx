@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import markdownit from 'markdown-it';
 import { Navigation } from '@/components/Navigation';
@@ -35,6 +35,7 @@ export default function FAQ() {
         setIsLoading(true);
         setError(null);
         
+        const supabase = supabaseClient();
         const { data, error: supabaseError } = await supabase
           .from('faq_questions')
           .select('*')

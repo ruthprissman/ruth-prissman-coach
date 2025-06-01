@@ -4,7 +4,7 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Article } from '@/types/article';
 import { SiteLink } from '@/types/links';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { ChevronRight, Calendar, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,6 +27,7 @@ const ArticleView = () => {
     const fetchArticle = async () => {
       setIsLoading(true);
       try {
+        const supabase = supabaseClient();
         const { data, error } = await supabase
           .from('professional_content')
           .select(`
