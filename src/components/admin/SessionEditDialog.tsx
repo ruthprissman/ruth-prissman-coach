@@ -79,6 +79,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   useEffect(() => {
     const fetchExercises = async () => {
       try {
+        const supabase = supabaseClient();
         const { data, error } = await supabase
           .from('exercises')
           .select('id, name')

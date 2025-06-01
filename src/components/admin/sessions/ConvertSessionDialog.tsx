@@ -75,7 +75,6 @@ const ConvertSessionDialog: React.FC<ConvertSessionDialogProps> = ({
       open={open}
       onOpenChange={onOpenChange}
       patientId={patientId}
-      patient={patient}
       onSessionCreated={() => {
         if (onConverted) onConverted();
       }}

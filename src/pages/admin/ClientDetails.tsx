@@ -334,10 +334,10 @@ const ClientDetails: React.FC = () => {
       
       {isEditDialogOpen && (
         <EditClientDialog 
-          isOpen={isEditDialogOpen}
-          onClose={() => setIsEditDialogOpen(false)}
-          client={client}
-          onClientUpdated={handleClientUpdated}
+          open={isEditDialogOpen}
+          onOpenChange={() => setIsEditDialogOpen(false)}
+          patient={client}
+          onPatientUpdated={handleClientUpdated}
         />
       )}
     </AdminLayout>

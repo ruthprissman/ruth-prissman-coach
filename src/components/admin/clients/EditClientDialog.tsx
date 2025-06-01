@@ -29,7 +29,7 @@ interface EditClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   patient: Patient;
-  onPatientUpdated?: () => void;
+  onPatientUpdated?: (updatedPatient: Patient) => void;
 }
 
 const phoneRegex = /^0\d{8,9}$/; // Simple Israeli phone validation
@@ -108,7 +108,7 @@ const EditClientDialog: React.FC<EditClientDialogProps> = ({
       });
       
       if (onPatientUpdated) {
-        onPatientUpdated();
+        onPatientUpdated({ ...patient, ...patientData });
       }
       
       onOpenChange(false);

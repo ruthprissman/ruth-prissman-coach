@@ -29,6 +29,19 @@ export interface NewFutureSessionFormData {
   zoom_link?: string;
 }
 
+export interface NewSessionFormData {
+  session_date: Date;
+  meeting_type: 'Zoom' | 'Phone' | 'In-Person';
+  summary: string | null;
+  sent_exercises: boolean;
+  exercise_list: string[] | null;
+  paid_amount: number | null;
+  payment_status: 'paid' | 'partially_paid' | 'unpaid';
+  payment_method: 'cash' | 'bit' | 'transfer' | null;
+  payment_date: Date | null;
+  payment_notes: string | null;
+}
+
 export interface NewHistoricalSessionFormData {
   session_date: Date;
   meeting_type: 'Zoom' | 'Phone' | 'In-Person';
