@@ -6,6 +6,8 @@ import { supabaseClient } from '@/lib/supabaseClient';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { DateRange, PeriodType } from '@/types/finances';
 import FinancialChart from '@/components/admin/finances/FinancialChart';
 import ExpensesPieChart from '@/components/admin/analytics/ExpensesPieChart';
@@ -15,6 +17,7 @@ import ProfitTrendChart from '@/components/admin/analytics/ProfitTrendChart';
 import TopClientsChart from '@/components/admin/analytics/TopClientsChart';
 import { useToast } from '@/hooks/use-toast';
 import { useFinancialChartData } from '@/hooks/useFinancialChartData';
+import { usePatients } from '@/hooks/usePatients';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient();
@@ -22,10 +25,14 @@ const queryClient = new QueryClient();
 const FinancialAnalyticsContent: React.FC = () => {
   const { toast } = useToast();
   const [period, setPeriod] = useState<PeriodType>("month");
+  const [selectedClient, setSelectedClient] = useState<string>('all');
   const [dateRange, setDateRange] = useState<DateRange>({
     start: startOfMonth(subMonths(new Date(), 1)),
     end: endOfMonth(new Date())
   });
+
+  // Fetch patients for client filter
+  const { data: patients = [] } = usePatients();
 
   // Update date range when period changes
   useEffect(() => {
@@ -64,19 +71,29 @@ const FinancialAnalyticsContent: React.FC = () => {
   // Use the existing financial chart data hook
   const { data: monthlySummaryData = [], isLoading: isLoadingMonthlySummary } = useFinancialChartData(dateRange);
 
-  // Fetch income categories data
+  // Fetch income categories data with client filter
   const { data: incomeCategoriesData, isLoading: isLoadingIncomeCategories } = useQuery({
-    queryKey: ['incomeCategories', dateRange.start.toISOString(), dateRange.end.toISOString()],
+    queryKey: ['incomeCategories', dateRange.start.toISOString(), dateRange.end.toISOString(), selectedClient],
     queryFn: async () => {
       try {
         const supabase = supabaseClient();
         
-        const { data, error } = await supabase
+        let query = supabase
           .from('transactions')
           .select('category, amount')
           .eq('type', 'income')
           .gte('date', dateRange.start.toISOString().split('T')[0])
           .lte('date', dateRange.end.toISOString().split('T')[0]);
+
+        // Add client filter if specific client is selected
+        if (selectedClient !== 'all') {
+          const selectedPatient = patients.find(p => p.id.toString() === selectedClient);
+          if (selectedPatient) {
+            query = query.eq('client_name', selectedPatient.name);
+          }
+        }
+        
+        const { data, error } = await query;
         
         if (error) throw error;
         
@@ -190,20 +207,30 @@ const FinancialAnalyticsContent: React.FC = () => {
     }
   });
 
-  // Fetch top clients data
+  // Fetch top clients data with client filter
   const { data: topClientsData, isLoading: isLoadingTopClients } = useQuery({
-    queryKey: ['topClients', dateRange.start.toISOString(), dateRange.end.toISOString()],
+    queryKey: ['topClients', dateRange.start.toISOString(), dateRange.end.toISOString(), selectedClient],
     queryFn: async () => {
       try {
         const supabase = supabaseClient();
         
-        const { data, error } = await supabase
+        let query = supabase
           .from('transactions')
           .select('client_name, amount')
           .eq('type', 'income')
           .gte('date', dateRange.start.toISOString().split('T')[0])
           .lte('date', dateRange.end.toISOString().split('T')[0])
           .not('client_name', 'is', null);
+
+        // Add client filter if specific client is selected
+        if (selectedClient !== 'all') {
+          const selectedPatient = patients.find(p => p.id.toString() === selectedClient);
+          if (selectedPatient) {
+            query = query.eq('client_name', selectedPatient.name);
+          }
+        }
+        
+        const { data, error } = await query;
         
         if (error) throw error;
         
@@ -233,6 +260,37 @@ const FinancialAnalyticsContent: React.FC = () => {
   return (
     <AdminLayout title="ניתוחים גרפיים">
       <div dir="rtl" className="container mx-auto space-y-6">
+        {/* Client Filter */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col space-y-2">
+                <Label htmlFor="client-filter">בחר לקוח</Label>
+                <Select value={selectedClient} onValueChange={setSelectedClient}>
+                  <SelectTrigger id="client-filter" className="w-full md:w-[300px]">
+                    <SelectValue placeholder="כל הלקוחות" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">כל הלקוחות</SelectItem>
+                    {patients.map((patient) => (
+                      <SelectItem key={patient.id} value={patient.id.toString()}>
+                        {patient.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedClient !== 'all' && (
+                <div className="flex items-end">
+                  <div className="text-sm text-muted-foreground">
+                    מציג נתונים עבור: {patients.find(p => p.id.toString() === selectedClient)?.name}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Summary Chart with Period Selector */}
         <FinancialChart 
           dateRange={dateRange}
@@ -256,7 +314,12 @@ const FinancialAnalyticsContent: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>התפלגות הכנסות לפי קטגוריה</CardTitle>
+                  <CardTitle>
+                    התפלגות הכנסות לפי קטגוריה
+                    {selectedClient !== 'all' && (
+                      <span className="text-sm font-normal text-muted-foreground"> - {patients.find(p => p.id.toString() === selectedClient)?.name}</span>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <IncomePieChart 
@@ -296,7 +359,12 @@ const FinancialAnalyticsContent: React.FC = () => {
           <TabsContent value="income">
             <Card>
               <CardHeader>
-                <CardTitle>סיכום הכנסות חודשי</CardTitle>
+                <CardTitle>
+                  סיכום הכנסות חודשי
+                  {selectedClient !== 'all' && (
+                    <span className="text-sm font-normal text-muted-foreground"> - {patients.find(p => p.id.toString() === selectedClient)?.name}</span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <MonthlyFinanceChart 
@@ -326,7 +394,12 @@ const FinancialAnalyticsContent: React.FC = () => {
           <TabsContent value="clients">
             <Card>
               <CardHeader>
-                <CardTitle>לקוחות מובילים</CardTitle>
+                <CardTitle>
+                  לקוחות מובילים
+                  {selectedClient !== 'all' && (
+                    <span className="text-sm font-normal text-muted-foreground"> - {patients.find(p => p.id.toString() === selectedClient)?.name}</span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <TopClientsChart 
