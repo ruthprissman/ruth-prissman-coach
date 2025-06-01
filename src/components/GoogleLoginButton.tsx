@@ -32,18 +32,17 @@ export function GoogleLoginButton() {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col flex-1 min-w-0">
       <Button
         variant="outline"
-        size="sm"
-        className="h-7 px-2 text-xs gap-1 bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+        className="!h-7 !min-h-[28px] !max-h-[28px] px-2 text-xs gap-1 bg-white text-gray-700 border-gray-300 hover:bg-gray-50 flex-shrink-0"
         onClick={handleClick}
         disabled={isAuthenticating}
       >
-        <Calendar className="h-3 w-3 text-blue-600" />
-        <span>{isAuthenticated ? 'התנתק מיומן Google' : 'התחבר עם גוגל'}</span>
+        <Calendar className="h-3 w-3 text-blue-600 flex-shrink-0" />
+        <span className="truncate">{isAuthenticated ? 'התנתק מיומן Google' : 'התחבר עם גוגל'}</span>
         {isAuthenticating && (
-          <Loader2 className="ml-1 h-3 w-3 animate-spin" />
+          <Loader2 className="h-3 w-3 animate-spin flex-shrink-0" />
         )}
       </Button>
       

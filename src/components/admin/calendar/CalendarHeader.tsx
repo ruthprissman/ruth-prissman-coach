@@ -76,7 +76,8 @@ export default function CalendarHeader({
               </p>
             </div>
             
-            <div className="flex flex-wrap items-center gap-1">
+            {/* Container with consistent height for all buttons */}
+            <div className="flex flex-wrap items-stretch gap-1.5 h-7">
               <GoogleLoginButton />
               
               {isGoogleAuthenticated && (

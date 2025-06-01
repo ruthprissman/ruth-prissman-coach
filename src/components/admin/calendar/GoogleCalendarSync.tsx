@@ -29,29 +29,27 @@ export function GoogleCalendarSync({
   };
   
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-stretch gap-1.5 h-7">
       <Button
         variant="outline"
-        size="sm"
-        className="h-7 px-2 text-xs gap-1"
+        className="!h-7 !min-h-[28px] !max-h-[28px] px-2 text-xs gap-1 flex-shrink-0"
         onClick={onSyncClick}
         disabled={isLoading || !!settingsError}
       >
-        <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
-        <span>סנכרן יומן</span>
+        <RefreshCw className={`h-3 w-3 flex-shrink-0 ${isLoading ? 'animate-spin' : ''}`} />
+        <span className="truncate">סנכרן יומן</span>
       </Button>
 
       {onCopyMeetingsClick && (
         <>
           <Button
             variant="secondary"
-            size="sm"
-            className="h-7 px-2 text-xs gap-1"
+            className="!h-7 !min-h-[28px] !max-h-[28px] px-2 text-xs gap-1 flex-shrink-0"
             onClick={handleOpenCopyDialog}
             disabled={isLoading || isCopying || !!settingsError}
           >
-            <Calendar className={`h-3 w-3 ${isCopying ? 'animate-pulse' : ''}`} />
-            <span>העתק פגישות</span>
+            <Calendar className={`h-3 w-3 flex-shrink-0 ${isCopying ? 'animate-pulse' : ''}`} />
+            <span className="truncate">העתק פגישות</span>
           </Button>
           
           <CopyMeetingsDialog
