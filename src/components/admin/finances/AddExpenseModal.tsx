@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,12 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { CalendarIcon, UploadCloud } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+import { UploadCloud } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 import { useAddExpense } from '@/hooks/useAddExpense';
 import { useFinanceCategories } from '@/hooks/useFinanceCategories';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
@@ -23,7 +18,7 @@ interface AddExpenseModalProps {
 }
 
 const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, onSuccess }) => {
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = React.useState<string>(new Date().toISOString().split('T')[0]);
   const [amount, setAmount] = React.useState('');
   const [category, setCategory] = React.useState('');
   const [payee, setPayee] = React.useState('');
@@ -44,7 +39,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
     }
 
     const expenseData = {
-      date,
+      date: new Date(date),
       amount: parseFloat(amount),
       category,
       payee,
@@ -64,7 +59,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
         setPaymentMethod('');
         setReferenceNumber('');
         setIsConfirmed(false);
-        setDate(new Date());
+        setDate(new Date().toISOString().split('T')[0]);
         
         onSuccess();
         onOpenChange(false);
@@ -82,30 +77,13 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col space-y-2">
               <Label htmlFor="date">תאריך *</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-right font-normal",
-                      !date && "text-muted-foreground"
-                    )}
-                    id="date"
-                  >
-                    <CalendarIcon className="ml-2 h-4 w-4" />
-                    {date ? format(date, "dd/MM/yyyy") : <span>בחר תאריך</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
             </div>
 
             <div className="flex flex-col space-y-2">
