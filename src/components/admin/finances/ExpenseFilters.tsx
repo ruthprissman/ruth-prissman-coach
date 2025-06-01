@@ -1,13 +1,9 @@
+
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CalendarIcon } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 import { useFinanceCategories } from '@/hooks/useFinanceCategories';
 
 interface ExpenseFiltersProps {
@@ -22,68 +18,87 @@ interface ExpenseFiltersProps {
 }
 
 export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange }) => {
-  const [startDate, setStartDate] = React.useState<Date>();
-  const [endDate, setEndDate] = React.useState<Date>();
-  const [startDateInput, setStartDateInput] = React.useState<string>('');
-  const [endDateInput, setEndDateInput] = React.useState<string>('');
+  const [startDate, setStartDate] = React.useState<string>('');
+  const [endDate, setEndDate] = React.useState<string>('');
   const [category, setCategory] = React.useState<string>('');
   const [minAmount, setMinAmount] = React.useState<string>('');
   const [maxAmount, setMaxAmount] = React.useState<string>('');
   const [payee, setPayee] = React.useState<string>('');
   const [dateError, setDateError] = React.useState<string>('');
+  const [dateRange, setDateRange] = React.useState<string>('');
 
   // Fetch expense categories from database
   const { data: categories = [] } = useFinanceCategories('expense');
 
-  const validateDateRange = (start?: Date, end?: Date) => {
-    if (start && end && start > end) {
-      setDateError('תאריך התחלה חייב להיות מוקדם מתאריך הסיום');
-      return false;
+  const validateDateRange = (start: string, end: string) => {
+    if (start && end) {
+      const startDateObj = new Date(start);
+      const endDateObj = new Date(end);
+      
+      if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
+        setDateError('תאריך לא תקין');
+        return false;
+      }
+      
+      if (startDateObj > endDateObj) {
+        setDateError('תאריך התחלה חייב להיות מוקדם מתאריך הסיום');
+        return false;
+      }
     }
+    
     setDateError('');
     return true;
   };
 
-  const handleStartDateChange = (date?: Date) => {
-    setStartDate(date);
-    if (date) {
-      setStartDateInput(format(date, 'yyyy-MM-dd'));
+  const handleDateRangeChange = (value: string) => {
+    setDateRange(value);
+    
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    
+    switch (value) {
+      case 'current-year':
+        setStartDate(`${currentYear}-01-01`);
+        setEndDate(today.toISOString().split('T')[0]);
+        break;
+      case 'all-time':
+        setStartDate('2020-01-01'); // נקודת התחלה של הנתונים
+        setEndDate(today.toISOString().split('T')[0]);
+        break;
+      case 'last-month':
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+        setStartDate(lastMonth.toISOString().split('T')[0]);
+        setEndDate(lastMonthEnd.toISOString().split('T')[0]);
+        break;
+      case 'current-month':
+        const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        setStartDate(currentMonthStart.toISOString().split('T')[0]);
+        setEndDate(today.toISOString().split('T')[0]);
+        break;
+      case 'custom':
+        // לא משנה כלום - המשתמש יכול להזין ידנית
+        break;
+      case 'none':
+        setStartDate('');
+        setEndDate('');
+        break;
+      default:
+        setStartDate('');
+        setEndDate('');
     }
-    validateDateRange(date, endDate);
   };
 
-  const handleEndDateChange = (date?: Date) => {
-    setEndDate(date);
-    if (date) {
-      setEndDateInput(format(date, 'yyyy-MM-dd'));
-    }
-    validateDateRange(startDate, date);
+  const handleStartDateChange = (value: string) => {
+    setStartDate(value);
+    setDateRange('custom'); // מעבר למצב מותאם אישית כשמזינים ידנית
+    validateDateRange(value, endDate);
   };
 
-  const handleStartDateInputChange = (value: string) => {
-    setStartDateInput(value);
-    if (value) {
-      const date = new Date(value);
-      if (!isNaN(date.getTime())) {
-        setStartDate(date);
-        validateDateRange(date, endDate);
-      }
-    } else {
-      setStartDate(undefined);
-    }
-  };
-
-  const handleEndDateInputChange = (value: string) => {
-    setEndDateInput(value);
-    if (value) {
-      const date = new Date(value);
-      if (!isNaN(date.getTime())) {
-        setEndDate(date);
-        validateDateRange(startDate, date);
-      }
-    } else {
-      setEndDate(undefined);
-    }
+  const handleEndDateChange = (value: string) => {
+    setEndDate(value);
+    setDateRange('custom'); // מעבר למצב מותאם אישית כשמזינים ידנית
+    validateDateRange(startDate, value);
   };
 
   const handleFilterChange = React.useCallback(() => {
@@ -93,26 +108,25 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange 
     
     if (onFiltersChange) {
       onFiltersChange({
-        startDate,
-        endDate,
-        category,
+        startDate: startDate ? new Date(startDate) : undefined,
+        endDate: endDate ? new Date(endDate) : undefined,
+        category: category === 'all' ? undefined : category,
         minAmount: minAmount ? parseFloat(minAmount) : undefined,
         maxAmount: maxAmount ? parseFloat(maxAmount) : undefined,
-        payee
+        payee: payee || undefined
       });
     }
   }, [startDate, endDate, category, minAmount, maxAmount, payee, onFiltersChange]);
 
   const handleClearFilters = () => {
-    setStartDate(undefined);
-    setEndDate(undefined);
-    setStartDateInput('');
-    setEndDateInput('');
+    setStartDate('');
+    setEndDate('');
     setCategory('');
     setMinAmount('');
     setMaxAmount('');
     setPayee('');
     setDateError('');
+    setDateRange('');
     
     if (onFiltersChange) {
       onFiltersChange({});
@@ -125,82 +139,49 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange 
   
   return (
     <Card className="mb-4">
-      <CardContent className="p-3 space-y-3">
+      <CardContent className="p-3 space-y-2">
         {dateError && (
           <div className="text-red-500 text-sm text-center">{dateError}</div>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-2">
+          <div className="flex flex-col space-y-1">
+            <label className="text-xs text-muted-foreground">טווח תאריכים</label>
+            <Select value={dateRange} onValueChange={handleDateRangeChange}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="בחר טווח" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">ללא סינון תאריכים</SelectItem>
+                <SelectItem value="current-month">החודש הנוכחי</SelectItem>
+                <SelectItem value="last-month">החודש הקודם</SelectItem>
+                <SelectItem value="current-year">מתחילת השנה הנוכחית</SelectItem>
+                <SelectItem value="all-time">מתחילת הנתונים</SelectItem>
+                <SelectItem value="custom">טווח מותאם אישית</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex flex-col space-y-1">
             <label className="text-xs text-muted-foreground">מתאריך</label>
-            <div className="space-y-1">
-              <Input
-                type="date"
-                value={startDateInput}
-                onChange={(e) => handleStartDateInputChange(e.target.value)}
-                className="h-8 text-xs"
-                placeholder="yyyy-mm-dd"
-              />
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-right font-normal h-8 text-xs",
-                      !startDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="ml-1 h-3 w-3" />
-                    {startDate ? format(startDate, "dd/MM/yyyy") : <span>בחר בקלנדר</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={handleStartDateChange}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => handleStartDateChange(e.target.value)}
+              className="h-8 text-xs"
+              placeholder="בחר תאריך התחלה"
+            />
           </div>
 
           <div className="flex flex-col space-y-1">
             <label className="text-xs text-muted-foreground">עד תאריך</label>
-            <div className="space-y-1">
-              <Input
-                type="date"
-                value={endDateInput}
-                onChange={(e) => handleEndDateInputChange(e.target.value)}
-                className="h-8 text-xs"
-                placeholder="yyyy-mm-dd"
-              />
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-right font-normal h-8 text-xs",
-                      !endDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="ml-1 h-3 w-3" />
-                    {endDate ? format(endDate, "dd/MM/yyyy") : <span>בחר בקלנדר</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={handleEndDateChange}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => handleEndDateChange(e.target.value)}
+              className="h-8 text-xs"
+              placeholder="בחר תאריך סיום"
+            />
           </div>
           
           <div className="flex flex-col space-y-1">
@@ -252,11 +233,11 @@ export const ExpenseFilters: React.FC<ExpenseFiltersProps> = ({ onFiltersChange 
           </div>
         </div>
         
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={handleClearFilters} size="sm" className="h-7 text-xs">
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="outline" onClick={handleClearFilters} size="sm" className="h-7 text-xs px-3">
             נקה הכל
           </Button>
-          <Button onClick={handleApplyFilters} size="sm" className="h-7 text-xs">
+          <Button onClick={handleApplyFilters} size="sm" className="h-7 text-xs px-3">
             החל סינון
           </Button>
         </div>
