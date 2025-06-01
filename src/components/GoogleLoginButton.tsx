@@ -35,7 +35,7 @@ export function GoogleLoginButton() {
     <div className="flex flex-col flex-1 min-w-0">
       <Button
         variant="outline"
-        className="!h-7 !min-h-[28px] !max-h-[28px] px-2 text-xs gap-1 bg-white text-gray-700 border-gray-300 hover:bg-gray-50 flex-shrink-0"
+        className="!h-7 !min-h-[28px] !max-h-[28px] !w-32 px-2 text-xs gap-1 bg-white text-gray-700 border-gray-300 hover:bg-gray-50 flex-shrink-0"
         onClick={handleClick}
         disabled={isAuthenticating}
       >
