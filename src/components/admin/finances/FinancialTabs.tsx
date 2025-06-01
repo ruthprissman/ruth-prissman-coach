@@ -40,9 +40,9 @@ const FinancialTabs: React.FC<FinancialTabsProps> = ({ dateRange }) => {
   };
 
   return (
-    <div className="w-full">
-      <Tabs defaultValue="income" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+    <div className="w-full" dir="rtl">
+      <Tabs defaultValue="income" className="w-full" dir="rtl">
+        <TabsList className="grid w-full grid-cols-2" dir="rtl">
           <TabsTrigger value="income">הכנסות</TabsTrigger>
           <TabsTrigger value="expenses">הוצאות</TabsTrigger>
         </TabsList>
