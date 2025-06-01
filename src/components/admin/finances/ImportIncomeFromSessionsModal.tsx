@@ -126,7 +126,7 @@ const ImportIncomeFromSessionsModal: React.FC<ImportIncomeFromSessionsModalProps
           session_id: session.id,
           payment_method: mappedPaymentMethod,
           status: 'draft',
-          category: 'טיפול',
+          category: 'טיפולים',
           client_name: session.patient_name
         };
       });
