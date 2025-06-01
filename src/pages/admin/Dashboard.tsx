@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -372,9 +371,9 @@ const Dashboard: React.FC = () => {
             </Link>
           </div>
           
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div dir="rtl">
-              <Card className="w-full h-96">
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 items-stretch">
+            <div dir="rtl" className="flex">
+              <Card className="w-full flex flex-col">
                 <CardHeader className="flex items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xl font-bold text-right">מה חדש?</CardTitle>
                   <Link to="/admin/articles" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
@@ -382,7 +381,7 @@ const Dashboard: React.FC = () => {
                     <ArrowUpRight className="w-4 h-4 ms-1" />
                   </Link>
                 </CardHeader>
-                <CardContent className="pt-4 text-right">
+                <CardContent className="pt-4 text-right flex-1">
                   {isPublicationsLoading ? <div className="flex justify-center items-center py-8">
                       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                     </div> : upcomingPublications.length > 0 ? <div className="space-y-1 text-right">
@@ -392,8 +391,8 @@ const Dashboard: React.FC = () => {
               </Card>
             </div>
 
-            <div dir="rtl">
-              <Card className="w-full h-96">
+            <div dir="rtl" className="flex">
+              <Card className="w-full flex flex-col">
                 <CardHeader className="flex items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xl font-bold text-right">הפגישות הקרובות שלך</CardTitle>
                   <Link to="/admin/calendar" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
@@ -401,7 +400,7 @@ const Dashboard: React.FC = () => {
                     <ArrowUpRight className="w-4 h-4 ms-1" />
                   </Link>
                 </CardHeader>
-                <CardContent className="pt-4 text-right">
+                <CardContent className="pt-4 text-right flex-1">
                   {isSessionsLoading ? (
                     <div className="flex justify-center items-center py-8">
                       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -422,14 +421,14 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div dir="rtl">
-              <Card className="w-full h-96">
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            <div dir="rtl" className="flex">
+              <Card className="w-full flex flex-col">
                 <CardHeader className="flex items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xl font-bold text-right">סטטיסטיקות מנויים</CardTitle>
                   <div className="w-6"></div>
                 </CardHeader>
-                <CardContent className="pt-4 text-right">
+                <CardContent className="pt-4 text-right flex-1">
                   {subscriptionStats.contentSubscribers.loading || subscriptionStats.storySubscribers.loading ? <div className="flex justify-center items-center py-8">
                       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                     </div> : <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
@@ -463,8 +462,8 @@ const Dashboard: React.FC = () => {
               </Card>
             </div>
 
-            <div dir="rtl">
-              <Card className="w-full h-96">
+            <div dir="rtl" className="flex">
+              <Card className="w-full flex flex-col">
                 <CardHeader className="flex items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xl font-bold text-right">סטטיסטיקות תשלומים</CardTitle>
                   <Link to="/admin/finances" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
@@ -472,7 +471,7 @@ const Dashboard: React.FC = () => {
                     <ArrowUpRight className="w-4 h-4 ms-1" />
                   </Link>
                 </CardHeader>
-                <CardContent className="pt-4 text-right">
+                <CardContent className="pt-4 text-right flex-1">
                   {paymentStats.loading ? <div className="flex justify-center items-center py-8">
                       <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                     </div> : paymentStats.totalReceived > 0 || paymentStats.outstandingBalance > 0 ? <div className="flex flex-col md:flex-row justify-between space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse">
