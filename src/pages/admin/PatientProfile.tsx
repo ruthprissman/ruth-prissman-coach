@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabaseClient } from '@/lib/supabaseClient';
@@ -269,10 +268,11 @@ const PatientProfile: React.FC = () => {
       
       {isAddSessionDialogOpen && (
         <AddSessionDialog 
-          open={isAddSessionDialogOpen}
-          onOpenChange={setIsAddSessionDialogOpen}
-          patientId={parseInt(id!)}
+          isOpen={isAddSessionDialogOpen}
+          onClose={() => setIsAddSessionDialogOpen(false)}
+          patient={patient}
           onSessionAdded={handleSessionAdded}
+          sessionPrice={patient.session_price}
         />
       )}
     </AdminLayout>
