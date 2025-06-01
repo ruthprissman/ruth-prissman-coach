@@ -32,8 +32,7 @@ export function GoogleCalendarSync({
     <div className="flex items-center gap-1.5">
       <Button 
         variant="outline" 
-        size="sm"
-        className="bg-white flex items-center gap-1 h-7 px-2 text-xs" 
+        className="bg-white flex items-center gap-1 !h-7 px-2 text-xs min-h-0" 
         onClick={onSyncClick}
         disabled={isLoading || !!settingsError}
       >
@@ -45,8 +44,7 @@ export function GoogleCalendarSync({
         <>
           <Button 
             variant="secondary"
-            size="sm"
-            className="flex items-center gap-1 h-7 px-2 text-xs" 
+            className="flex items-center gap-1 !h-7 px-2 text-xs min-h-0" 
             onClick={handleOpenCopyDialog}
             disabled={isLoading || isCopying || !!settingsError}
           >

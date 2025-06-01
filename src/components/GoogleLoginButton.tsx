@@ -34,10 +34,9 @@ export function GoogleLoginButton() {
   return (
     <div className="flex flex-col">
       <Button 
-        className="flex items-center gap-1 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 h-7 px-2 text-xs"
+        className="flex items-center gap-1 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 !h-7 px-2 text-xs min-h-0"
         onClick={handleClick}
         disabled={isAuthenticating}
-        size="sm"
       >
         <Calendar className="h-3 w-3 text-blue-600" />
         <span>{isAuthenticated ? 'התנתק מיומן Google' : 'התחבר עם גוגל'}</span>
