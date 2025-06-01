@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,11 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { CalendarIcon, Plus } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { Plus } from 'lucide-react';
 import { useAddIncome } from '@/hooks/useAddIncome';
 import { useFinanceCategories } from '@/hooks/useFinanceCategories';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
@@ -28,7 +23,10 @@ interface AddIncomeModalProps {
 }
 
 const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange, onSuccess }) => {
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [date, setDate] = React.useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const [amount, setAmount] = React.useState('');
   const [source, setSource] = React.useState('');
   const [category, setCategory] = React.useState('');
@@ -102,7 +100,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange, onS
     const selectedPatient = patients.find(p => p.id.toString() === clientId);
     
     const incomeData = {
-      date,
+      date: new Date(date),
       amount: parseFloat(amount),
       source,
       category: category || 'other',
@@ -126,7 +124,8 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange, onS
         setReferenceNumber('');
         setReceiptNumber('');
         setIsConfirmed(false);
-        setDate(new Date());
+        const today = new Date();
+        setDate(today.toISOString().split('T')[0]);
         
         onSuccess();
         onOpenChange(false);
@@ -145,30 +144,14 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ open, onOpenChange, onS
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col space-y-2">
                 <Label htmlFor="date">תאריך *</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-right font-normal",
-                        !date && "text-muted-foreground"
-                      )}
-                      id="date"
-                    >
-                      <CalendarIcon className="ml-2 h-4 w-4" />
-                      {date ? format(date, "dd/MM/yyyy") : <span>בחר תאריך</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Input
+                  type="date"
+                  id="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                  className="text-right"
+                />
               </div>
 
               <div className="flex flex-col space-y-2">
