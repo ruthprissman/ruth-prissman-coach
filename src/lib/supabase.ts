@@ -1,4 +1,3 @@
-
 import { supabaseClient, clearSupabaseClientCache } from './supabaseClient';
 
 // For backward compatibility, export the client

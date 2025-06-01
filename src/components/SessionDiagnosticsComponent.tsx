@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import useSessionDiagnostics from '@/hooks/useSessionDiagnostics';
 
 /**
@@ -9,14 +9,20 @@ import useSessionDiagnostics from '@/hooks/useSessionDiagnostics';
  */
 export const SessionDiagnosticsComponent: React.FC = () => {
   const { report } = useSessionDiagnostics();
+  const loggedRef = useRef(false);
 
   // You can add additional effects here if needed
   useEffect(() => {
+    // Prevent duplicate logging
+    if (loggedRef.current) return;
+    
     // This effect runs when the diagnostics report changes
     if (report.issues.length > 0) {
       console.log('🔍 Session diagnostics detected issues:', report.issues);
-    } else {
+      loggedRef.current = true;
+    } else if (report.authEvents.length > 0) {
       console.log('✅ Session diagnostics completed with no issues detected');
+      loggedRef.current = true;
     }
   }, [report]);
 
