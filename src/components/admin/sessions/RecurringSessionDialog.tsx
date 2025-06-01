@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Calendar, Clock, Repeat } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { convertLocalToUTC } from '@/utils/dateUtils';
 
 import {
@@ -122,6 +122,7 @@ const RecurringSessionDialog: React.FC<RecurringSessionDialogProps> = ({
         });
       }
 
+      const supabase = supabaseClient();
       const { error } = await supabase
         .from('future_sessions')
         .insert(sessions);

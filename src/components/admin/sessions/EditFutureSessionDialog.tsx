@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { FutureSession } from '@/types/session';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { convertLocalToUTC, formatDateTimeInIsrael } from '@/utils/dateUtils';
 
 import {
@@ -165,6 +164,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
       });
 
       // Only include fields that exist in the database table
+      const supabase = supabaseClient();
       const { error } = await supabase
         .from('future_sessions')
         .update({

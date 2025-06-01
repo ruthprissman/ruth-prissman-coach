@@ -5,7 +5,7 @@ import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { NewFutureSessionFormData } from '@/types/session';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { convertLocalToUTC } from '@/utils/dateUtils';
 
 import {
@@ -136,6 +136,7 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
         iso: isoDate
       });
 
+      const supabase = supabaseClient();
       const { error } = await supabase
         .from('future_sessions')
         .insert({

@@ -270,27 +270,14 @@ export function useGoogleOAuth() {
       setState({
         isAuthenticated: false,
         isAuthenticating: false,
-        error: error.message || 'שגיאה בהתחברות ל-Google'
+        error: 'שגיאה בהתחברות ל-Google'
       });
       
-      // Clear persisted state on error
-      persistAuthState(false);
-      
-      const errorMessage = error.message || 'שגיאה בהתחברות ל-Google';
-      
-      if (errorMessage.includes('בוטל') || errorMessage === 'ההתחברות בוטלה') {
-        toast({
-          title: 'ההתחברות בוטלה',
-          description: 'תהליך ההתחברות לגוגל בוטל',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'ההתחברות ליומן גוגל נכשלה',
-          description: 'אירעה שגיאה בהתחברות',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'שגיאה בהתחברות',
+        description: error.message || 'אירעה שגיאה בהתחברות ל-Google',
+        variant: 'destructive',
+      });
       
       return false;
     }
@@ -298,29 +285,40 @@ export function useGoogleOAuth() {
 
   const signOut = async () => {
     try {
+      setState(prev => ({ ...prev, isAuthenticating: true }));
+      
       await signOutFromGoogle();
-      setEvents([]);
+      
       setState({
         isAuthenticated: false,
         isAuthenticating: false,
         error: null
       });
       
-      // Clear persisted state and cache
+      // Clear persisted state
       persistAuthState(false);
+      
+      // Clear events
+      setEvents([]);
       eventCacheRef.current = null;
       
       toast({
-        title: 'התנתקת מיומן גוגל',
-        description: 'המידע מיומן Google נמחק',
+        title: 'התנתקת בהצלחה',
+        description: 'התנתקת מיומן Google',
       });
+      
+      return true;
     } catch (error: any) {
       console.error('Google sign-out error:', error);
+      setState(prev => ({ ...prev, isAuthenticating: false }));
+      
       toast({
-        title: 'שגיאה בהתנתקות מיומן גוגל',
-        description: 'אירעה שגיאה בהתנתקות',
+        title: 'שגיאה בהתנתקות',
+        description: 'אירעה שגיאה בהתנתקות מ-Google',
         variant: 'destructive',
       });
+      
+      return false;
     }
   };
 
@@ -332,6 +330,6 @@ export function useGoogleOAuth() {
     signIn,
     signOut,
     fetchEvents,
-    createEvent
+    createEvent,
   };
 }
