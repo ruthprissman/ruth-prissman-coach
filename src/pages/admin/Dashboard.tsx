@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -373,7 +374,7 @@ const Dashboard: React.FC = () => {
           
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div dir="rtl">
-              <Card className="w-full">
+              <Card className="w-full h-96">
                 <CardHeader className="flex items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xl font-bold text-right">מה חדש?</CardTitle>
                   <Link to="/admin/articles" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
@@ -392,7 +393,7 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div dir="rtl">
-              <Card className="w-full">
+              <Card className="w-full h-96">
                 <CardHeader className="flex items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xl font-bold text-right">הפגישות הקרובות שלך</CardTitle>
                   <Link to="/admin/calendar" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
@@ -423,7 +424,7 @@ const Dashboard: React.FC = () => {
 
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
             <div dir="rtl">
-              <Card className="w-full">
+              <Card className="w-full h-96">
                 <CardHeader className="flex items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xl font-bold text-right">סטטיסטיקות מנויים</CardTitle>
                   <div className="w-6"></div>
@@ -463,7 +464,7 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div dir="rtl">
-              <Card className="w-full">
+              <Card className="w-full h-96">
                 <CardHeader className="flex items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xl font-bold text-right">סטטיסטיקות תשלומים</CardTitle>
                   <Link to="/admin/finances" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
