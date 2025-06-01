@@ -25,6 +25,7 @@ export const IncomeFilters: React.FC<IncomeFiltersProps> = ({ onFiltersChange })
   const [paymentMethod, setPaymentMethod] = React.useState<string>('');
   const [client, setClient] = React.useState<string>('');
   const [dateError, setDateError] = React.useState<string>('');
+  const [dateRange, setDateRange] = React.useState<string>('');
 
   // Fetch data from database
   const { data: patients = [] } = usePatients();
@@ -51,13 +52,50 @@ export const IncomeFilters: React.FC<IncomeFiltersProps> = ({ onFiltersChange })
     return true;
   };
 
+  const handleDateRangeChange = (value: string) => {
+    setDateRange(value);
+    
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    
+    switch (value) {
+      case 'current-year':
+        setStartDate(`${currentYear}-01-01`);
+        setEndDate(today.toISOString().split('T')[0]);
+        break;
+      case 'all-time':
+        setStartDate('2020-01-01'); // נקודת התחלה של הנתונים
+        setEndDate(today.toISOString().split('T')[0]);
+        break;
+      case 'last-month':
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+        setStartDate(lastMonth.toISOString().split('T')[0]);
+        setEndDate(lastMonthEnd.toISOString().split('T')[0]);
+        break;
+      case 'current-month':
+        const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        setStartDate(currentMonthStart.toISOString().split('T')[0]);
+        setEndDate(today.toISOString().split('T')[0]);
+        break;
+      case 'custom':
+        // לא משנה כלום - המשתמש יכול להזין ידנית
+        break;
+      default:
+        setStartDate('');
+        setEndDate('');
+    }
+  };
+
   const handleStartDateChange = (value: string) => {
     setStartDate(value);
+    setDateRange('custom'); // מעבר למצב מותאם אישית כשמזינים ידנית
     validateDateRange(value, endDate);
   };
 
   const handleEndDateChange = (value: string) => {
     setEndDate(value);
+    setDateRange('custom'); // מעבר למצב מותאם אישית כשמזינים ידנית
     validateDateRange(startDate, value);
   };
 
@@ -84,6 +122,7 @@ export const IncomeFilters: React.FC<IncomeFiltersProps> = ({ onFiltersChange })
     setPaymentMethod('');
     setClient('');
     setDateError('');
+    setDateRange('');
     
     if (onFiltersChange) {
       onFiltersChange({});
@@ -101,7 +140,24 @@ export const IncomeFilters: React.FC<IncomeFiltersProps> = ({ onFiltersChange })
           <div className="text-red-500 text-sm text-center">{dateError}</div>
         )}
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-2">
+          <div className="flex flex-col space-y-1">
+            <label className="text-xs text-muted-foreground">טווח תאריכים</label>
+            <Select value={dateRange} onValueChange={handleDateRangeChange}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="בחר טווח" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">ללא סינון תאריכים</SelectItem>
+                <SelectItem value="current-month">החודש הנוכחי</SelectItem>
+                <SelectItem value="last-month">החודש הקודם</SelectItem>
+                <SelectItem value="current-year">מתחילת השנה הנוכחית</SelectItem>
+                <SelectItem value="all-time">מתחילת הנתונים</SelectItem>
+                <SelectItem value="custom">טווח מותאם אישית</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex flex-col space-y-1">
             <label className="text-xs text-muted-foreground">מתאריך</label>
             <Input
