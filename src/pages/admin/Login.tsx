@@ -8,24 +8,39 @@ import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
 
+// Enhanced validation schemas with security considerations
 const formSchema = z.object({
-  email: z.string().email("כתובת אימייל לא תקינה"),
-  password: z.string().min(6, "סיסמה חייבת להיות לפחות 6 תווים"),
+  email: z.string()
+    .email("כתובת אימייל לא תקינה")
+    .min(5, "כתובת אימייל קצרה מדי")
+    .max(254, "כתובת אימייל ארוכה מדי"),
+  password: z.string()
+    .min(8, "סיסמה חייבת להיות לפחות 8 תווים")
+    .max(128, "סיסמה ארוכה מדי")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "סיסמה חייבת לכלול לפחות אות קטנה, אות גדולה ומספר"),
 });
 
 const resetPasswordSchema = z.object({
-  email: z.string().email("כתובת אימייל לא תקינה"),
+  email: z.string()
+    .email("כתובת אימייל לא תקינה")
+    .min(5, "כתובת אימייל קצרה מדי")
+    .max(254, "כתובת אימייל ארוכה מדי"),
 });
 
 const passwordRecoverySchema = z.object({
-  password: z.string().min(6, "סיסמה חייבת להיות לפחות 6 תווים"),
-  confirmPassword: z.string().min(6, "סיסמה חייבת להיות לפחות 6 תווים"),
+  password: z.string()
+    .min(8, "סיסמה חייבת להיות לפחות 8 תווים")
+    .max(128, "סיסמה ארוכה מדי")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "סיסמה חייבת לכלול לפחות אות קטנה, אות גדולה ומספר"),
+  confirmPassword: z.string()
+    .min(8, "סיסמה חייבת להיות לפחות 8 תווים")
+    .max(128, "סיסמה ארוכה מדי"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "הסיסמאות אינן תואמות",
   path: ["confirmPassword"],
@@ -42,6 +57,8 @@ const Login: React.FC = () => {
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(false);
   const [passwordResetSuccess, setPasswordResetSuccess] = useState(false);
   const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
   
   const { signIn, signInWithGoogle, createAdminUser, resetPassword, checkAdminExists } = useAuth();
   
@@ -52,6 +69,19 @@ const Login: React.FC = () => {
   const [loginMethod, setLoginMethod] = useState<'email' | 'google'>('google');
   
   const from = (location.state as { from: { pathname: string } })?.from?.pathname || '/admin/dashboard';
+  
+  // Rate limiting for login attempts
+  const checkRateLimit = () => {
+    if (loginAttempts >= 5) {
+      setIsBlocked(true);
+      setTimeout(() => {
+        setIsBlocked(false);
+        setLoginAttempts(0);
+      }, 15 * 60 * 1000); // 15 minutes block
+      return false;
+    }
+    return true;
+  };
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -79,28 +109,48 @@ const Login: React.FC = () => {
   });
 
   const onSubmit = async (data: FormValues) => {
+    if (!checkRateLimit()) {
+      return;
+    }
+
     console.log('Form submitted:', isCreatingAdmin ? 'Creating admin' : 'Signing in');
     
-    if (isCreatingAdmin) {
-      const { error } = await createAdminUser(data.email, data.password);
-      if (!error) {
-        setIsCreatingAdmin(false);
-        form.reset();
+    try {
+      if (isCreatingAdmin) {
+        const { error } = await createAdminUser(data.email, data.password);
+        if (!error) {
+          setIsCreatingAdmin(false);
+          form.reset();
+          setLoginAttempts(0); // Reset on success
+        } else {
+          setLoginAttempts(prev => prev + 1);
+        }
+      } else {
+        const { error } = await signIn(data.email, data.password);
+        if (!error) {
+          console.log('Sign in successful, navigating to:', from);
+          setLoginAttempts(0); // Reset on success
+        } else {
+          setLoginAttempts(prev => prev + 1);
+        }
       }
-    } else {
-      const { error } = await signIn(data.email, data.password);
-      if (!error) {
-        console.log('Sign in successful, navigating to:', from);
-      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      setLoginAttempts(prev => prev + 1);
     }
   };
   
   const onResetPasswordSubmit = async (data: ResetPasswordFormValues) => {
     console.log('Reset password form submitted with email:', data.email);
-    const { error } = await resetPassword(data.email);
-    if (!error) {
-      resetForm.reset();
-      setIsForgotPassword(false);
+    
+    try {
+      const { error } = await resetPassword(data.email);
+      if (!error) {
+        resetForm.reset();
+        setIsForgotPassword(false);
+      }
+    } catch (error) {
+      console.error('Password reset error:', error);
     }
   };
 
@@ -109,13 +159,14 @@ const Login: React.FC = () => {
     setPasswordResetError(null);
     
     try {
+      const supabase = supabaseClient();
       const { error } = await supabase.auth.updateUser({ 
         password: data.password 
       });
       
       if (error) {
         console.error('Error updating password:', error);
-        setPasswordResetError(error.message);
+        setPasswordResetError('שגיאה בעדכון הסיסמה');
         return;
       }
       
@@ -127,7 +178,7 @@ const Login: React.FC = () => {
       }, 3000);
     } catch (error: any) {
       console.error('Unexpected error during password reset:', error);
-      setPasswordResetError(error.message || 'אירעה שגיאה בעדכון הסיסמה');
+      setPasswordResetError('אירעה שגיאה בעדכון הסיסמה');
     }
   };
   
@@ -136,6 +187,7 @@ const Login: React.FC = () => {
       console.log('[auth] Initiating Google sign-in from Login page');
       saveEnvironmentForAuth();
       
+      const supabase = supabaseClient();
       await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -169,7 +221,7 @@ const Login: React.FC = () => {
       setIsCheckingAdmin(false);
     }
   };
-  
+
   if (isRecoveryMode) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
@@ -339,6 +391,14 @@ const Login: React.FC = () => {
           <h1 className="text-2xl font-bold text-purple-dark">כניסה לאזור הניהול</h1>
         </div>
 
+        {isBlocked && (
+          <Alert className="mb-4 bg-red-50 border-red-200">
+            <AlertDescription className="text-center text-red-700">
+              חשבונך נחסם זמנית בגלל ניסיונות התחברות רבים. נסה שוב בעוד 15 דקות.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Tabs defaultValue="google" value={loginMethod} onValueChange={(value) => setLoginMethod(value as 'email' | 'google')}>
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="email">אימייל וסיסמה</TabsTrigger>
@@ -363,6 +423,7 @@ const Login: React.FC = () => {
                             placeholder="admin@example.com"
                             className="w-full text-right pr-10"
                             dir="rtl"
+                            disabled={isBlocked}
                           />
                         </div>
                       </FormControl>
@@ -386,6 +447,7 @@ const Login: React.FC = () => {
                             placeholder="הקלד סיסמה"
                             className="w-full text-right pr-10"
                             dir="rtl"
+                            disabled={isBlocked}
                           />
                         </div>
                       </FormControl>
@@ -397,7 +459,7 @@ const Login: React.FC = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-[#4A235A] hover:bg-[#7E69AB] text-white"
-                  disabled={form.formState.isSubmitting || (isCreatingAdmin && adminExists)}
+                  disabled={form.formState.isSubmitting || (isCreatingAdmin && adminExists) || isBlocked}
                 >
                   {form.formState.isSubmitting ? (
                     <>
@@ -463,7 +525,7 @@ const Login: React.FC = () => {
                 type="button"
                 className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
                 onClick={handleGoogleSignIn}
-                disabled={isCheckingAdmin}
+                disabled={isCheckingAdmin || isBlocked}
               >
                 <LogIn className="mr-2 h-4 w-4" />
                 {isCheckingAdmin ? (

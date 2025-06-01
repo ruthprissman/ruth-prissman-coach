@@ -14,8 +14,15 @@ import { persistAuthState, getPersistedAuthState } from '@/utils/cookieUtils';
 import { isEqual, addDays, startOfWeek } from 'date-fns';
 
 // Hook version for debugging
-const HOOK_VERSION = "1.1.0"; // Updated version
-console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Hook loaded, version ${HOOK_VERSION}`);
+const HOOK_VERSION = "1.2.0"; // Updated version with security fixes
+const isDevelopment = import.meta.env.DEV;
+
+// Only log in development mode
+const secureLog = (message: string, data?: any) => {
+  if (isDevelopment) {
+    console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: ${message}`, data || '');
+  }
+};
 
 // Cache types
 interface EventCache {
@@ -27,7 +34,7 @@ interface EventCache {
 
 export function useGoogleOAuth() {
   const [state, setState] = useState<GoogleOAuthState>({
-    isAuthenticated: getPersistedAuthState().isAuthenticated, // Extract the boolean from the object
+    isAuthenticated: getPersistedAuthState().isAuthenticated,
     isAuthenticating: true,
     error: null
   });
@@ -46,7 +53,7 @@ export function useGoogleOAuth() {
         setState(prev => ({ ...prev, isAuthenticating: true }));
         
         const isSignedIn = await checkIfSignedIn();
-        console.log('Google OAuth initialized, signed in:', isSignedIn);
+        secureLog('Google OAuth initialized, signed in:', isSignedIn);
         
         setState({
           isAuthenticated: isSignedIn,
@@ -56,7 +63,7 @@ export function useGoogleOAuth() {
         
         // Only fetch events on initial load, without checking the cache
         if (isSignedIn && !hasInitialFetchRef.current) {
-          console.log('User is signed in to Google, doing initial event fetch');
+          secureLog('User is signed in to Google, doing initial event fetch');
           hasInitialFetchRef.current = true;
           fetchEvents();
         }
@@ -65,7 +72,7 @@ export function useGoogleOAuth() {
         setState({
           isAuthenticated: false,
           isAuthenticating: false,
-          error: error.message
+          error: 'שגיאה בהתחברות לגוגל'
         });
       }
     };
@@ -75,7 +82,7 @@ export function useGoogleOAuth() {
     // Modify visibility change handler to not automatically fetch events
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log('[auth] Page became visible, checking Google auth state (but NOT refetching events)');
+        secureLog('Page became visible, checking Google auth state (but NOT refetching events)');
         // Only check authentication status, don't fetch events
         checkIfSignedIn().then((isSignedIn) => {
           if (state.isAuthenticated !== isSignedIn) {
@@ -102,7 +109,7 @@ export function useGoogleOAuth() {
     const cacheAge = new Date().getTime() - cache.fetchDate.getTime();
     const cacheMaxAge = 15 * 60 * 1000; // 15 minutes
     if (cacheAge > cacheMaxAge) {
-      console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Cache expired, will fetch new data');
+      secureLog('Cache expired, will fetch new data');
       return false;
     }
     
@@ -113,21 +120,12 @@ export function useGoogleOAuth() {
     // Check if this range is within our cached range
     const isWithinCache = weekStart >= cache.startDate && weekEnd <= cache.endDate;
     
-    if (isWithinCache) {
-      console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Requested date range is in cache', {
-        requestedWeekStart: weekStart,
-        requestedWeekEnd: weekEnd,
-        cacheStart: cache.startDate,
-        cacheEnd: cache.endDate
-      });
-    } else {
-      console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Requested date range is NOT in cache', {
-        requestedWeekStart: weekStart,
-        requestedWeekEnd: weekEnd,
-        cacheStart: cache.startDate,
-        cacheEnd: cache.endDate
-      });
-    }
+    secureLog(isWithinCache ? 'Requested date range is in cache' : 'Requested date range is NOT in cache', {
+      requestedWeekStart: weekStart,
+      requestedWeekEnd: weekEnd,
+      cacheStart: cache.startDate,
+      cacheEnd: cache.endDate
+    });
     
     return isWithinCache;
   };
@@ -136,12 +134,12 @@ export function useGoogleOAuth() {
     try {
       // Check if we already have data for this date range in cache
       if (!forceRefresh && isDateInCache(currentDisplayDate)) {
-        console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Using cached events');
+        secureLog('Using cached events');
         return eventCacheRef.current?.events || [];
       }
       
       setIsLoadingEvents(true);
-      console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Starting to fetch Google Calendar events', 
+      secureLog('Starting to fetch Google Calendar events', 
         currentDisplayDate ? `for date: ${currentDisplayDate.toISOString()}` : '', 
         forceRefresh ? '(force refresh)' : '');
       
@@ -160,7 +158,7 @@ export function useGoogleOAuth() {
           endDate: twoMonthsLater
         };
         
-        console.log('LOV_DEBUG_GOOGLE_OAUTH_HOOK: Updated event cache:', {
+        secureLog('Updated event cache:', {
           eventCount: calendarEvents.length,
           fetchDate: new Date().toISOString(),
           startDate: weekStart.toISOString(),
@@ -168,25 +166,15 @@ export function useGoogleOAuth() {
         });
       }
       
-      console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Fetched ${calendarEvents.length} Google Calendar events`);
+      secureLog(`Fetched ${calendarEvents.length} Google Calendar events`);
       
       if (calendarEvents.length > 0) {
-        // לוג מפורט של האירועים הראשונים
-        calendarEvents.slice(0, 3).forEach((event, idx) => {
-          console.log(`Event ${idx + 1}:`, {
-            summary: event.summary,
-            start: event.start?.dateTime,
-            end: event.end?.dateTime,
-            description: event.description?.substring(0, 30) + '...' || 'No description'
-          });
-        });
-        
         toast({
           title: 'אירועי יומן Google נטענו',
           description: `נטענו ${calendarEvents.length} אירועים מיומן Google`,
         });
       } else {
-        console.log('No Google Calendar events found');
+        secureLog('No Google Calendar events found');
         toast({
           title: 'לא נמצאו אירועים',
           description: 'לא נמצאו אירועים ביומן Google',
@@ -198,7 +186,7 @@ export function useGoogleOAuth() {
       console.error('Error fetching Google Calendar events:', error);
       toast({
         title: 'שגיאה בטעינת אירועי יומן',
-        description: error.message,
+        description: 'לא ניתן לטעון את אירועי היומן כעת',
         variant: 'destructive',
       });
       return [];
@@ -214,13 +202,13 @@ export function useGoogleOAuth() {
     description: string = '',
   ) => {
     try {
-      console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Creating event "${summary}" from ${startDateTime} to ${endDateTime}`);
+      secureLog(`Creating event "${summary}" from ${startDateTime} to ${endDateTime}`);
       setIsCreatingEvent(true);
       
       const eventId = await createGoogleCalendarEvent(summary, startDateTime, endDateTime, description);
       
       if (eventId) {
-        console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Event created with ID: ${eventId}`);
+        secureLog(`Event created with ID: ${eventId}`);
         // Refresh events to include the newly created one, with force refresh
         await fetchEvents(undefined, true);
         
@@ -230,14 +218,14 @@ export function useGoogleOAuth() {
         });
         return eventId;
       } else {
-        console.log(`LOV_DEBUG_GOOGLE_OAUTH_HOOK: Event creation failed, no ID returned`);
+        secureLog('Event creation failed, no ID returned');
         throw new Error('לא הצלחנו ליצור את האירוע ביומן');
       }
     } catch (error: any) {
       console.error('Error creating calendar event:', error);
       toast({
         title: 'שגיאה ביצירת האירוע',
-        description: error.message,
+        description: error.message || 'אירעה שגיאה ביצירת האירוע',
         variant: 'destructive',
       });
       return null;
@@ -280,7 +268,7 @@ export function useGoogleOAuth() {
       setState({
         isAuthenticated: false,
         isAuthenticating: false,
-        error: error.message
+        error: error.message || 'שגיאה בהתחברות ל-Google'
       });
       
       // Clear persisted state on error
@@ -297,7 +285,7 @@ export function useGoogleOAuth() {
       } else {
         toast({
           title: 'ההתחברות ליומן גוגל נכשלה',
-          description: errorMessage,
+          description: 'אירעה שגיאה בהתחברות',
           variant: 'destructive',
         });
       }
@@ -328,7 +316,7 @@ export function useGoogleOAuth() {
       console.error('Google sign-out error:', error);
       toast({
         title: 'שגיאה בהתנתקות מיומן גוגל',
-        description: error.message,
+        description: 'אירעה שגיאה בהתנתקות',
         variant: 'destructive',
       });
     }

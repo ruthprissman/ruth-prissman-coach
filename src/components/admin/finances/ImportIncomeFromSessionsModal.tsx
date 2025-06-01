@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Download } from 'lucide-react';
+import { sanitizeNumericInput, validateDate } from '@/utils/inputValidation';
 
 interface ImportIncomeFromSessionsModalProps {
   open: boolean;
@@ -35,13 +36,22 @@ const ImportIncomeFromSessionsModal: React.FC<ImportIncomeFromSessionsModalProps
   const [daysBack, setDaysBack] = useState(60);
   const [searchTriggered, setSearchTriggered] = useState(false);
 
-  // Query for sessions eligible for import
+  // Query for sessions eligible for import with enhanced security
   const { data: sessionsToImport, isLoading: isSearching, refetch: searchSessions } = useQuery({
     queryKey: ['sessionsForImport', daysBack],
     queryFn: async () => {
       const supabase = supabaseClient();
+      
+      // Validate and sanitize the daysBack input
+      const sanitizedDaysBack = Math.min(Math.max(1, daysBack), 365); // Limit to 1-365 days
       const daysAgo = new Date();
-      daysAgo.setDate(daysAgo.getDate() - daysBack);
+      daysAgo.setDate(daysAgo.getDate() - sanitizedDaysBack);
+      
+      try {
+        validateDate(daysAgo.toISOString());
+      } catch (error) {
+        throw new Error('Invalid date range for import');
+      }
       
       // Get sessions with payments in the specified period
       const { data: sessions, error: sessionsError } = await supabase
@@ -59,10 +69,12 @@ const ImportIncomeFromSessionsModal: React.FC<ImportIncomeFromSessionsModalProps
         `)
         .gt('paid_amount', 0)
         .gte('payment_date', daysAgo.toISOString().split('T')[0])
-        .not('payment_date', 'is', null);
+        .not('payment_date', 'is', null)
+        .order('payment_date', { ascending: false });
 
       if (sessionsError) {
-        throw sessionsError;
+        console.error('Error fetching sessions:', sessionsError);
+        throw new Error('שגיאה בטעינת נתוני הפגישות');
       }
 
       if (!sessions || sessions.length === 0) {
@@ -77,44 +89,80 @@ const ImportIncomeFromSessionsModal: React.FC<ImportIncomeFromSessionsModalProps
         .in('session_id', sessions.map(s => s.id));
 
       if (transactionsError) {
-        throw transactionsError;
+        console.error('Error checking existing transactions:', transactionsError);
+        throw new Error('שגיאה בבדיקת עסקאות קיימות');
       }
 
       const existingSessionIds = new Set(
         existingTransactions?.map(t => t.session_id) || []
       );
 
-      // Filter out sessions that already exist in transactions
+      // Filter out sessions that already exist in transactions and validate data
       const eligibleSessions = sessions
         .filter(session => !existingSessionIds.has(session.id))
-        .map(session => ({
-          id: session.id,
-          payment_date: session.payment_date,
-          paid_amount: session.paid_amount,
-          payment_method: session.payment_method,
-          patient_id: session.patient_id,
-          patient_name: (session.patients as any)?.name || 'לא ידוע'
-        }));
+        .map(session => {
+          try {
+            // Validate and sanitize session data
+            const sanitizedAmount = sanitizeNumericInput(session.paid_amount);
+            validateDate(session.payment_date);
+            
+            return {
+              id: session.id,
+              payment_date: session.payment_date,
+              paid_amount: sanitizedAmount,
+              payment_method: session.payment_method,
+              patient_id: session.patient_id,
+              patient_name: (session.patients as any)?.name || 'לא ידוע'
+            };
+          } catch (error) {
+            console.error(`Invalid session data for session ${session.id}:`, error);
+            return null;
+          }
+        })
+        .filter((session): session is SessionForImport => session !== null);
 
-      return eligibleSessions as SessionForImport[];
+      return eligibleSessions;
     },
     enabled: false // Only run when manually triggered
   });
 
-  // Mutation for importing sessions
+  // Enhanced mutation with better error handling and validation
   const importMutation = useMutation({
     mutationFn: async (sessions: SessionForImport[]) => {
       const supabase = supabaseClient();
       
-      const transactionsToInsert = sessions.map(session => {
-        // Map payment method
+      if (!sessions || sessions.length === 0) {
+        throw new Error('לא נבחרו פגישות לייבוא');
+      }
+
+      // Validate all sessions before import
+      const validatedSessions = sessions.map(session => {
+        try {
+          validateDate(session.payment_date);
+          const sanitizedAmount = sanitizeNumericInput(session.paid_amount);
+          
+          return {
+            ...session,
+            paid_amount: sanitizedAmount
+          };
+        } catch (error) {
+          throw new Error(`נתונים לא תקינים בפגישה ${session.id}`);
+        }
+      });
+      
+      const transactionsToInsert = validatedSessions.map(session => {
+        // Map payment method with validation
         let mappedPaymentMethod = 'אחר';
-        if (session.payment_method === 'cash') {
-          mappedPaymentMethod = 'מזומן';
-        } else if (session.payment_method === 'bit') {
-          mappedPaymentMethod = 'ביט';
-        } else if (session.payment_method === 'transfer') {
-          mappedPaymentMethod = 'העברה';
+        const validPaymentMethods = ['cash', 'bit', 'transfer'];
+        
+        if (validPaymentMethods.includes(session.payment_method)) {
+          if (session.payment_method === 'cash') {
+            mappedPaymentMethod = 'מזומן';
+          } else if (session.payment_method === 'bit') {
+            mappedPaymentMethod = 'ביט';
+          } else if (session.payment_method === 'transfer') {
+            mappedPaymentMethod = 'העברה';
+          }
         }
 
         return {
@@ -127,7 +175,7 @@ const ImportIncomeFromSessionsModal: React.FC<ImportIncomeFromSessionsModalProps
           payment_method: mappedPaymentMethod,
           status: 'draft',
           category: 'טיפולים',
-          client_name: session.patient_name
+          client_name: session.patient_name.substring(0, 200) // Limit length
         };
       });
 
@@ -136,7 +184,8 @@ const ImportIncomeFromSessionsModal: React.FC<ImportIncomeFromSessionsModalProps
         .insert(transactionsToInsert);
 
       if (error) {
-        throw error;
+        console.error('Error inserting transactions:', error);
+        throw new Error('שגיאה בשמירת העסקאות: ' + error.message);
       }
 
       return transactionsToInsert.length;
@@ -154,15 +203,26 @@ const ImportIncomeFromSessionsModal: React.FC<ImportIncomeFromSessionsModalProps
       setSearchTriggered(false);
     },
     onError: (error: any) => {
+      console.error('Import error:', error);
       toast({
         title: "שגיאה בייבוא",
-        description: error.message,
+        description: error.message || "אירעה שגיאה לא צפויה",
         variant: "destructive"
       });
     }
   });
 
   const handleSearch = () => {
+    // Validate input before search
+    if (daysBack < 1 || daysBack > 365) {
+      toast({
+        title: "שגיאה בנתונים",
+        description: "מספר הימים חייב להיות בין 1 ל-365",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setSearchTriggered(true);
     searchSessions();
   };

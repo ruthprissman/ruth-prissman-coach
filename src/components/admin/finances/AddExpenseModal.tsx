@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAddExpense } from '@/hooks/useAddExpense';
 import { useFinanceCategories } from '@/hooks/useFinanceCategories';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
+import { validateExpenseData, sanitizeFinancialData } from '@/utils/inputValidation';
+import { useToast } from '@/hooks/use-toast';
 
 interface AddExpenseModalProps {
   open: boolean;
@@ -30,41 +33,71 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
   const addExpenseMutation = useAddExpense();
   const { data: expenseCategories, isLoading: categoriesLoading } = useFinanceCategories('expense');
   const { data: paymentMethods, isLoading: paymentMethodsLoading } = usePaymentMethods();
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!date || !amount || !category || !payee || !paymentMethod) {
-      return;
+    try {
+      // Validate input data using the security schema
+      const validatedData = validateExpenseData({
+        date,
+        amount,
+        category,
+        payee,
+        description,
+        payment_method: paymentMethod,
+        reference_number: referenceNumber,
+        status: isConfirmed ? 'מאושר' : 'טיוטה'
+      });
+
+      // Sanitize the data before submission
+      const sanitizedData = sanitizeFinancialData({
+        date: new Date(validatedData.date),
+        amount: parseFloat(validatedData.amount),
+        category: validatedData.category,
+        payee: validatedData.payee,
+        description: validatedData.description || '',
+        payment_method: validatedData.payment_method,
+        reference_number: validatedData.reference_number || '',
+        status: validatedData.status
+      });
+
+      addExpenseMutation.mutate(sanitizedData, {
+        onSuccess: () => {
+          // Reset form
+          setAmount('');
+          setCategory('');
+          setPayee('');
+          setDescription('');
+          setPaymentMethod('');
+          setReferenceNumber('');
+          setIsConfirmed(false);
+          setDate(new Date().toISOString().split('T')[0]);
+          
+          onSuccess();
+          onOpenChange(false);
+          
+          toast({
+            title: "הוצאה נוספה בהצלחה",
+            description: "ההוצאה נשמרה במערכת",
+          });
+        },
+        onError: (error: any) => {
+          toast({
+            title: "שגיאה בשמירת ההוצאה",
+            description: error.message || "אירעה שגיאה לא צפויה",
+            variant: "destructive"
+          });
+        }
+      });
+    } catch (error: any) {
+      toast({
+        title: "שגיאה בנתונים",
+        description: error.message || "הנתונים שהוזנו אינם תקינים",
+        variant: "destructive"
+      });
     }
-
-    const expenseData = {
-      date: new Date(date),
-      amount: parseFloat(amount),
-      category,
-      payee,
-      description,
-      payment_method: paymentMethod,
-      reference_number: referenceNumber,
-      status: isConfirmed ? 'מאושר' : 'טיוטה'
-    };
-
-    addExpenseMutation.mutate(expenseData, {
-      onSuccess: () => {
-        // Reset form
-        setAmount('');
-        setCategory('');
-        setPayee('');
-        setDescription('');
-        setPaymentMethod('');
-        setReferenceNumber('');
-        setIsConfirmed(false);
-        setDate(new Date().toISOString().split('T')[0]);
-        
-        onSuccess();
-        onOpenChange(false);
-      }
-    });
   };
 
   return (
@@ -83,6 +116,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 required
+                max={new Date().toISOString().split('T')[0]} // Prevent future dates
               />
             </div>
 
@@ -95,6 +129,9 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required 
+                min="0.01"
+                max="1000000"
+                step="0.01"
               />
             </div>
 
@@ -132,6 +169,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
                 value={payee}
                 onChange={(e) => setPayee(e.target.value)}
                 required 
+                maxLength={200}
               />
             </div>
 
@@ -142,6 +180,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
                 placeholder="הוסף תיאור להוצאה..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                maxLength={1000}
               />
             </div>
 
@@ -178,6 +217,7 @@ const AddExpenseModal: React.FC<AddExpenseModalProps> = ({ open, onOpenChange, o
                 placeholder="הזן מספר אסמכתא"
                 value={referenceNumber}
                 onChange={(e) => setReferenceNumber(e.target.value)}
+                maxLength={100}
               />
             </div>
 

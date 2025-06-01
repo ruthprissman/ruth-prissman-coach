@@ -1,18 +1,23 @@
 import { GoogleCalendarEvent } from '@/types/calendar';
-import { supabase } from '@/lib/supabase';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { getDashboardRedirectUrl, saveEnvironmentForAuth } from '@/utils/urlUtils';
 import { startOfWeek, format, addMonths } from 'date-fns';
 import { persistAuthState, getPersistedAuthState } from '@/utils/cookieUtils';
 
-// OAuth2 configuration
-const CLIENT_ID = '216734901779-csrnrl4nmkilae4blbolsip8mmibsk3t.apps.googleusercontent.com';
+// OAuth2 configuration - moved to environment variables for security
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID || '';
 const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar';
 // Use the utility to get the correct redirect URL
 const REDIRECT_URI = getDashboardRedirectUrl();
 
 // Version identifier for debugging
-const SERVICE_VERSION = "1.0.2";
+const SERVICE_VERSION = "1.0.3";
 console.log(`LOV_DEBUG_GOOGLE_OAUTH: Service initialized, version ${SERVICE_VERSION}`);
+
+// Validate required environment variables
+if (!CLIENT_ID) {
+  console.error('VITE_GOOGLE_OAUTH_CLIENT_ID environment variable is required');
+}
 
 export interface GoogleOAuthState {
   isAuthenticated: boolean;
@@ -24,6 +29,7 @@ export interface GoogleOAuthState {
 export async function getAccessToken(): Promise<string | null> {
   try {
     console.log('LOV_DEBUG_GOOGLE_OAUTH: Getting access token from session');
+    const supabase = supabaseClient();
     const { data } = await supabase.auth.getSession();
     const session = data.session;
     
@@ -67,11 +73,12 @@ export async function signInWithGoogle(): Promise<boolean> {
     saveEnvironmentForAuth();
     
     // Use Supabase OAuth with the exact scopes and configuration
+    const supabase = supabaseClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
-        redirectTo: window.location.origin + '/admin/dashboard',  // Use origin for correct domain
+        redirectTo: window.location.origin + '/admin/dashboard',
         queryParams: {
           // Force re-authentication even if already authenticated
           prompt: 'consent',
@@ -100,6 +107,7 @@ export async function signInWithGoogle(): Promise<boolean> {
 
 export async function signOutFromGoogle(): Promise<void> {
   try {
+    const supabase = supabaseClient();
     await supabase.auth.signOut();
     // Clear the persisted state when signing out
     persistAuthState(false);
