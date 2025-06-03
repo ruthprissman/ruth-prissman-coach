@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   checkIfSignedIn, 
   signInWithGoogle, 
@@ -32,7 +31,7 @@ interface EventCache {
   endDate: Date;
 }
 
-export function useGoogleOAuth() {
+export const useGoogleOAuth = () => {
   const [state, setState] = useState<GoogleOAuthState>({
     isAuthenticated: getPersistedAuthState().isAuthenticated,
     isAuthenticating: true,
@@ -322,6 +321,74 @@ export function useGoogleOAuth() {
     }
   };
 
+  const handleAuthSuccess = useCallback(async (accessToken: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Store the access token
+      localStorage.setItem('google_access_token', accessToken);
+      
+      // Test the token by making a simple API call
+      const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+      
+      if (response.ok) {
+        setIsAuthenticated(true);
+        setError(null);
+        
+        toast({
+          title: "התחברות בוצעה בהצלחה",
+          description: "אתה כעת מחובר לגוגל קלנדר",
+        });
+      } else {
+        throw new Error('Failed to verify Google Calendar access');
+      }
+    } catch (error: any) {
+      console.error('Error in handleAuthSuccess:', error);
+      setError(error.message);
+      setIsAuthenticated(false);
+      
+      // Remove invalid token
+      localStorage.removeItem('google_access_token');
+      
+      toast({
+        title: "שגיאה בהתחברות",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  const disconnect = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      
+      // Clear the stored token
+      localStorage.removeItem('google_access_token');
+      setIsAuthenticated(false);
+      setError(null);
+      
+      toast({
+        title: "התנתקות בוצעה בהצלחה",
+        description: "התנתקת מגוגל קלנדר",
+      });
+    } catch (error: any) {
+      console.error('Error disconnecting:', error);
+      toast({
+        title: "שגיאה בהתנתקות", 
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
   return {
     ...state,
     events,
@@ -331,5 +398,7 @@ export function useGoogleOAuth() {
     signOut,
     fetchEvents,
     createEvent,
+    handleAuthSuccess,
+    disconnect,
   };
 }
