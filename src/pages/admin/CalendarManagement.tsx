@@ -428,31 +428,6 @@ const CalendarManagement: React.FC = () => {
     checkTableExists();
   }, []);
 
-  const handleRefreshSession = async (): Promise<void> => {
-    try {
-      const success = await refreshSession();
-      if (success) {
-        toast({
-          title: "הסשן רוענן בהצלחה",
-          description: "המידע עודכן",
-        });
-      } else {
-        toast({
-          title: "שגיאה ברענון הסשן",
-          description: "נסה שוב מאוחר יותר",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Error refreshing session:', error);
-      toast({
-        title: "שגיאה ברענון הסשן",
-        description: "נסה שוב מאוחר יותר",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <AdminLayout title="ניהול זמינות יומן">
       <div className="container mx-auto py-1" dir="rtl">
