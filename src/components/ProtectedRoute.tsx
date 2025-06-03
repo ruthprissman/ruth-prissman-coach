@@ -18,6 +18,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
   const [verificationComplete, setVerificationComplete] = useState(false);
   const [isRestoringSession, setIsRestoringSession] = useState(false);
+  const [adminCheckPerformed, setAdminCheckPerformed] = useState(false);
   const { toast } = useToast();
 
   // First check for persisted auth state if no user is detected
@@ -58,9 +59,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
   // Then verify admin access if needed
   useEffect(() => {
     const verifyAdmin = async () => {
-      if (!user || isVerifying) return;
+      if (!user || isVerifying || adminCheckPerformed) return;
       
       setIsVerifying(true);
+      setAdminCheckPerformed(true);
       try {
         console.log('ProtectedRoute: Checking admin status for', user.email);
         
@@ -90,12 +92,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
       }
     };
 
-    if (user && !isLoading && requireAdmin) {
+    if (user && !isLoading && requireAdmin && !adminCheckPerformed) {
       verifyAdmin();
-    } else if (!isLoading && !isRestoringSession) {
+    } else if (!isLoading && !isRestoringSession && !requireAdmin) {
+      setVerificationComplete(true);
+    } else if (!isLoading && !isRestoringSession && requireAdmin && !user) {
       setVerificationComplete(true);
     }
-  }, [user, isLoading, isRestoringSession, checkIsAdmin, requireAdmin, toast]);
+  }, [user, isLoading, isRestoringSession, checkIsAdmin, requireAdmin, toast, adminCheckPerformed]);
 
   // Show loading state while authentication is being checked
   if (isLoading || isRestoringSession || (user && requireAdmin && !verificationComplete)) {
@@ -114,7 +118,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
     return <Navigate to="/admin/login" replace state={{ from: location }} />;
   }
 
-  if (requireAdmin && verificationComplete && !hasAdminAccess) {
+  if (requireAdmin && verificationComplete && !hasAdminAccess && user) {
     console.log('User is not an admin, redirecting to homepage');
     // User is authenticated but not an admin - redirect to homepage
     return <Navigate to="/" replace />;

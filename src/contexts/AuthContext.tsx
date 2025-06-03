@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabaseClient, clearSupabaseClientCache } from '@/lib/supabaseClient';
@@ -110,22 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'SIGNED_IN' && newSession?.user?.email) {
           const adminStatus = await checkIsAdmin(newSession.user.email);
           setIsAdmin(adminStatus);
-          
-          if (!adminStatus) {
-            toast({
-              title: "אין הרשאה",
-              description: "אין לך הרשאה לגשת לאזור זה",
-              variant: "destructive",
-            });
-            
-            await supabaseClient().auth.signOut();
-            setIsAdmin(false);
-            setUser(null);
-            setSession(null);
-            persistAuthState(false);
-            
-            window.location.href = '/';
-          }
+          console.log('[Auth] Admin status set:', adminStatus);
         }
         
         if (event === 'SIGNED_OUT') {
@@ -225,8 +209,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         
         setIsLoading(false);
-        
-        window.location.href = '/';
         return { error: new Error("Not an admin") };
       }
       
