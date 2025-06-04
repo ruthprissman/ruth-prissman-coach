@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -278,7 +277,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
 
       const supabase = supabaseClient();
       
-      // Convert to historical session format
+      // Convert to historical session format - using correct database values
       const sessionData = {
         patient_id: patientId,
         session_date: isoDate,
@@ -287,8 +286,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
         sent_exercises: formData.sent_exercises,
         exercise_list: formData.sent_exercises ? formData.exercise_list : [],
         paid_amount: formData.paid_amount,
-        payment_status: formData.payment_status === 'paid' ? 'paid' : 
-                       formData.payment_status === 'partial' ? 'partially_paid' : 'unpaid',
+        payment_status: formData.payment_status, // Keep the original values: 'paid', 'partial', 'pending'
         payment_method: formData.payment_method,
         payment_date: formData.payment_date ? convertLocalToUTC(formData.payment_date) : null,
         payment_notes: formData.payment_notes,
