@@ -16,6 +16,7 @@ import DeleteFutureSessionDialog from '@/components/admin/sessions/DeleteFutureS
 import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog';
 import SessionEditDialog from '@/components/admin/SessionEditDialog';
 import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistoricalSessionDialog';
+import EditFutureSessionDialog from '@/components/admin/sessions/EditFutureSessionDialog';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { Patient, Session } from '@/types/patient';
@@ -38,6 +39,7 @@ const ClientDetails: React.FC = () => {
   const [isDeleteFutureDialogOpen, setIsDeleteFutureDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditSessionDialogOpen, setIsEditSessionDialogOpen] = useState(false);
+  const [isEditFutureSessionDialogOpen, setIsEditFutureSessionDialogOpen] = useState(false);
   const [selectedFutureSession, setSelectedFutureSession] = useState<FutureSession | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
@@ -155,7 +157,8 @@ const ClientDetails: React.FC = () => {
   };
 
   const handleEditFutureSession = (futureSession: FutureSession) => {
-    console.log('Edit future session:', futureSession);
+    setSelectedFutureSession(futureSession);
+    setIsEditFutureSessionDialogOpen(true);
   };
 
   const handleDeleteFutureSession = async (futureSession: FutureSession) => {
@@ -263,7 +266,7 @@ const ClientDetails: React.FC = () => {
       case 'Phone':
         return 'טלפון';
       case 'In-Person':
-        return 'פגישה פרונטלית';
+        return 'פגישה פרונטית';
       default:
         return type;
     }
@@ -338,52 +341,8 @@ const ClientDetails: React.FC = () => {
           </Button>
         </div>
         
-        {/* Changed order: Statistics on left, Details on right */}
+        {/* Swapped order: Details on right, Statistics on left */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left side - Non-editable statistics */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-purple-800 flex items-center">
-                <TrendingUp className="mr-2 h-5 w-5" />
-                סטטיסטיקות לקוח
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">פגישות שהתקיימו:</span>
-                  <span className="font-medium">{sessions.length}</span>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">פגישות עתידיות:</span>
-                  <span className="font-medium">{futureSessions.length}</span>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">חוב קיים:</span>
-                  <div className="flex items-center">
-                    {outstandingBalance > 0 ? (
-                      <>
-                        <CreditCard className="h-4 w-4 text-red-500 mr-1" />
-                        <span className="font-medium text-red-600">₪{outstandingBalance}</span>
-                      </>
-                    ) : (
-                      <span className="font-medium text-green-600">אין חוב</span>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">סטטוס:</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    פעיל
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Right side - Editable client details */}
           <Card className="relative">
             <CardHeader>
@@ -448,6 +407,50 @@ const ClientDetails: React.FC = () => {
                   <p className="text-gray-600 whitespace-pre-wrap">{client.notes}</p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Left side - Non-editable statistics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-purple-800 flex items-center">
+                <TrendingUp className="mr-2 h-5 w-5" />
+                סטטיסטיקות לקוח
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">פגישות שהתקיימו:</span>
+                  <span className="font-medium">{sessions.length}</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">פגישות עתידיות:</span>
+                  <span className="font-medium">{futureSessions.length}</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">חוב קיים:</span>
+                  <div className="flex items-center">
+                    {outstandingBalance > 0 ? (
+                      <>
+                        <CreditCard className="h-4 w-4 text-red-500 mr-1" />
+                        <span className="font-medium text-red-600">₪{outstandingBalance}</span>
+                      </>
+                    ) : (
+                      <span className="font-medium text-green-600">אין חוב</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">סטטוס:</span>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    פעיל
+                  </Badge>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -703,6 +706,19 @@ const ClientDetails: React.FC = () => {
           onOpenChange={setIsNewHistoricalSessionDialogOpen}
           patientId={Number(id)}
           onSessionCreated={fetchClientDetails}
+        />
+      )}
+
+      {isEditFutureSessionDialogOpen && selectedFutureSession && (
+        <EditFutureSessionDialog
+          open={isEditFutureSessionDialogOpen}
+          onOpenChange={setIsEditFutureSessionDialogOpen}
+          session={selectedFutureSession}
+          onSessionUpdated={() => {
+            fetchClientDetails();
+            setIsEditFutureSessionDialogOpen(false);
+            setSelectedFutureSession(null);
+          }}
         />
       )}
     </AdminLayout>
