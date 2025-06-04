@@ -15,6 +15,7 @@ import ConvertSessionDialog from '@/components/admin/sessions/ConvertSessionDial
 import DeleteFutureSessionDialog from '@/components/admin/sessions/DeleteFutureSessionDialog';
 import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog';
 import SessionEditDialog from '@/components/admin/SessionEditDialog';
+import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistoricalSessionDialog';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { Patient, Session } from '@/types/patient';
@@ -31,6 +32,7 @@ const ClientDetails: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isNewFutureSessionDialogOpen, setIsNewFutureSessionDialogOpen] = useState(false);
+  const [isNewHistoricalSessionDialogOpen, setIsNewHistoricalSessionDialogOpen] = useState(false);
   const [isRecurringSessionDialogOpen, setIsRecurringSessionDialogOpen] = useState(false);
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
   const [isDeleteFutureDialogOpen, setIsDeleteFutureDialogOpen] = useState(false);
@@ -267,7 +269,7 @@ const ClientDetails: React.FC = () => {
     }
   };
 
-  // Calculate outstanding balance
+  // Calculate outstanding balance based on sessions data
   const calculateOutstandingBalance = () => {
     if (!client?.session_price) return 0;
     
@@ -336,8 +338,52 @@ const ClientDetails: React.FC = () => {
           </Button>
         </div>
         
-        {/* Split client details into two cards - swapped order */}
+        {/* Changed order: Statistics on left, Details on right */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left side - Non-editable statistics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-purple-800 flex items-center">
+                <TrendingUp className="mr-2 h-5 w-5" />
+                סטטיסטיקות לקוח
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">פגישות שהתקיימו:</span>
+                  <span className="font-medium">{sessions.length}</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">פגישות עתידיות:</span>
+                  <span className="font-medium">{futureSessions.length}</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">חוב קיים:</span>
+                  <div className="flex items-center">
+                    {outstandingBalance > 0 ? (
+                      <>
+                        <CreditCard className="h-4 w-4 text-red-500 mr-1" />
+                        <span className="font-medium text-red-600">₪{outstandingBalance}</span>
+                      </>
+                    ) : (
+                      <span className="font-medium text-green-600">אין חוב</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">סטטוס:</span>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    פעיל
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Right side - Editable client details */}
           <Card className="relative">
             <CardHeader>
@@ -404,50 +450,6 @@ const ClientDetails: React.FC = () => {
               )}
             </CardContent>
           </Card>
-
-          {/* Left side - Non-editable statistics */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-purple-800 flex items-center">
-                <TrendingUp className="mr-2 h-5 w-5" />
-                סטטיסטיקות לקוח
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">פגישות שהתקיימו:</span>
-                  <span className="font-medium">{sessions.length}</span>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">פגישות עתידיות:</span>
-                  <span className="font-medium">{futureSessions.length}</span>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">חוב קיים:</span>
-                  <div className="flex items-center">
-                    {outstandingBalance > 0 ? (
-                      <>
-                        <CreditCard className="h-4 w-4 text-red-500 mr-1" />
-                        <span className="font-medium text-red-600">₪{outstandingBalance}</span>
-                      </>
-                    ) : (
-                      <span className="font-medium text-green-600">אין חוב</span>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">סטטוס:</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    פעיל
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
         
         <Tabs defaultValue="future" className="w-full">
@@ -487,10 +489,10 @@ const ClientDetails: React.FC = () => {
                     <p className="text-gray-500">אין פגישות עתידיות מתוכננות</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" dir="rtl">
                     {futureSessions.map((session) => (
                       <div key={session.id} className="p-4 rounded-lg border border-purple-200 bg-purple-50 relative">
-                        <div className="absolute top-2 left-2 flex gap-1">
+                        <div className="absolute top-2 right-2 flex gap-1">
                           <button
                             onClick={() => handleEditFutureSession(session)}
                             className="p-1 hover:bg-purple-100 rounded-full transition-colors"
@@ -531,7 +533,17 @@ const ClientDetails: React.FC = () => {
           <TabsContent value="past" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-purple-800">היסטוריית פגישות</CardTitle>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-xl font-bold text-purple-800">היסטוריית פגישות</CardTitle>
+                  <Button 
+                    onClick={() => setIsNewHistoricalSessionDialogOpen(true)}
+                    className="bg-purple-600 hover:bg-purple-700"
+                    size="sm"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    הוספת פגישה היסטורית
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {sessions.length === 0 ? (
@@ -682,6 +694,15 @@ const ClientDetails: React.FC = () => {
           session={selectedSession}
           onSessionUpdated={fetchClientDetails}
           sessionPrice={client.session_price}
+        />
+      )}
+
+      {isNewHistoricalSessionDialogOpen && (
+        <NewHistoricalSessionDialog
+          open={isNewHistoricalSessionDialogOpen}
+          onOpenChange={setIsNewHistoricalSessionDialogOpen}
+          patientId={Number(id)}
+          onSessionCreated={fetchClientDetails}
         />
       )}
     </AdminLayout>
