@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { RefreshCw } from 'lucide-react';
 
-const CalendarManagement: React.FC = () => {
+// Create a query client instance
+const queryClient = new QueryClient();
+
+const CalendarManagementContent: React.FC = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
   const googleAuth = useGoogleOAuth();
@@ -144,6 +147,14 @@ const CalendarManagement: React.FC = () => {
         </Card>
       </div>
     </AdminLayout>
+  );
+};
+
+const CalendarManagement: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <CalendarManagementContent />
+    </QueryClientProvider>
   );
 };
 
