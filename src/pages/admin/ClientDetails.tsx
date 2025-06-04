@@ -299,7 +299,7 @@ const ClientDetails: React.FC = () => {
     if (!client?.session_price) return 0;
     
     const unpaidSessions = sessions.filter(session => 
-      session.payment_status === 'unpaid' || session.payment_status === 'partially_paid'
+      session.payment_status === 'pending' || session.payment_status === 'partial'
     );
     
     return unpaidSessions.reduce((total, session) => {
@@ -567,14 +567,14 @@ const ClientDetails: React.FC = () => {
                                 className={
                                   session.payment_status === 'paid' 
                                     ? 'bg-green-50 text-green-700 border-green-200' 
-                                    : session.payment_status === 'partially_paid'
+                                    : session.payment_status === 'partial'
                                     ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
                                     : 'bg-red-50 text-red-700 border-red-200'
                                 }
                               >
                                 {session.payment_status === 'paid' 
                                   ? 'שולם' 
-                                  : session.payment_status === 'partially_paid'
+                                  : session.payment_status === 'partial'
                                   ? 'שולם חלקית'
                                   : 'לא שולם'}
                               </Badge>

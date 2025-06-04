@@ -23,14 +23,14 @@ const ClientStatisticsCard: React.FC<ClientStatisticsCardProps> = ({
     if (!sessionPrice) return 0;
     
     const unpaidSessions = sessions.filter(session => 
-      session.payment_status === 'unpaid' || session.payment_status === 'partially_paid'
+      session.payment_status === 'pending' || session.payment_status === 'partial'
     );
     
     return unpaidSessions.reduce((total, session) => {
-      if (session.payment_status === 'unpaid') {
+      if (session.payment_status === 'pending') {
         // For unpaid sessions, the full session price is owed
         return total + sessionPrice;
-      } else if (session.payment_status === 'partially_paid') {
+      } else if (session.payment_status === 'partial') {
         // For partially paid sessions, subtract what was already paid
         const paidAmount = session.paid_amount || 0;
         return total + (sessionPrice - paidAmount);
@@ -88,3 +88,4 @@ const ClientStatisticsCard: React.FC<ClientStatisticsCardProps> = ({
 };
 
 export default ClientStatisticsCard;
+

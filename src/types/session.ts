@@ -1,4 +1,5 @@
 
+
 import { Patient, Session } from './patient';
 
 export interface SessionWithPatient extends Session {
@@ -36,7 +37,7 @@ export interface NewSessionFormData {
   sent_exercises: boolean;
   exercise_list: string[] | null;
   paid_amount: number | null;
-  payment_status: 'paid' | 'partially_paid' | 'unpaid';
+  payment_status: 'paid' | 'partial' | 'pending';
   payment_method: 'cash' | 'bit' | 'transfer' | null;
   payment_date: Date | null;
   payment_notes: string | null;
@@ -54,3 +55,4 @@ export interface NewHistoricalSessionFormData {
   payment_date: Date | null;
   payment_notes: string | null;
 }
+

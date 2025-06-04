@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -142,9 +141,9 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
     if (name === 'paid_amount') {
       if (sessionPrice) {
         if (numValue === null || numValue === 0) {
-          setFormData(prev => ({ ...prev, payment_status: 'unpaid' }));
+          setFormData(prev => ({ ...prev, payment_status: 'pending' }));
         } else if (numValue < sessionPrice) {
-          setFormData(prev => ({ ...prev, payment_status: 'partially_paid' }));
+          setFormData(prev => ({ ...prev, payment_status: 'partial' }));
         } else {
           setFormData(prev => ({ ...prev, payment_status: 'paid' }));
         }
@@ -155,14 +154,14 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     
-    // Reset payment_date if payment_status is "unpaid"
-    if (name === 'payment_status' && value === 'unpaid') {
+    // Reset payment_date if payment_status is "pending"
+    if (name === 'payment_status' && value === 'pending') {
       setFormData((prev) => ({ ...prev, payment_date: null }));
       setPaymentDate(undefined);
     }
     
-    // Set payment_date to today if payment_status changed to "paid" or "partially_paid" and there's no date
-    if (name === 'payment_status' && (value === 'paid' || value === 'partially_paid') && !formData.payment_date) {
+    // Set payment_date to today if payment_status changed to "paid" or "partial" and there's no date
+    if (name === 'payment_status' && (value === 'paid' || value === 'partial') && !formData.payment_date) {
       const today = new Date();
       setFormData((prev) => ({ ...prev, payment_date: today }));
       setPaymentDate(today);
@@ -434,13 +433,13 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="paid">שולם</SelectItem>
-                <SelectItem value="partially_paid">שולם חלקית</SelectItem>
-                <SelectItem value="unpaid">ממתין לתשלום</SelectItem>
+                <SelectItem value="partial">שולם חלקית</SelectItem>
+                <SelectItem value="pending">ממתין לתשלום</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {(formData.payment_status === 'paid' || formData.payment_status === 'partially_paid') && (
+          {(formData.payment_status === 'paid' || formData.payment_status === 'partial') && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="payment_method" className="text-purple-700">אמצעי תשלום</Label>
