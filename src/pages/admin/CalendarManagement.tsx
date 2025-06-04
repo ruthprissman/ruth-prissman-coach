@@ -9,6 +9,13 @@ import { generateWeekDays } from '@/utils/calendarDataProcessing';
 import { useCalendarData } from '@/hooks/useCalendarData';
 import { useCalendarOperations } from '@/hooks/useCalendarOperations';
 import { GoogleCalendarEvent, RecurringRule } from '@/types/calendar';
+import {
+  signInWithGoogle,
+  signOutFromGoogle,
+  fetchGoogleCalendarEvents,
+  checkIfSignedIn,
+  createGoogleCalendarEvent
+} from '@/services/GoogleOAuthService';
 import { toast } from '@/components/ui/use-toast';
 import { addDays, subDays } from 'date-fns';
 
@@ -50,19 +57,62 @@ const CalendarManagementContent: React.FC = () => {
     applyDefaultAvailability
   } = useCalendarOperations();
 
-  // Simplified Google auth functions without OAuth dependencies
+  useEffect(() => {
+    const checkGoogleAuth = async () => {
+      try {
+        const isSignedIn = await checkIfSignedIn();
+        setIsGoogleAuthenticated(isSignedIn);
+        
+        if (isSignedIn) {
+          await fetchGoogleEvents();
+        }
+      } catch (error: any) {
+        console.error('Error checking Google auth:', error);
+        setGoogleAuthError(error.message);
+      }
+    };
+
+    checkGoogleAuth();
+  }, []);
+
+  const fetchGoogleEvents = async () => {
+    try {
+      setIsLoadingGoogleEvents(true);
+      setGoogleAuthError(null);
+      
+      const events = await fetchGoogleCalendarEvents(currentDate);
+      setGoogleEvents(events);
+      
+      console.log(`Fetched ${events.length} Google Calendar events`);
+    } catch (error: any) {
+      console.error('Error fetching Google events:', error);
+      setGoogleAuthError(error.message || 'שגיאה בטעינת אירועי Google Calendar');
+      
+      toast({
+        title: 'שגיאה בטעינת אירועי Google Calendar',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingGoogleEvents(false);
+    }
+  };
+
   const handleSignInGoogle = async (): Promise<void> => {
     try {
       setIsGoogleAuthenticating(true);
       setGoogleAuthError(null);
       
-      // Placeholder for Google authentication
-      console.log('Google sign-in initiated');
-      
-      toast({
-        title: 'Google Calendar',
-        description: 'חיבור ליומן Google זמינות בקרוב',
-      });
+      const success = await signInWithGoogle();
+      if (success) {
+        setIsGoogleAuthenticated(true);
+        await fetchGoogleEvents();
+        
+        toast({
+          title: 'התחברות בוצעה בהצלחה',
+          description: 'התחברת בהצלחה ליומן Google',
+        });
+      }
     } catch (error: any) {
       console.error('Error signing in with Google:', error);
       setGoogleAuthError(error.message || 'שגיאה בהתחברות ליומן Google');
@@ -79,6 +129,7 @@ const CalendarManagementContent: React.FC = () => {
 
   const handleSignOutGoogle = async (): Promise<void> => {
     try {
+      await signOutFromGoogle();
       setIsGoogleAuthenticated(false);
       setGoogleEvents([]);
       
@@ -99,9 +150,7 @@ const CalendarManagementContent: React.FC = () => {
   const handleGoogleSync = async (): Promise<void> => {
     try {
       setIsSyncing(true);
-      
-      // Placeholder for sync functionality
-      console.log('Google Calendar sync initiated');
+      await fetchGoogleEvents();
       await fetchAvailabilityData();
       
       toast({
@@ -127,15 +176,23 @@ const CalendarManagementContent: React.FC = () => {
     try {
       setIsCopyingMeetings(true);
       
-      // Placeholder for copy meetings functionality
-      console.log('Copying professional meetings:', { selectedEventIds, clientMapping });
+      // Use the actual Google calendar utils for copying meetings
+      const { copyProfessionalMeetingsToFutureSessions } = await import('@/utils/googleCalendarUtils');
+      const result = await copyProfessionalMeetingsToFutureSessions(
+        googleEvents,
+        selectedEventIds,
+        clientMapping
+      );
       
       toast({
         title: 'פגישות הועתקו בהצלחה',
-        description: `${selectedEventIds.length} פגישות הועתקו למערכת`,
+        description: `${result.added} פגישות הועתקו למערכת`,
       });
       
-      return { success: true };
+      // Refresh calendar data after copying
+      await fetchAvailabilityData();
+      
+      return result;
     } catch (error: any) {
       console.error('Error copying meetings:', error);
       toast({
