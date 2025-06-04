@@ -714,7 +714,7 @@ const ClientDetails: React.FC = () => {
           open={isEditFutureSessionDialogOpen}
           onOpenChange={setIsEditFutureSessionDialogOpen}
           session={selectedFutureSession}
-          onSessionUpdated={() => {
+          onUpdated={() => {
             fetchClientDetails();
             setIsEditFutureSessionDialogOpen(false);
             setSelectedFutureSession(null);
