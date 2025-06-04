@@ -7,14 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Mail, Phone, Calendar, Trash2, Edit, User, Plus } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Calendar, Trash2, Edit, User, Plus, History, RefreshCw, Monitor, RotateCcw } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import EditClientDialog from '@/components/admin/clients/EditClientDialog';
 import NewFutureSessionDialog from '@/components/admin/sessions/NewFutureSessionDialog';
+import RecurringSessionDialog from '@/components/admin/sessions/RecurringSessionDialog';
 import ConvertSessionDialog from '@/components/admin/sessions/ConvertSessionDialog';
 import DeleteFutureSessionDialog from '@/components/admin/sessions/DeleteFutureSessionDialog';
 import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog';
-import UpcomingSessionCard from '@/components/admin/sessions/UpcomingSessionCard';
+import SessionEditDialog from '@/components/admin/SessionEditDialog';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { Patient, Session } from '@/types/patient';
@@ -31,9 +32,11 @@ const ClientDetails: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isNewFutureSessionDialogOpen, setIsNewFutureSessionDialogOpen] = useState(false);
+  const [isRecurringSessionDialogOpen, setIsRecurringSessionDialogOpen] = useState(false);
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
   const [isDeleteFutureDialogOpen, setIsDeleteFutureDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isEditSessionDialogOpen, setIsEditSessionDialogOpen] = useState(false);
   const [selectedFutureSession, setSelectedFutureSession] = useState<FutureSession | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
@@ -150,14 +153,19 @@ const ClientDetails: React.FC = () => {
     setIsConvertDialogOpen(true);
   };
 
-  const handleConvertSession = async (futureSession: FutureSession) => {
-    setSelectedFutureSession(futureSession);
-    setIsConvertDialogOpen(true);
+  const handleEditFutureSession = (futureSession: FutureSession) => {
+    // Implementation for editing future session
+    console.log('Edit future session:', futureSession);
   };
 
   const handleDeleteFutureSession = async (futureSession: FutureSession) => {
     setSelectedFutureSession(futureSession);
     setIsDeleteFutureDialogOpen(true);
+  };
+
+  const handleEditSession = (session: Session) => {
+    setSelectedSession(session);
+    setIsEditSessionDialogOpen(true);
   };
 
   const handleDeleteSession = async (session: Session) => {
@@ -235,10 +243,30 @@ const ClientDetails: React.FC = () => {
     }
   };
 
-  const isOverdue = (sessionDate: string): boolean => {
-    const sessionDateTime = new Date(sessionDate);
-    const now = new Date();
-    return sessionDateTime < now;
+  const getMeetingTypeIcon = (type: string) => {
+    switch (type) {
+      case 'Zoom':
+        return <Monitor className="h-4 w-4 text-purple-700 ml-1" />;
+      case 'Phone':
+        return <Phone className="h-4 w-4 text-purple-700 ml-1" />;
+      case 'In-Person':
+        return <User className="h-4 w-4 text-purple-700 ml-1" />;
+      default:
+        return null;
+    }
+  };
+
+  const getMeetingTypeText = (type: string) => {
+    switch (type) {
+      case 'Zoom':
+        return 'זום';
+      case 'Phone':
+        return 'טלפון';
+      case 'In-Person':
+        return 'פגישה פרונטלית';
+      default:
+        return type;
+    }
   };
 
   if (isLoading) {
@@ -272,7 +300,7 @@ const ClientDetails: React.FC = () => {
 
   return (
     <AdminLayout title={`פרטי לקוח - ${client.name}`}>
-      <div className="space-y-6">
+      <div className="space-y-6" dir="rtl">
         <div className="flex justify-between items-center">
           <Button 
             onClick={() => navigate('/admin/patients')}
@@ -284,14 +312,6 @@ const ClientDetails: React.FC = () => {
           </Button>
           
           <div className="flex space-x-2 space-x-reverse">
-            <Button 
-              onClick={() => setIsNewFutureSessionDialogOpen(true)}
-              className="flex items-center bg-purple-600 hover:bg-purple-700"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              הוספת פגישה עתידית
-            </Button>
-            
             <Button 
               onClick={() => setIsEditDialogOpen(true)}
               variant="outline"
@@ -394,37 +414,67 @@ const ClientDetails: React.FC = () => {
           <TabsContent value="future" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-purple-800">פגישות עתידיות</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {futureSessions.length === 0 ? (
-                  <div className="text-center py-6">
-                    <p className="text-gray-500">אין פגישות עתידיות מתוכננות</p>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-xl font-bold text-purple-800">פגישות עתידיות</CardTitle>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => setIsRecurringSessionDialogOpen(true)}
+                      className="bg-purple-600 hover:bg-purple-700"
+                      size="sm"
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      פגישות חוזרות
+                    </Button>
                     <Button 
                       onClick={() => setIsNewFutureSessionDialogOpen(true)}
-                      className="mt-4 bg-purple-600 hover:bg-purple-700"
+                      className="bg-purple-600 hover:bg-purple-700"
+                      size="sm"
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       הוספת פגישה עתידית
                     </Button>
                   </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {futureSessions.length === 0 ? (
+                  <div className="text-center py-6">
+                    <p className="text-gray-500">אין פגישות עתידיות מתוכננות</p>
+                  </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {futureSessions.map((session) => (
-                      <div key={session.id} className="flex justify-between items-center">
-                        <UpcomingSessionCard
-                          session={session}
-                          isOverdue={isOverdue(session.session_date)}
-                          onMoveToHistorical={handleMoveToHistorical}
-                          onConvertSession={handleConvertSession}
-                        />
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteFutureSession(session)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div key={session.id} className="p-4 rounded-lg border border-purple-200 bg-purple-50 relative">
+                        <div className="absolute top-2 left-2 flex gap-1">
+                          <button
+                            onClick={() => handleEditFutureSession(session)}
+                            className="p-1 hover:bg-purple-100 rounded-full transition-colors"
+                          >
+                            <Edit className="h-4 w-4 text-purple-600" />
+                          </button>
+                          <button
+                            onClick={() => handleMoveToHistorical(session)}
+                            className="p-1 hover:bg-purple-100 rounded-full transition-colors"
+                          >
+                            <History className="h-4 w-4 text-purple-600" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteFutureSession(session)}
+                            className="p-1 hover:bg-red-100 rounded-full transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </button>
+                        </div>
+                        
+                        <div className="mt-6">
+                          <div className="font-medium text-purple-800 mb-2">
+                            {formatDate(session.session_date)}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            {getMeetingTypeIcon(session.meeting_type)}
+                            <span>{getMeetingTypeText(session.meeting_type)}</span>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -444,7 +494,7 @@ const ClientDetails: React.FC = () => {
                     <p className="text-gray-500">אין פגישות קודמות עם לקוח זה</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto" dir="rtl">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
@@ -459,7 +509,12 @@ const ClientDetails: React.FC = () => {
                         {sessions.map((session) => (
                           <tr key={session.id} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="py-3 px-4">{formatDate(session.session_date)}</td>
-                            <td className="py-3 px-4">{session.meeting_type}</td>
+                            <td className="py-3 px-4">
+                              <div className="flex items-center">
+                                {getMeetingTypeIcon(session.meeting_type)}
+                                <span>{getMeetingTypeText(session.meeting_type)}</span>
+                              </div>
+                            </td>
                             <td className="py-3 px-4">
                               <Badge 
                                 variant="outline" 
@@ -482,13 +537,20 @@ const ClientDetails: React.FC = () => {
                               {session.paid_amount ? `₪${session.paid_amount}` : '-'}
                             </td>
                             <td className="py-3 px-4">
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteSession(session)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => handleEditSession(session)}
+                                  className="p-1 hover:bg-purple-100 rounded-full transition-colors"
+                                >
+                                  <Edit className="h-4 w-4 text-purple-600" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSession(session)}
+                                  className="p-1 hover:bg-red-100 rounded-full transition-colors"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -518,6 +580,16 @@ const ClientDetails: React.FC = () => {
           patientId={Number(id)}
           patientName={client.name}
           onSessionCreated={fetchClientDetails}
+        />
+      )}
+
+      {isRecurringSessionDialogOpen && (
+        <RecurringSessionDialog
+          open={isRecurringSessionDialogOpen}
+          onOpenChange={setIsRecurringSessionDialogOpen}
+          patientId={Number(id)}
+          patientName={client.name}
+          onSessionsCreated={fetchClientDetails}
         />
       )}
 
@@ -552,6 +624,19 @@ const ClientDetails: React.FC = () => {
           session={selectedSession}
           onConfirm={confirmDeleteSession}
           formatDate={formatDate}
+        />
+      )}
+
+      {isEditSessionDialogOpen && selectedSession && (
+        <SessionEditDialog
+          isOpen={isEditSessionDialogOpen}
+          onClose={() => {
+            setIsEditSessionDialogOpen(false);
+            setSelectedSession(null);
+          }}
+          session={selectedSession}
+          onSessionUpdated={fetchClientDetails}
+          sessionPrice={client.session_price}
         />
       )}
     </AdminLayout>
