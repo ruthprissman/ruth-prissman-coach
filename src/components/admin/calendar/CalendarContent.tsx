@@ -19,6 +19,7 @@ interface CalendarContentProps {
   onUpdateSlot: (date: string, hour: string, status: 'available' | 'private' | 'unspecified') => void;
   onSetCurrentDate: (date: Date) => void;
   onRecurringDialogOpen: () => void;
+  onCreateEvent?: (summary: string, startDateTime: string, endDateTime: string, description?: string) => Promise<string | null>;
 }
 
 const CalendarContent: React.FC<CalendarContentProps> = ({
@@ -30,7 +31,8 @@ const CalendarContent: React.FC<CalendarContentProps> = ({
   onNavigateWeek,
   onUpdateSlot,
   onSetCurrentDate,
-  onRecurringDialogOpen
+  onRecurringDialogOpen,
+  onCreateEvent
 }) => {
   const [selectedView, setSelectedView] = useState<'calendar' | 'list'>('calendar');
 
@@ -82,7 +84,7 @@ const CalendarContent: React.FC<CalendarContentProps> = ({
       </div>
       
       <div className="col-span-3">
-        <GoogleCalendarEventForm />
+        <GoogleCalendarEventForm onCreateEvent={onCreateEvent} />
       </div>
     </div>
   );
