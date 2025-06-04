@@ -13,9 +13,9 @@ import {
   signInWithGoogle,
   signOutFromGoogle,
   fetchGoogleCalendarEvents,
-  checkIfSignedIn
+  checkIfSignedIn,
+  createGoogleCalendarEvent
 } from '@/services/GoogleOAuthService';
-import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { toast } from '@/components/ui/use-toast';
 import { addDays, subDays } from 'date-fns';
 
@@ -43,9 +43,6 @@ const CalendarManagementContent: React.FC = () => {
 
   const days = generateWeekDays(currentDate);
   const hours = generateHours();
-
-  // Use the GoogleOAuth hook for creating events
-  const { createEvent } = useGoogleOAuth();
 
   const { calendarData, setCalendarData, isLoading, fetchAvailabilityData } = useCalendarData(
     currentDate,
@@ -233,6 +230,45 @@ const CalendarManagementContent: React.FC = () => {
       description: `נוספה זמינות חוזרת ליום ${data.day}`,
     });
     fetchAvailabilityData();
+  };
+
+  // Create event function that uses the working GoogleOAuthService
+  const handleCreateEvent = async (
+    summary: string,
+    startDateTime: string,
+    endDateTime: string,
+    description?: string
+  ): Promise<string | null> => {
+    try {
+      console.log('Creating Google Calendar event:', { summary, startDateTime, endDateTime, description });
+      
+      if (!isGoogleAuthenticated) {
+        throw new Error('לא מחובר ליומן Google');
+      }
+
+      const eventId = await createGoogleCalendarEvent(summary, startDateTime, endDateTime, description);
+      
+      if (eventId) {
+        toast({
+          title: 'האירוע נוצר בהצלחה',
+          description: 'האירוע נוסף ליומן Google שלך',
+        });
+        
+        // Refresh events after creating
+        await fetchGoogleEvents();
+        return eventId;
+      }
+      
+      return null;
+    } catch (error: any) {
+      console.error('Error creating Google Calendar event:', error);
+      toast({
+        title: 'שגיאה ביצירת האירוע',
+        description: error.message,
+        variant: 'destructive',
+      });
+      throw error;
+    }
   };
 
   return (
