@@ -451,7 +451,7 @@ const ClientDetails: React.FC = () => {
           <TabsContent value="future" className="space-y-4">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center" >
                   <div className="flex gap-2">
                     <Button 
                       onClick={() => setIsRecurringSessionDialogOpen(true)}
@@ -523,7 +523,7 @@ const ClientDetails: React.FC = () => {
           <TabsContent value="past" className="space-y-4">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center" dir="rtl">
+                <div className="flex justify-between items-center">
                   <Button 
                     onClick={() => setIsNewHistoricalSessionDialogOpen(true)}
                     className="bg-purple-600 hover:bg-purple-700"
