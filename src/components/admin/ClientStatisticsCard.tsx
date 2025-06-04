@@ -66,7 +66,9 @@ const ClientStatisticsCard: React.FC<ClientStatisticsCardProps> = ({
                   <DollarSign className="h-5 w-5 text-purple-600" />
                 </div>
                 <div className="text-xs text-purple-600 text-center">סה״כ חוב</div>
-                <div className="text-2xl font-bold text-purple-800 text-center">₪{outstandingBalance}</div>
+                <div className={`text-2xl font-bold text-center ${outstandingBalance > 0 ? 'text-red-600' : 'text-purple-800'}`}>
+                  ₪{outstandingBalance}
+                </div>
               </div>
             </div>
             
