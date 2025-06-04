@@ -451,7 +451,7 @@ const ClientDetails: React.FC = () => {
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-xl font-bold text-purple-800">פגישות עתידיות</CardTitle>
+                  <CardTitle className="text-xl font-bold text-purple-800 text-right">פגישות עתידיות</CardTitle>
                   <div className="flex gap-2">
                     <Button 
                       onClick={() => setIsRecurringSessionDialogOpen(true)}
@@ -523,7 +523,7 @@ const ClientDetails: React.FC = () => {
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-xl font-bold text-purple-800">היסטוריית פגישות</CardTitle>
+                  <CardTitle className="text-xl font-bold text-purple-800 text-right">היסטוריית פגישות</CardTitle>
                   <Button 
                     onClick={() => setIsNewHistoricalSessionDialogOpen(true)}
                     className="bg-purple-600 hover:bg-purple-700"
