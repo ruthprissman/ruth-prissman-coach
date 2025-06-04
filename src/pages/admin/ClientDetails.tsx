@@ -17,10 +17,11 @@ import DeleteSessionDialog from '@/components/admin/sessions/DeleteSessionDialog
 import SessionEditDialog from '@/components/admin/SessionEditDialog';
 import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistoricalSessionDialog';
 import EditFutureSessionDialog from '@/components/admin/sessions/EditFutureSessionDialog';
+import ClientStatisticsCard from '@/components/admin/ClientStatisticsCard';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { Patient, Session } from '@/types/patient';
-import { FutureSession } from '@/types/session';
+import { FutureSession, ClientStatistics } from '@/types/session';
 
 const ClientDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +31,7 @@ const ClientDetails: React.FC = () => {
   const [client, setClient] = useState<Patient | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [futureSessions, setFutureSessions] = useState<FutureSession[]>([]);
+  const [statistics, setStatistics] = useState<ClientStatistics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isNewFutureSessionDialogOpen, setIsNewFutureSessionDialogOpen] = useState(false);
@@ -83,6 +85,17 @@ const ClientDetails: React.FC = () => {
 
       if (futureSessionsError) throw futureSessionsError;
       setFutureSessions(futureSessionsData || []);
+
+      // Create statistics based on the fetched data
+      const lastSession = sessionsData && sessionsData.length > 0 ? sessionsData[0].session_date : null;
+      const nextSession = futureSessionsData && futureSessionsData.length > 0 ? futureSessionsData[0].session_date : null;
+      
+      setStatistics({
+        total_sessions: sessionsData?.length || 0,
+        total_debt: 0, // This will be calculated in the component based on sessions
+        last_session: lastSession,
+        next_session: nextSession,
+      });
     } catch (error: any) {
       console.error('Error fetching client details:', error);
       toast({
@@ -241,6 +254,15 @@ const ClientDetails: React.FC = () => {
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: he });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const formatDateOnly = (dateString: string | null) => {
+    if (!dateString) return '';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy', { locale: he });
     } catch (e) {
       return dateString;
     }
@@ -410,49 +432,13 @@ const ClientDetails: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Left side - Non-editable statistics */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-purple-800 flex items-center">
-                <TrendingUp className="mr-2 h-5 w-5" />
-                סטטיסטיקות לקוח
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">פגישות שהתקיימו:</span>
-                  <span className="font-medium">{sessions.length}</span>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">פגישות עתידיות:</span>
-                  <span className="font-medium">{futureSessions.length}</span>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">חוב קיים:</span>
-                  <div className="flex items-center">
-                    {outstandingBalance > 0 ? (
-                      <>
-                        <CreditCard className="h-4 w-4 text-red-500 mr-1" />
-                        <span className="font-medium text-red-600">₪{outstandingBalance}</span>
-                      </>
-                    ) : (
-                      <span className="font-medium text-green-600">אין חוב</span>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-32">סטטוס:</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    פעיל
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Left side - Statistics using the updated component */}
+          <ClientStatisticsCard 
+            statistics={statistics}
+            sessions={sessions}
+            sessionPrice={client.session_price}
+            formatDateOnly={formatDateOnly}
+          />
         </div>
         
         <Tabs defaultValue="future" className="w-full">

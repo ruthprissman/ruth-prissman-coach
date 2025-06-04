@@ -3,16 +3,37 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, DollarSign, BookOpen } from 'lucide-react';
 import { ClientStatistics } from '@/types/session';
+import { Session } from '@/types/patient';
 
 interface ClientStatisticsCardProps {
   statistics: ClientStatistics | null;
+  sessions: Session[];
+  sessionPrice: number | null;
   formatDateOnly: (date: string | null) => string;
 }
 
 const ClientStatisticsCard: React.FC<ClientStatisticsCardProps> = ({ 
   statistics, 
+  sessions,
+  sessionPrice,
   formatDateOnly
 }) => {
+  // Calculate outstanding balance based on sessions
+  const calculateOutstandingBalance = () => {
+    if (!sessionPrice) return 0;
+    
+    const unpaidSessions = sessions.filter(session => 
+      session.payment_status === 'unpaid' || session.payment_status === 'partially_paid'
+    );
+    
+    return unpaidSessions.reduce((total, session) => {
+      const paidAmount = session.paid_amount || 0;
+      return total + (sessionPrice - paidAmount);
+    }, 0);
+  };
+
+  const outstandingBalance = calculateOutstandingBalance();
+
   return (
     <Card className="border-purple-200" dir="rtl">
       <CardHeader className="pb-3 text-right">
@@ -28,7 +49,7 @@ const ClientStatisticsCard: React.FC<ClientStatisticsCardProps> = ({
               </div>
               <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
                 <div className="text-sm text-purple-600">סה״כ חוב</div>
-                <div className="text-2xl font-bold text-purple-800">₪{statistics.total_debt}</div>
+                <div className="text-2xl font-bold text-purple-800">₪{outstandingBalance}</div>
               </div>
             </div>
             
