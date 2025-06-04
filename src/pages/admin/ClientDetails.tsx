@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Mail, Phone, Calendar, Trash2, Edit, User, Plus, History, RefreshCw, Monitor, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, Calendar, Trash2, Edit, User, Plus, History, RefreshCw, Monitor, RotateCcw, Wrench, CreditCard, TrendingUp } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import EditClientDialog from '@/components/admin/clients/EditClientDialog';
 import NewFutureSessionDialog from '@/components/admin/sessions/NewFutureSessionDialog';
@@ -153,7 +153,6 @@ const ClientDetails: React.FC = () => {
   };
 
   const handleEditFutureSession = (futureSession: FutureSession) => {
-    // Implementation for editing future session
     console.log('Edit future session:', futureSession);
   };
 
@@ -268,6 +267,23 @@ const ClientDetails: React.FC = () => {
     }
   };
 
+  // Calculate outstanding balance
+  const calculateOutstandingBalance = () => {
+    if (!client?.session_price) return 0;
+    
+    const unpaidSessions = sessions.filter(session => 
+      session.payment_status === 'unpaid' || session.payment_status === 'partially_paid'
+    );
+    
+    return unpaidSessions.reduce((total, session) => {
+      const sessionPrice = client.session_price || 0;
+      const paidAmount = session.paid_amount || 0;
+      return total + (sessionPrice - paidAmount);
+    }, 0);
+  };
+
+  const outstandingBalance = calculateOutstandingBalance();
+
   if (isLoading) {
     return (
       <AdminLayout title="פרטי לקוח">
@@ -310,37 +326,81 @@ const ClientDetails: React.FC = () => {
             חזרה לרשימת הלקוחות
           </Button>
           
-          <div className="flex space-x-2 space-x-reverse">
-            <Button 
-              onClick={() => setIsEditDialogOpen(true)}
-              variant="outline"
-              className="flex items-center"
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              עריכת פרטים
-            </Button>
-            
-            <Button 
-              onClick={handleDeleteClient}
-              variant="destructive"
-              className="flex items-center"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              מחיקת לקוח
-            </Button>
-          </div>
+          <Button 
+            onClick={handleDeleteClient}
+            variant="destructive"
+            className="flex items-center"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            מחיקת לקוח
+          </Button>
         </div>
         
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-purple-800 flex items-center">
-              <User className="mr-2 h-5 w-5" />
-              פרטי לקוח
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+        {/* Split client details into two cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left side - Non-editable statistics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-purple-800 flex items-center">
+                <TrendingUp className="mr-2 h-5 w-5" />
+                סטטיסטיקות לקוח
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">פגישות שהתקיימו:</span>
+                  <span className="font-medium">{sessions.length}</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">פגישות עתידיות:</span>
+                  <span className="font-medium">{futureSessions.length}</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">חוב קיים:</span>
+                  <div className="flex items-center">
+                    {outstandingBalance > 0 ? (
+                      <>
+                        <CreditCard className="h-4 w-4 text-red-500 mr-1" />
+                        <span className="font-medium text-red-600">₪{outstandingBalance}</span>
+                      </>
+                    ) : (
+                      <span className="font-medium text-green-600">אין חוב</span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <span className="text-gray-500 w-32">סטטוס:</span>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    פעיל
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Right side - Editable client details */}
+          <Card className="relative">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-xl font-bold text-purple-800 flex items-center">
+                  <User className="mr-2 h-5 w-5" />
+                  פרטי לקוח
+                </CardTitle>
+                <button
+                  onClick={() => setIsEditDialogOpen(true)}
+                  className="p-2 hover:bg-purple-100 rounded-full transition-colors"
+                  title="ערוך פרטי לקוח"
+                >
+                  <Wrench className="h-4 w-4 text-purple-600" />
+                </button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center">
                   <span className="text-gray-500 w-24">שם מלא:</span>
                   <span className="font-medium">{client.name}</span>
@@ -373,36 +433,22 @@ const ClientDetails: React.FC = () => {
                     <span className="text-gray-400">לא הוזן</span>
                   )}
                 </div>
-              </div>
-              
-              <div className="space-y-2">
+                
                 <div className="flex items-center">
                   <span className="text-gray-500 w-24">מחיר פגישה:</span>
                   <span>{client.session_price ? `₪${client.session_price}` : 'לא הוגדר'}</span>
                 </div>
-                
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-24">סטטוס:</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    פעיל
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center">
-                  <span className="text-gray-500 w-24">סה"כ פגישות:</span>
-                  <span>{sessions.length + futureSessions.length}</span>
-                </div>
               </div>
-            </div>
-            
-            {client.notes && (
-              <div className="pt-4 border-t border-gray-100">
-                <h3 className="font-medium text-gray-700 mb-2">הערות:</h3>
-                <p className="text-gray-600 whitespace-pre-wrap">{client.notes}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              
+              {client.notes && (
+                <div className="pt-4 border-t border-gray-100">
+                  <h3 className="font-medium text-gray-700 mb-2">הערות:</h3>
+                  <p className="text-gray-600 whitespace-pre-wrap">{client.notes}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
         
         <Tabs defaultValue="future" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
