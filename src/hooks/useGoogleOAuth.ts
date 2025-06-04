@@ -151,9 +151,54 @@ export const useGoogleOAuth = () => {
     await checkAuthStatus();
   };
 
-  // Add missing functions that components expect
-  const createEvent = async (): Promise<void> => {
-    console.log('Create event not implemented');
+  // Create event function with proper signature and implementation
+  const createEvent = async (
+    summary: string,
+    startDateTime: string,
+    endDateTime: string,
+    description?: string
+  ): Promise<string> => {
+    try {
+      console.log('Creating Google Calendar event:', { summary, startDateTime, endDateTime, description });
+      
+      if (!state.isAuthenticated || !state.accessToken) {
+        throw new Error('לא מחובר ליומן Google');
+      }
+
+      const event = {
+        summary,
+        description: description || '',
+        start: {
+          dateTime: startDateTime,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        end: {
+          dateTime: endDateTime,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        }
+      };
+
+      const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${state.accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(event)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Failed to create calendar event');
+      }
+
+      const data = await response.json();
+      console.log('Event created successfully:', data.id);
+      return data.id;
+    } catch (error: any) {
+      console.error('Error creating Google Calendar event:', error);
+      throw error;
+    }
   };
 
   return {
