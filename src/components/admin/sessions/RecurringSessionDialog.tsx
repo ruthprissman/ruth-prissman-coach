@@ -37,7 +37,7 @@ interface RecurringSessionDialogProps {
   onOpenChange: (open: boolean) => void;
   patientId: number;
   patientName?: string;
-  onCreated?: () => void;
+  onSessionsCreated?: () => void | Promise<void>;
 }
 
 const RecurringSessionDialog: React.FC<RecurringSessionDialogProps> = ({
@@ -45,7 +45,7 @@ const RecurringSessionDialog: React.FC<RecurringSessionDialogProps> = ({
   onOpenChange,
   patientId,
   patientName,
-  onCreated,
+  onSessionsCreated,
 }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,7 +134,7 @@ const RecurringSessionDialog: React.FC<RecurringSessionDialogProps> = ({
         description: `נוצרו ${recurringCount} פגישות שבועיות בלוח הזמנים`,
       });
 
-      if (onCreated) onCreated();
+      if (onSessionsCreated) await onSessionsCreated();
       resetForm();
       onOpenChange(false);
     } catch (error: any) {
