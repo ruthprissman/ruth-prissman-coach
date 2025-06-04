@@ -19,6 +19,7 @@ import SessionEditDialog from '@/components/admin/SessionEditDialog';
 import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistoricalSessionDialog';
 import EditFutureSessionDialog from '@/components/admin/sessions/EditFutureSessionDialog';
 import ClientStatisticsCard from '@/components/admin/ClientStatisticsCard';
+import ClientInfoCard from '@/components/admin/ClientInfoCard';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { Patient, Session } from '@/types/patient';
