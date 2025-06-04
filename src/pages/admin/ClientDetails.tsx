@@ -451,7 +451,7 @@ const ClientDetails: React.FC = () => {
           <TabsContent value="future" className="space-y-4">
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center" >
+                <div className="flex justify-between items-center">
                   <div className="flex gap-2">
                     <Button 
                       onClick={() => setIsRecurringSessionDialogOpen(true)}
