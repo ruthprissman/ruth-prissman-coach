@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, DollarSign, BookOpen, TrendingUp } from 'lucide-react';
+import { Calendar, BookOpen, TrendingUp } from 'lucide-react';
 import { ClientStatistics } from '@/types/session';
 import { Session } from '@/types/patient';
 
@@ -63,11 +63,11 @@ const ClientStatisticsCard: React.FC<ClientStatisticsCardProps> = ({
               </div>
               <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
                 <div className="flex items-center justify-center mb-2">
-                  <DollarSign className="h-5 w-5 text-purple-600" />
+                  <span className={`text-lg font-bold ${outstandingBalance > 0 ? 'text-red-600' : 'text-purple-600'}`}>₪</span>
                 </div>
-                <div className="text-xs text-purple-600 text-center">סה״כ חוב</div>
+                <div className={`text-xs text-center ${outstandingBalance > 0 ? 'text-red-600' : 'text-purple-600'}`}>סה״כ חוב</div>
                 <div className={`text-2xl font-bold text-center ${outstandingBalance > 0 ? 'text-red-600' : 'text-purple-800'}`}>
-                  ₪{outstandingBalance}
+                  {outstandingBalance}
                 </div>
               </div>
             </div>
