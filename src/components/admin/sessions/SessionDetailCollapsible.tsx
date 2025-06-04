@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Info, BadgeDollarSign, Check, X } from 'lucide-react';
 import { Session } from '@/types/patient';
@@ -101,7 +100,7 @@ const SessionDetailCollapsible: React.FC<SessionDetailCollapsibleProps> = ({
               </div>
               <div className="flex justify-between border-b py-2">
                 <span className="font-medium text-purple-600">סכום לתשלום:</span>
-                <span className={session.payment_status === 'unpaid' ? 'text-red-600 font-medium' : ''}>
+                <span className={session.payment_status === 'pending' ? 'text-red-600 font-medium' : ''}>
                   {client.session_price && session.paid_amount
                     ? session.payment_status === 'paid'
                       ? '₪0'

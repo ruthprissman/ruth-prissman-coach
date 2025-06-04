@@ -49,7 +49,7 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
       const { data, error } = await supabase
         .from('exercises')
         .select('*')
-        .order(sortField, { ascending: sortDirection === 'asc' });
+        .order(sortField === 'exercise_name' ? 'name' : sortField, { ascending: sortDirection === 'asc' });
 
       if (error) throw error;
       setExercises(data || []);
@@ -79,7 +79,7 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
   };
 
   const filteredExercises = exercises.filter(exercise => {
-    const exerciseName = exercise.exercise_name.toLowerCase();
+    const exerciseName = (exercise.name || exercise.exercise_name || '').toLowerCase();
     const description = exercise.description?.toLowerCase() || '';
     const searchLower = searchQuery.toLowerCase();
     
@@ -159,7 +159,7 @@ const ExerciseList: React.FC<ExerciseListProps> = ({ refreshTrigger }) => {
             ) : (
               filteredExercises.map((exercise) => (
                 <TableRow key={exercise.id}>
-                  <TableCell>{exercise.exercise_name}</TableCell>
+                  <TableCell>{exercise.name || exercise.exercise_name}</TableCell>
                   <TableCell className="hidden md:table-cell max-w-xs truncate">
                     {exercise.description || '-'}
                   </TableCell>

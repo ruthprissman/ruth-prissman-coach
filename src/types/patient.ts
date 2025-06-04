@@ -8,6 +8,12 @@ export interface Patient {
   notes?: string | null;
   created_at?: string;
   updated_at?: string;
+  
+  // Additional properties used in PatientsList
+  last_session_date?: string | null;
+  has_unpaid_sessions?: boolean;
+  has_upcoming_sessions?: boolean;
+  is_active?: boolean;
 }
 
 export interface Session {
@@ -30,8 +36,10 @@ export interface Session {
 export interface Exercise {
   id: number;
   name: string;
+  exercise_name?: string; // Keep for backward compatibility
   description?: string | null;
   category?: string | null;
+  file_url?: string | null; // Add back for compatibility
   created_at?: string;
   updated_at?: string;
 }

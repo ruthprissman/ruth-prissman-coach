@@ -47,7 +47,7 @@ const ExerciseManagerDialog: React.FC<ExerciseManagerDialogProps> = ({ isOpen, o
       const { data, error } = await supabase
         .from('exercises')
         .select('*')
-        .order('exercise_name');
+        .order('name');
       
       if (error) throw error;
       
@@ -77,7 +77,7 @@ const ExerciseManagerDialog: React.FC<ExerciseManagerDialogProps> = ({ isOpen, o
       const { error } = await supabase
         .from('exercises')
         .insert([{
-          exercise_name: data.exercise_name,
+          name: data.exercise_name,
           description: data.description || null,
         }]);
       
@@ -111,7 +111,7 @@ const ExerciseManagerDialog: React.FC<ExerciseManagerDialogProps> = ({ isOpen, o
       const { error } = await supabase
         .from('exercises')
         .update({
-          exercise_name: data.exercise_name,
+          name: data.exercise_name,
           description: data.description || null,
         })
         .eq('id', currentExerciseId);
@@ -169,7 +169,7 @@ const ExerciseManagerDialog: React.FC<ExerciseManagerDialogProps> = ({ isOpen, o
 
   const handleEditExercise = (exercise: Exercise) => {
     form.reset({
-      exercise_name: exercise.exercise_name,
+      exercise_name: exercise.name || exercise.exercise_name || '',
       description: exercise.description || '',
     });
     setIsEditing(true);
@@ -266,7 +266,7 @@ const ExerciseManagerDialog: React.FC<ExerciseManagerDialogProps> = ({ isOpen, o
                   className="flex items-center justify-between p-3 bg-muted rounded"
                 >
                   <div>
-                    <p className="font-medium">{exercise.exercise_name}</p>
+                    <p className="font-medium">{exercise.name || exercise.exercise_name}</p>
                     {exercise.description && (
                       <p className="text-sm text-gray-500 mt-1">{exercise.description}</p>
                     )}
