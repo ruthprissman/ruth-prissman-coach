@@ -9,13 +9,6 @@ import { generateWeekDays } from '@/utils/calendarDataProcessing';
 import { useCalendarData } from '@/hooks/useCalendarData';
 import { useCalendarOperations } from '@/hooks/useCalendarOperations';
 import { GoogleCalendarEvent, RecurringRule } from '@/types/calendar';
-import {
-  signInWithGoogle,
-  signOutFromGoogle,
-  fetchGoogleCalendarEvents,
-  checkIfSignedIn,
-  createGoogleCalendarEvent
-} from '@/services/GoogleOAuthService';
 import { toast } from '@/components/ui/use-toast';
 import { addDays, subDays } from 'date-fns';
 
@@ -57,62 +50,19 @@ const CalendarManagementContent: React.FC = () => {
     applyDefaultAvailability
   } = useCalendarOperations();
 
-  useEffect(() => {
-    const checkGoogleAuth = async () => {
-      try {
-        const isSignedIn = await checkIfSignedIn();
-        setIsGoogleAuthenticated(isSignedIn);
-        
-        if (isSignedIn) {
-          await fetchGoogleEvents();
-        }
-      } catch (error: any) {
-        console.error('Error checking Google auth:', error);
-        setGoogleAuthError(error.message);
-      }
-    };
-
-    checkGoogleAuth();
-  }, []);
-
-  const fetchGoogleEvents = async () => {
-    try {
-      setIsLoadingGoogleEvents(true);
-      setGoogleAuthError(null);
-      
-      const events = await fetchGoogleCalendarEvents(currentDate);
-      setGoogleEvents(events);
-      
-      console.log(`Fetched ${events.length} Google Calendar events`);
-    } catch (error: any) {
-      console.error('Error fetching Google events:', error);
-      setGoogleAuthError(error.message || 'שגיאה בטעינת אירועי Google Calendar');
-      
-      toast({
-        title: 'שגיאה בטעינת אירועי Google Calendar',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoadingGoogleEvents(false);
-    }
-  };
-
+  // Simplified Google auth functions without OAuth dependencies
   const handleSignInGoogle = async (): Promise<void> => {
     try {
       setIsGoogleAuthenticating(true);
       setGoogleAuthError(null);
       
-      const success = await signInWithGoogle();
-      if (success) {
-        setIsGoogleAuthenticated(true);
-        await fetchGoogleEvents();
-        
-        toast({
-          title: 'התחברות בוצעה בהצלחה',
-          description: 'התחברת בהצלחה ליומן Google',
-        });
-      }
+      // Placeholder for Google authentication
+      console.log('Google sign-in initiated');
+      
+      toast({
+        title: 'Google Calendar',
+        description: 'חיבור ליומן Google זמינות בקרוב',
+      });
     } catch (error: any) {
       console.error('Error signing in with Google:', error);
       setGoogleAuthError(error.message || 'שגיאה בהתחברות ליומן Google');
@@ -129,7 +79,6 @@ const CalendarManagementContent: React.FC = () => {
 
   const handleSignOutGoogle = async (): Promise<void> => {
     try {
-      await signOutFromGoogle();
       setIsGoogleAuthenticated(false);
       setGoogleEvents([]);
       
@@ -150,7 +99,9 @@ const CalendarManagementContent: React.FC = () => {
   const handleGoogleSync = async (): Promise<void> => {
     try {
       setIsSyncing(true);
-      await fetchGoogleEvents();
+      
+      // Placeholder for sync functionality
+      console.log('Google Calendar sync initiated');
       await fetchAvailabilityData();
       
       toast({
@@ -176,7 +127,7 @@ const CalendarManagementContent: React.FC = () => {
     try {
       setIsCopyingMeetings(true);
       
-      // Basic implementation - in real app this would copy meetings to the system
+      // Placeholder for copy meetings functionality
       console.log('Copying professional meetings:', { selectedEventIds, clientMapping });
       
       toast({
