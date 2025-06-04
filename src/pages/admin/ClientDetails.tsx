@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabaseClient } from '@/lib/supabaseClient';
@@ -342,7 +343,7 @@ const ClientDetails: React.FC = () => {
 
   return (
     <AdminLayout title={`פרטי לקוח - ${client.name}`}>
-      <div className="space-y-6" dir="rtl">
+      <div className="space-y-6">
         <div className="flex justify-between items-center">
           <Button 
             onClick={() => navigate('/admin/patients')}
