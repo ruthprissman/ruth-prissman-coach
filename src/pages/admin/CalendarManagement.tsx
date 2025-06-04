@@ -13,9 +13,9 @@ import {
   signInWithGoogle,
   signOutFromGoogle,
   fetchGoogleCalendarEvents,
-  checkIfSignedIn,
-  createGoogleCalendarEvent
+  checkIfSignedIn
 } from '@/services/GoogleOAuthService';
+import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { toast } from '@/components/ui/use-toast';
 import { addDays, subDays } from 'date-fns';
 
@@ -43,6 +43,9 @@ const CalendarManagementContent: React.FC = () => {
 
   const days = generateWeekDays(currentDate);
   const hours = generateHours();
+
+  // Use the GoogleOAuth hook for creating events
+  const { createEvent } = useGoogleOAuth();
 
   const { calendarData, setCalendarData, isLoading, fetchAvailabilityData } = useCalendarData(
     currentDate,
