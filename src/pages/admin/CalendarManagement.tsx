@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -50,7 +51,7 @@ const CalendarManagementContent: React.FC = () => {
     applyDefaultAvailability
   } = useCalendarOperations();
 
-  // Enhanced Google Calendar integration with detailed logging
+  // Simplified Google Calendar integration with reduced authentication checks
   useEffect(() => {
     const checkGoogleAuth = async () => {
       try {
@@ -61,51 +62,12 @@ const CalendarManagementContent: React.FC = () => {
         console.log('🔍 GOOGLE_AUTH_DEBUG: Session data:', {
           hasSession: !!session,
           provider: session?.user?.app_metadata?.provider,
-          providersArray: session?.user?.app_metadata?.providers,
           hasProviderToken: !!session?.provider_token,
-          hasProviderRefreshToken: !!session?.provider_refresh_token,
           tokenLength: session?.provider_token?.length || 0
         });
         
         if (session?.provider_token) {
-          console.log('✅ GOOGLE_AUTH_DEBUG: Google token found, checking token info...');
-          
-          // Check token info to see scopes
-          try {
-            console.log('🔍 GOOGLE_AUTH_DEBUG: Making tokeninfo request...');
-            const tokenInfoResponse = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${session.provider_token}`);
-            
-            if (!tokenInfoResponse.ok) {
-              console.error('🔍 GOOGLE_AUTH_DEBUG: Tokeninfo request failed:', tokenInfoResponse.status, tokenInfoResponse.statusText);
-              throw new Error(`Token validation failed: ${tokenInfoResponse.status}`);
-            }
-            
-            const tokenInfo = await tokenInfoResponse.json();
-            
-            console.log('🔍 GOOGLE_AUTH_DEBUG: Token info:', {
-              scope: tokenInfo.scope,
-              audience: tokenInfo.audience,
-              userId: tokenInfo.user_id,
-              expires_in: tokenInfo.expires_in,
-              hasCalendarScope: tokenInfo.scope?.includes('calendar'),
-              hasWriteScope: tokenInfo.scope?.includes('calendar') && !tokenInfo.scope?.includes('readonly'),
-              fullScope: tokenInfo.scope
-            });
-            
-            if (!tokenInfo.scope?.includes('calendar')) {
-              throw new Error('חסרות הרשאות יומן Google - נדרשת התחברות מחדש');
-            }
-            
-            if (tokenInfo.scope?.includes('readonly')) {
-              console.warn('⚠️ GOOGLE_AUTH_DEBUG: Token has read-only scope, write operations may fail');
-              setGoogleAuthError('הרשאות יומן Google מוגבלות לקריאה בלבד - נדרשת התחברות מחדש');
-            }
-            
-          } catch (tokenError: any) {
-            console.error('❌ GOOGLE_AUTH_DEBUG: Error checking token info:', tokenError);
-            setGoogleAuthError(`שגיאה בבדיקת הרשאות: ${tokenError.message}`);
-          }
-          
+          console.log('✅ GOOGLE_AUTH_DEBUG: Google token found');
           setIsGoogleAuthenticated(true);
           await fetchGoogleEvents();
         } else {
@@ -307,7 +269,7 @@ const CalendarManagementContent: React.FC = () => {
     }
   };
 
-  // Enhanced event creation with detailed logging
+  // Simplified event creation with minimal token validation
   const handleCreateEvent = async (
     summary: string,
     startDateTime: string,
@@ -328,46 +290,12 @@ const CalendarManagementContent: React.FC = () => {
       console.log('🚀 CREATE_EVENT_DEBUG: Session check:', {
         hasSession: !!session,
         hasProviderToken: !!session?.provider_token,
-        provider: session?.user?.app_metadata?.provider,
         tokenLength: session?.provider_token?.length || 0
       });
       
       if (!session?.provider_token) {
         console.error('🚀 CREATE_EVENT_DEBUG: No provider token found');
         throw new Error('לא מחובר ליומן Google');
-      }
-
-      // Verify token is still valid for write operations
-      try {
-        console.log('🚀 CREATE_EVENT_DEBUG: Verifying token validity...');
-        const tokenInfoResponse = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${session.provider_token}`);
-        
-        if (!tokenInfoResponse.ok) {
-          console.error('🚀 CREATE_EVENT_DEBUG: Token validation failed:', tokenInfoResponse.status);
-          throw new Error('אסימון Google לא תקף - נדרשת התחברות מחדש');
-        }
-        
-        const tokenInfo = await tokenInfoResponse.json();
-        
-        console.log('🚀 CREATE_EVENT_DEBUG: Token verification result:', {
-          valid: tokenInfoResponse.ok,
-          scope: tokenInfo.scope,
-          hasCalendarScope: tokenInfo.scope?.includes('calendar'),
-          isReadOnly: tokenInfo.scope?.includes('readonly'),
-          expires_in: tokenInfo.expires_in
-        });
-        
-        if (!tokenInfo.scope?.includes('calendar')) {
-          throw new Error('חסרות הרשאות יומן Google - נדרשת התחברות מחדש');
-        }
-        
-        if (tokenInfo.scope?.includes('readonly')) {
-          throw new Error('הרשאות יומן Google מוגבלות לקריאה בלבד - נדרשת התחברות מחדש עם הרשאות כתיבה');
-        }
-        
-      } catch (tokenError: any) {
-        console.error('🚀 CREATE_EVENT_DEBUG: Token verification failed:', tokenError);
-        throw new Error(`שגיאה בבדיקת הרשאות: ${tokenError.message}`);
       }
 
       const event = {
