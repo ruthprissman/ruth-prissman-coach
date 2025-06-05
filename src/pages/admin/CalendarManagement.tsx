@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -34,6 +33,7 @@ const CalendarManagementContent: React.FC = () => {
   const [isLoadingGoogleEvents, setIsLoadingGoogleEvents] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isCopyingMeetings, setIsCopyingMeetings] = useState(false);
+  const [currentAccessToken, setCurrentAccessToken] = useState<string | null>(null);
 
   const days = generateWeekDays(currentDate);
   const hours = generateHours();
@@ -51,33 +51,66 @@ const CalendarManagementContent: React.FC = () => {
     applyDefaultAvailability
   } = useCalendarOperations();
 
-  // Simplified Google Calendar integration with reduced authentication checks
+  // Get current access token from session
+  const getCurrentAccessToken = async (): Promise<string | null> => {
+    try {
+      console.log('🔑 TOKEN_DEBUG: Getting current access token...');
+      const supabase = supabaseClient();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('🔑 TOKEN_DEBUG: Error getting session:', error);
+        return null;
+      }
+      
+      if (!session) {
+        console.log('🔑 TOKEN_DEBUG: No session found');
+        return null;
+      }
+      
+      console.log('🔑 TOKEN_DEBUG: Session found:', {
+        hasUser: !!session.user,
+        hasProviderToken: !!session.provider_token,
+        tokenLength: session.provider_token?.length || 0,
+        provider: session.user?.app_metadata?.provider
+      });
+      
+      if (session.provider_token) {
+        console.log('🔑 TOKEN_DEBUG: Found provider token');
+        setCurrentAccessToken(session.provider_token);
+        return session.provider_token;
+      }
+      
+      console.log('🔑 TOKEN_DEBUG: No provider token found');
+      return null;
+    } catch (error: any) {
+      console.error('🔑 TOKEN_DEBUG: Error getting access token:', error);
+      return null;
+    }
+  };
+
+  // Check authentication status
   useEffect(() => {
     const checkGoogleAuth = async () => {
       try {
-        console.log('🔍 GOOGLE_AUTH_DEBUG: Starting authentication check...');
-        const supabase = supabaseClient();
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('🔍 AUTH_CHECK: Starting authentication check...');
+        const token = await getCurrentAccessToken();
         
-        console.log('🔍 GOOGLE_AUTH_DEBUG: Session data:', {
-          hasSession: !!session,
-          provider: session?.user?.app_metadata?.provider,
-          hasProviderToken: !!session?.provider_token,
-          tokenLength: session?.provider_token?.length || 0
-        });
-        
-        if (session?.provider_token) {
-          console.log('✅ GOOGLE_AUTH_DEBUG: Google token found');
+        if (token) {
+          console.log('✅ AUTH_CHECK: Authentication successful');
           setIsGoogleAuthenticated(true);
+          setGoogleAuthError(null);
           await fetchGoogleEvents();
         } else {
-          console.log('❌ GOOGLE_AUTH_DEBUG: No Google token found');
+          console.log('❌ AUTH_CHECK: No authentication found');
           setIsGoogleAuthenticated(false);
+          setCurrentAccessToken(null);
         }
       } catch (error: any) {
-        console.error('❌ GOOGLE_AUTH_DEBUG: Error in authentication check:', error);
+        console.error('❌ AUTH_CHECK: Error in authentication check:', error);
         setGoogleAuthError(error.message);
         setIsGoogleAuthenticated(false);
+        setCurrentAccessToken(null);
       }
     };
 
@@ -89,11 +122,10 @@ const CalendarManagementContent: React.FC = () => {
       setIsLoadingGoogleEvents(true);
       setGoogleAuthError(null);
       
-      console.log('📅 GOOGLE_EVENTS_DEBUG: Starting to fetch events...');
-      const supabase = supabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('📅 FETCH_EVENTS: Starting to fetch events...');
+      const token = await getCurrentAccessToken();
       
-      if (!session?.provider_token) {
+      if (!token) {
         throw new Error('לא מחובר ליומן Google');
       }
 
@@ -105,20 +137,20 @@ const CalendarManagementContent: React.FC = () => {
       const timeMax = encodeURIComponent(twoMonthsLater.toISOString());
       
       const apiUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
-      console.log('📅 GOOGLE_EVENTS_DEBUG: Fetching from URL:', apiUrl);
+      console.log('📅 FETCH_EVENTS: Fetching from URL:', apiUrl);
       
       const response = await fetch(apiUrl, {
         headers: {
-          Authorization: `Bearer ${session.provider_token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
       
-      console.log('📅 GOOGLE_EVENTS_DEBUG: Response status:', response.status);
+      console.log('📅 FETCH_EVENTS: Response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('📅 GOOGLE_EVENTS_DEBUG: API error:', errorData);
+        console.error('📅 FETCH_EVENTS: API error:', errorData);
         throw new Error(errorData.error?.message || 'Failed to fetch calendar events');
       }
       
@@ -134,10 +166,10 @@ const CalendarManagementContent: React.FC = () => {
         syncStatus: 'google-only'
       }));
       
-      console.log(`📅 GOOGLE_EVENTS_DEBUG: Successfully fetched ${events.length} events`);
+      console.log(`📅 FETCH_EVENTS: Successfully fetched ${events.length} events`);
       setGoogleEvents(events);
     } catch (error: any) {
-      console.error('❌ GOOGLE_EVENTS_DEBUG: Error fetching events:', error);
+      console.error('❌ FETCH_EVENTS: Error fetching events:', error);
       setGoogleAuthError(error.message || 'שגיאה בטעינת אירועי Google Calendar');
       
       toast({
@@ -155,7 +187,7 @@ const CalendarManagementContent: React.FC = () => {
       setIsGoogleAuthenticating(true);
       setGoogleAuthError(null);
       
-      console.log('🔐 GOOGLE_SIGNIN_DEBUG: Starting Google sign-in...');
+      console.log('🔐 SIGNIN: Starting Google sign-in...');
       const supabase = supabaseClient();
       
       // Use specific scopes that include write permissions
@@ -172,13 +204,13 @@ const CalendarManagementContent: React.FC = () => {
       });
       
       if (error) {
-        console.error('🔐 GOOGLE_SIGNIN_DEBUG: Sign-in error:', error);
+        console.error('🔐 SIGNIN: Sign-in error:', error);
         throw error;
       }
       
-      console.log('🔐 GOOGLE_SIGNIN_DEBUG: Sign-in initiated successfully');
+      console.log('🔐 SIGNIN: Sign-in initiated successfully');
     } catch (error: any) {
-      console.error('❌ GOOGLE_SIGNIN_DEBUG: Error signing in:', error);
+      console.error('❌ SIGNIN: Error signing in:', error);
       setGoogleAuthError(error.message || 'שגיאה בהתחברות ליומן Google');
       
       toast({
@@ -197,6 +229,7 @@ const CalendarManagementContent: React.FC = () => {
       await supabase.auth.signOut();
       setIsGoogleAuthenticated(false);
       setGoogleEvents([]);
+      setCurrentAccessToken(null);
       
       toast({
         title: 'התנתקות בוצעה בהצלחה',
@@ -269,7 +302,7 @@ const CalendarManagementContent: React.FC = () => {
     }
   };
 
-  // Simplified event creation with minimal token validation
+  // Create event function with proper token validation
   const handleCreateEvent = async (
     summary: string,
     startDateTime: string,
@@ -277,25 +310,24 @@ const CalendarManagementContent: React.FC = () => {
     description?: string
   ): Promise<string | null> => {
     try {
-      console.log('🚀 CREATE_EVENT_DEBUG: Starting event creation...', {
+      console.log('🚀 CREATE_EVENT: Starting event creation...', {
         summary,
         startDateTime,
         endDateTime,
         description
       });
       
-      const supabase = supabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      console.log('🚀 CREATE_EVENT_DEBUG: Session check:', {
-        hasSession: !!session,
-        hasProviderToken: !!session?.provider_token,
-        tokenLength: session?.provider_token?.length || 0
+      // Get fresh token
+      const token = await getCurrentAccessToken();
+      console.log('🚀 CREATE_EVENT: Token check result:', {
+        hasToken: !!token,
+        tokenLength: token?.length || 0,
+        isAuthenticated: isGoogleAuthenticated
       });
       
-      if (!session?.provider_token) {
-        console.error('🚀 CREATE_EVENT_DEBUG: No provider token found');
-        throw new Error('לא מחובר ליומן Google');
+      if (!token) {
+        console.error('🚀 CREATE_EVENT: No access token available');
+        throw new Error('לא מחובר ליומן Google - נדרשת התחברות מחדש');
       }
 
       const event = {
@@ -311,25 +343,28 @@ const CalendarManagementContent: React.FC = () => {
         }
       };
       
-      console.log('🚀 CREATE_EVENT_DEBUG: Event object created:', event);
-      console.log('🚀 CREATE_EVENT_DEBUG: Making API request to create event...');
+      console.log('🚀 CREATE_EVENT: Event object created:', event);
+      console.log('🚀 CREATE_EVENT: Making API request...');
       
       const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${session.provider_token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(event)
       });
       
-      console.log('🚀 CREATE_EVENT_DEBUG: API response status:', response.status);
+      console.log('🚀 CREATE_EVENT: API response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('🚀 CREATE_EVENT_DEBUG: API error response:', errorData);
+        console.error('🚀 CREATE_EVENT: API error response:', errorData);
         
         if (response.status === 401) {
+          // Token expired, clear authentication state
+          setIsGoogleAuthenticated(false);
+          setCurrentAccessToken(null);
           throw new Error('אסימון Google פג תוקף - נדרשת התחברות מחדש');
         } else if (response.status === 403) {
           throw new Error('אין הרשאות לכתוב ליומן Google - נדרשת התחברות מחדש עם הרשאות מלאות');
@@ -339,7 +374,7 @@ const CalendarManagementContent: React.FC = () => {
       }
       
       const data = await response.json();
-      console.log('🚀 CREATE_EVENT_DEBUG: Event created successfully:', {
+      console.log('🚀 CREATE_EVENT: Event created successfully:', {
         eventId: data.id,
         htmlLink: data.htmlLink
       });
@@ -353,7 +388,7 @@ const CalendarManagementContent: React.FC = () => {
       await fetchGoogleEvents();
       return data.id;
     } catch (error: any) {
-      console.error('❌ CREATE_EVENT_DEBUG: Event creation failed:', error);
+      console.error('❌ CREATE_EVENT: Event creation failed:', error);
       toast({
         title: 'שגיאה ביצירת האירוע',
         description: error.message,
