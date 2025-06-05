@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -51,23 +50,62 @@ const CalendarManagementContent: React.FC = () => {
     applyDefaultAvailability
   } = useCalendarOperations();
 
-  // Simple Google Calendar integration - check if user is authenticated
+  // Enhanced Google Calendar integration with detailed logging
   useEffect(() => {
     const checkGoogleAuth = async () => {
       try {
+        console.log('🔍 GOOGLE_AUTH_DEBUG: Starting authentication check...');
         const supabase = supabaseClient();
         const { data: { session } } = await supabase.auth.getSession();
         
+        console.log('🔍 GOOGLE_AUTH_DEBUG: Session data:', {
+          hasSession: !!session,
+          provider: session?.app_metadata?.provider,
+          providersArray: session?.app_metadata?.providers,
+          hasProviderToken: !!session?.provider_token,
+          hasProviderRefreshToken: !!session?.provider_refresh_token,
+          tokenLength: session?.provider_token?.length || 0
+        });
+        
         if (session?.provider_token) {
-          console.log('Google authenticated with token');
+          console.log('✅ GOOGLE_AUTH_DEBUG: Google token found, checking token info...');
+          
+          // Check token info to see scopes
+          try {
+            const tokenInfoResponse = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${session.provider_token}`);
+            const tokenInfo = await tokenInfoResponse.json();
+            
+            console.log('🔍 GOOGLE_AUTH_DEBUG: Token info:', {
+              scope: tokenInfo.scope,
+              audience: tokenInfo.audience,
+              userId: tokenInfo.user_id,
+              expires_in: tokenInfo.expires_in,
+              hasCalendarScope: tokenInfo.scope?.includes('calendar'),
+              hasWriteScope: tokenInfo.scope?.includes('calendar') && !tokenInfo.scope?.includes('readonly')
+            });
+            
+            if (!tokenInfo.scope?.includes('calendar')) {
+              throw new Error('חסרות הרשאות יומן Google - נדרשת התחברות מחדש');
+            }
+            
+            if (tokenInfo.scope?.includes('readonly')) {
+              console.warn('⚠️ GOOGLE_AUTH_DEBUG: Token has read-only scope, write operations may fail');
+              setGoogleAuthError('הרשאות יומן Google מוגבלות לקריאה בלבד - נדרשת התחברות מחדש');
+            }
+            
+          } catch (tokenError: any) {
+            console.error('❌ GOOGLE_AUTH_DEBUG: Error checking token info:', tokenError);
+            setGoogleAuthError(`שגיאה בבדיקת הרשאות: ${tokenError.message}`);
+          }
+          
           setIsGoogleAuthenticated(true);
           await fetchGoogleEvents();
         } else {
-          console.log('No Google token found');
+          console.log('❌ GOOGLE_AUTH_DEBUG: No Google token found');
           setIsGoogleAuthenticated(false);
         }
       } catch (error: any) {
-        console.error('Error checking Google auth:', error);
+        console.error('❌ GOOGLE_AUTH_DEBUG: Error in authentication check:', error);
         setGoogleAuthError(error.message);
         setIsGoogleAuthenticated(false);
       }
@@ -81,6 +119,7 @@ const CalendarManagementContent: React.FC = () => {
       setIsLoadingGoogleEvents(true);
       setGoogleAuthError(null);
       
+      console.log('📅 GOOGLE_EVENTS_DEBUG: Starting to fetch events...');
       const supabase = supabaseClient();
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -95,18 +134,21 @@ const CalendarManagementContent: React.FC = () => {
       const timeMin = encodeURIComponent(weekStart.toISOString());
       const timeMax = encodeURIComponent(twoMonthsLater.toISOString());
       
-      const response = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
-        {
-          headers: {
-            Authorization: `Bearer ${session.provider_token}`,
-            'Content-Type': 'application/json'
-          }
+      const apiUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`;
+      console.log('📅 GOOGLE_EVENTS_DEBUG: Fetching from URL:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
+        headers: {
+          Authorization: `Bearer ${session.provider_token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      });
+      
+      console.log('📅 GOOGLE_EVENTS_DEBUG: Response status:', response.status);
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('📅 GOOGLE_EVENTS_DEBUG: API error:', errorData);
         throw new Error(errorData.error?.message || 'Failed to fetch calendar events');
       }
       
@@ -122,10 +164,10 @@ const CalendarManagementContent: React.FC = () => {
         syncStatus: 'google-only'
       }));
       
+      console.log(`📅 GOOGLE_EVENTS_DEBUG: Successfully fetched ${events.length} events`);
       setGoogleEvents(events);
-      console.log(`Fetched ${events.length} Google Calendar events`);
     } catch (error: any) {
-      console.error('Error fetching Google events:', error);
+      console.error('❌ GOOGLE_EVENTS_DEBUG: Error fetching events:', error);
       setGoogleAuthError(error.message || 'שגיאה בטעינת אירועי Google Calendar');
       
       toast({
@@ -141,8 +183,12 @@ const CalendarManagementContent: React.FC = () => {
   const handleSignInGoogle = async (): Promise<void> => {
     try {
       setIsGoogleAuthenticating(true);
+      setGoogleAuthError(null);
+      
+      console.log('🔐 GOOGLE_SIGNIN_DEBUG: Starting Google sign-in...');
       const supabase = supabaseClient();
       
+      // Use specific scopes that include write permissions
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -156,10 +202,13 @@ const CalendarManagementContent: React.FC = () => {
       });
       
       if (error) {
+        console.error('🔐 GOOGLE_SIGNIN_DEBUG: Sign-in error:', error);
         throw error;
       }
+      
+      console.log('🔐 GOOGLE_SIGNIN_DEBUG: Sign-in initiated successfully');
     } catch (error: any) {
-      console.error('Error signing in with Google:', error);
+      console.error('❌ GOOGLE_SIGNIN_DEBUG: Error signing in:', error);
       setGoogleAuthError(error.message || 'שגיאה בהתחברות ליומן Google');
       
       toast({
@@ -250,6 +299,132 @@ const CalendarManagementContent: React.FC = () => {
     }
   };
 
+  // Enhanced event creation with detailed logging
+  const handleCreateEvent = async (
+    summary: string,
+    startDateTime: string,
+    endDateTime: string,
+    description?: string
+  ): Promise<string | null> => {
+    try {
+      console.log('🚀 CREATE_EVENT_DEBUG: Starting event creation...', {
+        summary,
+        startDateTime,
+        endDateTime,
+        description
+      });
+      
+      const supabase = supabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      console.log('🚀 CREATE_EVENT_DEBUG: Session check:', {
+        hasSession: !!session,
+        hasProviderToken: !!session?.provider_token,
+        provider: session?.app_metadata?.provider,
+        tokenLength: session?.provider_token?.length || 0
+      });
+      
+      if (!session?.provider_token) {
+        console.error('🚀 CREATE_EVENT_DEBUG: No provider token found');
+        throw new Error('לא מחובר ליומן Google');
+      }
+
+      // Verify token is still valid for write operations
+      try {
+        console.log('🚀 CREATE_EVENT_DEBUG: Verifying token validity...');
+        const tokenInfoResponse = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${session.provider_token}`);
+        const tokenInfo = await tokenInfoResponse.json();
+        
+        console.log('🚀 CREATE_EVENT_DEBUG: Token verification result:', {
+          valid: tokenInfoResponse.ok,
+          scope: tokenInfo.scope,
+          hasCalendarScope: tokenInfo.scope?.includes('calendar'),
+          isReadOnly: tokenInfo.scope?.includes('readonly'),
+          expires_in: tokenInfo.expires_in
+        });
+        
+        if (!tokenInfoResponse.ok) {
+          throw new Error('אסימון Google לא תקף - נדרשת התחברות מחדש');
+        }
+        
+        if (!tokenInfo.scope?.includes('calendar')) {
+          throw new Error('חסרות הרשאות יומן Google - נדרשת התחברות מחדש');
+        }
+        
+        if (tokenInfo.scope?.includes('readonly')) {
+          throw new Error('הרשאות יומן Google מוגבלות לקריאה בלבד - נדרשת התחברות מחדש עם הרשאות כתיבה');
+        }
+        
+      } catch (tokenError: any) {
+        console.error('🚀 CREATE_EVENT_DEBUG: Token verification failed:', tokenError);
+        throw new Error(`שגיאה בבדיקת הרשאות: ${tokenError.message}`);
+      }
+
+      const event = {
+        'summary': summary,
+        'description': description || '',
+        'start': {
+          'dateTime': startDateTime,
+          'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        'end': {
+          'dateTime': endDateTime,
+          'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+        }
+      };
+      
+      console.log('🚀 CREATE_EVENT_DEBUG: Event object created:', event);
+      console.log('🚀 CREATE_EVENT_DEBUG: Making API request to create event...');
+      
+      const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.provider_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(event)
+      });
+      
+      console.log('🚀 CREATE_EVENT_DEBUG: API response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('🚀 CREATE_EVENT_DEBUG: API error response:', errorData);
+        
+        if (response.status === 401) {
+          throw new Error('אסימון Google פג תוקף - נדרשת התחברות מחדש');
+        } else if (response.status === 403) {
+          throw new Error('אין הרשאות לכתוב ליומן Google - נדרשת התחברות מחדש עם הרשאות מלאות');
+        }
+        
+        throw new Error(errorData.error?.message || `שגיאה ביצירת אירוע: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('🚀 CREATE_EVENT_DEBUG: Event created successfully:', {
+        eventId: data.id,
+        htmlLink: data.htmlLink
+      });
+      
+      toast({
+        title: 'האירוע נוצר בהצלחה',
+        description: 'האירוע נוסף ליומן Google שלך',
+      });
+      
+      // Refresh events after creating
+      await fetchGoogleEvents();
+      return data.id;
+    } catch (error: any) {
+      console.error('❌ CREATE_EVENT_DEBUG: Event creation failed:', error);
+      toast({
+        title: 'שגיאה ביצירת האירוע',
+        description: error.message,
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
   const handleNavigateWeek = (direction: 'next' | 'prev') => {
     const newDate = direction === 'next' 
       ? addDays(currentDate, 7) 
@@ -272,71 +447,6 @@ const CalendarManagementContent: React.FC = () => {
       description: `נוספה זמינות חוזרת ליום ${data.day}`,
     });
     fetchAvailabilityData();
-  };
-
-  // Simple event creation function
-  const handleCreateEvent = async (
-    summary: string,
-    startDateTime: string,
-    endDateTime: string,
-    description?: string
-  ): Promise<string | null> => {
-    try {
-      console.log('Creating Google Calendar event:', { summary, startDateTime, endDateTime, description });
-      
-      const supabase = supabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.provider_token) {
-        throw new Error('לא מחובר ליומן Google');
-      }
-
-      const event = {
-        'summary': summary,
-        'description': description || '',
-        'start': {
-          'dateTime': startDateTime,
-          'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
-        },
-        'end': {
-          'dateTime': endDateTime,
-          'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
-        }
-      };
-      
-      const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.provider_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(event)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Failed to create calendar event');
-      }
-      
-      const data = await response.json();
-      
-      toast({
-        title: 'האירוע נוצר בהצלחה',
-        description: 'האירוע נוסף ליומן Google שלך',
-      });
-      
-      // Refresh events after creating
-      await fetchGoogleEvents();
-      return data.id;
-    } catch (error: any) {
-      console.error('Error creating Google Calendar event:', error);
-      toast({
-        title: 'שגיאה ביצירת האירוע',
-        description: error.message,
-        variant: 'destructive',
-      });
-      throw error;
-    }
   };
 
   return (

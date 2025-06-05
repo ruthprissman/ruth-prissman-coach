@@ -25,7 +25,10 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('📝 FORM_DEBUG: Form submission started with data:', formData);
+    
     if (!formData.title || !formData.date || !formData.startTime || !formData.endTime) {
+      console.log('📝 FORM_DEBUG: Validation failed - missing required fields');
       toast({
         title: 'שגיאה',
         description: 'יש למלא את כל השדות הנדרשים',
@@ -35,6 +38,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
     }
 
     if (!onCreateEvent) {
+      console.log('📝 FORM_DEBUG: No onCreateEvent function provided');
       toast({
         title: 'שגיאה',
         description: 'לא ניתן ליצור אירוע כעת',
@@ -50,6 +54,13 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
       const startDateTime = `${formData.date}T${formData.startTime}:00`;
       const endDateTime = `${formData.date}T${formData.endTime}:00`;
       
+      console.log('📝 FORM_DEBUG: Calling onCreateEvent with:', {
+        title: formData.title,
+        startDateTime,
+        endDateTime,
+        description: formData.description
+      });
+      
       const eventId = await onCreateEvent(
         formData.title,
         startDateTime,
@@ -57,7 +68,10 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
         formData.description
       );
       
+      console.log('📝 FORM_DEBUG: Event creation result:', eventId);
+      
       if (eventId) {
+        console.log('📝 FORM_DEBUG: Event created successfully, resetting form');
         // Reset form
         setFormData({
           title: '',
@@ -68,7 +82,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
         });
       }
     } catch (error: any) {
-      console.error('Error creating event:', error);
+      console.error('📝 FORM_DEBUG: Error creating event:', error);
       toast({
         title: 'שגיאה ביצירת האירוע',
         description: error.message,
