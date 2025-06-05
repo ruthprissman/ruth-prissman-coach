@@ -19,6 +19,43 @@ export const useGoogleOAuth = () => {
     refreshToken: null
   });
 
+  // Get current access token from session
+  const getCurrentAccessToken = async (): Promise<string | null> => {
+    try {
+      console.log('🔑 useGoogleOAuth: Getting current access token...');
+      const supabase = supabaseClient();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('🔑 useGoogleOAuth: Error getting session:', error);
+        return null;
+      }
+      
+      if (!session) {
+        console.log('🔑 useGoogleOAuth: No session found');
+        return null;
+      }
+      
+      console.log('🔑 useGoogleOAuth: Session found:', {
+        hasUser: !!session.user,
+        hasProviderToken: !!session.provider_token,
+        tokenLength: session.provider_token?.length || 0,
+        provider: session.user?.app_metadata?.provider
+      });
+      
+      if (session.provider_token) {
+        console.log('🔑 useGoogleOAuth: Found provider token');
+        return session.provider_token;
+      }
+      
+      console.log('🔑 useGoogleOAuth: No provider token found');
+      return null;
+    } catch (error: any) {
+      console.error('🔑 useGoogleOAuth: Error getting access token:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -27,61 +64,29 @@ export const useGoogleOAuth = () => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      const supabase = supabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const token = await getCurrentAccessToken();
       
-      if (!session) {
-        setState(prev => ({ 
-          ...prev, 
-          isAuthenticated: false, 
-          isLoading: false,
-          accessToken: null,
-          refreshToken: null
-        }));
-        return;
-      }
-
-      // Check if we have Google tokens stored
-      const { data: tokens, error } = await supabase
-        .from('google_tokens')
-        .select('access_token, refresh_token, expires_at')
-        .eq('user_id', session.user.id)
-        .single();
-
-      if (error || !tokens) {
-        setState(prev => ({ 
-          ...prev, 
-          isAuthenticated: false, 
-          isLoading: false,
-          accessToken: null,
-          refreshToken: null
-        }));
-        return;
-      }
-
-      // Check if token is still valid
-      const now = new Date();
-      const expiresAt = new Date(tokens.expires_at);
-      
-      if (now >= expiresAt) {
-        setState(prev => ({ 
-          ...prev, 
-          isAuthenticated: false, 
-          isLoading: false,
-          accessToken: null,
-          refreshToken: null
-        }));
-      } else {
+      if (token) {
+        console.log('✅ useGoogleOAuth: Authentication successful');
         setState(prev => ({ 
           ...prev, 
           isAuthenticated: true, 
           isLoading: false,
-          accessToken: tokens.access_token,
-          refreshToken: tokens.refresh_token
+          accessToken: token,
+          refreshToken: null // We don't store refresh token separately
+        }));
+      } else {
+        console.log('❌ useGoogleOAuth: No authentication found');
+        setState(prev => ({ 
+          ...prev, 
+          isAuthenticated: false, 
+          isLoading: false,
+          accessToken: null,
+          refreshToken: null
         }));
       }
     } catch (error: any) {
-      console.error('Error checking auth status:', error);
+      console.error('❌ useGoogleOAuth: Error in authentication check:', error);
       setState(prev => ({ 
         ...prev, 
         isLoading: false, 
@@ -97,20 +102,33 @@ export const useGoogleOAuth = () => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      // Basic implementation - in real app this would redirect to Google OAuth
-      console.log('Google OAuth sign in initiated');
+      console.log('🔐 useGoogleOAuth: Starting Google sign-in...');
+      const supabase = supabaseClient();
       
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: 'Google OAuth not fully implemented'
-      }));
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
+          redirectTo: window.location.origin + '/admin/dashboard',
+          queryParams: {
+            prompt: 'consent',
+            access_type: 'offline'
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('🔐 useGoogleOAuth: Sign-in error:', error);
+        throw error;
+      }
+      
+      console.log('🔐 useGoogleOAuth: Sign-in initiated successfully');
     } catch (error: any) {
-      console.error('Error signing in with Google:', error);
+      console.error('❌ useGoogleOAuth: Error signing in:', error);
       setState(prev => ({ 
         ...prev, 
         isLoading: false, 
-        error: error.message || 'Failed to authenticate with Google'
+        error: error.message || 'שגיאה בהתחברות ליומן Google'
       }));
     }
   };
@@ -120,15 +138,7 @@ export const useGoogleOAuth = () => {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
       
       const supabase = supabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        // Remove Google tokens
-        await supabase
-          .from('google_tokens')
-          .delete()
-          .eq('user_id', session.user.id);
-      }
+      await supabase.auth.signOut();
       
       setState(prev => ({ 
         ...prev, 
@@ -151,7 +161,7 @@ export const useGoogleOAuth = () => {
     await checkAuthStatus();
   };
 
-  // Create event function with proper signature and implementation
+  // Create event function with proper token validation
   const createEvent = async (
     summary: string,
     startDateTime: string,
@@ -159,10 +169,24 @@ export const useGoogleOAuth = () => {
     description?: string
   ): Promise<string> => {
     try {
-      console.log('Creating Google Calendar event:', { summary, startDateTime, endDateTime, description });
+      console.log('🚀 useGoogleOAuth: Creating Google Calendar event...', {
+        summary,
+        startDateTime,
+        endDateTime,
+        description
+      });
       
-      if (!state.isAuthenticated || !state.accessToken) {
-        throw new Error('לא מחובר ליומן Google');
+      // Get fresh token each time
+      const token = await getCurrentAccessToken();
+      console.log('🚀 useGoogleOAuth: Token check result:', {
+        hasToken: !!token,
+        tokenLength: token?.length || 0,
+        stateAuthenticated: state.isAuthenticated
+      });
+      
+      if (!token) {
+        console.error('🚀 useGoogleOAuth: No access token available');
+        throw new Error('לא מחובר ליומן Google - נדרשת התחברות מחדש');
       }
 
       const event = {
@@ -177,26 +201,49 @@ export const useGoogleOAuth = () => {
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
         }
       };
+      
+      console.log('🚀 useGoogleOAuth: Event object created:', event);
+      console.log('🚀 useGoogleOAuth: Making API request...');
 
       const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${state.accessToken}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(event)
       });
+      
+      console.log('🚀 useGoogleOAuth: API response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Failed to create calendar event');
+        console.error('🚀 useGoogleOAuth: API error response:', errorData);
+        
+        if (response.status === 401) {
+          // Token expired, update authentication state
+          setState(prev => ({ 
+            ...prev, 
+            isAuthenticated: false,
+            accessToken: null
+          }));
+          throw new Error('אסימון Google פג תוקף - נדרשת התחברות מחדש');
+        } else if (response.status === 403) {
+          throw new Error('אין הרשאות לכתוב ליומן Google - נדרשת התחברות מחדש עם הרשאות מלאות');
+        }
+        
+        throw new Error(errorData.error?.message || `שגיאה ביצירת אירוע: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('Event created successfully:', data.id);
+      console.log('🚀 useGoogleOAuth: Event created successfully:', {
+        eventId: data.id,
+        htmlLink: data.htmlLink
+      });
+      
       return data.id;
     } catch (error: any) {
-      console.error('Error creating Google Calendar event:', error);
+      console.error('❌ useGoogleOAuth: Event creation failed:', error);
       throw error;
     }
   };
