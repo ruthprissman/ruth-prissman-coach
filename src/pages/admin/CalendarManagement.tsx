@@ -11,13 +11,7 @@ import { useCalendarOperations } from '@/hooks/useCalendarOperations';
 import { GoogleCalendarEvent, RecurringRule } from '@/types/calendar';
 import { toast } from '@/components/ui/use-toast';
 import { addDays, subDays, startOfWeek, addMonths } from 'date-fns';
-import { 
-  checkIfSignedIn,
-  signInWithGoogle,
-  signOutFromGoogle,
-  fetchGoogleCalendarEvents,
-  createGoogleCalendarEvent
-} from '@/services/GoogleOAuthService';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 // Create a query client instance
 const queryClient = new QueryClient();
@@ -57,18 +51,25 @@ const CalendarManagementContent: React.FC = () => {
     applyDefaultAvailability
   } = useCalendarOperations();
 
+  // Simple Google Calendar integration - check if user is authenticated
   useEffect(() => {
     const checkGoogleAuth = async () => {
       try {
-        const isSignedIn = await checkIfSignedIn();
-        setIsGoogleAuthenticated(isSignedIn);
+        const supabase = supabaseClient();
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (isSignedIn) {
+        if (session?.provider_token) {
+          console.log('Google authenticated with token');
+          setIsGoogleAuthenticated(true);
           await fetchGoogleEvents();
+        } else {
+          console.log('No Google token found');
+          setIsGoogleAuthenticated(false);
         }
       } catch (error: any) {
         console.error('Error checking Google auth:', error);
         setGoogleAuthError(error.message);
+        setIsGoogleAuthenticated(false);
       }
     };
 
@@ -80,9 +81,48 @@ const CalendarManagementContent: React.FC = () => {
       setIsLoadingGoogleEvents(true);
       setGoogleAuthError(null);
       
-      const events = await fetchGoogleCalendarEvents(currentDate);
-      setGoogleEvents(events);
+      const supabase = supabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session?.provider_token) {
+        throw new Error('לא מחובר ליומן Google');
+      }
+
+      const now = currentDate || new Date();
+      const weekStart = startOfWeek(now, { weekStartsOn: 0 });
+      const twoMonthsLater = addMonths(weekStart, 2);
+      
+      const timeMin = encodeURIComponent(weekStart.toISOString());
+      const timeMax = encodeURIComponent(twoMonthsLater.toISOString());
+      
+      const response = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.provider_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Failed to fetch calendar events');
+      }
+      
+      const data = await response.json();
+      
+      const events: GoogleCalendarEvent[] = data.items.map((item: any) => ({
+        id: item.id,
+        summary: item.summary || 'אירוע ללא כותרת',
+        description: item.description || '',
+        start: item.start,
+        end: item.end,
+        status: item.status || 'confirmed',
+        syncStatus: 'google-only'
+      }));
+      
+      setGoogleEvents(events);
       console.log(`Fetched ${events.length} Google Calendar events`);
     } catch (error: any) {
       console.error('Error fetching Google events:', error);
@@ -101,15 +141,22 @@ const CalendarManagementContent: React.FC = () => {
   const handleSignInGoogle = async (): Promise<void> => {
     try {
       setIsGoogleAuthenticating(true);
-      const success = await signInWithGoogle();
-      if (success) {
-        setIsGoogleAuthenticated(true);
-        await fetchGoogleEvents();
-        
-        toast({
-          title: 'התחברות בוצעה בהצלחה',
-          description: 'התחברת בהצלחה ליומן Google',
-        });
+      const supabase = supabaseClient();
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
+          redirectTo: window.location.origin + '/admin/dashboard',
+          queryParams: {
+            prompt: 'consent',
+            access_type: 'offline'
+          }
+        }
+      });
+      
+      if (error) {
+        throw error;
       }
     } catch (error: any) {
       console.error('Error signing in with Google:', error);
@@ -127,7 +174,8 @@ const CalendarManagementContent: React.FC = () => {
 
   const handleSignOutGoogle = async (): Promise<void> => {
     try {
-      await signOutFromGoogle();
+      const supabase = supabaseClient();
+      await supabase.auth.signOut();
       setIsGoogleAuthenticated(false);
       setGoogleEvents([]);
       
@@ -226,7 +274,7 @@ const CalendarManagementContent: React.FC = () => {
     fetchAvailabilityData();
   };
 
-  // Create event function for the form - using GoogleOAuthService directly
+  // Simple event creation function
   const handleCreateEvent = async (
     summary: string,
     startDateTime: string,
@@ -236,24 +284,50 @@ const CalendarManagementContent: React.FC = () => {
     try {
       console.log('Creating Google Calendar event:', { summary, startDateTime, endDateTime, description });
       
-      if (!isGoogleAuthenticated) {
+      const supabase = supabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.provider_token) {
         throw new Error('לא מחובר ליומן Google');
       }
 
-      const eventId = await createGoogleCalendarEvent(summary, startDateTime, endDateTime, description);
+      const event = {
+        'summary': summary,
+        'description': description || '',
+        'start': {
+          'dateTime': startDateTime,
+          'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        'end': {
+          'dateTime': endDateTime,
+          'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+        }
+      };
       
-      if (eventId) {
-        toast({
-          title: 'האירוע נוצר בהצלחה',
-          description: 'האירוע נוסף ליומן Google שלך',
-        });
-        
-        // Refresh events after creating
-        await fetchGoogleEvents();
-        return eventId;
+      const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.provider_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(event)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Failed to create calendar event');
       }
       
-      return null;
+      const data = await response.json();
+      
+      toast({
+        title: 'האירוע נוצר בהצלחה',
+        description: 'האירוע נוסף ליומן Google שלך',
+      });
+      
+      // Refresh events after creating
+      await fetchGoogleEvents();
+      return data.id;
     } catch (error: any) {
       console.error('Error creating Google Calendar event:', error);
       toast({
