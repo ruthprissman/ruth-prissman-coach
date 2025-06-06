@@ -1,12 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Clock } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { usePatients } from '@/hooks/usePatients';
 
 interface GoogleCalendarEventFormProps {
   onCreateEvent?: (summary: string, startDateTime: string, endDateTime: string, description?: string) => Promise<string | null>;
@@ -15,23 +17,81 @@ interface GoogleCalendarEventFormProps {
 export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFormProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
+    meetingType: '',
+    meetingWith: '',
+    customMeetingWith: '',
+    subject: '',
     date: '',
     startTime: '',
     endTime: '',
     description: ''
   });
 
+  const { data: patients = [], isLoading: isLoadingPatients } = usePatients();
+
+  // Auto-generate title and end time based on selections
+  useEffect(() => {
+    let newSubject = '';
+    let newEndTime = '';
+
+    if (formData.meetingType && formData.meetingType !== 'אחר') {
+      if (formData.meetingWith) {
+        const selectedPatient = patients.find(p => p.id.toString() === formData.meetingWith);
+        if (selectedPatient) {
+          newSubject = `פגישה עם ${selectedPatient.name}`;
+          
+          // Auto-calculate end time (1.5 hours later) for client meetings
+          if (formData.startTime) {
+            const [hours, minutes] = formData.startTime.split(':').map(Number);
+            const startMinutes = hours * 60 + minutes;
+            const endMinutes = startMinutes + 90; // 1.5 hours = 90 minutes
+            const endHours = Math.floor(endMinutes / 60);
+            const remainingMinutes = endMinutes % 60;
+            newEndTime = `${endHours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}`;
+          }
+        }
+      }
+    } else if (formData.meetingType === 'אחר' && formData.customMeetingWith) {
+      newSubject = formData.customMeetingWith;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      subject: newSubject,
+      ...(newEndTime && formData.meetingType !== 'אחר' ? { endTime: newEndTime } : {})
+    }));
+  }, [formData.meetingType, formData.meetingWith, formData.customMeetingWith, formData.startTime, patients]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     console.log('📝 FORM_DEBUG: Form submission started with data:', formData);
     
-    if (!formData.title || !formData.date || !formData.startTime || !formData.endTime) {
+    if (!formData.subject || !formData.date || !formData.startTime || !formData.endTime || !formData.meetingType) {
       console.log('📝 FORM_DEBUG: Validation failed - missing required fields');
       toast({
         title: 'שגיאה',
         description: 'יש למלא את כל השדות הנדרשים',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (formData.meetingType !== 'אחר' && !formData.meetingWith) {
+      console.log('📝 FORM_DEBUG: Validation failed - missing client selection');
+      toast({
+        title: 'שגיאה',
+        description: 'יש לבחור לקוח עבור הפגישה',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (formData.meetingType === 'אחר' && !formData.customMeetingWith) {
+      console.log('📝 FORM_DEBUG: Validation failed - missing custom meeting description');
+      toast({
+        title: 'שגיאה',
+        description: 'יש להזין תיאור עבור זמן פרטי',
         variant: 'destructive',
       });
       return;
@@ -54,18 +114,24 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
       const startDateTime = `${formData.date}T${formData.startTime}:00`;
       const endDateTime = `${formData.date}T${formData.endTime}:00`;
       
+      // Create description based on meeting type
+      let description = formData.description;
+      if (formData.meetingType !== 'אחר') {
+        description = `סוג פגישה: ${formData.meetingType}\n${formData.description || ''}`.trim();
+      }
+      
       console.log('📝 FORM_DEBUG: Calling onCreateEvent with:', {
-        title: formData.title,
+        title: formData.subject,
         startDateTime,
         endDateTime,
-        description: formData.description
+        description
       });
       
       const eventId = await onCreateEvent(
-        formData.title,
+        formData.subject,
         startDateTime,
         endDateTime,
-        formData.description
+        description
       );
       
       console.log('📝 FORM_DEBUG: Event creation result:', eventId);
@@ -74,7 +140,10 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
         console.log('📝 FORM_DEBUG: Event created successfully, resetting form');
         // Reset form
         setFormData({
-          title: '',
+          meetingType: '',
+          meetingWith: '',
+          customMeetingWith: '',
+          subject: '',
           date: '',
           startTime: '',
           endTime: '',
@@ -114,13 +183,64 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="title">כותרת האירוע *</Label>
+            <Label htmlFor="meetingType">סוג פגישה *</Label>
+            <Select value={formData.meetingType} onValueChange={(value) => handleInputChange('meetingType', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="בחר סוג פגישה" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="זום">זום</SelectItem>
+                <SelectItem value="טלפון">טלפון</SelectItem>
+                <SelectItem value="פגישה פרונטלית">פגישה פרונטלית</SelectItem>
+                <SelectItem value="אחר">אחר (זמן פרטי)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {formData.meetingType && formData.meetingType !== 'אחר' && (
+            <div>
+              <Label htmlFor="meetingWith">פגישה עם *</Label>
+              <Select 
+                value={formData.meetingWith} 
+                onValueChange={(value) => handleInputChange('meetingWith', value)}
+                disabled={isLoadingPatients}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={isLoadingPatients ? "טוען לקוחות..." : "בחר לקוח"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {patients.map((patient) => (
+                    <SelectItem key={patient.id} value={patient.id.toString()}>
+                      {patient.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {formData.meetingType === 'אחר' && (
+            <div>
+              <Label htmlFor="customMeetingWith">תיאור הזמן הפרטי *</Label>
+              <Input
+                id="customMeetingWith"
+                value={formData.customMeetingWith}
+                onChange={(e) => handleInputChange('customMeetingWith', e.target.value)}
+                placeholder="למשל: זמן אישי, ביקור רופא, וכו'"
+                required
+              />
+            </div>
+          )}
+
+          <div>
+            <Label htmlFor="subject">נושא פגישה</Label>
             <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="למשל: פגישה עם לקוח"
-              required
+              id="subject"
+              value={formData.subject}
+              onChange={(e) => handleInputChange('subject', e.target.value)}
+              placeholder="הנושא יתמלא אוטומטי לפי הבחירות"
+              readOnly={formData.meetingType !== 'אחר'}
+              className={formData.meetingType !== 'אחר' ? 'bg-gray-50' : ''}
             />
           </div>
           
@@ -154,13 +274,15 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => handleInputChange('endTime', e.target.value)}
+                readOnly={formData.meetingType !== 'אחר' && formData.meetingWith}
+                className={formData.meetingType !== 'אחר' && formData.meetingWith ? 'bg-gray-50' : ''}
                 required
               />
             </div>
           </div>
           
           <div>
-            <Label htmlFor="description">תיאור (אופציונלי)</Label>
+            <Label htmlFor="description">הערות נוספות (אופציונלי)</Label>
             <Textarea
               id="description"
               value={formData.description}
