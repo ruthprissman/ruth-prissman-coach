@@ -274,7 +274,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => handleInputChange('endTime', e.target.value)}
-                readOnly={formData.meetingType !== 'אחר' && formData.meetingWith}
+                readOnly={formData.meetingType !== 'אחר' && !!formData.meetingWith}
                 className={formData.meetingType !== 'אחר' && formData.meetingWith ? 'bg-gray-50' : ''}
                 required
               />
