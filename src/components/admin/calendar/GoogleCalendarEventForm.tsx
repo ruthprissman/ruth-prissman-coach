@@ -67,7 +67,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
     
     console.log('📝 FORM_DEBUG: Form submission started with data:', formData);
     
-    if (!formData.subject || !formData.date || !formData.startTime || !formData.endTime || !formData.meetingType) {
+    if (!formData.date || !formData.startTime || !formData.endTime || !formData.meetingType) {
       console.log('📝 FORM_DEBUG: Validation failed - missing required fields');
       toast({
         title: 'שגיאה',
@@ -192,7 +192,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
                 <SelectItem value="זום">זום</SelectItem>
                 <SelectItem value="טלפון">טלפון</SelectItem>
                 <SelectItem value="פגישה פרונטלית">פגישה פרונטלית</SelectItem>
-                <SelectItem value="אחר">אחר (זמן פרטי)</SelectItem>
+                <SelectItem value="אחר">אחר</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -221,28 +221,16 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
 
           {formData.meetingType === 'אחר' && (
             <div>
-              <Label htmlFor="customMeetingWith">תיאור הזמן הפרטי *</Label>
+              <Label htmlFor="customMeetingWith">נושא פגישה *</Label>
               <Input
                 id="customMeetingWith"
                 value={formData.customMeetingWith}
                 onChange={(e) => handleInputChange('customMeetingWith', e.target.value)}
-                placeholder="למשל: זמן אישי, ביקור רופא, וכו'"
+                placeholder="הנושא יתמלא אוטומטי לפי הבחירות"
                 required
               />
             </div>
           )}
-
-          <div>
-            <Label htmlFor="subject">נושא פגישה</Label>
-            <Input
-              id="subject"
-              value={formData.subject}
-              onChange={(e) => handleInputChange('subject', e.target.value)}
-              placeholder="הנושא יתמלא אוטומטי לפי הבחירות"
-              readOnly={formData.meetingType !== 'אחר'}
-              className={formData.meetingType !== 'אחר' ? 'bg-gray-50' : ''}
-            />
-          </div>
           
           <div>
             <Label htmlFor="date">תאריך *</Label>
