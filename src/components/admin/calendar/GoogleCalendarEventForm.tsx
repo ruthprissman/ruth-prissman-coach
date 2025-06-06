@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,9 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Clock } from 'lucide-react';
+import { Calendar, Clock, Plus } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { usePatients } from '@/hooks/usePatients';
+import { useQueryClient } from '@tanstack/react-query';
+import AddPatientDialog from '@/components/admin/AddPatientDialog';
+import { Patient } from '@/types/patient';
+import { supabaseClient } from '@/lib/supabaseClient';
 
 interface GoogleCalendarEventFormProps {
   onCreateEvent?: (summary: string, startDateTime: string, endDateTime: string, description?: string) => Promise<string | null>;
@@ -16,6 +19,7 @@ interface GoogleCalendarEventFormProps {
 
 export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFormProps) {
   const [isCreating, setIsCreating] = useState(false);
+  const [addPatientDialogOpen, setAddPatientDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     meetingType: 'טלפון', // Set default meeting type
     meetingWith: '',
@@ -28,6 +32,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
   });
 
   const { data: patients = [], isLoading: isLoadingPatients } = usePatients();
+  const queryClient = useQueryClient();
 
   // Auto-generate title and end time based on selections
   useEffect(() => {
@@ -169,127 +174,183 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
     }));
   };
 
+  const handleAddPatient = async (patientData: Omit<Patient, 'id'>): Promise<boolean> => {
+    try {
+      const supabase = supabaseClient();
+      const { data, error } = await supabase
+        .from('patients')
+        .insert([patientData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Refresh the patients list
+      await queryClient.invalidateQueries({ queryKey: ['patients'] });
+
+      // Auto-select the newly created patient
+      setFormData(prev => ({
+        ...prev,
+        meetingWith: data.id.toString()
+      }));
+
+      toast({
+        title: 'לקוח נוסף בהצלחה',
+        description: 'הלקוח החדש נוסף למערכת ונבחר אוטומטיט',
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error('Error adding patient:', error);
+      toast({
+        title: 'שגיאה בהוספת לקוח',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    }
+  };
+
   // Get today's date for the date input minimum
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          יצירת אירוע ביומן Google
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="meetingType">סוג פגישה *</Label>
-            <Select value={formData.meetingType} onValueChange={(value) => handleInputChange('meetingType', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="בחר סוג פגישה" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="זום">זום</SelectItem>
-                <SelectItem value="טלפון">טלפון</SelectItem>
-                <SelectItem value="פגישה פרונטלית">פגישה פרונטלית</SelectItem>
-                <SelectItem value="אחר">אחר</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {formData.meetingType !== 'אחר' && (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            יצירת אירוע ביומן Google
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="meetingWith">פגישה עם *</Label>
-              <Select 
-                value={formData.meetingWith} 
-                onValueChange={(value) => handleInputChange('meetingWith', value)}
-                disabled={isLoadingPatients}
-              >
+              <Label htmlFor="meetingType">סוג פגישה *</Label>
+              <Select value={formData.meetingType} onValueChange={(value) => handleInputChange('meetingType', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder={isLoadingPatients ? "טוען לקוחות..." : "בחר לקוח"} />
+                  <SelectValue placeholder="בחר סוג פגישה" />
                 </SelectTrigger>
                 <SelectContent>
-                  {patients.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id.toString()}>
-                      {patient.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="זום">זום</SelectItem>
+                  <SelectItem value="טלפון">טלפון</SelectItem>
+                  <SelectItem value="פגישה פרונטלית">פגישה פרונטלית</SelectItem>
+                  <SelectItem value="אחר">אחר</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          )}
 
-          {formData.meetingType === 'אחר' && (
+            {formData.meetingType !== 'אחר' && (
+              <div>
+                <Label htmlFor="meetingWith">פגישה עם *</Label>
+                <div className="flex gap-2">
+                  <Select 
+                    value={formData.meetingWith} 
+                    onValueChange={(value) => handleInputChange('meetingWith', value)}
+                    disabled={isLoadingPatients}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder={isLoadingPatients ? "טוען לקוחות..." : "בחר לקוח"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {patients.map((patient) => (
+                        <SelectItem key={patient.id} value={patient.id.toString()}>
+                          {patient.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setAddPatientDialogOpen(true)}
+                    className="shrink-0"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {formData.meetingType === 'אחר' && (
+              <div>
+                <Label htmlFor="customMeetingWith">נושא פגישה *</Label>
+                <Input
+                  id="customMeetingWith"
+                  value={formData.customMeetingWith}
+                  onChange={(e) => handleInputChange('customMeetingWith', e.target.value)}
+                  placeholder="הנושא יתמלא אוטומטי לפי הבחירות"
+                  required
+                />
+              </div>
+            )}
+            
             <div>
-              <Label htmlFor="customMeetingWith">נושא פגישה *</Label>
+              <Label htmlFor="date">תאריך *</Label>
               <Input
-                id="customMeetingWith"
-                value={formData.customMeetingWith}
-                onChange={(e) => handleInputChange('customMeetingWith', e.target.value)}
-                placeholder="הנושא יתמלא אוטומטי לפי הבחירות"
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) => handleInputChange('date', e.target.value)}
+                min={today}
                 required
               />
             </div>
-          )}
-          
-          <div>
-            <Label htmlFor="date">תאריך *</Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => handleInputChange('date', e.target.value)}
-              min={today}
-              required
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-2">
+            
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="startTime">שעת התחלה *</Label>
+                <Input
+                  id="startTime"
+                  type="time"
+                  value={formData.startTime}
+                  onChange={(e) => handleInputChange('startTime', e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="endTime">שעת סיום *</Label>
+                <Input
+                  id="endTime"
+                  type="time"
+                  value={formData.endTime}
+                  onChange={(e) => handleInputChange('endTime', e.target.value)}
+                  readOnly={formData.meetingType !== 'אחר' && Boolean(formData.meetingWith)}
+                  className={formData.meetingType !== 'אחר' && formData.meetingWith ? 'bg-gray-50' : ''}
+                  required
+                />
+              </div>
+            </div>
+            
             <div>
-              <Label htmlFor="startTime">שעת התחלה *</Label>
-              <Input
-                id="startTime"
-                type="time"
-                value={formData.startTime}
-                onChange={(e) => handleInputChange('startTime', e.target.value)}
-                required
+              <Label htmlFor="description">הערות נוספות (אופציונלי)</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                placeholder="פרטים נוספים על האירוע..."
+                rows={3}
               />
             </div>
-            <div>
-              <Label htmlFor="endTime">שעת סיום *</Label>
-              <Input
-                id="endTime"
-                type="time"
-                value={formData.endTime}
-                onChange={(e) => handleInputChange('endTime', e.target.value)}
-                readOnly={formData.meetingType !== 'אחר' && Boolean(formData.meetingWith)}
-                className={formData.meetingType !== 'אחר' && formData.meetingWith ? 'bg-gray-50' : ''}
-                required
-              />
-            </div>
-          </div>
-          
-          <div>
-            <Label htmlFor="description">הערות נוספות (אופציונלי)</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="פרטים נוספים על האירוע..."
-              rows={3}
-            />
-          </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={isCreating || !onCreateEvent}
-          >
-            <Clock className="h-4 w-4 mr-2" />
-            {isCreating ? 'יוצר אירוע...' : 'צור אירוע ביומן'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isCreating || !onCreateEvent}
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              {isCreating ? 'יוצר אירוע...' : 'צור אירוע ביומן'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <AddPatientDialog
+        isOpen={addPatientDialogOpen}
+        onClose={() => setAddPatientDialogOpen(false)}
+        onAddPatient={handleAddPatient}
+      />
+    </>
   );
 }
