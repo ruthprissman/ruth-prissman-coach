@@ -17,7 +17,7 @@ interface GoogleCalendarEventFormProps {
 export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFormProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({
-    meetingType: '',
+    meetingType: 'טלפון', // Set default meeting type
     meetingWith: '',
     customMeetingWith: '',
     subject: '',
@@ -140,7 +140,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
         console.log('📝 FORM_DEBUG: Event created successfully, resetting form');
         // Reset form
         setFormData({
-          meetingType: '',
+          meetingType: 'טלפון', // Reset to default
           meetingWith: '',
           customMeetingWith: '',
           subject: '',
@@ -197,7 +197,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
             </Select>
           </div>
 
-          {formData.meetingType && formData.meetingType !== 'אחר' && (
+          {formData.meetingType !== 'אחר' && (
             <div>
               <Label htmlFor="meetingWith">פגישה עם *</Label>
               <Select 
@@ -262,7 +262,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => handleInputChange('endTime', e.target.value)}
-                readOnly={formData.meetingType !== 'אחר' && !!formData.meetingWith}
+                readOnly={formData.meetingType !== 'אחר' && Boolean(formData.meetingWith)}
                 className={formData.meetingType !== 'אחר' && formData.meetingWith ? 'bg-gray-50' : ''}
                 required
               />
