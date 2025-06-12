@@ -1,3 +1,4 @@
+
 import { format, isSameDay, addMinutes } from 'date-fns';
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 
@@ -48,7 +49,7 @@ export const generateWeekDays = (currentDate: Date) => {
     const date = new Date(startDate);
     date.setDate(startDate.getDate() + i);
     const dateString = format(date, 'yyyy-MM-dd');
-    const label = format(date, 'EEE', { locale: { code: 'he' } });
+    const label = format(date, 'EEE');
     days.push({ date: dateString, label: label, dayNumber: i });
   }
   return days;
