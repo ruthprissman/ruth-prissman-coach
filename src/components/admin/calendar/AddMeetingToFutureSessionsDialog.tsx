@@ -46,6 +46,12 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
   const [patient, setPatient] = useState<Patient | null>(null);
 
   useEffect(() => {
+    console.log('SEFT_DEBUG: Dialog opened with data:', {
+      googleEvent,
+      clientId,
+      sessionTypes: sessionTypes?.length || 0
+    });
+
     const fetchPatient = async () => {
       if (clientId) {
         try {
@@ -58,8 +64,9 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
             
           if (error) throw error;
           setPatient(data as Patient);
+          console.log('SEFT_DEBUG: Patient loaded:', data);
         } catch (error) {
-          console.error('Error fetching patient:', error);
+          console.error('SEFT_DEBUG: Error fetching patient:', error);
         }
       }
     };
@@ -70,6 +77,7 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
       if (sessionTypes && sessionTypes.length > 0) {
         const defaultType = sessionTypes.find(type => type.is_default) || sessionTypes[0];
         setSelectedSessionTypeId(defaultType.id);
+        console.log('SEFT_DEBUG: Default session type set:', defaultType);
       }
     }
   }, [clientId, open, sessionTypes]);
@@ -84,16 +92,29 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
   };
 
   const handleSubmit = async () => {
-    if (!googleEvent || !clientId || !selectedSessionTypeId) {
+    console.log('SEFT_DEBUG: Starting submit with data:', {
+      googleEvent: !!googleEvent,
+      googleEventId: googleEvent?.id,
+      googleEventSummary: googleEvent?.summary,
+      googleEventStart: googleEvent?.start?.dateTime,
+      clientId,
+      selectedSessionTypeId,
+      sessionTypes: sessionTypes?.length || 0
+    });
+
+    // More detailed validation with specific error messages
+    if (!googleEvent) {
+      console.error('SEFT_DEBUG: Missing googleEvent');
       toast({
         title: "שגיאה",
-        description: "חסרים נתונים נדרשים",
+        description: "חסר מידע על האירוע מיומן Google",
         variant: "destructive",
       });
       return;
     }
 
     if (!googleEvent.start?.dateTime) {
+      console.error('SEFT_DEBUG: Missing googleEvent start dateTime:', googleEvent.start);
       toast({
         title: "שגיאה",
         description: "אין תאריך התחלה לאירוע",
@@ -101,6 +122,19 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
       });
       return;
     }
+
+    if (!selectedSessionTypeId) {
+      console.error('SEFT_DEBUG: Missing selectedSessionTypeId');
+      toast({
+        title: "שגיאה",
+        description: "יש לבחור סוג פגישה",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Note: clientId can be null for meetings without a specific patient
+    console.log('SEFT_DEBUG: All validations passed, proceeding with insert');
 
     setIsSubmitting(true);
     try {
@@ -110,25 +144,37 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
       const duration = getSessionTypeDuration(selectedSessionTypeId, sessionTypes);
       const endDate = new Date(startDate.getTime() + duration * 60000); // duration is in minutes
       
-      console.log('Adding future session with session type:', {
+      console.log('SEFT_DEBUG: Adding future session with session type:', {
         sessionTypeId: selectedSessionTypeId,
         duration: duration,
         startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
+        endDate: endDate.toISOString(),
+        clientId,
+        googleEventSummary: googleEvent.summary
       });
 
-      const supabase = supabaseClient();
-      const { error } = await supabase
-        .from('future_sessions')
-        .insert({
-          patient_id: clientId,
-          session_date: startDate.toISOString(),
-          meeting_type: 'Zoom', // Default to Zoom, can be made configurable later
-          session_type_id: selectedSessionTypeId,
-          status: 'Scheduled',
-        });
+      const sessionData = {
+        patient_id: clientId, // Can be null
+        session_date: startDate.toISOString(),
+        meeting_type: 'Zoom', // Default to Zoom, can be made configurable later
+        session_type_id: selectedSessionTypeId,
+        status: 'Scheduled',
+      };
 
-      if (error) throw error;
+      console.log('SEFT_DEBUG: Final session data to insert:', sessionData);
+
+      const supabase = supabaseClient();
+      const { error, data } = await supabase
+        .from('future_sessions')
+        .insert(sessionData)
+        .select();
+
+      if (error) {
+        console.error('SEFT_DEBUG: Supabase insert error:', error);
+        throw error;
+      }
+
+      console.log('SEFT_DEBUG: Successfully inserted session:', data);
 
       toast({
         title: "פגישה נוספה בהצלחה",
@@ -138,7 +184,7 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
       if (onAdded) onAdded();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error adding future session:', error);
+      console.error('SEFT_DEBUG: Error adding future session:', error);
       toast({
         title: "שגיאה בהוספת פגישה",
         description: error.message || "אנא נסה שוב מאוחר יותר",
@@ -151,6 +197,14 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
 
   const selectedSessionType = sessionTypes?.find(type => type.id === selectedSessionTypeId);
   const duration = selectedSessionType ? selectedSessionType.duration_minutes : 90;
+
+  console.log('SEFT_DEBUG: Rendering dialog with:', {
+    open,
+    googleEvent: !!googleEvent,
+    selectedSessionTypeId,
+    sessionTypesCount: sessionTypes?.length || 0,
+    isLoadingSessionTypes
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -174,6 +228,11 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
                   לקוח: {patient.name}
                 </div>
               )}
+              {!clientId && (
+                <div className="text-sm text-gray-500 mt-1">
+                  ללא לקוח מוגדר
+                </div>
+              )}
             </div>
           </div>
 
@@ -181,7 +240,11 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
             <Label htmlFor="session_type" className="text-purple-700">סוג פגישה</Label>
             <Select
               value={selectedSessionTypeId ? selectedSessionTypeId.toString() : undefined}
-              onValueChange={(value) => setSelectedSessionTypeId(Number(value))}
+              onValueChange={(value) => {
+                const newSessionTypeId = Number(value);
+                console.log('SEFT_DEBUG: Session type changed to:', newSessionTypeId);
+                setSelectedSessionTypeId(newSessionTypeId);
+              }}
             >
               <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
                 <SelectValue placeholder="בחר סוג פגישה" />
@@ -204,12 +267,17 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
               </div>
             )}
           </div>
+
+          {/* Debug info */}
+          <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded">
+            Debug: GoogleEvent={!!googleEvent}, ClientId={clientId}, SessionType={selectedSessionTypeId}
+          </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || !selectedSessionTypeId}
+            disabled={isSubmitting || !selectedSessionTypeId || !googleEvent}
             className="bg-purple-600 hover:bg-purple-700"
           >
             {isSubmitting ? 'מוסיף פגישה...' : 'הוסף פגישה'}
