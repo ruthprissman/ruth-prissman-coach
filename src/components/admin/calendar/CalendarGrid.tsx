@@ -54,7 +54,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const navigate = useNavigate();
   const [forceRefreshToken, setForceRefreshToken] = useState<number>(Date.now());
   const [addToFutureSessionDialogOpen, setAddToFutureSessionDialogOpen] = useState<boolean>(false);
-  const [selectedMeetingSlot, setSelectedMeetingSlot] = useState<CalendarSlot | null>(null);
+  const [selectedGoogleEvent, setSelectedGoogleEvent] = useState<GoogleCalendarEvent | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [meetingToDelete, setMeetingToDelete] = useState<any>(null);
   
@@ -322,8 +323,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   // Handle add to future sessions
   const handleAddToFutureSessions = (slot: CalendarSlot, date: string) => {
     console.log(`MEETING_SAVE_DEBUG: Adding meeting to future sessions for ${date} at ${slot.hour}`);
-    // Set the selected meeting slot and open the dialog
-    setSelectedMeetingSlot(slot);
+    
+    // Extract client ID from the notes if it contains "פגישה עם"
+    const clientName = extractClientName(slot.notes);
+    // For now, we'll set clientId to null since we don't have a way to map names to IDs
+    // This will need to be enhanced to lookup the actual client ID
+    
+    setSelectedGoogleEvent(slot.googleEvent || null);
+    setSelectedClientId(null); // This should be enhanced to get actual client ID
     setAddToFutureSessionDialogOpen(true);
   };
 
@@ -729,8 +736,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         <AddMeetingToFutureSessionsDialog
           open={addToFutureSessionDialogOpen}
           onOpenChange={setAddToFutureSessionDialogOpen}
-          meetingData={selectedMeetingSlot}
-          onCreated={handleFutureSessionCreated}
+          googleEvent={selectedGoogleEvent}
+          clientId={selectedClientId}
+          onAdded={handleFutureSessionCreated}
         />
 
         {/* Dialog for deleting future sessions */}
