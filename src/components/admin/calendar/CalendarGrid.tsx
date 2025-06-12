@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -7,7 +8,7 @@ import {
   TableBody, 
   TableCell 
 } from '@/components/ui/table';
-import { CalendarSlot } from '@/types/calendar';
+import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 import { Check, Calendar, Lock, Clock, ArrowUp, Trash2, Database, RefreshCw, Pencil } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
