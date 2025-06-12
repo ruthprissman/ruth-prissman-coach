@@ -306,6 +306,7 @@ export type Database = {
           meeting_type: string | null
           patient_id: number | null
           session_date: string
+          session_type_id: number | null
           status: string | null
           updated_at: string | null
           zoom_link: string | null
@@ -316,6 +317,7 @@ export type Database = {
           meeting_type?: string | null
           patient_id?: number | null
           session_date: string
+          session_type_id?: number | null
           status?: string | null
           updated_at?: string | null
           zoom_link?: string | null
@@ -326,6 +328,7 @@ export type Database = {
           meeting_type?: string | null
           patient_id?: number | null
           session_date?: string
+          session_type_id?: number | null
           status?: string | null
           updated_at?: string | null
           zoom_link?: string | null
@@ -336,6 +339,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "future_sessions_session_type_id_fkey"
+            columns: ["session_type_id"]
+            isOneToOne: false
+            referencedRelation: "session_types"
             referencedColumns: ["id"]
           },
         ]
@@ -432,6 +442,36 @@ export type Database = {
           },
         ]
       }
+      session_types: {
+        Row: {
+          code: string
+          created_at: string | null
+          duration_minutes: number
+          id: number
+          is_default: boolean
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          duration_minutes?: number
+          id?: number
+          is_default?: boolean
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          duration_minutes?: number
+          id?: number
+          is_default?: boolean
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           exercise: string | null
@@ -446,6 +486,7 @@ export type Database = {
           payment_status: string | null
           sent_exercises: boolean | null
           session_date: string | null
+          session_type_id: number | null
           summary: string | null
         }
         Insert: {
@@ -461,6 +502,7 @@ export type Database = {
           payment_status?: string | null
           sent_exercises?: boolean | null
           session_date?: string | null
+          session_type_id?: number | null
           summary?: string | null
         }
         Update: {
@@ -476,6 +518,7 @@ export type Database = {
           payment_status?: string | null
           sent_exercises?: boolean | null
           session_date?: string | null
+          session_type_id?: number | null
           summary?: string | null
         }
         Relationships: [
@@ -484,6 +527,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_session_type_id_fkey"
+            columns: ["session_type_id"]
+            isOneToOne: false
+            referencedRelation: "session_types"
             referencedColumns: ["id"]
           },
         ]
