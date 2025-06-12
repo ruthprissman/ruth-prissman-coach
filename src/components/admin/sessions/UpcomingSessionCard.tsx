@@ -10,9 +10,6 @@ import {
   Calendar, Monitor, Phone, User, 
   AlertTriangle, RefreshCw, History
 } from 'lucide-react';
-import { getSessionTypeIcon, getSessionTypeIconColor } from '@/utils/sessionTypeIcons';
-import { useSessionTypes } from '@/hooks/useSessionTypes';
-import { cn } from '@/lib/utils';
 
 interface UpcomingSessionCardProps {
   session: FutureSession;
@@ -27,8 +24,6 @@ const UpcomingSessionCard: React.FC<UpcomingSessionCardProps> = ({
   onMoveToHistorical,
   onConvertSession
 }) => {
-  const { data: sessionTypes } = useSessionTypes();
-
   // Format the date for display
   const formatDate = (dateString: string) => {
     try {
@@ -66,10 +61,6 @@ const UpcomingSessionCard: React.FC<UpcomingSessionCardProps> = ({
     }
   };
 
-  // Get session type icon and color
-  const sessionTypeIcon = getSessionTypeIcon(session.session_type_id, sessionTypes);
-  const iconColorClass = getSessionTypeIconColor(session.session_type_id, sessionTypes);
-
   return (
     <div 
       className={`p-3 rounded-md border ${isOverdue 
@@ -77,17 +68,7 @@ const UpcomingSessionCard: React.FC<UpcomingSessionCardProps> = ({
         : 'bg-purple-50 border-purple-200'}`}
     >
       <div className="flex justify-between items-start">
-        <div className="flex flex-col relative">
-          {/* Session type icon */}
-          {sessionTypeIcon && (
-            <div className={cn(
-              'absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold',
-              iconColorClass
-            )}>
-              {sessionTypeIcon}
-            </div>
-          )}
-          
+        <div className="flex flex-col">
           <div className="flex items-center">
             {isOverdue && (
               <AlertTriangle className="h-4 w-4 text-red-500 ml-1" />
@@ -100,6 +81,7 @@ const UpcomingSessionCard: React.FC<UpcomingSessionCardProps> = ({
             {getMeetingTypeIcon(session.meeting_type)}
             <span className="mr-1">{getMeetingTypeText(session.meeting_type)}</span>
           </div>
+          {/* Removed notes section as it's no longer part of FutureSession */}
         </div>
         
         <div className="flex flex-col gap-2">

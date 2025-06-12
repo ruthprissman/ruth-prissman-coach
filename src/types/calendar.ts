@@ -1,4 +1,3 @@
-
 export interface TimeSlot {
   day: number;
   date: string;
@@ -71,7 +70,6 @@ export interface GoogleCalendarEvent {
   };
   status?: string;
   syncStatus?: 'synced' | 'google-only';
-  sessionTypeId?: number; // Add the sessionTypeId property
 }
 
 // Settings interfaces
