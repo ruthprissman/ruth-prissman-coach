@@ -6,6 +6,7 @@ import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import { Session } from '@/types/patient';
 import { formatDateInIsraelTimeZone, convertLocalToUTC } from '@/utils/dateUtils';
+import { useSessionTypes } from '@/hooks/useSessionTypes';
 
 import {
   Dialog,
@@ -40,7 +41,7 @@ interface SessionEditDialogProps {
   onClose: () => void;
   session: Session;
   onSessionUpdated: () => void;
-  sessionPrice?: number | null; // Making sessionPrice optional
+  sessionPrice?: number | null;
 }
 
 const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
@@ -51,6 +52,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   sessionPrice,
 }) => {
   const { toast } = useToast();
+  const { data: sessionTypes, isLoading: isLoadingSessionTypes } = useSessionTypes();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [exercises, setExercises] = useState<{ id: number; name: string }[]>([]);
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
@@ -64,6 +66,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   const [formData, setFormData] = useState({
     session_date: new Date(session.session_date),
     meeting_type: session.meeting_type,
+    session_type_id: session.session_type_id || null,
     summary: session.summary,
     sent_exercises: session.sent_exercises,
     exercise_list: session.exercise_list || [],
@@ -112,6 +115,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       setFormData({
         session_date: sessionDate,
         meeting_type: session.meeting_type,
+        session_type_id: session.session_type_id || null,
         summary: session.summary,
         sent_exercises: session.sent_exercises,
         exercise_list: session.exercise_list || [],
@@ -152,7 +156,11 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'session_type_id') {
+      setFormData((prev) => ({ ...prev, [name]: value ? Number(value) : null }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
     
     // Reset payment_date if payment_status is "pending"
     if (name === 'payment_status' && value === 'pending') {
@@ -253,6 +261,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       const sessionData = {
         meeting_type: formData.meeting_type,
         session_date: isoDate,
+        session_type_id: formData.session_type_id,
         summary: formData.summary,
         sent_exercises: formData.sent_exercises,
         exercise_list: formData.sent_exercises ? formData.exercise_list : [],
@@ -352,6 +361,29 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                 <SelectItem value="Zoom">זום</SelectItem>
                 <SelectItem value="Phone">טלפון</SelectItem>
                 <SelectItem value="In-Person">פגישה פרונטית</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="session_type" className="text-purple-700">סוג פגישה</Label>
+            <Select
+              value={formData.session_type_id ? formData.session_type_id.toString() : undefined}
+              onValueChange={(value) => handleSelectChange('session_type_id', value)}
+            >
+              <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
+                <SelectValue placeholder="בחר סוג פגישה" />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingSessionTypes ? (
+                  <div className="py-2 px-4 text-sm text-muted-foreground">טוען...</div>
+                ) : (
+                  sessionTypes?.map((type) => (
+                    <SelectItem key={type.id} value={type.id.toString()}>
+                      {type.name} ({type.duration_minutes} דקות)
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>

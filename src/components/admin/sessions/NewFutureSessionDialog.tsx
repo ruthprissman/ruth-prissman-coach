@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -248,7 +247,7 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
           <div className="space-y-2">
             <Label htmlFor="session_type" className="text-purple-700">סוג פגישה</Label>
             <Select
-              value={formData.session_type_id?.toString() || ''}
+              value={formData.session_type_id ? formData.session_type_id.toString() : undefined}
               onValueChange={(value) => handleSelectChange('session_type_id', value)}
             >
               <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
@@ -256,7 +255,7 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
               </SelectTrigger>
               <SelectContent>
                 {isLoadingSessionTypes ? (
-                  <SelectItem value="" disabled>טוען...</SelectItem>
+                  <div className="py-2 px-4 text-sm text-muted-foreground">טוען...</div>
                 ) : (
                   sessionTypes?.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>

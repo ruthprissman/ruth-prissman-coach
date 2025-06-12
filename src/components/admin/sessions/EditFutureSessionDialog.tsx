@@ -279,7 +279,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
           <div className="space-y-2">
             <Label className="text-purple-700">סוג פגישה</Label>
             <Select
-              value={formData.session_type_id?.toString() || ''}
+              value={formData.session_type_id ? formData.session_type_id.toString() : undefined}
               onValueChange={(value) => handleSelectChange('session_type_id', value)}
             >
               <SelectTrigger className="border-purple-200">
@@ -287,7 +287,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
               </SelectTrigger>
               <SelectContent>
                 {isLoadingSessionTypes ? (
-                  <SelectItem value="" disabled>טוען...</SelectItem>
+                  <div className="py-2 px-4 text-sm text-muted-foreground">טוען...</div>
                 ) : (
                   sessionTypes?.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
