@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { FutureSession } from '@/types/session';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { convertLocalToUTC } from '@/utils/dateUtils';
+import { useSessionTypes } from '@/hooks/useSessionTypes';
 
 import {
   Dialog,
@@ -49,6 +50,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
   onUpdated,
 }) => {
   const { toast } = useToast();
+  const { data: sessionTypes, isLoading: isLoadingSessionTypes } = useSessionTypes();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState<string>('');
@@ -56,11 +58,13 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
   const [formData, setFormData] = useState<{
     session_date: string;
     meeting_type: 'Zoom' | 'Phone' | 'In-Person';
+    session_type_id: number | null;
     status: 'Scheduled' | 'Completed' | 'Cancelled';
     zoom_link: string;
   }>({
     session_date: '',
     meeting_type: 'Zoom',
+    session_type_id: null,
     status: 'Scheduled',
     zoom_link: '',
   });
@@ -84,6 +88,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
         setFormData({
           session_date: session.session_date,
           meeting_type: session.meeting_type,
+          session_type_id: session.session_type_id || null,
           status: session.status,
           zoom_link: session.zoom_link || '',
         });
@@ -110,7 +115,11 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'session_type_id') {
+      setFormData((prev) => ({ ...prev, [name]: value ? Number(value) : null }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,6 +185,7 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
         .update({
           session_date: isoDate,
           meeting_type: formData.meeting_type,
+          session_type_id: formData.session_type_id,
           status: formData.status,
           zoom_link: formData.meeting_type === 'Zoom' ? formData.zoom_link : null,
         })
@@ -262,6 +272,29 @@ const EditFutureSessionDialog: React.FC<EditFutureSessionDialogProps> = ({
                 <SelectItem value="Zoom">זום</SelectItem>
                 <SelectItem value="Phone">טלפון</SelectItem>
                 <SelectItem value="In-Person">פגישה פרונטית</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-purple-700">סוג פגישה</Label>
+            <Select
+              value={formData.session_type_id?.toString() || ''}
+              onValueChange={(value) => handleSelectChange('session_type_id', value)}
+            >
+              <SelectTrigger className="border-purple-200">
+                <SelectValue placeholder="בחר סוג פגישה" />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingSessionTypes ? (
+                  <SelectItem value="" disabled>טוען...</SelectItem>
+                ) : (
+                  sessionTypes?.map((type) => (
+                    <SelectItem key={type.id} value={type.id.toString()}>
+                      {type.name} ({type.duration_minutes} דקות)
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -8,6 +9,7 @@ import { Patient } from '@/types/patient';
 import { FutureSession } from '@/types/session';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { convertLocalToUTC } from '@/utils/dateUtils';
+import { useSessionTypes } from '@/hooks/useSessionTypes';
 
 import {
   Dialog,
@@ -55,6 +57,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   onDeleteFutureSession,
 }) => {
   const { toast } = useToast();
+  const { data: sessionTypes, isLoading: isLoadingSessionTypes } = useSessionTypes();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [exercises, setExercises] = useState<{ id: number; name: string }[]>([]);
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
@@ -69,6 +72,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   const [formData, setFormData] = useState<NewHistoricalSessionFormData>({
     session_date: fromFutureSession ? new Date(fromFutureSession.session_date) : new Date(),
     meeting_type: fromFutureSession?.meeting_type || 'Zoom',
+    session_type_id: fromFutureSession?.session_type_id || null,
     summary: '',
     sent_exercises: false,
     exercise_list: [],
@@ -137,6 +141,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
           ...prev,
           session_date: sessionDate,
           meeting_type: fromFutureSession.meeting_type,
+          session_type_id: fromFutureSession.session_type_id || null,
         }));
       } else {
         // Reset form for new session
@@ -148,6 +153,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
         setFormData({
           session_date: now,
           meeting_type: 'Zoom',
+          session_type_id: null,
           summary: '',
           sent_exercises: false,
           exercise_list: [],
@@ -185,7 +191,11 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'session_type_id') {
+      setFormData((prev) => ({ ...prev, [name]: value ? Number(value) : null }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
     
     // Reset payment_date if payment_status is "pending"
     if (name === 'payment_status' && value === 'pending') {
@@ -282,6 +292,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
         patient_id: patientId,
         session_date: isoDate,
         meeting_type: formData.meeting_type,
+        session_type_id: formData.session_type_id,
         summary: formData.summary,
         sent_exercises: formData.sent_exercises,
         exercise_list: formData.sent_exercises ? formData.exercise_list : [],
@@ -380,6 +391,29 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
                 <SelectItem value="Zoom">זום</SelectItem>
                 <SelectItem value="Phone">טלפון</SelectItem>
                 <SelectItem value="In-Person">פגישה פרונטית</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-purple-700">סוג פגישה</Label>
+            <Select
+              value={formData.session_type_id?.toString() || ''}
+              onValueChange={(value) => handleSelectChange('session_type_id', value)}
+            >
+              <SelectTrigger className="border-purple-200">
+                <SelectValue placeholder="בחר סוג פגישה" />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingSessionTypes ? (
+                  <SelectItem value="" disabled>טוען...</SelectItem>
+                ) : (
+                  sessionTypes?.map((type) => (
+                    <SelectItem key={type.id} value={type.id.toString()}>
+                      {type.name} ({type.duration_minutes} דקות)
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
