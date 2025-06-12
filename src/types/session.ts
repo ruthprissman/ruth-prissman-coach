@@ -1,5 +1,4 @@
 
-
 import { Patient, Session } from './patient';
 
 export interface SessionWithPatient extends Session {
@@ -11,6 +10,7 @@ export interface FutureSession {
   patient_id: number | null;
   session_date: string; // timestamp without time zone
   meeting_type: 'Zoom' | 'Phone' | 'In-Person';
+  session_type_id?: number | null; // New field for session type
   status: 'Scheduled' | 'Completed' | 'Cancelled';
   zoom_link?: string;
   created_at?: string;
@@ -26,6 +26,7 @@ export interface ClientStatistics {
 export interface NewFutureSessionFormData {
   session_date: Date;
   meeting_type: 'Zoom' | 'Phone' | 'In-Person';
+  session_type_id?: number | null; // New field
   status: 'Scheduled' | 'Completed' | 'Cancelled';
   zoom_link?: string;
 }
@@ -33,6 +34,7 @@ export interface NewFutureSessionFormData {
 export interface NewSessionFormData {
   session_date: Date;
   meeting_type: 'Zoom' | 'Phone' | 'In-Person';
+  session_type_id?: number | null; // New field
   summary: string | null;
   sent_exercises: boolean;
   exercise_list: string[] | null;
@@ -46,6 +48,7 @@ export interface NewSessionFormData {
 export interface NewHistoricalSessionFormData {
   session_date: Date;
   meeting_type: 'Zoom' | 'Phone' | 'In-Person';
+  session_type_id?: number | null; // New field
   summary: string | null;
   sent_exercises: boolean;
   exercise_list: string[] | null;
@@ -55,4 +58,3 @@ export interface NewHistoricalSessionFormData {
   payment_date: Date | null;
   payment_notes: string | null;
 }
-

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, Clock, Plus } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { usePatients } from '@/hooks/usePatients';
+import { useSessionTypes, getDefaultSessionType, getSessionTypeDuration } from '@/hooks/useSessionTypes';
 import { useQueryClient } from '@tanstack/react-query';
 import AddPatientDialog from '@/components/admin/AddPatientDialog';
 import { Patient } from '@/types/patient';
@@ -21,7 +23,8 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
   const [isCreating, setIsCreating] = useState(false);
   const [addPatientDialogOpen, setAddPatientDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
-    meetingType: 'טלפון', // Set default meeting type
+    meetingType: 'טלפון',
+    sessionTypeId: getDefaultSessionType().id.toString(), // New field with default
     meetingWith: '',
     customMeetingWith: '',
     subject: '',
@@ -32,6 +35,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
   });
 
   const { data: patients = [], isLoading: isLoadingPatients } = usePatients();
+  const { data: sessionTypes = [], isLoading: isLoadingSessionTypes } = useSessionTypes();
   const queryClient = useQueryClient();
 
   // Auto-generate title and end time based on selections
@@ -45,11 +49,12 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
         if (selectedPatient) {
           newSubject = `פגישה עם ${selectedPatient.name}`;
           
-          // Auto-calculate end time (1.5 hours later) for client meetings
-          if (formData.startTime) {
+          // Auto-calculate end time based on session type duration
+          if (formData.startTime && formData.sessionTypeId) {
             const [hours, minutes] = formData.startTime.split(':').map(Number);
             const startMinutes = hours * 60 + minutes;
-            const endMinutes = startMinutes + 90; // 1.5 hours = 90 minutes
+            const duration = getSessionTypeDuration(parseInt(formData.sessionTypeId), sessionTypes);
+            const endMinutes = startMinutes + duration;
             const endHours = Math.floor(endMinutes / 60);
             const remainingMinutes = endMinutes % 60;
             newEndTime = `${endHours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}`;
@@ -65,7 +70,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
       subject: newSubject,
       ...(newEndTime && formData.meetingType !== 'אחר' ? { endTime: newEndTime } : {})
     }));
-  }, [formData.meetingType, formData.meetingWith, formData.customMeetingWith, formData.startTime, patients]);
+  }, [formData.meetingType, formData.meetingWith, formData.customMeetingWith, formData.startTime, formData.sessionTypeId, patients, sessionTypes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,10 +124,12 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
       const startDateTime = `${formData.date}T${formData.startTime}:00`;
       const endDateTime = `${formData.date}T${formData.endTime}:00`;
       
-      // Create description based on meeting type
+      // Create description based on meeting type and session type
       let description = formData.description;
       if (formData.meetingType !== 'אחר') {
-        description = `סוג פגישה: ${formData.meetingType}\n${formData.description || ''}`.trim();
+        const selectedSessionType = sessionTypes.find(type => type.id.toString() === formData.sessionTypeId);
+        const sessionTypeText = selectedSessionType ? selectedSessionType.name : 'פגישה רגילה';
+        description = `סוג פגישה: ${formData.meetingType}\nסוג טיפול: ${sessionTypeText}\n${formData.description || ''}`.trim();
       }
       
       console.log('📝 FORM_DEBUG: Calling onCreateEvent with:', {
@@ -145,7 +152,8 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
         console.log('📝 FORM_DEBUG: Event created successfully, resetting form');
         // Reset form
         setFormData({
-          meetingType: 'טלפון', // Reset to default
+          meetingType: 'טלפון',
+          sessionTypeId: getDefaultSessionType().id.toString(), // Reset to default
           meetingWith: '',
           customMeetingWith: '',
           subject: '',
@@ -241,36 +249,58 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
             </div>
 
             {formData.meetingType !== 'אחר' && (
-              <div>
-                <Label htmlFor="meetingWith">פגישה עם *</Label>
-                <div className="flex gap-2">
+              <>
+                <div>
+                  <Label htmlFor="sessionType">סוג טיפול *</Label>
                   <Select 
-                    value={formData.meetingWith} 
-                    onValueChange={(value) => handleInputChange('meetingWith', value)}
-                    disabled={isLoadingPatients}
+                    value={formData.sessionTypeId} 
+                    onValueChange={(value) => handleInputChange('sessionTypeId', value)}
+                    disabled={isLoadingSessionTypes}
                   >
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder={isLoadingPatients ? "טוען לקוחות..." : "בחר לקוח"} />
+                    <SelectTrigger>
+                      <SelectValue placeholder={isLoadingSessionTypes ? "טוען סוגי טיפול..." : "בחר סוג טיפול"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {patients.map((patient) => (
-                        <SelectItem key={patient.id} value={patient.id.toString()}>
-                          {patient.name}
+                      {sessionTypes.map((sessionType) => (
+                        <SelectItem key={sessionType.id} value={sessionType.id.toString()}>
+                          {sessionType.name} ({sessionType.duration_minutes} דקות)
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setAddPatientDialogOpen(true)}
-                    className="shrink-0"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
                 </div>
-              </div>
+
+                <div>
+                  <Label htmlFor="meetingWith">פגישה עם *</Label>
+                  <div className="flex gap-2">
+                    <Select 
+                      value={formData.meetingWith} 
+                      onValueChange={(value) => handleInputChange('meetingWith', value)}
+                      disabled={isLoadingPatients}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder={isLoadingPatients ? "טוען לקוחות..." : "בחר לקוח"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {patients.map((patient) => (
+                          <SelectItem key={patient.id} value={patient.id.toString()}>
+                            {patient.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setAddPatientDialogOpen(true)}
+                      className="shrink-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
 
             {formData.meetingType === 'אחר' && (

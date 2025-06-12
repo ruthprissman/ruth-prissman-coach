@@ -21,6 +21,7 @@ export interface Session {
   patient_id: number;
   session_date: string;
   meeting_type: 'Zoom' | 'Phone' | 'In-Person';
+  session_type_id?: number | null; // New field for session type
   summary?: string | null;
   sent_exercises: boolean;
   exercise_list?: string[] | null;
