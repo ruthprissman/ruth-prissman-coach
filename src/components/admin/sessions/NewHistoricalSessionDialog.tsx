@@ -381,7 +381,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
           <div className="space-y-2">
             <Label className="text-purple-700">סוג פגישה</Label>
             <Select
-              value={formData.meeting_type}
+              value={formData.meeting_type || ''}
               onValueChange={(value) => handleSelectChange('meeting_type', value)}
             >
               <SelectTrigger className="border-purple-200">
@@ -485,7 +485,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
           <div className="space-y-2">
             <Label className="text-purple-700">סטטוס תשלום</Label>
             <Select
-              value={formData.payment_status}
+              value={formData.payment_status || ''}
               onValueChange={(value) => handleSelectChange('payment_status', value)}
             >
               <SelectTrigger className="border-purple-200">
