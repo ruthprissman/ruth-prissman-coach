@@ -86,12 +86,27 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     const fetchExercises = async () => {
       try {
         const supabase = supabaseClient();
-        const { data, error } = await supabase
+        // Try to fetch with 'name' column first, if it fails, try 'exercise_name'
+        let { data, error } = await supabase
           .from('exercises')
           .select('id, name')
           .order('name');
           
-        if (error) throw error;
+        if (error && error.code === '42703') {
+          // Column 'name' doesn't exist, try 'exercise_name'
+          const { data: exerciseData, error: exerciseError } = await supabase
+            .from('exercises')
+            .select('id, exercise_name')
+            .order('exercise_name');
+            
+          if (exerciseError) throw exerciseError;
+          
+          // Map exercise_name to name for consistency
+          data = exerciseData?.map(ex => ({ id: ex.id, name: ex.exercise_name })) || [];
+        } else if (error) {
+          throw error;
+        }
+        
         setExercises(data || []);
       } catch (error) {
         console.error('Error fetching exercises:', error);
@@ -139,7 +154,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
         setFormData(prev => ({
           ...prev,
           session_date: sessionDate,
-          meeting_type: fromFutureSession.meeting_type,
+          meeting_type: fromFutureSession.meeting_type || 'Zoom',
           session_type_id: fromFutureSession.session_type_id || null,
         }));
       } else {
@@ -405,7 +420,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
               </SelectTrigger>
               <SelectContent>
                 {isLoadingSessionTypes ? (
-                  <SelectItem value="" disabled>טוען...</SelectItem>
+                  <SelectItem value="loading" disabled>טוען...</SelectItem>
                 ) : (
                   sessionTypes?.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
