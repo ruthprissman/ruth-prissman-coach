@@ -27,7 +27,7 @@ import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { addFutureSessionToGoogleCalendar } from '@/utils/googleCalendarUtils';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.21";
+const COMPONENT_VERSION = "1.0.22";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -362,7 +362,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     navigate(`/admin/sessions?search=${encodeURIComponent(clientName)}`);
   };
 
-  // Render action icons for work meetings - Updated to show icons for all meetings including past ones
+  // Render action icons for work meetings - UPDATED to show ALL icons for ALL work meetings
   const renderActionIcons = (slot: CalendarSlot, date: string) => {
     // First check if this is a work meeting
     const isWorkMeetingSlot = isWorkMeeting(slot);
@@ -381,10 +381,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     console.log(`ICON_DEBUG: Rendering action icons for meeting on ${date} at ${slot.hour}`);
     console.log(`ICON_DEBUG: Meeting flags - fromGoogle: ${slot.fromGoogle}, fromFutureSession: ${slot.fromFutureSession}, inGoogleCalendar: ${slot.inGoogleCalendar}`);
     console.log(`ICON_DEBUG: Meeting notes: "${slot.notes || 'undefined'}", isPastMeeting: ${isPastMeeting}`);
+    console.log(`ICON_DEBUG: Will show delete button: ${!!slot.fromFutureSession}, Will show update button: true`);
     
     return (
       <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        {/* Update button - always shown for all meetings */}
+        {/* Update button - always shown for all work meetings */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button 
@@ -402,7 +403,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </TooltipContent>
         </Tooltip>
         
-        {/* Show delete button for any meeting that has a future session entry (regardless of Google Calendar status) */}
+        {/* Delete button - show for ALL meetings that have a future session entry */}
         {slot.fromFutureSession && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -423,7 +424,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </Tooltip>
         )}
         
-        {/* Show "Add to Google Calendar" button for future sessions that aren't in Google Calendar (including past ones) */}
+        {/* Show "Add to Google Calendar" button for future sessions that aren't in Google Calendar */}
         {slot.fromFutureSession && !slot.inGoogleCalendar && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -521,7 +522,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const { bg, text, colorClass, borderColor } = getStatusStyle(slot);
     const isWorkMeetingSlot = isWorkMeeting(slot);
     
-    console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering cell ${day} ${hour}, isWorkMeeting: ${isWorkMeetingSlot}, status: ${slot.status}`);
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering cell ${day} ${hour}, isWorkMeeting: ${isWorkMeetingSlot}, status: ${slot.status}, fromFutureSession: ${slot.fromFutureSession}`);
     
     return (
       <div 
@@ -534,10 +535,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </div>
         )}
         
-        {/* Only show action icons for work meetings, and only in the first hour of multi-hour events */}
+        {/* Show action icons for work meetings, and only in the first hour of multi-hour events */}
         {(!slot.isPartialHour || slot.isFirstHour) && renderActionIcons(slot, day)}
         
-        {/* ... keep existing code (rendering partial hour events and other cell content) */}
+        {/* Render partial hour events and other cell content */}
         {slot.isPartialHour ? (
           renderPartialHourEvent(slot)
         ) : slot.fromGoogle || slot.fromFutureSession || (slot.notes && slot.status === 'booked') ? (
