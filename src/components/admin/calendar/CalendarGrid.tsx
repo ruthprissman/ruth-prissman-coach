@@ -257,17 +257,34 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Handle delete future session
   const handleDeleteFutureSession = (slot: CalendarSlot) => {
-    console.log(`DELETE_DEBUG: Delete session requested for future session:`, slot.futureSession);
-    if (slot.futureSession?.id) {
+    // Add detailed log for debug
+    console.log(`DELETE_DEBUG: Trying to delete! Slot:`, slot);
+    console.log('DELETE_DEBUG: slot.futureSession:', slot.futureSession);
+    console.log('DELETE_DEBUG: slot.fromFutureSession:', slot.fromFutureSession, 'slot.fromGoogle:', slot.fromGoogle);
+
+    // Case 1: Booked from DB (future session)
+    if (slot.fromFutureSession && slot.futureSession?.id) {
       setMeetingToDelete(slot.futureSession);
       setDeleteDialogOpen(true);
-    } else {
+      return;
+    }
+
+    // Case 2: Google Calendar event only, can't delete from app
+    if (slot.fromGoogle && !slot.fromFutureSession) {
       toast({
-        title: "שגיאה",
-        description: "לא ניתן למחוק את הפגישה, חסר מזהה",
+        title: "מחיקה דרך Google Calendar בלבד",
+        description: "פגישה זו מקורה ביומן Google בלבד ולא ניתן למחוק אותה מפה. מחיקה יש לבצע דרך היומן.",
         variant: "destructive"
       });
+      return;
     }
+
+    // Case 3: If neither, or missing id
+    toast({
+      title: "שגיאה",
+      description: "לא ניתן למחוק את הפגישה - חסר מזהה או מקור לא מזוהה. ראה לוג בדפדפן.",
+      variant: "destructive"
+    });
   };
 
   // Confirm delete future session
