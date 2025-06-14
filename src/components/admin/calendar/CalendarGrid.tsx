@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -363,7 +362,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     navigate(`/admin/sessions?search=${encodeURIComponent(clientName)}`);
   };
 
-  // Render action icons for work meetings - Updated to include "Add to Google Calendar" icon
+  // Render action icons for work meetings - Updated to show icons for all meetings including past ones
   const renderActionIcons = (slot: CalendarSlot, date: string) => {
     // First check if this is a work meeting
     const isWorkMeetingSlot = isWorkMeeting(slot);
@@ -403,7 +402,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </TooltipContent>
         </Tooltip>
         
-        {/* Show delete button for any future session, even if it's in the past */}
+        {/* Show delete button for any future session, including past ones */}
         {slot.fromFutureSession && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -424,7 +423,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </Tooltip>
         )}
         
-        {/* NEW: Show "Add to Google Calendar" button for future sessions that aren't in Google Calendar */}
+        {/* Show "Add to Google Calendar" button for future sessions that aren't in Google Calendar (including past ones) */}
         {slot.fromFutureSession && !slot.inGoogleCalendar && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -445,7 +444,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </Tooltip>
         )}
         
-        {/* Show "Add to DB" button for Google Calendar events that aren't already in the database */}
+        {/* Show "Add to DB" button for Google Calendar events that aren't already in the database (only for future meetings) */}
         {!isPastMeeting && slot.fromGoogle && !slot.fromFutureSession && (
           <Tooltip>
             <TooltipTrigger asChild>
