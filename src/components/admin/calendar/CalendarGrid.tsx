@@ -236,7 +236,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
-    console.log(`LOV_DEBUG_CALENDAR_GRID: Debug mode ${!debugMode ? 'enabled' : 'disabled}`);
+    console.log(`LOV_DEBUG_CALENDAR_GRID: Debug mode ${!debugMode ? 'enabled' : 'disabled'}`);
     if (!debugMode) {
       calendarData.forEach((dayMap, date) => {
         dayMap.forEach((slot, hour) => {
