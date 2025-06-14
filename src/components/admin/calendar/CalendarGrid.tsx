@@ -257,34 +257,37 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Handle delete future session
   const handleDeleteFutureSession = (slot: CalendarSlot) => {
-    // Add detailed log for debug
-    console.log(`DELETE_DEBUG: Trying to delete! Slot:`, slot);
-    console.log('DELETE_DEBUG: slot.futureSession:', slot.futureSession);
-    console.log('DELETE_DEBUG: slot.fromFutureSession:', slot.fromFutureSession, 'slot.fromGoogle:', slot.fromGoogle);
+    // לוגים מפורטים לכל מקרה
+    console.log("DELETE_DEBUG: Slot Received:", slot);
+    console.log("DELETE_DEBUG: slot.futureSession:", slot.futureSession);
+    console.log("DELETE_DEBUG: slot.fromFutureSession:", slot.fromFutureSession, "slot.fromGoogle:", slot.fromGoogle);
 
-    // Case 1: Booked from DB (future session)
+    // ניתן למחוק רק אם קיים futureSession.id
     if (slot.fromFutureSession && slot.futureSession?.id) {
       setMeetingToDelete(slot.futureSession);
       setDeleteDialogOpen(true);
+      console.log("DELETE_DEBUG: Opened Modal for DB futureSession id", slot.futureSession.id);
       return;
     }
 
-    // Case 2: Google Calendar event only, can't delete from app
+    // אם זה Google בלבד - אין אפשרות למחוק מפה
     if (slot.fromGoogle && !slot.fromFutureSession) {
       toast({
         title: "מחיקה דרך Google Calendar בלבד",
-        description: "פגישה זו מקורה ביומן Google בלבד ולא ניתן למחוק אותה מפה. מחיקה יש לבצע דרך היומן.",
+        description: "פגישה זו מקורה ביומן Google בלבד, לא ניתן למחוק אותה כאן. מחיקה יש לעשות דרך היומן.",
         variant: "destructive"
       });
+      console.log("DELETE_DEBUG: Toast for Google Calendar only event");
       return;
     }
-
-    // Case 3: If neither, or missing id
+    
+    // כל מקרה אחר: אין מזהה/לא מזוהה
     toast({
       title: "שגיאה",
       description: "לא ניתן למחוק את הפגישה - חסר מזהה או מקור לא מזוהה. ראה לוג בדפדפן.",
       variant: "destructive"
     });
+    console.log("DELETE_DEBUG: Error - missing id or unknown source for slot", slot);
   };
 
   // Confirm delete future session
@@ -292,9 +295,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     if (!meetingToDelete?.id) {
       toast({
         title: "שגיאה",
-        description: "לא ניתן למחוק את הפגישה, חסר מזהה",
+        description: "לא ניתן למחוק את הפגישה, חסר מזהה ב-meetingToDelete",
         variant: "destructive"
       });
+      console.log("DELETE_DEBUG: Tried deleting with missing id", meetingToDelete);
       return;
     }
 
@@ -311,6 +315,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         title: "הפגישה נמחקה בהצלחה",
         description: "הפגישה נמחקה ממסד הנתונים",
       });
+      console.log("DELETE_DEBUG: Meeting deleted successfully", meetingToDelete.id);
       
       // Force refresh to update the calendar
       handleForceRefresh();
@@ -322,6 +327,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         description: error.message,
         variant: "destructive"
       });
+      console.log("DELETE_DEBUG: Error from Supabase", error);
     }
   };
 
