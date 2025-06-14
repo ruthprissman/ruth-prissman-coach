@@ -45,21 +45,49 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
   const { data: patients = [], isLoading: isLoadingPatients } = usePatients();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ניהול בחירת לקוח, ותמיכה ב-clientId ראשוני אם יש
+  // ניהול בחירת לקוח
   const [selectedClientId, setSelectedClientId] = useState<number | null>(initialClientId || null);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [selectedSessionTypeId, setSelectedSessionTypeId] = useState<number | null>(null);
 
+  // פונקציה שמנסה לשלוף את שם הלקוח מתוך summary
+  function guessClientFromGoogleEvent(summary: string | undefined, patientsList: Patient[]): number | null {
+    if (!summary || !Array.isArray(patientsList)) return null;
+    // מחפש "פגישה עם"
+    const prefix = "פגישה עם";
+    if (summary.startsWith(prefix)) {
+      const nameGuess = summary.replace(prefix, '').trim();
+      if (!nameGuess) return null;
+      // השוואת שם מדוייקת/חלקית מימין-לשמאל
+      const found = patientsList.find(
+        p => p.name.trim() === nameGuess ||
+        p.name.trim().includes(nameGuess) ||
+        nameGuess.includes(p.name.trim())
+      );
+      return found ? found.id : null;
+    }
+    return null;
+  }
+
   useEffect(() => {
     if (open) {
-      setSelectedClientId(initialClientId || null);
-      // נאתחל את סוג הפגישה לברירת מחדל
+      let newClientId: number | null = initialClientId || null;
+      // ננסה לנחש מתוך השם של האירוע, רק אם עוד לא נבחר לקוח התחלתי
+      if (!initialClientId && googleEvent?.summary && patients.length > 0) {
+        const guessed = guessClientFromGoogleEvent(googleEvent.summary, patients);
+        if (guessed) {
+          newClientId = guessed;
+        }
+      }
+      setSelectedClientId(newClientId);
+      // נאתחל את סוג הפגישה
       if (sessionTypes && sessionTypes.length > 0) {
         const defaultType = sessionTypes.find(type => type.is_default) || sessionTypes[0];
         setSelectedSessionTypeId(defaultType.id);
       }
     }
-  }, [open, initialClientId, sessionTypes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialClientId, sessionTypes, googleEvent, patients]);
 
   useEffect(() => {
     if (selectedClientId) {
