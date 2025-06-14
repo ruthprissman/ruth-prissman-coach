@@ -402,14 +402,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </TooltipContent>
         </Tooltip>
         
-        {/* Show delete button for any future session, including past ones */}
+        {/* Show delete button for any meeting that has a future session entry (regardless of Google Calendar status) */}
         {slot.fromFutureSession && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log(`ICON_DEBUG: Delete button clicked for future session, isPastMeeting: ${isPastMeeting}`);
+                  console.log(`ICON_DEBUG: Delete button clicked for future session, isPastMeeting: ${isPastMeeting}, inGoogleCalendar: ${slot.inGoogleCalendar}`);
                   handleDeleteFutureSession(slot);
                 }}
                 className="bg-white p-1 rounded-full shadow hover:bg-red-50"
