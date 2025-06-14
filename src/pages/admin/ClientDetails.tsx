@@ -19,7 +19,7 @@ import NewHistoricalSessionDialog from '@/components/admin/sessions/NewHistorica
 import EditFutureSessionDialog from '@/components/admin/sessions/EditFutureSessionDialog';
 import ClientStatisticsCard from '@/components/admin/ClientStatisticsCard';
 import ClientInfoCard from '@/components/admin/ClientInfoCard';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { Patient, Session } from '@/types/patient';
 import { FutureSession, ClientStatistics } from '@/types/session';
@@ -101,11 +101,13 @@ const ClientDetails: React.FC = () => {
       if (sessionsError) throw sessionsError;
       setSessions(sessionsData || []);
 
-      // Fetch future sessions
+      // Fetch future sessions including past week
+      const oneWeekAgo = subDays(new Date(), 7);
       const { data: futureSessionsData, error: futureSessionsError } = await supabase
         .from('future_sessions')
         .select('*')
         .eq('patient_id', id)
+        .gte('session_date', oneWeekAgo.toISOString())
         .order('session_date', { ascending: true });
 
       if (futureSessionsError) throw futureSessionsError;
@@ -343,6 +345,10 @@ const ClientDetails: React.FC = () => {
 
   const outstandingBalance = calculateOutstandingBalance();
 
+  const isPastSession = (sessionDate: string) => {
+    return new Date(sessionDate) < new Date();
+  };
+
   if (isLoading) {
     return (
       <AdminLayout title="פרטי לקוח">
@@ -512,7 +518,22 @@ const ClientDetails: React.FC = () => {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" dir="rtl">
                     {futureSessions.map((session) => (
-                      <div key={session.id} className="p-4 rounded-lg border border-purple-200 bg-purple-50 relative">
+                      <div 
+                        key={session.id} 
+                        className={`p-4 rounded-lg border relative ${
+                          isPastSession(session.session_date) 
+                            ? 'border-orange-200 bg-orange-50' 
+                            : 'border-purple-200 bg-purple-50'
+                        }`}
+                      >
+                        {isPastSession(session.session_date) && (
+                          <div className="absolute top-1 left-1">
+                            <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300 text-xs">
+                              עבר
+                            </Badge>
+                          </div>
+                        )}
+                        
                         <div className="absolute top-2 right-2 flex gap-1">
                           <button
                             onClick={() => handleEditFutureSession(session)}
@@ -535,7 +556,11 @@ const ClientDetails: React.FC = () => {
                         </div>
                         
                         <div className="mt-6">
-                          <div className="font-medium text-purple-800 mb-2">
+                          <div className={`font-medium mb-2 ${
+                            isPastSession(session.session_date) 
+                              ? 'text-orange-800' 
+                              : 'text-purple-800'
+                          }`}>
                             {formatDate(session.session_date)}
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
