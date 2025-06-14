@@ -15,7 +15,7 @@ import {
 } from '@/utils/calendarDataFetching';
 
 // Version identifier for debugging
-const COMPONENT_VERSION = "1.0.2";
+const COMPONENT_VERSION = "1.0.1";
 
 export function useCalendarData(
   currentDate: Date,
@@ -41,18 +41,6 @@ export function useCalendarData(
       ]);
       
       console.log(`LOV_DEBUG_CALENDAR_DATA: Received availability slots: ${availableSlots.length}, booked slots: ${bookedSlots.length}`);
-
-      // DEBUG: Log details of booked slots to understand structure
-      console.log(`FUTURE_SESSION_DEBUG: Booked slots received:`, bookedSlots);
-      bookedSlots.forEach((slot, index) => {
-        console.log(`FUTURE_SESSION_DEBUG: Slot ${index}:`, {
-          id: slot.id,
-          patient_id: slot.patient_id,
-          session_date: slot.session_date,
-          patient_name: slot.patients?.name,
-          meeting_type: slot.meeting_type
-        });
-      });
 
       console.log('LOV_DEBUG_CALENDAR_DATA: Generating calendar data');
       let newCalendarData = generateEmptyCalendarData(currentDate);
@@ -87,14 +75,14 @@ export function useCalendarData(
           });
         });
         
-        // Process Google Calendar events FIRST
+        // Process Google Calendar events
         newCalendarData = processGoogleEvents(newCalendarData, googleEvents, days);
         
         // Create Google events map for future sessions processing
         const googleEventsMap = createGoogleEventsMap(googleEvents);
         console.log(`LOV_DEBUG_CALENDAR_DATA: Created Google events map with ${googleEventsMap.size} entries`);
         
-        // Process future sessions AFTER Google events - this is critical for proper flagging
+        // Process future sessions
         console.log(`LOV_DEBUG_CALENDAR_DATA: Processing future sessions with Google Calendar integration`);
         newCalendarData = processFutureSessions(newCalendarData, bookedSlots, googleEventsMap);
       } else {
@@ -111,7 +99,6 @@ export function useCalendarData(
       let availableCount = 0;
       let bookedCount = 0;
       let googleCount = 0;
-      let futureSessionsCount = 0;
       
       newCalendarData.forEach((dayMap, date) => {
         dayMap.forEach((slot, hour) => {
@@ -119,17 +106,6 @@ export function useCalendarData(
           if (slot.status === 'available') availableCount++;
           if (slot.status === 'booked') bookedCount++;
           if (slot.fromGoogle) googleCount++;
-          if (slot.fromFutureSession) futureSessionsCount++;
-          
-          // Log specific debug info for future sessions
-          if (slot.fromFutureSession) {
-            console.log(`FUTURE_SESSION_DEBUG: Found future session at ${date} ${hour}:`, {
-              notes: slot.notes,
-              fromFutureSession: slot.fromFutureSession,
-              inGoogleCalendar: slot.inGoogleCalendar,
-              futureSession: slot.futureSession
-            });
-          }
         });
       });
       
@@ -137,8 +113,7 @@ export function useCalendarData(
         Total slots: ${totalSlots}, 
         Available: ${availableCount}, 
         Booked: ${bookedCount}, 
-        Google events: ${googleCount},
-        Future sessions: ${futureSessionsCount}`
+        Google events: ${googleCount}`
       );
       
       setCalendarData(newCalendarData);
