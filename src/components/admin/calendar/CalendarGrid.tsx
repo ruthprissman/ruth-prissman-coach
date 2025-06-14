@@ -656,6 +656,45 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     return currentTime.date === date && currentTime.hour === hourStr;
   };
 
+  // --- ADD: Handler to open delete dialog for Google event (sets state) ---
+  const handleDeleteGoogleEvent = (slot: CalendarSlot) => {
+    if (slot.googleEvent) {
+      setGoogleEventToDelete(slot.googleEvent);
+      setDeleteGoogleEventDialogOpen(true);
+    }
+  };
+
+  // --- ADD: Handler to confirm deletion of Google event ---
+  const confirmDeleteGoogleEvent = async () => {
+    if (!googleEventToDelete?.id) {
+      toast({
+        title: "שגיאה",
+        description: "לא ניתן למחוק את האירוע, חסר מזהה",
+        variant: "destructive"
+      });
+      setDeleteGoogleEventDialogOpen(false);
+      return;
+    }
+    try {
+      await deleteEvent(googleEventToDelete.id);
+      toast({
+        title: "האירוע נמחק מיומן Google",
+        description: "האירוע נמחק בהצלחה מהיומן",
+      });
+      setDeleteGoogleEventDialogOpen(false);
+      setGoogleEventToDelete(null);
+      handleForceRefresh();
+    } catch (error: any) {
+      toast({
+        title: "שגיאה",
+        description: error.message || "שגיאה במחיקת האירוע מגוגל",
+        variant: "destructive"
+      });
+      setDeleteGoogleEventDialogOpen(false);
+      setGoogleEventToDelete(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-2">

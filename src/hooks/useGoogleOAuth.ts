@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '@/lib/supabaseClient';
 
@@ -248,12 +247,49 @@ export const useGoogleOAuth = () => {
     }
   };
 
+  // Add function to delete a Google Calendar event by ID
+  const deleteEvent = async (eventId: string): Promise<void> => {
+    try {
+      const token = await getCurrentAccessToken();
+      if (!token) {
+        throw new Error('לא מחובר ליומן Google - נדרשת התחברות מחדש');
+      }
+      const response = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events/${eventId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      if (!response.ok) {
+        if (response.status === 401) {
+          setState(prev => ({
+            ...prev,
+            isAuthenticated: false,
+            accessToken: null
+          }));
+          throw new Error('האימות מול Google פג תוקף - התחבר/י מחדש');
+        } else if (response.status === 403) {
+          throw new Error('אין הרשאות למחוק אירועים ביומן Google');
+        }
+        throw new Error(`שגיאה במחיקת אירוע: ${response.status}`);
+      }
+    } catch (error: any) {
+      console.error('❌ useGoogleOAuth: Event delete failed:', error);
+      throw error;
+    }
+  };
+
   return {
     ...state,
     signInWithGoogle,
     signOut,
     refreshAuth,
     createEvent,
+    deleteEvent,
     // Add aliases for compatibility
     isAuthenticating: state.isLoading,
     signIn: signInWithGoogle,
