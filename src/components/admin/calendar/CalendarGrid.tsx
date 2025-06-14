@@ -27,7 +27,7 @@ import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { addFutureSessionToGoogleCalendar } from '@/utils/googleCalendarUtils';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.23";
+const COMPONENT_VERSION = "1.0.24";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -362,7 +362,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     navigate(`/admin/sessions?search=${encodeURIComponent(clientName)}`);
   };
 
-  // Render action icons for work meetings - COMPLETELY REMOVED isPastMeeting check
+  // Render action icons for work meetings - FIXED LOGIC FOR CORRECT ICONS
   const renderActionIcons = (slot: CalendarSlot, date: string) => {
     // First check if this is a work meeting
     const isWorkMeetingSlot = isWorkMeeting(slot);
@@ -373,11 +373,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
     const clientName = extractClientName(slot.notes);
     
-    // Add detailed debugging logs with unique prefix for this issue
+    // Add detailed debugging logs with corrected logic
     console.log(`ICON_DEBUG: Rendering action icons for meeting on ${date} at ${slot.hour}`);
     console.log(`ICON_DEBUG: Meeting flags - fromGoogle: ${slot.fromGoogle}, fromFutureSession: ${slot.fromFutureSession}, inGoogleCalendar: ${slot.inGoogleCalendar}`);
     console.log(`ICON_DEBUG: Meeting notes: "${slot.notes || 'undefined'}"`);
-    console.log(`ICON_DEBUG: Will show delete button: ${!!slot.fromFutureSession}, Will show update button: true`);
+    
+    // Logic check: what icons should we show?
+    const shouldShowDeleteIcon = slot.fromFutureSession; // Show delete for any meeting in future sessions
+    const shouldShowAddToCalendarIcon = slot.fromFutureSession && !slot.inGoogleCalendar; // Show add to calendar only if in DB but not in Google
+    const shouldShowAddToDBIcon = slot.fromGoogle && !slot.fromFutureSession; // Show add to DB only if in Google but not in DB
+    
+    console.log(`ICON_DEBUG: Icon decisions - Delete: ${shouldShowDeleteIcon}, AddToCalendar: ${shouldShowAddToCalendarIcon}, AddToDB: ${shouldShowAddToDBIcon}`);
     
     return (
       <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -399,8 +405,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </TooltipContent>
         </Tooltip>
         
-        {/* Delete button - show for ALL meetings that have a future session entry (REMOVED isPastMeeting check) */}
-        {slot.fromFutureSession && (
+        {/* Delete button - show for ALL meetings that have a future session entry */}
+        {shouldShowDeleteIcon && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button 
@@ -421,7 +427,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         )}
         
         {/* Show "Add to Google Calendar" button for future sessions that aren't in Google Calendar */}
-        {slot.fromFutureSession && !slot.inGoogleCalendar && (
+        {shouldShowAddToCalendarIcon && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button 
@@ -441,8 +447,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </Tooltip>
         )}
         
-        {/* Show "Add to DB" button for Google Calendar events that aren't already in the database (only for future meetings) */}
-        {slot.fromGoogle && !slot.fromFutureSession && (
+        {/* Show "Add to DB" button for Google Calendar events that aren't already in the database */}
+        {shouldShowAddToDBIcon && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button 
