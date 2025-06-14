@@ -131,6 +131,19 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
     }
   }
 
+  // מחשב שעת סיום צפויה (אבל לא שולח למסד הנתונים – טריגר יתפוס)
+  const computeEndTimePreview = (start: string | undefined, durationMin: number) => {
+    if (!start) return null;
+    try {
+      const startDt = new Date(start);
+      const endDt = new Date(startDt.getTime() + durationMin * 60000);
+      // פורמט יפה להצגה
+      return format(endDt, 'dd/MM/yyyy HH:mm', { locale: he });
+    } catch {
+      return null;
+    }
+  };
+
   const handleSubmit = async () => {
     // Validation
     if (!googleEvent) {
@@ -202,6 +215,11 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
   const selectedSessionType = sessionTypes?.find(type => type.id === selectedSessionTypeId);
   const duration = selectedSessionType ? selectedSessionType.duration_minutes : 90;
 
+  // לחשב את שעת הסיום הנראית עבור התצוגה
+  const previewEndTime = googleEvent?.start?.dateTime && duration
+    ? computeEndTimePreview(googleDateTimeToIsraelISOString(googleEvent.start.dateTime), duration)
+    : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -218,6 +236,12 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
               <div className="font-medium">{googleEvent?.summary}</div>
               <div className="text-sm text-gray-600 mt-1">
                 {googleEvent?.start?.dateTime && formatEventDateTime(googleEvent.start.dateTime)}
+                {previewEndTime && (
+                  <>
+                    <span className="mx-2">—</span>
+                    <span>שעת סיום צפויה: {previewEndTime}</span>
+                  </>
+                )}
               </div>
               {selectedClientId && patient && (
                 <div className="text-sm text-purple-700 mt-1">

@@ -302,6 +302,7 @@ export type Database = {
       future_sessions: {
         Row: {
           created_at: string | null
+          end_time: string | null
           id: string
           meeting_type: string | null
           patient_id: number | null
@@ -313,6 +314,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          end_time?: string | null
           id?: string
           meeting_type?: string | null
           patient_id?: number | null
@@ -324,6 +326,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          end_time?: string | null
           id?: string
           meeting_type?: string | null
           patient_id?: number | null
