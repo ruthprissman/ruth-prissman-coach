@@ -27,7 +27,7 @@ import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { addFutureSessionToGoogleCalendar } from '@/utils/googleCalendarUtils';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.22";
+const COMPONENT_VERSION = "1.0.23";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -362,7 +362,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     navigate(`/admin/sessions?search=${encodeURIComponent(clientName)}`);
   };
 
-  // Render action icons for work meetings - UPDATED to show ALL icons for ALL work meetings
+  // Render action icons for work meetings - COMPLETELY REMOVED isPastMeeting check
   const renderActionIcons = (slot: CalendarSlot, date: string) => {
     // First check if this is a work meeting
     const isWorkMeetingSlot = isWorkMeeting(slot);
@@ -371,16 +371,12 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       return null;
     }
 
-    // Get meeting date to check if it's in the past
-    const meetingDate = new Date(date);
-    meetingDate.setHours(parseInt(slot.hour.split(':')[0]), 0, 0, 0);
-    const isPastMeeting = isPast(meetingDate);
     const clientName = extractClientName(slot.notes);
     
     // Add detailed debugging logs with unique prefix for this issue
     console.log(`ICON_DEBUG: Rendering action icons for meeting on ${date} at ${slot.hour}`);
     console.log(`ICON_DEBUG: Meeting flags - fromGoogle: ${slot.fromGoogle}, fromFutureSession: ${slot.fromFutureSession}, inGoogleCalendar: ${slot.inGoogleCalendar}`);
-    console.log(`ICON_DEBUG: Meeting notes: "${slot.notes || 'undefined'}", isPastMeeting: ${isPastMeeting}`);
+    console.log(`ICON_DEBUG: Meeting notes: "${slot.notes || 'undefined'}"`);
     console.log(`ICON_DEBUG: Will show delete button: ${!!slot.fromFutureSession}, Will show update button: true`);
     
     return (
@@ -403,14 +399,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           </TooltipContent>
         </Tooltip>
         
-        {/* Delete button - show for ALL meetings that have a future session entry */}
+        {/* Delete button - show for ALL meetings that have a future session entry (REMOVED isPastMeeting check) */}
         {slot.fromFutureSession && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log(`ICON_DEBUG: Delete button clicked for future session, isPastMeeting: ${isPastMeeting}, inGoogleCalendar: ${slot.inGoogleCalendar}`);
+                  console.log(`ICON_DEBUG: Delete button clicked for future session, inGoogleCalendar: ${slot.inGoogleCalendar}`);
                   handleDeleteFutureSession(slot);
                 }}
                 className="bg-white p-1 rounded-full shadow hover:bg-red-50"
@@ -446,7 +442,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         )}
         
         {/* Show "Add to DB" button for Google Calendar events that aren't already in the database (only for future meetings) */}
-        {!isPastMeeting && slot.fromGoogle && !slot.fromFutureSession && (
+        {slot.fromGoogle && !slot.fromFutureSession && (
           <Tooltip>
             <TooltipTrigger asChild>
               <button 
