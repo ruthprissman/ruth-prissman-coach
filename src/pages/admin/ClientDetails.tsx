@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabaseClient } from '@/lib/supabaseClient';
@@ -24,6 +23,7 @@ import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { Patient, Session } from '@/types/patient';
 import { FutureSession, ClientStatistics } from '@/types/session';
+import { SessionType } from '@/types/sessionTypes';
 
 const ClientDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +33,7 @@ const ClientDetails: React.FC = () => {
   const [client, setClient] = useState<Patient | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [futureSessions, setFutureSessions] = useState<FutureSession[]>([]);
+  const [sessionTypes, setSessionTypes] = useState<SessionType[]>([]);
   const [statistics, setStatistics] = useState<ClientStatistics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -68,10 +69,32 @@ const ClientDetails: React.FC = () => {
       if (clientError) throw clientError;
       setClient(clientData);
 
-      // Fetch historical sessions
+      // Fetch session types
+      const { data: sessionTypesData, error: sessionTypesError } = await supabase
+        .from('session_types')
+        .select('*')
+        .order('is_default', { ascending: false })
+        .order('name');
+
+      if (sessionTypesError) {
+        console.warn('Could not fetch session types:', sessionTypesError);
+        setSessionTypes([]);
+      } else {
+        setSessionTypes(sessionTypesData || []);
+      }
+
+      // Fetch historical sessions with session type information
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
-        .select('*')
+        .select(`
+          *,
+          session_types!left (
+            id,
+            name,
+            code,
+            duration_minutes
+          )
+        `)
         .eq('patient_id', id)
         .order('session_date', { ascending: false });
 
@@ -294,6 +317,13 @@ const ClientDetails: React.FC = () => {
       default:
         return type;
     }
+  };
+
+  const getSessionTypeName = (session: any) => {
+    if (session.session_types && session.session_types.name) {
+      return session.session_types.name;
+    }
+    return 'פגישה רגילה';
   };
 
   // Calculate outstanding balance based on sessions data
@@ -548,6 +578,7 @@ const ClientDetails: React.FC = () => {
                         <tr className="border-b border-gray-200">
                           <th className="py-2 px-4 text-right">תאריך</th>
                           <th className="py-2 px-4 text-right">סוג פגישה</th>
+                          <th className="py-2 px-4 text-right">אמצעי תקשורת</th>
                           <th className="py-2 px-4 text-right">סטטוס תשלום</th>
                           <th className="py-2 px-4 text-right">סכום</th>
                           <th className="py-2 px-4 text-right">פעולות</th>
@@ -557,6 +588,11 @@ const ClientDetails: React.FC = () => {
                         {sessions.map((session) => (
                           <tr key={session.id} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="py-3 px-4">{formatDate(session.session_date)}</td>
+                            <td className="py-3 px-4">
+                              <span className="text-sm font-medium text-purple-700">
+                                {getSessionTypeName(session)}
+                              </span>
+                            </td>
                             <td className="py-3 px-4">
                               <div className="flex items-center">
                                 {getMeetingTypeIcon(session.meeting_type)}
