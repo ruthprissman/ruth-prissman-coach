@@ -378,10 +378,15 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     console.log(`ICON_DEBUG: Meeting flags - fromGoogle: ${slot.fromGoogle}, fromFutureSession: ${slot.fromFutureSession}, inGoogleCalendar: ${slot.inGoogleCalendar}`);
     console.log(`ICON_DEBUG: Meeting notes: "${slot.notes || 'undefined'}"`);
     
-    // Logic check: what icons should we show?
-    const shouldShowDeleteIcon = slot.fromFutureSession; // Show delete for any meeting in future sessions
-    const shouldShowAddToCalendarIcon = slot.fromFutureSession && !slot.inGoogleCalendar; // Show add to calendar only if in DB but not in Google
-    const shouldShowAddToDBIcon = slot.fromGoogle && !slot.fromFutureSession; // Show add to DB only if in Google but not in DB
+    // CORRECTED Logic check: what icons should we show?
+    // Case 1: Meeting exists in future sessions table
+    const shouldShowDeleteIcon = slot.fromFutureSession === true;
+    
+    // Case 2: Meeting exists in future sessions but NOT in Google Calendar
+    const shouldShowAddToCalendarIcon = slot.fromFutureSession === true && slot.inGoogleCalendar !== true;
+    
+    // Case 3: Meeting exists ONLY in Google Calendar (not in future sessions)
+    const shouldShowAddToDBIcon = slot.fromGoogle === true && slot.fromFutureSession !== true;
     
     console.log(`ICON_DEBUG: Icon decisions - Delete: ${shouldShowDeleteIcon}, AddToCalendar: ${shouldShowAddToCalendarIcon}, AddToDB: ${shouldShowAddToDBIcon}`);
     
