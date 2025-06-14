@@ -63,7 +63,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const [googleEventToDelete, setGoogleEventToDelete] = useState<GoogleCalendarEvent | null>(null);
   
   // Add the Google OAuth hook to get access to the createEvent function
-  const { createEvent } = useGoogleOAuth();
+  const { createEvent, deleteEvent } = useGoogleOAuth();
   
   console.log(`LOV_DEBUG_CALENDAR_GRID: Rendering with ${days.length} days, ${hours.length} hours, loading: ${isLoading}`);
   console.log(`LOV_DEBUG_CALENDAR_GRID: Calendar data contains ${calendarData.size} days`);
