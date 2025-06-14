@@ -25,6 +25,7 @@ import { toast } from '@/components/ui/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { addFutureSessionToGoogleCalendar } from '@/utils/googleCalendarUtils';
+import DeleteGoogleCalendarEventDialog from './DeleteGoogleCalendarEventDialog';
 
 // Component version for debugging
 const COMPONENT_VERSION = "1.0.23";
@@ -58,6 +59,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [meetingToDelete, setMeetingToDelete] = useState<any>(null);
+  const [deleteGoogleEventDialogOpen, setDeleteGoogleEventDialogOpen] = useState<boolean>(false);
+  const [googleEventToDelete, setGoogleEventToDelete] = useState<GoogleCalendarEvent | null>(null);
   
   // Add the Google OAuth hook to get access to the createEvent function
   const { createEvent } = useGoogleOAuth();
@@ -409,6 +412,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
     // NEW: Show ONLY trash icon if meeting is in the past
     if (isPastMeeting(slot)) {
+      // --- NEW: אפשרות למחוק גם פגישות ממקור Google בלבד
       return (
         <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
           <Tooltip>
@@ -416,7 +420,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleDeleteFutureSession(slot);
+                  if (slot.fromGoogle && !slot.fromFutureSession) {
+                    // Google only event
+                    handleDeleteGoogleEvent(slot);
+                  } else {
+                    // רגיל
+                    handleDeleteFutureSession(slot);
+                  }
                 }}
                 className="bg-white p-1 rounded-full shadow hover:bg-red-50"
               >
@@ -467,6 +477,26 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             </TooltipTrigger>
             <TooltipContent side="top">
               <p>מחק פגישה</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        
+        {/* Google Calendar delete button for Google-only events */}
+        {slot.fromGoogle && !slot.fromFutureSession && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteGoogleEvent(slot);
+                }}
+                className="bg-white p-1 rounded-full shadow hover:bg-red-50"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-600" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>מחק מגוגל</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -794,6 +824,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           session={meetingToDelete}
           onConfirm={confirmDeleteSession}
           formatDate={formatDate}
+        />
+
+        {/* Dialog for deleting Google Calendar events */}
+        <DeleteGoogleCalendarEventDialog
+          open={deleteGoogleEventDialogOpen}
+          onOpenChange={setDeleteGoogleEventDialogOpen}
+          googleEvent={googleEventToDelete}
+          onConfirm={confirmDeleteGoogleEvent}
         />
       </div>
     </TooltipProvider>
