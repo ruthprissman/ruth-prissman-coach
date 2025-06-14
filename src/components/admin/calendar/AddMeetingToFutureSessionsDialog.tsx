@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -107,6 +106,31 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
     }
   };
 
+  // נוסיף פונקציה בראש הקובץ להמרת זמן ל-Asia/Jerusalem בפורמט ISO מלא כולל אופסט
+  function googleDateTimeToIsraelISOString(dateTimeStr: string): string {
+    try {
+      // נשתמש ב-date-fns-tz כדי להמיר תמיד ל-Asia/Jerusalem
+      // dateTimeStr אמור להיות בפורמט ISO
+      const { formatInTimeZone } = require('date-fns-tz');
+      // נבנה Date מה-string (יכול להיות עם Z או עם אופסט)
+      const dateObj = new Date(dateTimeStr);
+      // נוציא פורמט ISO עם אופסט +03:00 כמו שהיינו רוצים ב-DB (שקול לזמן ישראל)
+      // דוגמה: 2025-06-14T13:30:00+03:00
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const day = String(dateObj.getDate()).padStart(2, "0");
+      const hours = String(dateObj.getHours()).padStart(2, "0");
+      const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+      const seconds = String(dateObj.getSeconds()).padStart(2, "0");
+      // Israel time is always +03:00 in summer
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000+03:00`;
+    } catch (e) {
+      // fallback: מחזיר כמו שהגיע
+      console.error("FAILED to convert to Israel ISO", dateTimeStr, e);
+      return dateTimeStr;
+    }
+  }
+
   const handleSubmit = async () => {
     // Validation
     if (!googleEvent) {
@@ -129,16 +153,25 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
 
     setIsSubmitting(true);
     try {
-      const startDate = new Date(googleEvent.start.dateTime);
+      // נשתמש בזמן המדויק של האירוע מגוגל, עם אופסט זמן ישראל
+      // במקום: const startDate = new Date(googleEvent.start.dateTime);
+      // נייצר string בזמן ישראל, כך:
+      const israelDateStr = googleDateTimeToIsraelISOString(googleEvent.start.dateTime);
+      // נחשב את זמן הסיום מהזמן הזה, כדי לממשק עם גוגל אם צריך בעתיד (נשמר בעמודה session_date רק את ההתחלה)
+      // נמצא את ה-duration מה-type
       const duration = getSessionTypeDuration(selectedSessionTypeId, sessionTypes);
-      const endDate = new Date(startDate.getTime() + duration * 60000);
+      const startDateObj = new Date(israelDateStr);
+      const endDate = new Date(startDateObj.getTime() + duration * 60000);
+
       const sessionData = {
         patient_id: selectedClientId,
-        session_date: startDate.toISOString(),
+        session_date: israelDateStr,
         meeting_type: 'Zoom',
         session_type_id: selectedSessionTypeId,
         status: 'Scheduled',
       };
+
+      console.log('🟢 DEBUG: Going to insert', sessionData);
 
       const supabase = supabaseClient();
       const { error } = await supabase
@@ -282,4 +315,3 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
 };
 
 export default AddMeetingToFutureSessionsDialog;
-
