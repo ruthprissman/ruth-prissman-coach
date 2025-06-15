@@ -577,7 +577,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     if (!slot.isFirstHour && (slot.fromGoogle || slot.fromFutureSession)) {
       return null; // Don't show content in non-first hours of multi-hour events
     }
-    // תמיד מציגים NOTES + ICON, ללא שום שרשור מראש
+    // DEBUG: Print icon to console and highlight in yellow if present.
+    if (slot.icon) {
+      console.log(`[ICON_DEBUG_RENDER] ${slot.notes}: ICON="${slot.icon}"`);
+    }
     return (
       <div className="p-1 text-xs overflow-hidden">
         <div className="flex items-center gap-1">
@@ -585,9 +588,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           {slot.notes && (
             <>
               <span className="font-medium truncate">{slot.notes}</span>
-              {/* הצגת האייקון אם יש */}
               {slot.icon && (
-                <span className="ml-1 text-base select-none">{slot.icon}</span>
+                <span className="ml-1 text-base select-none bg-yellow-200 rounded px-1">{slot.icon}⭐</span>
               )}
             </>
           )}

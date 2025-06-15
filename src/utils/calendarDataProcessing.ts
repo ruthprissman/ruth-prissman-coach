@@ -112,6 +112,9 @@ export function processGoogleCalendarEvents(
       const summary = event.summary || '';
       const sessionIcon = getMeetingIcon(summary);
 
+      // DEBUG: Log the icon we are adding to Google events
+      console.log(`[ICON_DEBUG] Google Calendar: summary="${summary}" => icon="${sessionIcon}"`);
+
       while (currentHour <= endHour) {
         const hourStr = `${String(currentHour).padStart(2, '0')}:00`;
         const isLastHour = currentHour === endHour;
@@ -140,8 +143,13 @@ export function processGoogleCalendarEvents(
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
           isPatientMeeting: summary.trim().startsWith('פגישה עם'),
           showBorder: true,
-          icon: sessionIcon,
+          icon: sessionIcon ?? undefined,
         };
+
+        // DEBUG
+        if (slot.isPatientMeeting) {
+          console.log(`[ICON_DEBUG] FINAL slot for Google event`, slot);
+        }
 
         dayMap.set(hourStr, slot);
 
@@ -234,7 +242,7 @@ export function processFutureSessions(
       const patientName = session.patients?.name || 'לקוח לא ידוע';
       const summaryString = `פגישה עם ${patientName}`;
 
-      // --- קביעת האייקון אך ורק לפי סוג הפגישה ---
+      // קביעת האייקון אך ורק לפי סוג הפגישה
       let icon: string | undefined = undefined;
       const sessionTypeCode = session.session_type?.code;
       if (sessionTypeCode === 'seft') icon = '⚡';
@@ -244,7 +252,8 @@ export function processFutureSessions(
       // --- notes יהיה טקסט בלבד, icon בשדה נפרד
       const notesWithoutIcon = summaryString;
 
-      console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Future session ${session.id} icon:`, icon);
+      // DEBUG
+      console.log(`[ICON_DEBUG] FutureSession: summary="${summaryString}", type="${sessionTypeCode}" => icon="${icon}"`);
 
       while (currentHour <= endHour) {
         const currentHourStr = `${String(currentHour).padStart(2, '0')}:00`;
@@ -274,8 +283,17 @@ export function processFutureSessions(
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
           isPatientMeeting: true,
           showBorder: true,
-          icon, // להציב תמיד את האייקון לפי סוג
+          icon,
         };
+
+        // DEBUG
+        if (currentHour === startHour && isFirstHour) {
+          console.log(`[ICON_DEBUG] FINAL slot for FutureSession`, {
+            ...futureSessionData,
+            date: dateStr,
+            hour: currentHourStr,
+          });
+        }
 
         if (existingSlot && existingSlot.fromGoogle) {
           const mergedSlot: CalendarSlot = {
