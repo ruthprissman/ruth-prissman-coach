@@ -577,18 +577,19 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     if (!slot.isFirstHour && (slot.fromGoogle || slot.fromFutureSession)) {
       return null; // Don't show content in non-first hours of multi-hour events
     }
-    // עידכון: האייקון תמיד מוצג בצמוד ל-notes, לא משנה אם שרשרו אותו מראש או לא
+    // תמיד מציגים NOTES + ICON, ללא שום שרשור מראש
     return (
       <div className="p-1 text-xs overflow-hidden">
         <div className="flex items-center gap-1">
+          {/* הצגת שם הפגישה */}
           {slot.notes && (
-            <div className="font-medium truncate flex items-center gap-1">
-              {slot.notes}
-              {/* הוספה - אם יש אמוג'י יופיע מימין */}
+            <>
+              <span className="font-medium truncate">{slot.notes}</span>
+              {/* הצגת האייקון אם יש */}
               {slot.icon && (
                 <span className="ml-1 text-base select-none">{slot.icon}</span>
               )}
-            </div>
+            </>
           )}
         </div>
         {slot.exactStartTime && (
