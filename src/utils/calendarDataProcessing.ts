@@ -1,9 +1,66 @@
 
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
-import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInMinutes, startOfHour, addMinutes } from 'date-fns';
+import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInMinutes, startOfHour, addMinutes, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 
 const COMPONENT_VERSION = "1.0.15";
 console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Component loaded, version ${COMPONENT_VERSION}`);
+
+/**
+ * Generates an array of day objects for the week of the given date.
+ */
+export function generateWeekDays(currentDate: Date): { date: string; day: number }[] {
+  const start = startOfWeek(currentDate, { weekStartsOn: 0 }); // Sunday
+  const end = endOfWeek(currentDate, { weekStartsOn: 0 });
+  return eachDayOfInterval({ start, end }).map(date => ({
+    date: format(date, 'yyyy-MM-dd'),
+    day: getDay(date)
+  }));
+}
+
+/**
+ * Generates an empty calendar data structure for a given week.
+ */
+export function generateEmptyCalendarData(currentDate: Date): Map<string, Map<string, CalendarSlot>> {
+  const calendarData = new Map<string, Map<string, CalendarSlot>>();
+  const days = generateWeekDays(currentDate);
+  const hours = Array.from({ length: 16 }, (_, i) => `${String(i + 8).padStart(2, '0')}:00`);
+
+  days.forEach(day => {
+    const dayMap = new Map<string, CalendarSlot>();
+    hours.forEach(hour => {
+      dayMap.set(hour, {
+        date: day.date,
+        day: day.day,
+        hour: hour,
+        status: 'unspecified',
+        notes: '',
+        fromGoogle: false,
+        isMeeting: false,
+        syncStatus: 'synced',
+        showBorder: false
+      });
+    });
+    calendarData.set(day.date, dayMap);
+  });
+  return calendarData;
+}
+
+/**
+ * Creates a map of Google Calendar events for quick lookup.
+ */
+export function createGoogleEventsMap(googleEvents: GoogleCalendarEvent[]): Map<string, GoogleCalendarEvent> {
+  const map = new Map<string, GoogleCalendarEvent>();
+  googleEvents.forEach(event => {
+    if (event.start?.dateTime) {
+      const start = parseISO(event.start.dateTime);
+      // Key format: YYYY-MM-DDTHH
+      const key = `${format(start, 'yyyy-MM-dd')}T${String(getHours(start)).padStart(2, '0')}`;
+      map.set(key, event);
+    }
+  });
+  return map;
+}
+
 
 /**
  * Processes Google Calendar events and converts them to calendar slots

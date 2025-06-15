@@ -1,13 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 import { 
   generateEmptyCalendarData,
   generateWeekDays,
-  processGoogleEvents,
+  processGoogleCalendarEvents,
   processFutureSessions,
-  createGoogleEventsMap
 } from '@/utils/calendarDataProcessing';
 import {
   fetchAvailabilitySlots,
@@ -76,20 +74,15 @@ export function useCalendarData(
         });
         
         // Process Google Calendar events
-        newCalendarData = processGoogleEvents(newCalendarData, googleEvents, days);
-        
-        // Create Google events map for future sessions processing
-        const googleEventsMap = createGoogleEventsMap(googleEvents);
-        console.log(`LOV_DEBUG_CALENDAR_DATA: Created Google events map with ${googleEventsMap.size} entries`);
+        processGoogleCalendarEvents(googleEvents, newCalendarData);
         
         // Process future sessions
         console.log(`LOV_DEBUG_CALENDAR_DATA: Processing future sessions with Google Calendar integration`);
-        newCalendarData = processFutureSessions(newCalendarData, bookedSlots, googleEventsMap);
+        processFutureSessions(bookedSlots, newCalendarData, googleEvents);
       } else {
         console.log(`LOV_DEBUG_CALENDAR_DATA: No Google Calendar integration or events. Auth status: ${isGoogleAuthenticated}, events count: ${googleEvents.length}`);
         // Process future sessions without Google Calendar integration
-        const emptyGoogleEventsMap = new Map<string, GoogleCalendarEvent>();
-        newCalendarData = processFutureSessions(newCalendarData, bookedSlots, emptyGoogleEventsMap);
+        processFutureSessions(bookedSlots, newCalendarData, []);
       }
       
       console.log('LOV_DEBUG_CALENDAR_DATA: Calendar data processing complete');
