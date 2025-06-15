@@ -34,6 +34,7 @@ export interface CalendarSlot {
   fromFutureSession?: boolean; // New: Indicates if this event is from future_sessions table
   futureSession?: any; // New: Stores the original future session data for reference
   inGoogleCalendar?: boolean; // New: Indicates if this future session exists in Google Calendar
+  icon?: string; // NEW: Icon for meeting type
 }
 
 export interface ContextMenuOptions {

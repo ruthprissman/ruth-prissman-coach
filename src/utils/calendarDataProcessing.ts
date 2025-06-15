@@ -300,14 +300,23 @@ export function processFutureSessions(
 
         if (shouldCreateSlot) {
           const patientName = session.patients?.name || 'לקוח לא ידוע';
-          const meetingTypeDisplay = session.meeting_type ? ` (${session.meeting_type})` : '';
           
+          let sessionIcon: string | undefined;
+          const sessionTypeCode = session.session_type?.code;
+          if (sessionTypeCode === 'regular') {
+            sessionIcon = '👤';
+          } else if (sessionTypeCode === 'intake') {
+            sessionIcon = '📝';
+          } else if (sessionTypeCode === 'seft') {
+            sessionIcon = '⚡';
+          }
+
           const slot: CalendarSlot = {
             date: dateStr,
             day: dayOfWeek,
             hour: currentHourStr,
             status: 'booked',
-            notes: `פגישה עם ${patientName}${meetingTypeDisplay}`,
+            notes: `פגישה עם ${patientName}`,
             description: `פגישה ${session.meeting_type || 'לא צוין'} עם ${patientName}`,
             fromFutureSession: true,
             inGoogleCalendar,
@@ -325,7 +334,8 @@ export function processFutureSessions(
             endMinute: slotEndMinute,
             isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
             isPatientMeeting: true,
-            showBorder: true
+            showBorder: true,
+            icon: sessionIcon,
           };
 
           console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Created future session slot for ${currentHourStr}:`, {

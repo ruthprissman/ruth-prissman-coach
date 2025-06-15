@@ -4,7 +4,7 @@ import { Check, Calendar, Lock, CalendarPlus, Info } from 'lucide-react';
 
 const CalendarLegend: React.FC = () => {
   return (
-    <div className="flex flex-wrap gap-3 mt-2 mb-4 justify-end text-xs">
+    <div className="flex flex-wrap gap-3 text-xs">
       <div className="flex items-center gap-1">
         <div className="w-4 h-4 bg-purple-100 rounded"></div>
         <span>זמן זמין</span>

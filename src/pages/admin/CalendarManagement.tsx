@@ -11,6 +11,8 @@ import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import { GoogleCalendarEvent, RecurringRule } from '@/types/calendar';
 import { toast } from '@/components/ui/use-toast';
 import { addDays, subDays, startOfWeek, addMonths } from 'date-fns';
+import CalendarLegend from '@/components/admin/calendar/CalendarLegend';
+import MeetingTypeLegend from '@/components/admin/calendar/MeetingTypeLegend';
 
 // Create a query client instance
 const queryClient = new QueryClient();
@@ -222,7 +224,7 @@ const CalendarManagementContent: React.FC = () => {
 
   return (
     <AdminLayout title="ניהול זמינות יומן">
-      <div className="container mx-auto py-6 space-y-6" dir="rtl">
+      <div className="container mx-auto py-6 space-y-4" dir="rtl">
         <CalendarHeader
           isGoogleAuthenticated={isGoogleAuthenticated}
           isGoogleAuthenticating={isGoogleAuthenticating}
@@ -237,6 +239,11 @@ const CalendarManagementContent: React.FC = () => {
           onCopyProfessionalMeetings={handleCopyProfessionalMeetings}
         />
         
+        <div className="flex flex-wrap justify-end items-center gap-x-6 gap-y-2 px-1">
+          <MeetingTypeLegend />
+          <CalendarLegend />
+        </div>
+
         <CalendarContent
           days={days}
           hours={hours}
