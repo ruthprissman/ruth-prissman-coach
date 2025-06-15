@@ -1,6 +1,7 @@
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInMinutes, startOfHour, addMinutes, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
+import { getMeetingIcon } from './meetingIconUtils';
 
 const COMPONENT_VERSION = "1.0.18";
 console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Component loaded, version ${COMPONENT_VERSION}`);
@@ -107,19 +108,9 @@ export function processGoogleCalendarEvents(
       let currentHour = startHour;
       let isFirstHour = true;
 
-      // always pick summary for icon logic
+      // --- USE UNIFIED ICON LOGIC ---
       const summary = event.summary || '';
-      let sessionIcon: string | undefined = undefined;
-      // חישוב האייקון גם עבור כל סוג של "פגישה עם"
-      if (summary.trim().startsWith('פגישה עם')) {
-        if (summary.includes('seft') || summary.includes('SEFT') || summary.includes('ספט')) {
-          sessionIcon = '⚡';
-        } else if (summary.includes('אינטייק')) {
-          sessionIcon = '📝';
-        } else {
-          sessionIcon = '👤';
-        }
-      }
+      const sessionIcon = getMeetingIcon(summary);
 
       while (currentHour <= endHour) {
         const hourStr = `${String(currentHour).padStart(2, '0')}:00`;
@@ -239,6 +230,25 @@ export function processFutureSessions(
       let currentHour = startHour;
       let isFirstHour = true;
 
+      // --- NEW: Extract patient name and summary text consistently ---
+      const patientName = session.patients?.name || 'לקוח לא ידוע';
+      const summaryString = `פגישה עם ${patientName}`;
+
+      // --- USE UNIFIED ICON LOGIC ---
+      const sessionTypeCode = session.session_type?.code;
+      let icon: string | undefined = undefined;
+      // Try unified getMeetingIcon first (with the summary string)
+      icon = getMeetingIcon(summaryString);
+
+      // If not detected, fallback to type code (should match all old logic, covers all cases)
+      if (!icon && sessionTypeCode === 'seft') icon = '⚡';
+      if (!icon && sessionTypeCode === 'intake') icon = '📝';
+      if (!icon && sessionTypeCode === 'regular') icon = '👤';
+
+      const notesWithIcon = summaryString + (icon ? ` ${icon}` : "");
+
+      console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Future session ${session.id} icon:`, icon);
+
       while (currentHour <= endHour) {
         const currentHourStr = `${String(currentHour).padStart(2, '0')}:00`;
         
@@ -260,20 +270,7 @@ export function processFutureSessions(
         const slotEndMinute = isLastHour ? endMinute : 60;
 
         const existingSlot = dayMap.get(currentHourStr);
-        const patientName = session.patients?.name || 'לקוח לא ידוע';
         
-        let sessionIcon: string | undefined;
-        const sessionTypeCode = session.session_type?.code;
-        if (sessionTypeCode === 'regular') {
-          sessionIcon = '👤';
-        } else if (sessionTypeCode === 'intake') {
-          sessionIcon = '📝';
-        } else if (sessionTypeCode === 'seft') {
-          sessionIcon = '⚡';
-        }
-
-        const notesWithIcon = `פגישה עם ${patientName}` + (sessionIcon ? ` ${sessionIcon}` : "");
-
         const futureSessionData: Partial<CalendarSlot> = {
           notes: notesWithIcon,
           description: `פגישה ${session.meeting_type || 'לא צוין'} עם ${patientName}`,
@@ -294,11 +291,8 @@ export function processFutureSessions(
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
           isPatientMeeting: true,
           showBorder: true,
+          icon: icon, // Always provide icon
         };
-
-        if (sessionIcon) {
-          futureSessionData.icon = sessionIcon;
-        }
 
         if (existingSlot && existingSlot.fromGoogle) {
           // Merge with existing Google slot to enrich it
