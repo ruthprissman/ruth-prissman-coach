@@ -71,7 +71,7 @@ export function processGoogleCalendarEvents(
   googleEvents: GoogleCalendarEvent[],
   calendarData: Map<string, Map<string, CalendarSlot>>
 ): void {
-  console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Processing ${googleEvents.length} Google Calendar events`);
+  console.log(`[ICON_DEBUG_TRACE] processGoogleCalendarEvents: called with ${googleEvents.length} events`);
 
   googleEvents.forEach((event, index) => {
     try {
@@ -112,8 +112,8 @@ export function processGoogleCalendarEvents(
       const summary = event.summary || '';
       const sessionIcon = getMeetingIcon(summary);
 
-      // DEBUG: Log the icon we are adding to Google events
-      console.log(`[ICON_DEBUG] Google Calendar: summary="${summary}" => icon="${sessionIcon}"`);
+      // DEBUG: Always log icon logic (even if icon is missing)
+      console.log(`[ICON_DEBUG] [GOOGLE] summary="${summary}" -> icon="${sessionIcon}" | event=`, event);
 
       while (currentHour <= endHour) {
         const hourStr = `${String(currentHour).padStart(2, '0')}:00`;
@@ -146,10 +146,8 @@ export function processGoogleCalendarEvents(
           icon: sessionIcon ?? undefined,
         };
 
-        // DEBUG
-        if (slot.isPatientMeeting) {
-          console.log(`[ICON_DEBUG] FINAL slot for Google event`, slot);
-        }
+        // Always log out for debug
+        console.log(`[ICON_DEBUG] [GOOGLE] Creating slot:`, slot);
 
         dayMap.set(hourStr, slot);
 
@@ -161,7 +159,7 @@ export function processGoogleCalendarEvents(
     }
   });
 
-  console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Finished processing Google Calendar events`);
+  console.log(`[ICON_DEBUG_TRACE] processGoogleCalendarEvents: finished processing all events`);
 }
 
 /**
@@ -172,7 +170,7 @@ export function processFutureSessions(
   calendarData: Map<string, Map<string, CalendarSlot>>,
   googleEvents: GoogleCalendarEvent[]
 ): void {
-  console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Processing ${futureSessions.length} future sessions`);
+  console.log(`[ICON_DEBUG_TRACE] processFutureSessions: called with ${futureSessions.length} future sessions`);
 
   futureSessions.forEach((session, index) => {
     try {
@@ -252,8 +250,8 @@ export function processFutureSessions(
       // --- notes יהיה טקסט בלבד, icon בשדה נפרד
       const notesWithoutIcon = summaryString;
 
-      // DEBUG
-      console.log(`[ICON_DEBUG] FutureSession: summary="${summaryString}", type="${sessionTypeCode}" => icon="${icon}"`);
+      // Always print debug, even if icon is undefined!
+      console.log(`[ICON_DEBUG] [FUTURE] summary="${summaryString}", type="${sessionTypeCode}" -> icon="${icon}" | session=`, session);
 
       while (currentHour <= endHour) {
         const currentHourStr = `${String(currentHour).padStart(2, '0')}:00`;
@@ -286,14 +284,12 @@ export function processFutureSessions(
           icon,
         };
 
-        // DEBUG
-        if (currentHour === startHour && isFirstHour) {
-          console.log(`[ICON_DEBUG] FINAL slot for FutureSession`, {
-            ...futureSessionData,
-            date: dateStr,
-            hour: currentHourStr,
-          });
-        }
+        // Always log for debug
+        console.log(`[ICON_DEBUG] [FUTURE] Creating slot:`, {
+          ...futureSessionData,
+          date: dateStr,
+          hour: currentHourStr,
+        });
 
         if (existingSlot && existingSlot.fromGoogle) {
           const mergedSlot: CalendarSlot = {
@@ -324,7 +320,7 @@ export function processFutureSessions(
     }
   });
 
-  console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Finished processing future sessions`);
+  console.log(`[ICON_DEBUG_TRACE] processFutureSessions: finished processing all sessions`);
 }
 
 /**
