@@ -577,14 +577,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     if (!slot.isFirstHour && (slot.fromGoogle || slot.fromFutureSession)) {
       return null; // Don't show content in non-first hours of multi-hour events
     }
-    
     return (
       <div className="p-1 text-xs overflow-hidden">
         <div className="flex items-center gap-1">
           {slot.notes && (
-            <div className="font-medium truncate">{slot.notes}</div>
+            <div className="font-medium truncate flex items-center gap-1">
+              {slot.notes}
+              {slot.icon && (
+                <span className="ml-1 text-base select-none">{slot.icon}</span>
+              )}
+            </div>
           )}
-          {slot.icon && <span className="text-base select-none">{slot.icon}</span>}
         </div>
         {slot.exactStartTime && (
           <div className="text-xs opacity-75">
