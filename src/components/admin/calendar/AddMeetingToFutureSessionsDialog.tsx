@@ -7,6 +7,7 @@ import { Patient } from '@/types/patient';
 import { GoogleCalendarEvent } from '@/types/calendar';
 import { usePatients } from '@/hooks/usePatients';
 import { useSessionTypes, getSessionTypeDuration } from '@/hooks/useSessionTypes';
+import { useGoogleOAuth } from '@/hooks/useGoogleOAuth';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface AddMeetingToFutureSessionsDialogProps {
   open: boolean;
@@ -42,12 +44,14 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
   const { toast } = useToast();
   const { data: sessionTypes, isLoading: isLoadingSessionTypes } = useSessionTypes();
   const { data: patients = [], isLoading: isLoadingPatients } = usePatients();
+  const { createEvent, deleteEvent, isAuthenticated } = useGoogleOAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ניהול בחירת לקוח
   const [selectedClientId, setSelectedClientId] = useState<number | null>(initialClientId || null);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [selectedSessionTypeId, setSelectedSessionTypeId] = useState<number | null>(null);
+  const [shouldUpdateGoogleCalendar, setShouldUpdateGoogleCalendar] = useState(false);
 
   // פונקציה שמנסה לשלוף את שם הלקוח מתוך summary
   function guessClientFromGoogleEvent(summary: string | undefined, patientsList: Patient[]): number | null {
@@ -97,6 +101,21 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
     }
   }, [selectedClientId, patients]);
 
+  // בדיקה אם נדרש עדכון של יומן Google
+  useEffect(() => {
+    if (googleEvent && selectedSessionTypeId && sessionTypes) {
+      const requiredDuration = getSessionTypeDuration(selectedSessionTypeId, sessionTypes);
+      const currentDuration = getCurrentEventDuration();
+      
+      // אם הפגישה הנוכחית קצרה יותר מהנדרש, נציע עדכון
+      if (currentDuration && currentDuration < requiredDuration) {
+        setShouldUpdateGoogleCalendar(true);
+      } else {
+        setShouldUpdateGoogleCalendar(false);
+      }
+    }
+  }, [googleEvent, selectedSessionTypeId, sessionTypes]);
+
   const formatEventDateTime = (dateTime: string) => {
     try {
       const date = new Date(dateTime);
@@ -144,6 +163,61 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
     }
   };
 
+  // פונקציה לחישוב משך הפגישה הנוכחית ביומן Google
+  const getCurrentEventDuration = (): number | null => {
+    if (!googleEvent?.start?.dateTime || !googleEvent?.end?.dateTime) {
+      return null;
+    }
+    
+    const startTime = new Date(googleEvent.start.dateTime).getTime();
+    const endTime = new Date(googleEvent.end.dateTime).getTime();
+    const durationMs = endTime - startTime;
+    
+    return Math.round(durationMs / (1000 * 60)); // החזרה בדקות
+  };
+
+  // פונקציה לעדכון פגישה ביומן Google
+  const updateGoogleCalendarEvent = async (requiredDuration: number): Promise<boolean> => {
+    try {
+      if (!googleEvent?.start?.dateTime || !googleEvent.id) {
+        throw new Error('חסרים נתוני פגישה');
+      }
+
+      console.log('🔄 עדכון פגישה ביומן Google...');
+      
+      // חישוב שעת סיום חדשה
+      const startTime = new Date(googleEvent.start.dateTime);
+      const newEndTime = new Date(startTime.getTime() + requiredDuration * 60000);
+      
+      // מחיקת האירוע הישן
+      await deleteEvent(googleEvent.id);
+      console.log('🗑️ האירוע הישן נמחק');
+      
+      // יצירת אירוע חדש עם משך מעודכן
+      const newEventId = await createEvent(
+        googleEvent.summary || 'פגישה',
+        startTime.toISOString(),
+        newEndTime.toISOString(),
+        googleEvent.description || ''
+      );
+      
+      if (newEventId) {
+        console.log('✅ אירוע חדש נוצר עם משך מעודכן');
+        return true;
+      } else {
+        throw new Error('יצירת האירוע החדש נכשלה');
+      }
+    } catch (error: any) {
+      console.error('❌ שגיאה בעדכון יומן Google:', error);
+      toast({
+        title: "שגיאה בעדכון יומן Google",
+        description: error.message || "לא הצלחנו לעדכן את יומן Google",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   const handleSubmit = async () => {
     // Validation
     if (!googleEvent) {
@@ -166,16 +240,24 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
 
     setIsSubmitting(true);
     try {
-      // נשתמש בזמן המדויק של האירוע מגוגל, עם אופסט זמן ישראל
-      // במקום: const startDate = new Date(googleEvent.start.dateTime);
-      // נייצר string בזמן ישראל, כך:
-      const israelDateStr = googleDateTimeToIsraelISOString(googleEvent.start.dateTime);
-      // נחשב את זמן הסיום מהזמן הזה, כדי לממשק עם גוגל אם צריך בעתיד (נשמר בעמודה session_date רק את ההתחלה)
-      // נמצא את ה-duration מה-type
-      const duration = getSessionTypeDuration(selectedSessionTypeId, sessionTypes);
-      const startDateObj = new Date(israelDateStr);
-      const endDate = new Date(startDateObj.getTime() + duration * 60000);
+      // עדכון יומן Google אם נדרש
+      if (shouldUpdateGoogleCalendar && isAuthenticated) {
+        const requiredDuration = getSessionTypeDuration(selectedSessionTypeId, sessionTypes);
+        const success = await updateGoogleCalendarEvent(requiredDuration);
+        
+        if (!success) {
+          // אם העדכון נכשל, נמשיך בכל זאת עם הוספה לטבלה
+          toast({
+            title: "אזהרה",
+            description: "הפגישה נוספה אך לא הצלחנו לעדכן את יומן Google",
+            variant: "destructive",
+          });
+        }
+      }
 
+      // נשתמש בזמן המדויק של האירוע מגוגל, עם אופסט זמן ישראל
+      const israelDateStr = googleDateTimeToIsraelISOString(googleEvent.start.dateTime);
+      
       const sessionData = {
         patient_id: selectedClientId,
         session_date: israelDateStr,
@@ -194,9 +276,13 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
 
       if (error) throw error;
 
+      const duration = getSessionTypeDuration(selectedSessionTypeId, sessionTypes);
+      
       toast({
         title: "פגישה נוספה בהצלחה",
-        description: `הפגישה נוספה לפגישות עתידיות עם משך זמן של ${duration} דקות`,
+        description: `הפגישה נוספה לפגישות עתידיות עם משך זמן של ${duration} דקות${
+          shouldUpdateGoogleCalendar && isAuthenticated ? ' ויומן Google עודכן' : ''
+        }`,
       });
 
       if (onAdded) onAdded();
@@ -214,6 +300,7 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
 
   const selectedSessionType = sessionTypes?.find(type => type.id === selectedSessionTypeId);
   const duration = selectedSessionType ? selectedSessionType.duration_minutes : 90;
+  const currentDuration = getCurrentEventDuration();
 
   // לחשב את שעת הסיום הנראית עבור התצוגה
   const previewEndTime = googleEvent?.start?.dateTime && duration
@@ -243,6 +330,11 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
                   </>
                 )}
               </div>
+              {currentDuration && (
+                <div className="text-sm text-gray-500 mt-1">
+                  משך נוכחי ביומן Google: {currentDuration} דקות
+                </div>
+              )}
               {selectedClientId && patient && (
                 <div className="text-sm text-purple-700 mt-1">
                   לקוח: {patient.name}
@@ -311,9 +403,32 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
             )}
           </div>
 
+          {/* אופציה לעדכון יומן Google */}
+          {shouldUpdateGoogleCalendar && isAuthenticated && currentDuration && (
+            <div className="space-y-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="updateGoogleCalendar"
+                  checked={shouldUpdateGoogleCalendar}
+                  onCheckedChange={(checked) => setShouldUpdateGoogleCalendar(!!checked)}
+                />
+                <Label 
+                  htmlFor="updateGoogleCalendar" 
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  עדכון יומן Google
+                </Label>
+              </div>
+              <div className="text-sm text-yellow-700">
+                הפגישה ביומן Google היא {currentDuration} דקות, אבל סוג הפגישה דורש {duration} דקות.
+                סמן כדי לעדכן את יומן Google למשך הנדרש.
+              </div>
+            </div>
+          )}
+
           {/* Debug info */}
           <div className="text-xs text-gray-400 bg-gray-50 p-2 rounded">
-            Debug: GoogleEvent={!!googleEvent}, ClientId={selectedClientId}, SessionType={selectedSessionTypeId}
+            Debug: GoogleEvent={!!googleEvent}, ClientId={selectedClientId}, SessionType={selectedSessionTypeId}, UpdateGoogle={shouldUpdateGoogleCalendar}
           </div>
         </div>
 
