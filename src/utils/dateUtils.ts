@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
-import { HebrewCalendar, HDate, months, gematriya } from '@hebcal/core';
+import { HDate, gematriya } from '@hebcal/core';
 import { he } from 'date-fns/locale';
 
 /**
