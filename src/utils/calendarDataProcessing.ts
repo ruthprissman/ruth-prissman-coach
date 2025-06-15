@@ -238,7 +238,7 @@ export function processFutureSessions(
         const slotEndMinute = isLastHour ? endMinute : 60;
         const existingSlot = dayMap.get(currentHourStr);
 
-        // אם כבר קיים slot עם ערכי futureSession או איקון, לשמר אותם (לא לאפס!)
+        // איחוד חכם: אל תאפס futureSession ואייקון אם יש ב־existingSlot
         const newFutureSessionData: Partial<CalendarSlot> = {
           notes: summaryString,
           description: `פגישה ${session.meeting_type || 'לא צוין'} עם ${patientName}`,
@@ -259,43 +259,28 @@ export function processFutureSessions(
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
           isPatientMeeting: true,
           showBorder: true,
-          icon: icon || (existingSlot && existingSlot.icon),
+          icon: icon ?? (existingSlot?.icon) ?? undefined,
         };
 
-        // לוג לאבחון
-        console.log(`[ICON_DEBUG] [FUTURE] Creating slot:`, {
+        // שמור תמיד futureSession אם קיים ב־existingSlot
+        const slotWithMergedSession: CalendarSlot = {
+          ...(existingSlot || {
+            date: dateStr,
+            day: dayOfWeek,
+            hour: currentHourStr,
+            status: 'booked',
+          }),
           ...newFutureSessionData,
-          date: dateStr,
-          hour: currentHourStr,
-          prevSlotFutureSession: existingSlot?.futureSession,
-          prevSlotIcon: existingSlot?.icon
-        });
+          futureSession: existingSlot?.futureSession ?? session,
+          icon: newFutureSessionData.icon ?? existingSlot?.icon,
+          status: 'booked',
+          fromFutureSession: true,
+        };
 
-        if (existingSlot && existingSlot.fromGoogle) {
-          // נעדכן את השליפה ע"י מיזוג, נשמר futureSession, icon אם קיים כבר
-          const mergedSlot: CalendarSlot = {
-            ...existingSlot,
-            ...newFutureSessionData,
-            status: 'booked',
-            icon: newFutureSessionData.icon || existingSlot.icon,
-            fromFutureSession: true,
-            futureSession: session,
-          };
-          dayMap.set(currentHourStr, mergedSlot);
-        } else {
-          const newSlot: CalendarSlot = {
-            ...(existingSlot || {
-              date: dateStr,
-              day: dayOfWeek,
-              hour: currentHourStr,
-            }),
-            ...newFutureSessionData,
-            status: 'booked',
-            fromFutureSession: true,
-            futureSession: session,
-          } as CalendarSlot;
-          dayMap.set(currentHourStr, newSlot);
-        }
+        // לוג
+        console.log(`[ICON_DEBUG] [FUTURE] Creating slot:`, slotWithMergedSession);
+
+        dayMap.set(currentHourStr, slotWithMergedSession);
 
         currentHour++;
         isFirstHour = false;
