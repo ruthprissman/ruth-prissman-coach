@@ -575,18 +575,13 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   // Simplified function to render event content only in the first hour
   const renderEventContent = (slot: CalendarSlot) => {
-    // DEBUG הגברת הגלוי
-    console.log(`[ICON_DEBUG_RENDER] SLOT`, {
-      notes: slot.notes,
-      description: slot.description,
-      fromFutureSession: slot.fromFutureSession,
-      icon: slot.icon,
-      hour: slot.hour,
-      date: slot.date,
-      futureSession: slot.futureSession,
-      fromGoogle: slot.fromGoogle,
-      isPatientMeeting: slot.isPatientMeeting,
-    });
+    // DEBUG הגברת הגלוי אך ורק כשיש פגישה
+    if (slot.fromFutureSession || slot.fromGoogle) {
+      console.log(
+        `[ICON_UI_DEBUG] Rendering slot UI: date=${slot.date} hour=${slot.hour} icon=${slot.icon} fromFutureSession=${slot.fromFutureSession} fromGoogle=${slot.fromGoogle}`,
+        slot
+      );
+    }
 
     // ניתן להציג את הכל בלחיצה עם ALT - ויזואלי
     return (
@@ -605,9 +600,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           >
             {slot.notes}
           </span>
-          {!!slot.icon && (
+          {/* נציג לוג חזותי אם זוהה אייקון */}
+          {!!slot.icon ? (
             <span className="ml-1 text-base select-none bg-yellow-200 rounded px-1">
               {slot.icon} <b>icon</b>
+            </span>
+          ) : (
+            <span className="ml-1 text-base select-none bg-gray-200 rounded px-1 opacity-40" title="icon is missing">
+              {typeof slot.icon === 'undefined' ? "[no icon]" : slot.icon}
             </span>
           )}
           <span className="ml-1 text-[10px] text-purple-700">
