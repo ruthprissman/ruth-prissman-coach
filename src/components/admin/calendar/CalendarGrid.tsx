@@ -61,6 +61,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const [meetingToDelete, setMeetingToDelete] = useState<any>(null);
   const [deleteGoogleEventDialogOpen, setDeleteGoogleEventDialogOpen] = useState<boolean>(false);
   const [googleEventToDelete, setGoogleEventToDelete] = useState<GoogleCalendarEvent | null>(null);
+  const [inspectSlot, setInspectSlot] = useState<any>(null);
   
   // Add the Google OAuth hook to get access to the createEvent function
   const { createEvent, deleteEvent } = useGoogleOAuth();
@@ -575,27 +576,55 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   // Simplified function to render event content only in the first hour
   const renderEventContent = (slot: CalendarSlot) => {
     // DEBUG הגברת הגלוי
-    if (1) {
-      console.log(`[ICON_DEBUG_RENDER] renderEventContent: slot icon=${slot.icon} notes=${slot.notes} fromGoogle=${slot.fromGoogle} fromFutureSession=${slot.fromFutureSession}`, slot);
-    }
-    if (!slot.isFirstHour && (slot.fromGoogle || slot.fromFutureSession)) {
-      return null;
-    }
+    console.log(`[ICON_DEBUG_RENDER] SLOT`, {
+      notes: slot.notes,
+      description: slot.description,
+      fromFutureSession: slot.fromFutureSession,
+      icon: slot.icon,
+      hour: slot.hour,
+      date: slot.date,
+      futureSession: slot.futureSession,
+      fromGoogle: slot.fromGoogle,
+      isPatientMeeting: slot.isPatientMeeting,
+    });
+
+    // ניתן להציג את הכל בלחיצה עם ALT - ויזואלי
     return (
-      <div className="p-1 text-xs overflow-hidden">
+      <div 
+        className="p-1 text-xs overflow-hidden cursor-pointer"
+        onClick={e => {
+          if (e.altKey) {
+            setInspectSlot(slot);
+          }
+        }}
+      >
         <div className="flex items-center gap-1">
-          {slot.notes && (
-            <>
-              <span className="font-medium truncate">{slot.notes}</span>
-              {slot.icon && (
-                <span className="ml-1 text-base select-none bg-yellow-200 rounded px-1">{slot.icon}⭐️</span>
-              )}
-              {!slot.icon && (
-                <span className="ml-1 text-xs text-red-500 font-bold">NO ICON</span>
-              )}
-            </>
+          <span 
+            className="font-medium truncate"
+            title={slot.notes}
+          >
+            {slot.notes}
+          </span>
+          {!!slot.icon && (
+            <span className="ml-1 text-base select-none bg-yellow-200 rounded px-1">
+              {slot.icon} <b>icon</b>
+            </span>
           )}
+          <span className="ml-1 text-[10px] text-purple-700">
+            {slot.fromFutureSession ? "fromFutureSession" : ""}
+          </span>
+          <span className="ml-1 text-[10px] text-blue-700">
+            {slot.fromGoogle ? "fromGoogle" : ""}
+          </span>
         </div>
+        <div className="text-[10px] opacity-40">
+          hour: {slot.hour}, date: {slot.date}
+        </div>
+        {slot.futureSession && (
+          <div className="text-[10px] opacity-70">
+            futureSession.id: {slot.futureSession?.id || "(no id)"}
+          </div>
+        )}
         {slot.exactStartTime && (
           <div className="text-xs opacity-75">
             {slot.exactStartTime}-{slot.exactEndTime}
@@ -885,6 +914,28 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           googleEvent={googleEventToDelete}
           onConfirm={confirmDeleteGoogleEvent}
         />
+
+        {/* Debug modal */}
+        {inspectSlot && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+            onClick={() => setInspectSlot(null)}
+          >
+            <div
+              className="bg-white rounded p-6 max-w-lg shadow-lg overflow-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="text-lg font-bold mb-2 text-center">Slot debug info</div>
+              <pre className="text-xs text-left break-all">{JSON.stringify(inspectSlot, null, 2)}</pre>
+              <button
+                className="mt-2 px-4 py-2 bg-purple-600 text-white rounded"
+                onClick={() => setInspectSlot(null)}
+              >
+                סגור
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </TooltipProvider>
   );
