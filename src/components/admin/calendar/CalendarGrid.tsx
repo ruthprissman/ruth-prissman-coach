@@ -158,7 +158,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
     
     // Second priority: Patient meetings (always get a specific color)
-    if (isPatientMeeting || (isMeeting && (status as string) === 'booked')) {
+    if (isPatientMeeting) {
       console.log(`COLOR_DEBUG: Using dark purple color for patient meeting`);
       return { 
         bg: 'bg-[#5C4C8D]', 

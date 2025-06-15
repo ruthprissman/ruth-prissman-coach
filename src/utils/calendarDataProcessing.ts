@@ -123,6 +123,21 @@ export function processGoogleCalendarEvents(
       let currentHour = startHour;
       let isFirstHour = true;
 
+      // NEW: Add icon logic for Google Calendar events
+      const summary = event.summary || '';
+      const isPatientMeeting = summary.includes('פגישה עם');
+      let sessionIcon: string | undefined;
+
+      if (isPatientMeeting) {
+        if (summary.toLowerCase().includes('seft')) {
+          sessionIcon = '⚡';
+        } else if (summary.toLowerCase().includes('אינטייק')) {
+          sessionIcon = '📝';
+        } else {
+          sessionIcon = '👤';
+        }
+      }
+
       while (currentHour <= endHour) {
         const hourStr = `${String(currentHour).padStart(2, '0')}:00`;
         
@@ -168,8 +183,9 @@ export function processGoogleCalendarEvents(
           startMinute: slotStartMinute,
           endMinute: slotEndMinute,
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
-          isPatientMeeting: event.summary.includes('פגישה עם'),
-          showBorder: true
+          isPatientMeeting: isPatientMeeting,
+          showBorder: true,
+          icon: sessionIcon,
         };
 
         console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Created slot for ${hourStr}:`, {
