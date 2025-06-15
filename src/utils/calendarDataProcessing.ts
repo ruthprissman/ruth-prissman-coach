@@ -110,7 +110,12 @@ export function processGoogleCalendarEvents(
 
       // --- USE UNIFIED ICON LOGIC ---
       const summary = event.summary || '';
-      const sessionIcon = getMeetingIcon(summary);
+      let sessionIcon = getMeetingIcon(summary);
+      // Fallback: לוגיקת אייקון נוספת אם יש צורך
+      if (!sessionIcon && summary.includes('intake')) sessionIcon = "📝";
+      else if (!sessionIcon && summary.includes('seft')) sessionIcon = "⚡";
+      else if (!sessionIcon && summary.includes('פגישה')) sessionIcon = "👤";
+      else sessionIcon = '👤'; // ודא שתמיד יהיה משהו
 
       // DEBUG: Always log icon logic (even if icon is missing)
       console.log(`[ICON_DEBUG] [GOOGLE] summary="${summary}" -> icon="${sessionIcon}" | event=`, event);
@@ -143,7 +148,7 @@ export function processGoogleCalendarEvents(
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
           isPatientMeeting: summary.trim().startsWith('פגישה עם'),
           showBorder: true,
-          icon: sessionIcon ?? undefined,
+          icon: sessionIcon ?? '👤'
         };
 
         // Always log out for debug
@@ -221,6 +226,7 @@ export function processFutureSessions(
       if (sessionTypeCode === 'seft') icon = '⚡';
       else if (sessionTypeCode === 'intake') icon = '📝';
       else if (sessionTypeCode === 'regular') icon = '👤';
+      else icon = '👤'; // ודא שתמיד יהיה משהו
 
       // Debug always
       console.log(`[ICON_DEBUG] [FUTURE] summary="${summaryString}", type="${sessionTypeCode}" -> icon="${icon}" | session=`, session);
@@ -259,7 +265,7 @@ export function processFutureSessions(
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
           isPatientMeeting: true,
           showBorder: true,
-          icon: icon ?? (existingSlot?.icon) ?? undefined,
+          icon: icon ?? (existingSlot?.icon) ?? '👤',
         };
 
         // שמור תמיד futureSession אם קיים ב־existingSlot
@@ -272,7 +278,7 @@ export function processFutureSessions(
           }),
           ...newFutureSessionData,
           futureSession: existingSlot?.futureSession ?? session,
-          icon: newFutureSessionData.icon ?? existingSlot?.icon,
+          icon: newFutureSessionData.icon ?? existingSlot?.icon ?? '👤',
           status: 'booked',
           fromFutureSession: true,
         };
