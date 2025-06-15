@@ -634,6 +634,22 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     );
   };
 
+  const renderMeetingTypeLabel = (slot: CalendarSlot) => {
+    // שנותן label ברור לכל סוג, בדגש על futureSession
+    if (slot.futureSession?.session_type?.code) {
+      const code = slot.futureSession.session_type.code;
+      if (code === 'seft') return 'פגישת SEFT';
+      if (code === 'intake') return 'פגישת אינטק';
+      if (code === 'regular') return 'פגישה רגילה';
+    }
+    // פגישות מהיומן
+    if (slot.notes?.toLowerCase().includes('seft')) return 'פגישת SEFT';
+    if (slot.notes?.toLowerCase().includes('intake')) return 'פגישת אינטק';
+    // אם מתחיל ב"פגישה עם" זה כנראה רגילה
+    if (slot.notes?.startsWith('פגישה עם')) return 'פגישה רגילה';
+    return null;
+  };
+
   const renderCellContent = (day: string, hour: string, slot: CalendarSlot) => {
     const isCurrentCell = isCurrentTimeSlot(day, hour);
     const { bg, text, colorClass, borderColor } = getStatusStyle(slot);
@@ -821,6 +837,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                   const { borderColor } = getStatusStyle(slot);
                   
                   // Tooltip content for the cell
+                  const meetingType = renderMeetingTypeLabel(slot);
                   const tooltipContent = (
                     <div>
                       <p className="font-bold">{slot.notes}</p>
@@ -837,6 +854,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                       )}
                       {slot.fromFutureSession && !slot.inGoogleCalendar && (
                         <p className="text-blue-300 mt-1">לא קיים ביומן Google</p>
+                      )}
+                      {/* NEW: Meeting type label */}
+                      {meetingType && (
+                        <p className="mt-1 text-xs text-purple-700 font-bold">סוג פגישה: {meetingType}</p>
                       )}
                     </div>
                   );
