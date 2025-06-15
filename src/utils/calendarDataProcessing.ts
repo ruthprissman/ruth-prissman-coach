@@ -1,4 +1,3 @@
-
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInMinutes, startOfHour, addMinutes, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -121,7 +120,6 @@ export function processGoogleCalendarEvents(
       const dayMap = calendarData.get(dateStr)!;
 
       // Handle events that span multiple hours
-      let currentHour = startHour;
       let isFirstHour = true;
 
       while (currentHour <= endHour) {
@@ -242,9 +240,19 @@ export function processFutureSessions(
       }
       const dayMap = calendarData.get(dateStr)!;
 
-      // Calculate session duration (default 90 minutes if not specified)
-      const durationMinutes = session.session_type?.duration_minutes || 90;
-      const endTime = addMinutes(sessionDate, durationMinutes);
+      // Calculate session duration, preferring end_time if available
+      let durationMinutes;
+      let endTime;
+
+      if (session.end_time) {
+        endTime = new Date(session.end_time);
+        durationMinutes = differenceInMinutes(endTime, sessionDate);
+      } else {
+        // Fallback to session_type duration or default 90 minutes
+        durationMinutes = session.session_type?.duration_minutes || 90;
+        endTime = addMinutes(sessionDate, durationMinutes);
+      }
+      
       const startHour = getHours(sessionDate);
       const startMinute = getMinutes(sessionDate);
       const endHour = getHours(endTime);
@@ -259,7 +267,6 @@ export function processFutureSessions(
       });
 
       // Handle sessions that span multiple hours
-      let currentHour = startHour;
       let isFirstHour = true;
 
       while (currentHour <= endHour) {
@@ -291,14 +298,15 @@ export function processFutureSessions(
 
         if (shouldCreateSlot) {
           const patientName = session.patients?.name || 'לקוח לא ידוע';
+          const meetingTypeDisplay = session.meeting_type ? ` (${session.meeting_type})` : '';
           
           const slot: CalendarSlot = {
             date: dateStr,
             day: dayOfWeek,
             hour: currentHourStr,
             status: 'booked',
-            notes: `פגישה עם ${patientName}`,
-            description: `פגישה ${session.meeting_type || 'לא צוין'}`,
+            notes: `פגישה עם ${patientName}${meetingTypeDisplay}`,
+            description: `פגישה ${session.meeting_type || 'לא צוין'} עם ${patientName}`,
             fromFutureSession: true,
             inGoogleCalendar,
             isMeeting: true,
