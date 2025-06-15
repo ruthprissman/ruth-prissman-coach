@@ -234,7 +234,6 @@ export function processFutureSessions(
       const sessionDate = new Date(session.session_date);
       const dateStr = format(sessionDate, 'yyyy-MM-dd');
       const dayOfWeek = getDay(sessionDate);
-      const hourStr = `${String(sessionDate.getHours()).padStart(2, '0')}:00`;
 
       // Check if this session exists in Google Calendar
       const matchingGoogleEvent = googleEvents.find(event => {
@@ -290,10 +289,8 @@ export function processFutureSessions(
       while (currentHour <= endHour) {
         const currentHourStr = `${String(currentHour).padStart(2, '0')}:00`;
         
-        // Determine if this is the last hour of the session
         const isLastHour = currentHour === endHour;
         
-        // Skip if this hour would be after the session ends (for sessions ending at minute 0)
         if (isLastHour && endMinute === 0 && currentHour > startHour) {
           break;
         }
@@ -306,65 +303,67 @@ export function processFutureSessions(
           endHour
         });
 
-        // Calculate start and end minutes for this hour slot
         const slotStartMinute = isFirstHour ? startMinute : 0;
         const slotEndMinute = isLastHour ? endMinute : 60;
 
-        // Only create slot if it doesn't exist from Google Calendar or overwrite Google-only events
         const existingSlot = dayMap.get(currentHourStr);
-        const shouldCreateSlot = !existingSlot || existingSlot.syncStatus === 'google-only';
+        const patientName = session.patients?.name || 'לקוח לא ידוע';
+        
+        let sessionIcon: string | undefined;
+        const sessionTypeCode = session.session_type?.code;
+        if (sessionTypeCode === 'regular') {
+          sessionIcon = '👤';
+        } else if (sessionTypeCode === 'intake') {
+          sessionIcon = '📝';
+        } else if (sessionTypeCode === 'seft') {
+          sessionIcon = '⚡';
+        }
 
-        if (shouldCreateSlot) {
-          const patientName = session.patients?.name || 'לקוח לא ידוע';
-          
-          let sessionIcon: string | undefined;
-          const sessionTypeCode = session.session_type?.code;
-          if (sessionTypeCode === 'regular') {
-            sessionIcon = '👤';
-          } else if (sessionTypeCode === 'intake') {
-            sessionIcon = '📝';
-          } else if (sessionTypeCode === 'seft') {
-            sessionIcon = '⚡';
-          }
+        const futureSessionData: Partial<CalendarSlot> = {
+          notes: `פגישה עם ${patientName}`,
+          description: `פגישה ${session.meeting_type || 'לא צוין'} עם ${patientName}`,
+          fromFutureSession: true,
+          inGoogleCalendar,
+          isMeeting: true,
+          syncStatus: inGoogleCalendar ? 'synced' : 'supabase-only',
+          futureSession: session,
+          startTime: `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`,
+          endTime: `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`,
+          exactStartTime: `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`,
+          exactEndTime: `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`,
+          hoursSpan: Math.ceil(durationMinutes / 60),
+          isFirstHour,
+          isLastHour,
+          startMinute: slotStartMinute,
+          endMinute: slotEndMinute,
+          isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
+          isPatientMeeting: true,
+          showBorder: true,
+          icon: sessionIcon,
+        };
 
-          const slot: CalendarSlot = {
-            date: dateStr,
-            day: dayOfWeek,
-            hour: currentHourStr,
-            status: 'booked',
-            notes: `פגישה עם ${patientName}`,
-            description: `פגישה ${session.meeting_type || 'לא צוין'} עם ${patientName}`,
-            fromFutureSession: true,
-            inGoogleCalendar,
-            isMeeting: true,
-            syncStatus: inGoogleCalendar ? 'synced' : 'supabase-only',
-            futureSession: session,
-            startTime: `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`,
-            endTime: `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`,
-            exactStartTime: `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`,
-            exactEndTime: `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`,
-            hoursSpan: Math.ceil(durationMinutes / 60),
-            isFirstHour,
-            isLastHour,
-            startMinute: slotStartMinute,
-            endMinute: slotEndMinute,
-            isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
-            isPatientMeeting: true,
-            showBorder: true,
-            icon: sessionIcon,
+        if (existingSlot && existingSlot.fromGoogle) {
+          // Merge with existing Google slot to enrich it
+          const mergedSlot: CalendarSlot = {
+            ...existingSlot,
+            ...futureSessionData,
+            status: 'booked', // Ensure status is booked
           };
-
-          console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Created future session slot for ${currentHourStr}:`, {
-            isPartialHour: slot.isPartialHour,
-            isFirstHour: slot.isFirstHour,
-            isLastHour: slot.isLastHour,
-            startMinute: slot.startMinute,
-            endMinute: slot.endMinute,
-            hoursSpan: slot.hoursSpan,
-            inGoogleCalendar: slot.inGoogleCalendar
-          });
-
-          dayMap.set(currentHourStr, slot);
+          dayMap.set(currentHourStr, mergedSlot);
+          console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Merged future session ${session.id} with Google event for hour ${currentHourStr}`);
+        } else {
+          // Create a new slot or overwrite a non-Google slot (like 'available')
+          const newSlot: CalendarSlot = {
+            ...(existingSlot || { // use existingSlot if it's there (e.g. for date/day/hour) or create from scratch
+              date: dateStr,
+              day: dayOfWeek,
+              hour: currentHourStr,
+            }),
+            ...futureSessionData,
+            status: 'booked',
+          } as CalendarSlot;
+          dayMap.set(currentHourStr, newSlot);
+          console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Created/overwrote slot for future session ${session.id} for hour ${currentHourStr}`);
         }
 
         currentHour++;
