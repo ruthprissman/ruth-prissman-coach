@@ -2,7 +2,7 @@ import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInMinutes, startOfHour, addMinutes, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
 
-const COMPONENT_VERSION = "1.0.15";
+const COMPONENT_VERSION = "1.0.17";
 console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Component loaded, version ${COMPONENT_VERSION}`);
 
 /**
@@ -120,6 +120,7 @@ export function processGoogleCalendarEvents(
       const dayMap = calendarData.get(dateStr)!;
 
       // Handle events that span multiple hours
+      let currentHour = startHour;
       let isFirstHour = true;
 
       while (currentHour <= endHour) {
@@ -267,6 +268,7 @@ export function processFutureSessions(
       });
 
       // Handle sessions that span multiple hours
+      let currentHour = startHour;
       let isFirstHour = true;
 
       while (currentHour <= endHour) {
