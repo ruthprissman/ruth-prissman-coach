@@ -319,8 +319,10 @@ export function processFutureSessions(
           sessionIcon = '⚡';
         }
 
+        const notesWithIcon = `פגישה עם ${patientName}` + (sessionIcon ? ` ${sessionIcon}` : "");
+
         const futureSessionData: Partial<CalendarSlot> = {
-          notes: `פגישה עם ${patientName}`,
+          notes: notesWithIcon,
           description: `פגישה ${session.meeting_type || 'לא צוין'} עם ${patientName}`,
           fromFutureSession: true,
           inGoogleCalendar,
