@@ -185,7 +185,6 @@ export function processFutureSessions(
       const dateStr = format(sessionDate, 'yyyy-MM-dd');
       const dayOfWeek = getDay(sessionDate);
 
-      // Check if this session exists in Google Calendar
       const matchingGoogleEvent = googleEvents.find(event => {
         if (!event.start?.dateTime) return false;
         const eventStart = parseISO(event.start.dateTime);
@@ -194,19 +193,6 @@ export function processFutureSessions(
 
       const inGoogleCalendar = !!matchingGoogleEvent;
 
-      console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Future session ${session.id} Google Calendar check:`, {
-        inGoogleCalendar,
-        sessionDate: sessionDate.toISOString(),
-        matchingEventId: matchingGoogleEvent?.id
-      });
-
-      // Get or create the day map
-      if (!calendarData.has(dateStr)) {
-        calendarData.set(dateStr, new Map());
-      }
-      const dayMap = calendarData.get(dateStr)!;
-
-      // Calculate session duration, preferring end_time if available
       let durationMinutes;
       let endTime;
 
@@ -214,7 +200,6 @@ export function processFutureSessions(
         endTime = new Date(session.end_time);
         durationMinutes = differenceInMinutes(endTime, sessionDate);
       } else {
-        // Fallback to session_type duration or default 90 minutes
         durationMinutes = session.session_type?.duration_minutes || 90;
         endTime = addMinutes(sessionDate, durationMinutes);
       }
@@ -224,34 +209,26 @@ export function processFutureSessions(
       const endHour = getHours(endTime);
       const endMinute = getMinutes(endTime);
 
-      console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Future session ${session.id} time details:`, {
-        startHour,
-        startMinute,
-        endHour,
-        endMinute,
-        durationMinutes
-      });
-
-      // Handle sessions that span multiple hours
       let currentHour = startHour;
       let isFirstHour = true;
 
-      // --- קביעת שם הלקוח וטקסט notes ---
       const patientName = session.patients?.name || 'לקוח לא ידוע';
       const summaryString = `פגישה עם ${patientName}`;
 
-      // קביעת האייקון אך ורק לפי סוג הפגישה
+      // Only set icon according to session_type.code
       let icon: string | undefined = undefined;
       const sessionTypeCode = session.session_type?.code;
       if (sessionTypeCode === 'seft') icon = '⚡';
       else if (sessionTypeCode === 'intake') icon = '📝';
       else if (sessionTypeCode === 'regular') icon = '👤';
 
-      // --- notes יהיה טקסט בלבד, icon בשדה נפרד
-      const notesWithoutIcon = summaryString;
-
-      // Always print debug, even if icon is undefined!
+      // Debug always
       console.log(`[ICON_DEBUG] [FUTURE] summary="${summaryString}", type="${sessionTypeCode}" -> icon="${icon}" | session=`, session);
+
+      if (!calendarData.has(dateStr)) {
+        calendarData.set(dateStr, new Map());
+      }
+      const dayMap = calendarData.get(dateStr)!;
 
       while (currentHour <= endHour) {
         const currentHourStr = `${String(currentHour).padStart(2, '0')}:00`;
@@ -261,14 +238,15 @@ export function processFutureSessions(
         const slotEndMinute = isLastHour ? endMinute : 60;
         const existingSlot = dayMap.get(currentHourStr);
 
-        const futureSessionData: Partial<CalendarSlot> = {
-          notes: notesWithoutIcon,
+        // אם כבר קיים slot עם ערכי futureSession או איקון, לשמר אותם (לא לאפס!)
+        const newFutureSessionData: Partial<CalendarSlot> = {
+          notes: summaryString,
           description: `פגישה ${session.meeting_type || 'לא צוין'} עם ${patientName}`,
           fromFutureSession: true,
+          futureSession: session,
           inGoogleCalendar,
           isMeeting: true,
           syncStatus: inGoogleCalendar ? 'synced' : 'supabase-only',
-          futureSession: session,
           startTime: `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`,
           endTime: `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`,
           exactStartTime: `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`,
@@ -281,21 +259,27 @@ export function processFutureSessions(
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
           isPatientMeeting: true,
           showBorder: true,
-          icon,
+          icon: icon || (existingSlot && existingSlot.icon),
         };
 
-        // Always log for debug
+        // לוג לאבחון
         console.log(`[ICON_DEBUG] [FUTURE] Creating slot:`, {
-          ...futureSessionData,
+          ...newFutureSessionData,
           date: dateStr,
           hour: currentHourStr,
+          prevSlotFutureSession: existingSlot?.futureSession,
+          prevSlotIcon: existingSlot?.icon
         });
 
         if (existingSlot && existingSlot.fromGoogle) {
+          // נעדכן את השליפה ע"י מיזוג, נשמר futureSession, icon אם קיים כבר
           const mergedSlot: CalendarSlot = {
             ...existingSlot,
-            ...futureSessionData,
+            ...newFutureSessionData,
             status: 'booked',
+            icon: newFutureSessionData.icon || existingSlot.icon,
+            fromFutureSession: true,
+            futureSession: session,
           };
           dayMap.set(currentHourStr, mergedSlot);
         } else {
@@ -305,8 +289,10 @@ export function processFutureSessions(
               day: dayOfWeek,
               hour: currentHourStr,
             }),
-            ...futureSessionData,
+            ...newFutureSessionData,
             status: 'booked',
+            fromFutureSession: true,
+            futureSession: session,
           } as CalendarSlot;
           dayMap.set(currentHourStr, newSlot);
         }
@@ -314,10 +300,18 @@ export function processFutureSessions(
         currentHour++;
         isFirstHour = false;
       }
-
     } catch (error) {
       console.error(`LOV_DEBUG_CALENDAR_PROCESSING: Error processing future session ${session.id}:`, error);
     }
+  });
+
+  // מיפוי סופי - יצירת לוג לסקירה כוללת
+  calendarData.forEach((dayMap, date) => {
+    dayMap.forEach((slot, hour) => {
+      if (slot?.fromFutureSession) {
+        console.log(`[ICON_DEBUG_POST] [FUTURE][${date} ${hour}] slot.futureSession:`, slot.futureSession, 'icon:', slot.icon);
+      }
+    });
   });
 
   console.log(`[ICON_DEBUG_TRACE] processFutureSessions: finished processing all sessions`);
