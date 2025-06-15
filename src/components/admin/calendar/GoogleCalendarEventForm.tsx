@@ -24,7 +24,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
   const [addPatientDialogOpen, setAddPatientDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     meetingType: 'טלפון',
-    sessionTypeId: getDefaultSessionType().id.toString(), // New field with default
+    sessionTypeId: getDefaultSessionType().id.toString(),
     meetingWith: '',
     customMeetingWith: '',
     subject: '',
@@ -71,6 +71,26 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
       ...(newEndTime && formData.meetingType !== 'אחר' ? { endTime: newEndTime } : {})
     }));
   }, [formData.meetingType, formData.meetingWith, formData.customMeetingWith, formData.startTime, formData.sessionTypeId, patients, sessionTypes]);
+
+  // Helper function to create ISO string in Israel timezone
+  const createISOString = (date: string, time: string): string => {
+    // Create date string in YYYY-MM-DD HH:mm format
+    const dateTimeString = `${date}T${time}:00`;
+    console.log('📅 Creating ISO string from:', { date, time, combined: dateTimeString });
+    
+    // Create Date object and convert to ISO string
+    const dateObj = new Date(dateTimeString);
+    
+    // Check if the date is valid
+    if (isNaN(dateObj.getTime())) {
+      console.error('📅 Invalid date created:', dateTimeString);
+      throw new Error('תאריך או שעה לא תקינים');
+    }
+    
+    const isoString = dateObj.toISOString();
+    console.log('📅 Created ISO string:', isoString);
+    return isoString;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,9 +140,9 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
     try {
       setIsCreating(true);
       
-      // Create datetime strings
-      const startDateTime = `${formData.date}T${formData.startTime}:00`;
-      const endDateTime = `${formData.date}T${formData.endTime}:00`;
+      // Create datetime strings using the helper function
+      const startDateTime = createISOString(formData.date, formData.startTime);
+      const endDateTime = createISOString(formData.date, formData.endTime);
       
       // Create description based on meeting type and session type
       let description = formData.description;
@@ -153,7 +173,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
         // Reset form
         setFormData({
           meetingType: 'טלפון',
-          sessionTypeId: getDefaultSessionType().id.toString(), // Reset to default
+          sessionTypeId: getDefaultSessionType().id.toString(),
           meetingWith: '',
           customMeetingWith: '',
           subject: '',
@@ -162,12 +182,17 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
           endTime: '',
           description: ''
         });
+        
+        toast({
+          title: 'האירוע נוצר בהצלחה',
+          description: 'האירוע נוסף ליומן Google שלך',
+        });
       }
     } catch (error: any) {
       console.error('📝 FORM_DEBUG: Error creating event:', error);
       toast({
         title: 'שגיאה ביצירת האירוע',
-        description: error.message,
+        description: error.message || 'אנא נסה שוב מאוחר יותר',
         variant: 'destructive',
       });
     } finally {
@@ -310,7 +335,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
                   id="customMeetingWith"
                   value={formData.customMeetingWith}
                   onChange={(e) => handleInputChange('customMeetingWith', e.target.value)}
-                  placeholder="הנושא יתמלא אוטומטי לפי הבחירות"
+                  placeholder="הזן נושא הפגישה"
                   required
                 />
               </div>

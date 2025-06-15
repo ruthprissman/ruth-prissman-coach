@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '@/lib/supabaseClient';
 
@@ -160,7 +161,7 @@ export const useGoogleOAuth = () => {
     await checkAuthStatus();
   };
 
-  // Create event function with proper token validation
+  // Create event function with proper token validation and enhanced error handling
   const createEvent = async (
     summary: string,
     startDateTime: string,
@@ -188,16 +189,28 @@ export const useGoogleOAuth = () => {
         throw new Error('לא מחובר ליומן Google - נדרשת התחברות מחדש');
       }
 
+      // Validate the input dates
+      const startDate = new Date(startDateTime);
+      const endDate = new Date(endDateTime);
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new Error('תאריכים לא תקינים');
+      }
+      
+      if (endDate <= startDate) {
+        throw new Error('שעת הסיום חייבת להיות אחרי שעת ההתחלה');
+      }
+
       const event = {
         summary,
         description: description || '',
         start: {
           dateTime: startDateTime,
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+          timeZone: 'Asia/Jerusalem'
         },
         end: {
           dateTime: endDateTime,
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+          timeZone: 'Asia/Jerusalem'
         }
       };
       
@@ -214,10 +227,18 @@ export const useGoogleOAuth = () => {
       });
       
       console.log('🚀 useGoogleOAuth: API response status:', response.status);
+      console.log('🚀 useGoogleOAuth: Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('🚀 useGoogleOAuth: API error response:', errorData);
+        const errorText = await response.text();
+        console.error('🚀 useGoogleOAuth: API error response:', errorText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: { message: errorText } };
+        }
         
         if (response.status === 401) {
           // Token expired, update authentication state
@@ -229,6 +250,8 @@ export const useGoogleOAuth = () => {
           throw new Error('אסימון Google פג תוקף - נדרשת התחברות מחדש');
         } else if (response.status === 403) {
           throw new Error('אין הרשאות לכתוב ליומן Google - נדרשת התחברות מחדש עם הרשאות מלאות');
+        } else if (response.status === 400) {
+          throw new Error('נתוני האירוע לא תקינים - בדוק תאריך ושעה');
         }
         
         throw new Error(errorData.error?.message || `שגיאה ביצירת אירוע: ${response.status}`);
@@ -237,7 +260,10 @@ export const useGoogleOAuth = () => {
       const data = await response.json();
       console.log('🚀 useGoogleOAuth: Event created successfully:', {
         eventId: data.id,
-        htmlLink: data.htmlLink
+        htmlLink: data.htmlLink,
+        summary: data.summary,
+        start: data.start,
+        end: data.end
       });
       
       return data.id;
