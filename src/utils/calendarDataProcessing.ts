@@ -1,6 +1,7 @@
 
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInMinutes, startOfHour, addMinutes, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
+import { he } from 'date-fns/locale';
 
 const COMPONENT_VERSION = "1.0.15";
 console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Component loaded, version ${COMPONENT_VERSION}`);
@@ -8,12 +9,13 @@ console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Component loaded, version ${COMPONEN
 /**
  * Generates an array of day objects for the week of the given date.
  */
-export function generateWeekDays(currentDate: Date): { date: string; day: number }[] {
+export function generateWeekDays(currentDate: Date): { date: string; label: string; dayNumber: number }[] {
   const start = startOfWeek(currentDate, { weekStartsOn: 0 }); // Sunday
   const end = endOfWeek(currentDate, { weekStartsOn: 0 });
   return eachDayOfInterval({ start, end }).map(date => ({
     date: format(date, 'yyyy-MM-dd'),
-    day: getDay(date)
+    label: format(date, 'E', { locale: he }),
+    dayNumber: getDay(date)
   }));
 }
 
@@ -30,7 +32,7 @@ export function generateEmptyCalendarData(currentDate: Date): Map<string, Map<st
     hours.forEach(hour => {
       dayMap.set(hour, {
         date: day.date,
-        day: day.day,
+        day: day.dayNumber,
         hour: hour,
         status: 'unspecified',
         notes: '',
