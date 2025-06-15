@@ -581,10 +581,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     return (
       <div className="p-1 text-xs overflow-hidden">
         <div className="flex items-center gap-1">
-          {slot.icon && <span className="text-base select-none">{slot.icon}</span>}
           {slot.notes && (
             <div className="font-medium truncate">{slot.notes}</div>
           )}
+          {slot.icon && <span className="text-base select-none">{slot.icon}</span>}
         </div>
         {slot.exactStartTime && (
           <div className="text-xs opacity-75">
