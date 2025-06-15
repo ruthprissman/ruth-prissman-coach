@@ -86,15 +86,8 @@ export function processGoogleCalendarEvents(
         return;
       }
 
-      const startDate = parseISO(event.start.dateTime);
-      const endDate = parseISO(event.end.dateTime);
-      
-      console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Event ${event.id} parsed dates:`, {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        durationMinutes: differenceInMinutes(endDate, startDate)
-      });
-
+      const startDate = parseISO(event.start.dateTime!);
+      const endDate = parseISO(event.end.dateTime!);
       const dateStr = format(startDate, 'yyyy-MM-dd');
       const dayOfWeek = getDay(startDate);
 
@@ -105,33 +98,23 @@ export function processGoogleCalendarEvents(
       const endHour = getHours(endDate);
       const endMinute = getMinutes(endDate);
 
-      console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Event ${event.id} time details:`, {
-        startHour,
-        startMinute,
-        endHour,
-        endMinute,
-        durationMinutes
-      });
-
       // Get or create the day map
       if (!calendarData.has(dateStr)) {
         calendarData.set(dateStr, new Map());
       }
       const dayMap = calendarData.get(dateStr)!;
 
-      // Handle events that span multiple hours
       let currentHour = startHour;
       let isFirstHour = true;
 
-      // NEW: Add icon logic for Google Calendar events
+      // always pick summary for icon logic
       const summary = event.summary || '';
-      const isPatientMeeting = summary.includes('פגישה עם');
-      let sessionIcon: string | undefined;
-
-      if (isPatientMeeting) {
-        if (summary.toLowerCase().includes('seft')) {
+      let sessionIcon: string | undefined = undefined;
+      // חישוב האייקון גם עבור כל סוג של "פגישה עם"
+      if (summary.trim().startsWith('פגישה עם')) {
+        if (summary.includes('seft') || summary.includes('SEFT') || summary.includes('ספט')) {
           sessionIcon = '⚡';
-        } else if (summary.toLowerCase().includes('אינטייק')) {
+        } else if (summary.includes('אינטייק')) {
           sessionIcon = '📝';
         } else {
           sessionIcon = '👤';
@@ -140,28 +123,9 @@ export function processGoogleCalendarEvents(
 
       while (currentHour <= endHour) {
         const hourStr = `${String(currentHour).padStart(2, '0')}:00`;
-        
-        // Determine if this is the last hour of the event
         const isLastHour = currentHour === endHour;
-        
-        // Skip if this hour would be after the event ends (for events ending at minute 0)
-        if (isLastHour && endMinute === 0 && currentHour > startHour) {
-          break;
-        }
+        if (isLastHour && endMinute === 0 && currentHour > startHour) break;
 
-        console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Processing hour ${hourStr} for event ${event.id}`, {
-          isFirstHour,
-          isLastHour,
-          currentHour,
-          startHour,
-          endHour
-        });
-
-        // Calculate start and end minutes for this hour slot
-        const slotStartMinute = isFirstHour ? startMinute : 0;
-        const slotEndMinute = isLastHour ? endMinute : 60;
-
-        // Create the calendar slot
         const slot: CalendarSlot = {
           date: dateStr,
           day: dayOfWeek,
@@ -180,30 +144,19 @@ export function processGoogleCalendarEvents(
           hoursSpan: Math.ceil(durationMinutes / 60),
           isFirstHour,
           isLastHour,
-          startMinute: slotStartMinute,
-          endMinute: slotEndMinute,
+          startMinute: isFirstHour ? startMinute : 0,
+          endMinute: isLastHour ? endMinute : 60,
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
-          isPatientMeeting: isPatientMeeting,
+          isPatientMeeting: summary.trim().startsWith('פגישה עם'),
           showBorder: true,
           icon: sessionIcon,
         };
 
-        console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Created slot for ${hourStr}:`, {
-          isPartialHour: slot.isPartialHour,
-          isFirstHour: slot.isFirstHour,
-          isLastHour: slot.isLastHour,
-          startMinute: slot.startMinute,
-          endMinute: slot.endMinute,
-          hoursSpan: slot.hoursSpan
-        });
-
-        // Store the slot
         dayMap.set(hourStr, slot);
 
         currentHour++;
         isFirstHour = false;
       }
-
     } catch (error) {
       console.error(`LOV_DEBUG_CALENDAR_PROCESSING: Error processing event ${event.id}:`, error);
     }
