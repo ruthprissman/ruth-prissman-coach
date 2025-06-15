@@ -230,49 +230,32 @@ export function processFutureSessions(
       let currentHour = startHour;
       let isFirstHour = true;
 
-      // --- NEW: Extract patient name and summary text consistently ---
+      // --- קביעת שם הלקוח וטקסט notes ---
       const patientName = session.patients?.name || 'לקוח לא ידוע';
       const summaryString = `פגישה עם ${patientName}`;
 
-      // --- USE UNIFIED ICON LOGIC ---
-      const sessionTypeCode = session.session_type?.code;
+      // --- קביעת האייקון אך ורק לפי סוג הפגישה ---
       let icon: string | undefined = undefined;
-      // Try unified getMeetingIcon first (with the summary string)
-      icon = getMeetingIcon(summaryString);
+      const sessionTypeCode = session.session_type?.code;
+      if (sessionTypeCode === 'seft') icon = '⚡';
+      else if (sessionTypeCode === 'intake') icon = '📝';
+      else if (sessionTypeCode === 'regular') icon = '👤';
 
-      // If not detected, fallback to type code (should match all old logic, covers all cases)
-      if (!icon && sessionTypeCode === 'seft') icon = '⚡';
-      if (!icon && sessionTypeCode === 'intake') icon = '📝';
-      if (!icon && sessionTypeCode === 'regular') icon = '👤';
-
-      const notesWithIcon = summaryString + (icon ? ` ${icon}` : "");
+      // --- notes יהיה טקסט בלבד, icon בשדה נפרד
+      const notesWithoutIcon = summaryString;
 
       console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Future session ${session.id} icon:`, icon);
 
       while (currentHour <= endHour) {
         const currentHourStr = `${String(currentHour).padStart(2, '0')}:00`;
-        
         const isLastHour = currentHour === endHour;
-        
-        if (isLastHour && endMinute === 0 && currentHour > startHour) {
-          break;
-        }
-
-        console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Processing hour ${currentHourStr} for future session ${session.id}`, {
-          isFirstHour,
-          isLastHour,
-          currentHour,
-          startHour,
-          endHour
-        });
-
+        if (isLastHour && endMinute === 0 && currentHour > startHour) break;
         const slotStartMinute = isFirstHour ? startMinute : 0;
         const slotEndMinute = isLastHour ? endMinute : 60;
-
         const existingSlot = dayMap.get(currentHourStr);
-        
+
         const futureSessionData: Partial<CalendarSlot> = {
-          notes: notesWithIcon,
+          notes: notesWithoutIcon,
           description: `פגישה ${session.meeting_type || 'לא צוין'} עם ${patientName}`,
           fromFutureSession: true,
           inGoogleCalendar,
@@ -291,22 +274,19 @@ export function processFutureSessions(
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
           isPatientMeeting: true,
           showBorder: true,
-          icon: icon, // Always provide icon
+          icon, // להציב תמיד את האייקון לפי סוג
         };
 
         if (existingSlot && existingSlot.fromGoogle) {
-          // Merge with existing Google slot to enrich it
           const mergedSlot: CalendarSlot = {
             ...existingSlot,
             ...futureSessionData,
-            status: 'booked', // Ensure status is booked
+            status: 'booked',
           };
           dayMap.set(currentHourStr, mergedSlot);
-          console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Merged future session ${session.id} with Google event for hour ${currentHourStr}`);
         } else {
-          // Create a new slot or overwrite a non-Google slot (like 'available')
           const newSlot: CalendarSlot = {
-            ...(existingSlot || { // use existingSlot if it's there (e.g. for date/day/hour) or create from scratch
+            ...(existingSlot || {
               date: dateStr,
               day: dayOfWeek,
               hour: currentHourStr,
@@ -315,7 +295,6 @@ export function processFutureSessions(
             status: 'booked',
           } as CalendarSlot;
           dayMap.set(currentHourStr, newSlot);
-          console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Created/overwrote slot for future session ${session.id} for hour ${currentHourStr}`);
         }
 
         currentHour++;
