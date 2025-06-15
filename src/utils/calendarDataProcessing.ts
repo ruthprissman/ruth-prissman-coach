@@ -2,7 +2,7 @@ import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInMinutes, startOfHour, addMinutes, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
 
-const COMPONENT_VERSION = "1.0.17";
+const COMPONENT_VERSION = "1.0.18";
 console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Component loaded, version ${COMPONENT_VERSION}`);
 
 /**
@@ -339,8 +339,11 @@ export function processFutureSessions(
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
           isPatientMeeting: true,
           showBorder: true,
-          icon: sessionIcon,
         };
+
+        if (sessionIcon) {
+          futureSessionData.icon = sessionIcon;
+        }
 
         if (existingSlot && existingSlot.fromGoogle) {
           // Merge with existing Google slot to enrich it
