@@ -71,37 +71,76 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
     }));
   }, [formData.meetingType, formData.meetingWith, formData.customMeetingWith, formData.startTime, formData.sessionTypeId, patients, sessionTypes]);
 
-  // Helper function to create ISO string in Israel timezone - FIXED VERSION
+  // Helper function to create ISO string in Israel timezone
   const createISOString = (date: string, time: string): string => {
     try {
       console.log('📅 Creating ISO string from:', { date, time });
       
-      // Create a date object by combining date and time
-      const dateTimeString = `${date}T${time}:00`;
-      const dateObj = new Date(dateTimeString);
+      if (!date || !time) {
+        throw new Error('תאריך או שעה חסרים');
+      }
       
-      // Check if the date is valid
-      if (isNaN(dateObj.getTime())) {
-        console.error('📅 Invalid date created:', dateTimeString);
+      // Create a proper date string for Israel timezone
+      const dateTimeString = `${date}T${time}:00`;
+      const localDate = new Date(dateTimeString);
+      
+      if (isNaN(localDate.getTime())) {
         throw new Error('תאריך או שעה לא תקינים');
       }
       
-      // Format for Google Calendar API (RFC3339 format)
-      // We need to create the datetime in Israel timezone properly
-      const year = dateObj.getFullYear();
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const day = String(dateObj.getDate()).padStart(2, '0');
-      const hours = String(dateObj.getHours()).padStart(2, '0');
-      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+      // Format for Israel timezone (UTC+3 in summer, UTC+2 in winter)
+      // For Google Calendar API, we'll use UTC+3 (Israel Standard Time)
+      const year = localDate.getFullYear();
+      const month = String(localDate.getMonth() + 1).padStart(2, '0');
+      const day = String(localDate.getDate()).padStart(2, '0');
+      const hours = String(localDate.getHours()).padStart(2, '0');
+      const minutes = String(localDate.getMinutes()).padStart(2, '0');
       
-      // Create ISO string with Israel timezone offset (+02:00 winter, +03:00 summer)
-      // For simplicity, we'll use +03:00 (Israel Standard Time)
       const isoString = `${year}-${month}-${day}T${hours}:${minutes}:00+03:00`;
-      
       console.log('📅 Created ISO string:', isoString);
       return isoString;
     } catch (error) {
       console.error('📅 Error creating ISO string:', error);
+      throw error;
+    }
+  };
+
+  const createFutureSession = async (
+    patientId: number,
+    sessionTypeId: number,
+    startDateTime: string,
+    meetingType: string
+  ) => {
+    try {
+      console.log('💾 Creating future session record:', {
+        patientId,
+        sessionTypeId,
+        startDateTime,
+        meetingType
+      });
+
+      const supabase = supabaseClient();
+      const { data, error } = await supabase
+        .from('future_sessions')
+        .insert({
+          patient_id: patientId,
+          session_date: startDateTime,
+          meeting_type: meetingType === 'טלפון' ? 'Phone' : meetingType === 'זום' ? 'Zoom' : 'In-Person',
+          session_type_id: sessionTypeId,
+          status: 'Scheduled'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('💾 Error creating future session:', error);
+        throw error;
+      }
+
+      console.log('💾 Future session created successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('💾 Failed to create future session:', error);
       throw error;
     }
   };
@@ -111,6 +150,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
     
     console.log('📝 FORM_DEBUG: Form submission started with data:', formData);
     
+    // Validation
     if (!formData.date || !formData.startTime || !formData.endTime || !formData.meetingType) {
       console.log('📝 FORM_DEBUG: Validation failed - missing required fields');
       toast({
@@ -181,6 +221,7 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
         description
       });
       
+      // Step 1: Create Google Calendar event
       const eventId = await onCreateEvent(
         formData.subject,
         startDateTime,
@@ -190,29 +231,55 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
       
       console.log('📝 FORM_DEBUG: Event creation result:', eventId);
       
-      if (eventId) {
-        console.log('📝 FORM_DEBUG: Event created successfully, resetting form');
-        // Reset form
-        setFormData({
-          meetingType: 'טלפון',
-          sessionTypeId: getDefaultSessionType().id.toString(),
-          meetingWith: '',
-          customMeetingWith: '',
-          subject: '',
-          date: '',
-          startTime: '',
-          endTime: '',
-          description: ''
-        });
-        
-        toast({
-          title: 'האירוע נוצר בהצלחה',
-          description: 'האירוע נוסף ליומן Google שלך',
-        });
-      } else {
-        console.log('📝 FORM_DEBUG: Event creation failed - no event ID returned');
-        throw new Error('יצירת האירוע נכשלה');
+      if (!eventId) {
+        throw new Error('יצירת האירוע ב-Google Calendar נכשלה');
       }
+
+      // Step 2: Create future session record (only for patient meetings, not "אחר")
+      if (formData.meetingType !== 'אחר' && formData.meetingWith) {
+        try {
+          await createFutureSession(
+            parseInt(formData.meetingWith),
+            parseInt(formData.sessionTypeId),
+            startDateTime,
+            formData.meetingType
+          );
+          
+          // Refresh calendar data
+          await queryClient.invalidateQueries({ queryKey: ['calendar-data'] });
+          await queryClient.invalidateQueries({ queryKey: ['future-sessions'] });
+          
+          console.log('📝 FORM_DEBUG: Both Google Calendar event and future session created successfully');
+        } catch (futureSessionError: any) {
+          console.error('📝 FORM_DEBUG: Failed to create future session, but Google event was created:', futureSessionError);
+          toast({
+            title: 'אזהרה',
+            description: 'האירוע נוצר ביומן Google אבל לא נשמר במערכת הפגישות',
+            variant: 'destructive',
+          });
+        }
+      }
+      
+      // Reset form
+      setFormData({
+        meetingType: 'טלפון',
+        sessionTypeId: getDefaultSessionType().id.toString(),
+        meetingWith: '',
+        customMeetingWith: '',
+        subject: '',
+        date: '',
+        startTime: '',
+        endTime: '',
+        description: ''
+      });
+      
+      toast({
+        title: 'האירוע נוצר בהצלחה',
+        description: formData.meetingType !== 'אחר' ? 
+          'האירוע נוסף ליומן Google ולמערכת הפגישות' : 
+          'האירוע נוסף ליומן Google',
+      });
+      
     } catch (error: any) {
       console.error('📝 FORM_DEBUG: Error creating event:', error);
       toast({
