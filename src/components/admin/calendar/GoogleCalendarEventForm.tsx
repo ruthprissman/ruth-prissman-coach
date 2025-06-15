@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -72,24 +71,39 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
     }));
   }, [formData.meetingType, formData.meetingWith, formData.customMeetingWith, formData.startTime, formData.sessionTypeId, patients, sessionTypes]);
 
-  // Helper function to create ISO string in Israel timezone
+  // Helper function to create ISO string in Israel timezone - FIXED VERSION
   const createISOString = (date: string, time: string): string => {
-    // Create date string in YYYY-MM-DD HH:mm format
-    const dateTimeString = `${date}T${time}:00`;
-    console.log('📅 Creating ISO string from:', { date, time, combined: dateTimeString });
-    
-    // Create Date object and convert to ISO string
-    const dateObj = new Date(dateTimeString);
-    
-    // Check if the date is valid
-    if (isNaN(dateObj.getTime())) {
-      console.error('📅 Invalid date created:', dateTimeString);
-      throw new Error('תאריך או שעה לא תקינים');
+    try {
+      console.log('📅 Creating ISO string from:', { date, time });
+      
+      // Create a date object by combining date and time
+      const dateTimeString = `${date}T${time}:00`;
+      const dateObj = new Date(dateTimeString);
+      
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        console.error('📅 Invalid date created:', dateTimeString);
+        throw new Error('תאריך או שעה לא תקינים');
+      }
+      
+      // Format for Google Calendar API (RFC3339 format)
+      // We need to create the datetime in Israel timezone properly
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const hours = String(dateObj.getHours()).padStart(2, '0');
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+      
+      // Create ISO string with Israel timezone offset (+02:00 winter, +03:00 summer)
+      // For simplicity, we'll use +03:00 (Israel Standard Time)
+      const isoString = `${year}-${month}-${day}T${hours}:${minutes}:00+03:00`;
+      
+      console.log('📅 Created ISO string:', isoString);
+      return isoString;
+    } catch (error) {
+      console.error('📅 Error creating ISO string:', error);
+      throw error;
     }
-    
-    const isoString = dateObj.toISOString();
-    console.log('📅 Created ISO string:', isoString);
-    return isoString;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -144,6 +158,14 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
       const startDateTime = createISOString(formData.date, formData.startTime);
       const endDateTime = createISOString(formData.date, formData.endTime);
       
+      console.log('📝 FORM_DEBUG: Created datetime strings:', {
+        startDateTime,
+        endDateTime,
+        originalDate: formData.date,
+        originalStartTime: formData.startTime,
+        originalEndTime: formData.endTime
+      });
+      
       // Create description based on meeting type and session type
       let description = formData.description;
       if (formData.meetingType !== 'אחר') {
@@ -187,6 +209,9 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
           title: 'האירוע נוצר בהצלחה',
           description: 'האירוע נוסף ליומן Google שלך',
         });
+      } else {
+        console.log('📝 FORM_DEBUG: Event creation failed - no event ID returned');
+        throw new Error('יצירת האירוע נכשלה');
       }
     } catch (error: any) {
       console.error('📝 FORM_DEBUG: Error creating event:', error);

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabaseClient } from '@/lib/supabaseClient';
 
@@ -161,7 +160,7 @@ export const useGoogleOAuth = () => {
     await checkAuthStatus();
   };
 
-  // Create event function with proper token validation and enhanced error handling
+  // Create event function with FIXED datetime handling
   const createEvent = async (
     summary: string,
     startDateTime: string,
@@ -194,10 +193,12 @@ export const useGoogleOAuth = () => {
       const endDate = new Date(endDateTime);
       
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        console.error('🚀 useGoogleOAuth: Invalid dates:', { startDateTime, endDateTime });
         throw new Error('תאריכים לא תקינים');
       }
       
       if (endDate <= startDate) {
+        console.error('🚀 useGoogleOAuth: End time before start time:', { startDateTime, endDateTime });
         throw new Error('שעת הסיום חייבת להיות אחרי שעת ההתחלה');
       }
 
@@ -263,7 +264,8 @@ export const useGoogleOAuth = () => {
         htmlLink: data.htmlLink,
         summary: data.summary,
         start: data.start,
-        end: data.end
+        end: data.end,
+        fullResponse: data
       });
       
       return data.id;
