@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -99,7 +100,7 @@ const HumorView = () => {
                     <img 
                       src={humorItem.image_url} 
                       alt={humorItem.title} 
-                      className="w-full rounded-lg shadow-md object-cover max-h-[500px]"
+                      className="w-full h-auto rounded-lg shadow-md object-contain"
                     />
                   </div>
                 )}

@@ -121,7 +121,7 @@ const PoemView = () => {
                     <img 
                       src={poem.image_url} 
                       alt={poem.title} 
-                      className="w-full rounded-lg shadow-md object-cover max-h-[500px]"
+                      className="w-full h-auto rounded-lg shadow-md object-contain"
                     />
                   </div>
                 )}
