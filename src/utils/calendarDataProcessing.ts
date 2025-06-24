@@ -1,9 +1,10 @@
+
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInMinutes, startOfHour, addMinutes, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { getMeetingIcon } from './meetingIconUtils';
 
-const COMPONENT_VERSION = "1.0.18";
+const COMPONENT_VERSION = "1.0.19";
 console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Component loaded, version ${COMPONENT_VERSION}`);
 
 /**
@@ -92,12 +93,26 @@ export function processGoogleCalendarEvents(
       const dateStr = format(startDate, 'yyyy-MM-dd');
       const dayOfWeek = getDay(startDate);
 
+      // Check if this is a patient meeting
+      const summary = event.summary || '';
+      const isPatientMeeting = summary.trim().startsWith('פגישה עם');
+      
+      // For patient meetings from Google Calendar, ensure minimum 90 minutes duration
+      let actualEndDate = endDate;
+      if (isPatientMeeting) {
+        const actualDuration = differenceInMinutes(endDate, startDate);
+        if (actualDuration < 90) {
+          console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Patient meeting duration is ${actualDuration} minutes, extending to 90 minutes`);
+          actualEndDate = addMinutes(startDate, 90);
+        }
+      }
+
       // Calculate the duration and number of hours the event spans
-      const durationMinutes = differenceInMinutes(endDate, startDate);
+      const durationMinutes = differenceInMinutes(actualEndDate, startDate);
       const startHour = getHours(startDate);
       const startMinute = getMinutes(startDate);
-      const endHour = getHours(endDate);
-      const endMinute = getMinutes(endDate);
+      const endHour = getHours(actualEndDate);
+      const endMinute = getMinutes(actualEndDate);
 
       // Get or create the day map
       if (!calendarData.has(dateStr)) {
@@ -109,7 +124,6 @@ export function processGoogleCalendarEvents(
       let isFirstHour = true;
 
       // --- USE UNIFIED ICON LOGIC ---
-      const summary = event.summary || '';
       let sessionIcon = getMeetingIcon(summary);
       // Fallback: לוגיקת אייקון נוספת אם יש צורך
       if (!sessionIcon && summary.includes('intake')) sessionIcon = "📝";
@@ -146,7 +160,7 @@ export function processGoogleCalendarEvents(
           startMinute: isFirstHour ? startMinute : 0,
           endMinute: isLastHour ? endMinute : 60,
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
-          isPatientMeeting: summary.trim().startsWith('פגישה עם'),
+          isPatientMeeting: isPatientMeeting,
           showBorder: true,
           icon: sessionIcon ?? '👤'
         };
