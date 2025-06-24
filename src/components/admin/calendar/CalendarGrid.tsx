@@ -154,7 +154,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         border: 'border-[#9b87f5]', 
         text: 'text-white font-medium',
         colorClass: 'border-[#9b87f5]',
-        borderColor: '#9b87f5'
+        borderColor: '#9b87f5',
+        iconColor: 'text-[#CFB53B]' // Gold color for icon
       };
     }
     
@@ -166,7 +167,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         border: 'border-[#5C4C8D]', 
         text: 'text-[#CFB53B] font-medium',
         colorClass: 'border-[#5C4C8D]',
-        borderColor: '#5C4C8D'
+        borderColor: '#5C4C8D',
+        iconColor: 'text-[#CFB53B]' // Gold color for icon
       };
     }
 
@@ -178,7 +180,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         border: 'border-[#D3E4FD]', 
         text: 'text-gray-700',
         colorClass: 'border-[#D3E4FD]',
-        borderColor: '#D3E4FD'
+        borderColor: '#D3E4FD',
+        iconColor: 'text-gray-700' // Gray color for icon
       };
     }
     
@@ -190,24 +193,25 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         border: 'border-[#D3E4FD]', 
         text: 'text-gray-700',
         colorClass: 'border-[#D3E4FD]',
-        borderColor: '#D3E4FD'
+        borderColor: '#D3E4FD',
+        iconColor: 'text-gray-700' // Gray color for icon
       };
     }
     
-    // Default statuses - unchanged but with added borderColor property
+    // Default statuses - unchanged but with added iconColor property
     switch (status) {
       case 'available':
-        return { bg: 'bg-purple-100', border: 'border-purple-100', text: 'text-purple-800', colorClass: 'border-purple-100', borderColor: '#F3E8FF' };
+        return { bg: 'bg-purple-100', border: 'border-purple-100', text: 'text-purple-800', colorClass: 'border-purple-100', borderColor: '#F3E8FF', iconColor: 'text-purple-800' };
       case 'booked':
-        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]', colorClass: 'border-[#5C4C8D]', borderColor: '#5C4C8D' };
+        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]', colorClass: 'border-[#5C4C8D]', borderColor: '#5C4C8D', iconColor: 'text-[#CFB53B]' };
       case 'completed':
-        return { bg: 'bg-gray-200', border: 'border-gray-200', text: 'text-gray-800', colorClass: 'border-gray-200', borderColor: '#E5E7EB' };
+        return { bg: 'bg-gray-200', border: 'border-gray-200', text: 'text-gray-800', colorClass: 'border-gray-200', borderColor: '#E5E7EB', iconColor: 'text-gray-800' };
       case 'canceled':
-        return { bg: 'bg-red-100', border: 'border-red-100', text: 'text-red-800', colorClass: 'border-red-100', borderColor: '#FEE2E2' };
+        return { bg: 'bg-red-100', border: 'border-red-100', text: 'text-red-800', colorClass: 'border-red-100', borderColor: '#FEE2E2', iconColor: 'text-red-800' };
       case 'private':
-        return { bg: 'bg-amber-100', border: 'border-amber-100', text: 'text-amber-800', colorClass: 'border-amber-100', borderColor: '#FEF3C7' };
+        return { bg: 'bg-amber-100', border: 'border-amber-100', text: 'text-amber-800', colorClass: 'border-amber-100', borderColor: '#FEF3C7', iconColor: 'text-amber-800' };
       default:
-        return { bg: 'bg-gray-50', border: 'border-gray-50', text: 'text-gray-800', colorClass: 'border-gray-50', borderColor: '#F9FAFB' };
+        return { bg: 'bg-gray-50', border: 'border-gray-50', text: 'text-gray-800', colorClass: 'border-gray-50', borderColor: '#F9FAFB', iconColor: 'text-gray-800' };
     }
   };
 
@@ -583,6 +587,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       );
     }
 
+    const { iconColor } = getStatusStyle(slot);
+
     // ניתן להציג את הכל בלחיצה עם ALT - ויזואלי
     return (
       <div 
@@ -594,9 +600,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         }}
       >
         <div className="flex items-center gap-1">
-          {/* Display icon prominently in white color */}
+          {/* Display icon with the appropriate color */}
           {slot.icon && (
-            <span className="text-white text-base font-bold bg-black/20 rounded px-1 py-0.5 flex-shrink-0">
+            <span className={`${iconColor} text-base font-bold flex-shrink-0`}>
               {slot.icon}
             </span>
           )}
