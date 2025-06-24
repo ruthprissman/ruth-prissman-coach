@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
@@ -45,7 +44,8 @@ const Humor = () => {
           `)
           .eq('type', 'humor')
           .filter('article_publications.publish_location', 'eq', 'Website')
-          .lte('article_publications.published_date', today);
+          .lte('article_publications.published_date', today)
+          .order('published_at', { ascending: false });
 
         if (error) throw error;
 
@@ -64,6 +64,13 @@ const Humor = () => {
             new Date(pub.published_date) <= new Date()
           )
         );
+
+        // Sort by published_at date (newest first)
+        publishedContent.sort((a, b) => {
+          const dateA = new Date(a.published_at || 0);
+          const dateB = new Date(b.published_at || 0);
+          return dateB.getTime() - dateA.getTime();
+        });
 
         // Development mode logging for published content
         if (process.env.NODE_ENV === 'development') {
