@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -563,7 +564,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const endPercent = slot.isLastHour && slot.endMinute ? (slot.endMinute / 60) * 100 : 100;
     const heightPercent = endPercent - startPercent;
     
-    const { bg, text, iconColor } = getStatusStyle(slot);
+    const { bg, text } = getStatusStyle(slot);
+    const isWorkMeetingSlot = isWorkMeeting(slot);
     
     return (
       <div 
@@ -578,7 +580,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           <div className={`p-1 text-xs ${text} flex items-center gap-1`}>
             {/* Display icon for work meetings */}
             {slot.icon && isWorkMeetingSlot && (
-              <span className={`${iconColor} text-base font-bold flex-shrink-0`}>
+              <span className="text-[#CFB53B] text-base font-bold flex-shrink-0">
                 {slot.icon}
               </span>
             )}
