@@ -4,7 +4,7 @@ import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInM
 import { he } from 'date-fns/locale';
 import { getMeetingIcon } from './meetingIconUtils';
 
-const COMPONENT_VERSION = "1.0.19";
+const COMPONENT_VERSION = "1.0.20";
 console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Component loaded, version ${COMPONENT_VERSION}`);
 
 /**
@@ -131,6 +131,12 @@ export function processGoogleCalendarEvents(
       else if (!sessionIcon && summary.includes('פגישה')) sessionIcon = "👤";
       else sessionIcon = '👤'; // ודא שתמיד יהיה משהו
 
+      // For patient meetings, prepend the icon to the summary text
+      let displaySummary = summary;
+      if (isPatientMeeting && sessionIcon) {
+        displaySummary = `${sessionIcon} ${summary}`;
+      }
+
       // DEBUG: Always log icon logic (even if icon is missing)
       console.log(`[ICON_DEBUG] [GOOGLE] summary="${summary}" -> icon="${sessionIcon}" | event=`, event);
 
@@ -144,7 +150,7 @@ export function processGoogleCalendarEvents(
           day: dayOfWeek,
           hour: hourStr,
           status: 'booked',
-          notes: event.summary,
+          notes: displaySummary, // Use the modified summary with icon
           description: event.description || '',
           fromGoogle: true,
           isMeeting: true,
