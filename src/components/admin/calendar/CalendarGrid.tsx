@@ -28,7 +28,7 @@ import { addFutureSessionToGoogleCalendar } from '@/utils/googleCalendarUtils';
 import DeleteGoogleCalendarEventDialog from './DeleteGoogleCalendarEventDialog';
 
 // Component version for debugging
-const COMPONENT_VERSION = "1.0.23";
+const COMPONENT_VERSION = "1.0.24";
 console.log(`LOV_DEBUG_CALENDAR_GRID: Component loaded, version ${COMPONENT_VERSION}`);
 
 interface CalendarGridProps {
@@ -155,7 +155,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         text: 'text-white font-medium',
         colorClass: 'border-[#9b87f5]',
         borderColor: '#9b87f5',
-        iconColor: 'text-[#CFB53B]' // Gold color for icon
+        iconColor: 'text-[#CFB53B]' // Gold color for icon - ALWAYS gold for meetings
       };
     }
     
@@ -168,7 +168,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         text: 'text-[#CFB53B] font-medium',
         colorClass: 'border-[#5C4C8D]',
         borderColor: '#5C4C8D',
-        iconColor: 'text-[#CFB53B]' // Gold color for icon
+        iconColor: 'text-[#CFB53B]' // Gold color for icon - ALWAYS gold for meetings
       };
     }
 
@@ -181,7 +181,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         text: 'text-gray-700',
         colorClass: 'border-[#D3E4FD]',
         borderColor: '#D3E4FD',
-        iconColor: 'text-gray-700' // Gray color for icon
+        iconColor: 'text-[#CFB53B]' // Gold color for icon - ALWAYS gold for meetings
       };
     }
     
@@ -194,7 +194,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         text: 'text-gray-700',
         colorClass: 'border-[#D3E4FD]',
         borderColor: '#D3E4FD',
-        iconColor: 'text-gray-700' // Gray color for icon
+        iconColor: 'text-[#CFB53B]' // Gold color for icon - ALWAYS gold for meetings
       };
     }
     
@@ -373,11 +373,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       return true;
     }
     
+    // If it's from Google and looks like a meeting, consider it a work meeting
+    if (slot.fromGoogle === true) {
+      console.log(`ICON_DEBUG: isWorkMeeting - detected Google event, returning true`);
+      return true;
+    }
+    
     // Otherwise check if notes exists and starts with the required prefix
     const notesContent = slot.notes || '';
     const isMeeting = typeof notesContent === 'string' && notesContent.startsWith('פגישה עם');
     
-    console.log(`ICON_DEBUG: isWorkMeeting check for notes "${notesContent}" => ${isMeeting}, fromFutureSession: ${slot.fromFutureSession}`);
+    console.log(`ICON_DEBUG: isWorkMeeting check for notes "${notesContent}" => ${isMeeting}, fromFutureSession: ${slot.fromFutureSession}, fromGoogle: ${slot.fromGoogle}`);
     return isMeeting;
   };
 
@@ -557,7 +563,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     const endPercent = slot.isLastHour && slot.endMinute ? (slot.endMinute / 60) * 100 : 100;
     const heightPercent = endPercent - startPercent;
     
-    const { bg, text } = getStatusStyle(slot);
+    const { bg, text, iconColor } = getStatusStyle(slot);
     
     return (
       <div 
@@ -569,8 +575,14 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       >
         {/* Only show text in the first hour of a multi-hour event */}
         {slot.isFirstHour && slot.notes && (
-          <div className={`p-1 text-xs ${text}`}>
-            {slot.notes}
+          <div className={`p-1 text-xs ${text} flex items-center gap-1`}>
+            {/* Display icon for work meetings */}
+            {slot.icon && isWorkMeetingSlot && (
+              <span className={`${iconColor} text-base font-bold flex-shrink-0`}>
+                {slot.icon}
+              </span>
+            )}
+            <span className="truncate">{slot.notes}</span>
           </div>
         )}
       </div>
@@ -588,6 +600,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
 
     const { iconColor } = getStatusStyle(slot);
+    const isWorkMeetingSlot = isWorkMeeting(slot);
 
     // ניתן להציג את הכל בלחיצה עם ALT - ויזואלי
     return (
@@ -600,9 +613,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         }}
       >
         <div className="flex items-center gap-1">
-          {/* Display icon with the appropriate color */}
-          {slot.icon && (
-            <span className={`${iconColor} text-base font-bold flex-shrink-0`}>
+          {/* Display icon with the appropriate color - FOR ALL WORK MEETINGS */}
+          {slot.icon && isWorkMeetingSlot && (
+            <span className="text-[#CFB53B] text-base font-bold flex-shrink-0">
               {slot.icon}
             </span>
           )}
@@ -674,7 +687,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         ) : (
           <>
             {slot.status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
-            {slot.status === 'booked' && <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />}
+            {slot.status === 'booked' && (
+              <div className="flex flex-col items-center justify-center h-full">
+                <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />
+                {/* Show icon for booked meetings too */}
+                {slot.icon && isWorkMeetingSlot && (
+                  <span className="text-[#CFB53B] text-lg font-bold mt-1">
+                    {slot.icon}
+                  </span>
+                )}
+              </div>
+            )}
             {slot.status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
             {slot.status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
             {slot.status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
