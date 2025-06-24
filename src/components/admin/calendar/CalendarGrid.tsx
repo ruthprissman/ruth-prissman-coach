@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -155,8 +154,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         border: 'border-[#9b87f5]', 
         text: 'text-white font-medium',
         colorClass: 'border-[#9b87f5]',
-        borderColor: '#9b87f5',
-        iconColor: 'text-[#CFB53B]' // Gold color for icon - ALWAYS gold for meetings
+        borderColor: '#9b87f5'
       };
     }
     
@@ -168,8 +166,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         border: 'border-[#5C4C8D]', 
         text: 'text-[#CFB53B] font-medium',
         colorClass: 'border-[#5C4C8D]',
-        borderColor: '#5C4C8D',
-        iconColor: 'text-[#CFB53B]' // Gold color for icon - ALWAYS gold for meetings
+        borderColor: '#5C4C8D'
       };
     }
 
@@ -181,8 +178,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         border: 'border-[#D3E4FD]', 
         text: 'text-gray-700',
         colorClass: 'border-[#D3E4FD]',
-        borderColor: '#D3E4FD',
-        iconColor: 'text-[#CFB53B]' // Gold color for icon - ALWAYS gold for meetings
+        borderColor: '#D3E4FD'
       };
     }
     
@@ -194,25 +190,24 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         border: 'border-[#D3E4FD]', 
         text: 'text-gray-700',
         colorClass: 'border-[#D3E4FD]',
-        borderColor: '#D3E4FD',
-        iconColor: 'text-[#CFB53B]' // Gold color for icon - ALWAYS gold for meetings
+        borderColor: '#D3E4FD'
       };
     }
     
-    // Default statuses - unchanged but with added iconColor property
+    // Default statuses
     switch (status) {
       case 'available':
-        return { bg: 'bg-purple-100', border: 'border-purple-100', text: 'text-purple-800', colorClass: 'border-purple-100', borderColor: '#F3E8FF', iconColor: 'text-purple-800' };
+        return { bg: 'bg-purple-100', border: 'border-purple-100', text: 'text-purple-800', colorClass: 'border-purple-100', borderColor: '#F3E8FF' };
       case 'booked':
-        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]', colorClass: 'border-[#5C4C8D]', borderColor: '#5C4C8D', iconColor: 'text-[#CFB53B]' };
+        return { bg: 'bg-[#5C4C8D]', border: 'border-[#5C4C8D]', text: 'text-[#CFB53B]', colorClass: 'border-[#5C4C8D]', borderColor: '#5C4C8D' };
       case 'completed':
-        return { bg: 'bg-gray-200', border: 'border-gray-200', text: 'text-gray-800', colorClass: 'border-gray-200', borderColor: '#E5E7EB', iconColor: 'text-gray-800' };
+        return { bg: 'bg-gray-200', border: 'border-gray-200', text: 'text-gray-800', colorClass: 'border-gray-200', borderColor: '#E5E7EB' };
       case 'canceled':
-        return { bg: 'bg-red-100', border: 'border-red-100', text: 'text-red-800', colorClass: 'border-red-100', borderColor: '#FEE2E2', iconColor: 'text-red-800' };
+        return { bg: 'bg-red-100', border: 'border-red-100', text: 'text-red-800', colorClass: 'border-red-100', borderColor: '#FEE2E2' };
       case 'private':
-        return { bg: 'bg-amber-100', border: 'border-amber-100', text: 'text-amber-800', colorClass: 'border-amber-100', borderColor: '#FEF3C7', iconColor: 'text-amber-800' };
+        return { bg: 'bg-amber-100', border: 'border-amber-100', text: 'text-amber-800', colorClass: 'border-amber-100', borderColor: '#FEF3C7' };
       default:
-        return { bg: 'bg-gray-50', border: 'border-gray-50', text: 'text-gray-800', colorClass: 'border-gray-50', borderColor: '#F9FAFB', iconColor: 'text-gray-800' };
+        return { bg: 'bg-gray-50', border: 'border-gray-50', text: 'text-gray-800', colorClass: 'border-gray-50', borderColor: '#F9FAFB' };
     }
   };
 
@@ -578,7 +573,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         {/* Only show text in the first hour of a multi-hour event */}
         {slot.isFirstHour && slot.notes && (
           <div className={`p-1 text-xs ${text} flex items-center gap-1`}>
-            {/* Display icon for work meetings */}
+            {/* Display icon for work meetings - ALWAYS GOLD */}
             {slot.icon && isWorkMeetingSlot && (
               <span className="text-[#CFB53B] text-base font-bold flex-shrink-0">
                 {slot.icon}
@@ -601,7 +596,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       );
     }
 
-    const { iconColor } = getStatusStyle(slot);
     const isWorkMeetingSlot = isWorkMeeting(slot);
 
     // ניתן להציג את הכל בלחיצה עם ALT - ויזואלי
@@ -615,7 +609,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         }}
       >
         <div className="flex items-center gap-1">
-          {/* Display icon with the appropriate color - FOR ALL WORK MEETINGS */}
+          {/* Display icon with GOLD color - FOR ALL WORK MEETINGS */}
           {slot.icon && isWorkMeetingSlot && (
             <span className="text-[#CFB53B] text-base font-bold flex-shrink-0">
               {slot.icon}
@@ -692,12 +686,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             {slot.status === 'booked' && (
               <div className="flex flex-col items-center justify-center h-full">
                 <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />
-                {/* Show icon for booked meetings too */}
-                {slot.icon && isWorkMeetingSlot && (
-                  <span className="text-[#CFB53B] text-lg font-bold mt-1">
-                    {slot.icon}
-                  </span>
-                )}
+                {/* Show icon for booked meetings - NO DUPLICATE ICON HERE */}
               </div>
             )}
             {slot.status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
