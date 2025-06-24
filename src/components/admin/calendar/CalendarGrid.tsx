@@ -594,36 +594,41 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         }}
       >
         <div className="flex items-center gap-1">
+          {/* Display icon prominently in white color */}
+          {slot.icon && (
+            <span className="text-white text-base font-bold bg-black/20 rounded px-1 py-0.5 flex-shrink-0">
+              {slot.icon}
+            </span>
+          )}
           <span 
             className="font-medium truncate"
             title={slot.notes}
           >
             {slot.notes}
           </span>
-          {/* נציג לוג חזותי אם זוהה אייקון */}
-          {!!slot.icon ? (
-            <span className="ml-1 text-base select-none bg-yellow-200 rounded px-1">
-              {slot.icon} <b>icon</b>
-            </span>
-          ) : (
-            <span className="ml-1 text-base select-none bg-gray-200 rounded px-1 opacity-40" title="icon is missing">
-              {typeof slot.icon === 'undefined' ? "[no icon]" : slot.icon}
-            </span>
+          {/* Debug info - only show in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <>
+              <span className="ml-1 text-[10px] text-purple-700">
+                {slot.fromFutureSession ? "fromFutureSession" : ""}
+              </span>
+              <span className="ml-1 text-[10px] text-blue-700">
+                {slot.fromGoogle ? "fromGoogle" : ""}
+              </span>
+            </>
           )}
-          <span className="ml-1 text-[10px] text-purple-700">
-            {slot.fromFutureSession ? "fromFutureSession" : ""}
-          </span>
-          <span className="ml-1 text-[10px] text-blue-700">
-            {slot.fromGoogle ? "fromGoogle" : ""}
-          </span>
         </div>
-        <div className="text-[10px] opacity-40">
-          hour: {slot.hour}, date: {slot.date}
-        </div>
-        {slot.futureSession && (
-          <div className="text-[10px] opacity-70">
-            futureSession.id: {slot.futureSession?.id || "(no id)"}
-          </div>
+        {process.env.NODE_ENV === 'development' && (
+          <>
+            <div className="text-[10px] opacity-40">
+              hour: {slot.hour}, date: {slot.date}
+            </div>
+            {slot.futureSession && (
+              <div className="text-[10px] opacity-70">
+                futureSession.id: {slot.futureSession?.id || "(no id)"}
+              </div>
+            )}
+          </>
         )}
         {slot.exactStartTime && (
           <div className="text-xs opacity-75">
