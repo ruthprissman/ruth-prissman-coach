@@ -683,10 +683,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         ) : (
           <>
             {slot.status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
-            {slot.status === 'booked' && (
+            {slot.status === 'booked' && !isWorkMeetingSlot && (
               <div className="flex flex-col items-center justify-center h-full">
                 <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />
-                {/* Show icon for booked meetings - NO DUPLICATE ICON HERE */}
               </div>
             )}
             {slot.status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
