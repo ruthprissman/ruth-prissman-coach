@@ -361,7 +361,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     setAddToFutureSessionDialogOpen(true);
   };
 
-  // Function to check if a slot is a work meeting (starts with "פגישה עם" OR is a future session)
+  // Function to check if a slot is a work meeting (starts with "פגישה עם" OR is a future session OR is a patient meeting)
   const isWorkMeeting = (slot: CalendarSlot): boolean => {
     // If it's a future session, consider it a work meeting regardless of notes
     if (slot.fromFutureSession === true) {
@@ -369,17 +369,17 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       return true;
     }
     
-    // If it's from Google and looks like a meeting, consider it a work meeting
-    if (slot.fromGoogle === true) {
-      console.log(`ICON_DEBUG: isWorkMeeting - detected Google event, returning true`);
+    // Check if it's a patient meeting (90 minutes duration)
+    if (slot.isPatientMeeting === true) {
+      console.log(`ICON_DEBUG: isWorkMeeting - detected patient meeting, returning true`);
       return true;
     }
     
-    // Otherwise check if notes exists and starts with the required prefix
+    // Check if notes exists and starts with the required prefix for work meetings
     const notesContent = slot.notes || '';
     const isMeeting = typeof notesContent === 'string' && notesContent.startsWith('פגישה עם');
     
-    console.log(`ICON_DEBUG: isWorkMeeting check for notes "${notesContent}" => ${isMeeting}, fromFutureSession: ${slot.fromFutureSession}, fromGoogle: ${slot.fromGoogle}`);
+    console.log(`ICON_DEBUG: isWorkMeeting check for notes "${notesContent}" => ${isMeeting}, fromFutureSession: ${slot.fromFutureSession}, fromGoogle: ${slot.fromGoogle}, isPatientMeeting: ${slot.isPatientMeeting}`);
     return isMeeting;
   };
 
