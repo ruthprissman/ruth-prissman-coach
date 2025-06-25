@@ -688,8 +688,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />
               </div>
             )}
-            {slot.status === 'completed' && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
-            {slot.status === 'canceled' && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
+            {/* Only show default status icons if it's NOT a work meeting */}
+            {slot.status === 'completed' && !isWorkMeetingSlot && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
+            {slot.status === 'canceled' && !isWorkMeetingSlot && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
             {slot.status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
           </>
         )}
