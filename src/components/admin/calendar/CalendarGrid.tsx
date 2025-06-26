@@ -573,12 +573,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         {/* Only show text in the first hour of a multi-hour event */}
         {slot.isFirstHour && slot.notes && (
           <div className={`p-1 text-xs ${text} flex items-center gap-1`}>
-            {/* Display icon for work meetings - ALWAYS GOLD */}
-            {slot.icon && isWorkMeetingSlot && (
-              <span className="text-[#CFB53B] text-base font-bold flex-shrink-0">
-        
-              </span>
-            )}
+           
             <span className="truncate">{slot.notes}</span>
           </div>
         )}
