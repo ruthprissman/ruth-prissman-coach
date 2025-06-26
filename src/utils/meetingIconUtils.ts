@@ -20,3 +20,14 @@ export function getMeetingIcon(summaryOrType: string = ""): string | undefined {
 
   return undefined;
 }
+
+/**
+ * Get meeting icon based on numeric session type ID.
+ * Maps session_type_id to appropriate icons.
+ */
+export function getMeetingIconByTypeId(sessionTypeId: number | null | undefined): string {
+  if (sessionTypeId === 1) return '⭐'; // regular
+  if (sessionTypeId === 2) return '📝'; // intake
+  if (sessionTypeId === 3) return '⚡'; // seft
+  return '⭐'; // default fallback
+}

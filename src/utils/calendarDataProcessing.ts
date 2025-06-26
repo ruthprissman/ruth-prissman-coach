@@ -1,9 +1,10 @@
+
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInMinutes, startOfHour, addMinutes, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
-import { getMeetingIcon } from './meetingIconUtils';
+import { getMeetingIcon, getMeetingIconByTypeId } from './meetingIconUtils';
 
-const COMPONENT_VERSION = "1.0.21";
+const COMPONENT_VERSION = "1.0.22";
 console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Component loaded, version ${COMPONENT_VERSION}`);
 
 /**
@@ -234,19 +235,21 @@ export function processFutureSessions(
       const patientName = session.patients?.name || 'לקוח לא ידוע';
       let summaryString = `פגישה עם ${patientName}`;
 
-      // Only set icon according to session_type.code
+      // Use numeric session_type_id for icon mapping instead of text code
       let icon: string | undefined = undefined;
-      const sessionTypeCode = session.session_type?.code;
-      if (sessionTypeCode === 'seft') icon = '⚡';
-      else if (sessionTypeCode === 'intake') icon = '📝';
-      else if (sessionTypeCode === 'regular') icon = '⭐';
-      else icon = '⭐'; // ודא שתמיד יהיה משהו
+      const sessionTypeId = session.session_type_id;
+      
+      // Map numeric IDs to icons
+      if (sessionTypeId === 1) icon = '⭐'; // regular
+      else if (sessionTypeId === 2) icon = '📝'; // intake
+      else if (sessionTypeId === 3) icon = '⚡'; // seft
+      else icon = '⭐'; // default fallback
       
       // שרשר את האייקון לתוכן
       summaryString = `${icon} ${summaryString}`;
       
-      // Debug always
-      console.log(`[ICON_DEBUG] [FUTURE] summary="${summaryString}", type="${sessionTypeCode}" -> icon="${icon}" | session=`, session);
+      // Debug: Log the session type ID and resulting icon
+      console.log(`[ICON_DEBUG] [FUTURE] summary="${summaryString}", session_type_id="${sessionTypeId}" -> icon="${icon}" | session=`, session);
 
       if (!calendarData.has(dateStr)) {
         calendarData.set(dateStr, new Map());
