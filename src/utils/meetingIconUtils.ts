@@ -10,13 +10,13 @@ export function getMeetingIcon(summaryOrType: string = ""): string | undefined {
   if (str.startsWith('פגישה עם')) {
     if (str.includes('seft') || str.includes('ספט')) return "⚡";
     if (str.includes('intake') || str.includes('אינטייק')) return "📝";
-    return "👑"; // Gold crown icon instead of purple person
+    return "⭐"; // Gold star icon
   }
 
   // Fallback: check for keywords in any meeting
   if (str.includes('seft') || str.includes('ספט')) return "⚡";
   if (str.includes('intake') || str.includes('אינטייק')) return "📝";
-  if (str.includes('פגישה')) return "👑"; // Gold crown icon instead of purple person
+  if (str.includes('פגישה')) return "⭐"; // Gold star icon
 
   return undefined;
 }
