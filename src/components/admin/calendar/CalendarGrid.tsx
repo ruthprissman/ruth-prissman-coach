@@ -609,12 +609,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         }}
       >
         <div className="flex items-center gap-1">
-          {/* Display icon with GOLD color - FOR ALL WORK MEETINGS */}
-          {slot.icon && isWorkMeetingSlot && (
-            <span className="text-[#CFB53B] text-base font-bold flex-shrink-0">
-              {slot.icon}
-            </span>
-          )}
+          {/* Remove all icon rendering - no icons displayed */}
           <span 
             className="font-medium truncate"
             title={slot.notes}
@@ -682,17 +677,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
           renderEventContent(slot)
         ) : (
           <>
-            {slot.status === 'available' && <Check className="h-4 w-4 mx-auto text-purple-600" />}
-            {/* Only show booked icon for non-work meetings that don't have event content */}
-            {slot.status === 'booked' && !isWorkMeetingSlot && !slot.notes && (
-              <div className="flex flex-col items-center justify-center h-full">
-                <Calendar className="h-4 w-4 mx-auto text-[#CFB53B]" />
-              </div>
-            )}
-            {/* Only show default status icons if it's NOT a work meeting */}
-            {slot.status === 'completed' && !isWorkMeetingSlot && <Calendar className="h-4 w-4 mx-auto text-gray-600" />}
-            {slot.status === 'canceled' && !isWorkMeetingSlot && <Calendar className="h-4 w-4 mx-auto text-red-600" />}
-            {slot.status === 'private' && <Lock className="h-4 w-4 mx-auto text-amber-600" />}
+            {/* Remove all status icons - no icons displayed */}
           </>
         )}
       </div>
