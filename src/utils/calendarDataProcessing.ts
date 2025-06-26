@@ -168,7 +168,7 @@ export function processGoogleCalendarEvents(
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
           isPatientMeeting: isPatientMeeting,
           showBorder: true,
-          icon: sessionIcon ?? '👤'
+          icon: sessionIcon ?? '⭐'
         };
 
         // Always log out for debug
