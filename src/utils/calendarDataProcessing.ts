@@ -247,7 +247,7 @@ export function processFutureSessions(
       else if (sessionTypeCode === 'intake') icon = '📝';
       else if (sessionTypeCode === 'regular') icon = '⭐';
       else icon = '⭐'; // ודא שתמיד יהיה משהו
-      summaryString+=icon;
+      summaryString=`${icon} ${summaryString}`;
       // Debug always
       console.log(`[ICON_DEBUG] [FUTURE] summary="${summaryString}", type="${sessionTypeCode}" -> icon="${icon}" | session=`, session);
 
