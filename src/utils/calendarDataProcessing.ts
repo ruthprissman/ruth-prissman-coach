@@ -126,10 +126,10 @@ export function processGoogleCalendarEvents(
       // --- USE UNIFIED ICON LOGIC ---
       let sessionIcon = getMeetingIcon(summary);
       // Fallback: לוגיקת אייקון נוספת אם יש צורך
-      if (!sessionIcon && summary.includes('intake')) sessionIcon = "📝";
-      else if (!sessionIcon && summary.includes('seft')) sessionIcon = "⚡";
-      else if (!sessionIcon && summary.includes('פגישה')) sessionIcon = "👤";
-      else sessionIcon = '👤'; // ודא שתמיד יהיה משהו
+   //   if (!sessionIcon && summary.includes('intake')) sessionIcon = "📝";
+    //  else if (!sessionIcon && summary.includes('seft')) sessionIcon = "⚡";
+    //  else if (!sessionIcon && summary.includes('פגישה')) sessionIcon = "👤";
+    //  else sessionIcon = '👤'; // ודא שתמיד יהיה משהו
 
       // For patient meetings, prepend the icon to the summary text
       let displaySummary = summary;
