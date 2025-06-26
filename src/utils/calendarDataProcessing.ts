@@ -1,10 +1,9 @@
-
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInMinutes, startOfHour, addMinutes, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { getMeetingIcon } from './meetingIconUtils';
 
-const COMPONENT_VERSION = "1.0.20";
+const COMPONENT_VERSION = "1.0.21";
 console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Component loaded, version ${COMPONENT_VERSION}`);
 
 /**
@@ -125,12 +124,7 @@ export function processGoogleCalendarEvents(
 
       // --- USE UNIFIED ICON LOGIC ---
       let sessionIcon = getMeetingIcon(summary);
-      // Fallback: לוגיקת אייקון נוספת אם יש צורך
-   //   if (!sessionIcon && summary.includes('intake')) sessionIcon = "📝";
-    //  else if (!sessionIcon && summary.includes('seft')) sessionIcon = "⚡";
-    //  else if (!sessionIcon && summary.includes('פגישה')) sessionIcon = "👤";
-    //  else sessionIcon = '👤'; // ודא שתמיד יהיה משהו
-
+      
       // For patient meetings, prepend the icon to the summary text
       let displaySummary = summary;
       if (isPatientMeeting && sessionIcon) {
@@ -238,7 +232,7 @@ export function processFutureSessions(
       let isFirstHour = true;
 
       const patientName = session.patients?.name || 'לקוח לא ידוע';
-      const summaryString = `פגישה עם ${patientName}`;
+      let summaryString = `פגישה עם ${patientName}`;
 
       // Only set icon according to session_type.code
       let icon: string | undefined = undefined;
@@ -247,7 +241,10 @@ export function processFutureSessions(
       else if (sessionTypeCode === 'intake') icon = '📝';
       else if (sessionTypeCode === 'regular') icon = '⭐';
       else icon = '⭐'; // ודא שתמיד יהיה משהו
-      summaryString=`${icon} ${summaryString}`;
+      
+      // שרשר את האייקון לתוכן
+      summaryString = `${icon} ${summaryString}`;
+      
       // Debug always
       console.log(`[ICON_DEBUG] [FUTURE] summary="${summaryString}", type="${sessionTypeCode}" -> icon="${icon}" | session=`, session);
 
