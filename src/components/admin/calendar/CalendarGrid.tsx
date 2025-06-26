@@ -576,7 +576,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             {/* Display icon for work meetings - ALWAYS GOLD */}
             {slot.icon && isWorkMeetingSlot && (
               <span className="text-[#CFB53B] text-base font-bold flex-shrink-0">
-                {slot.icon}
+        
               </span>
             )}
             <span className="truncate">{slot.notes}</span>
