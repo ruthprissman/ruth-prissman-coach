@@ -245,9 +245,9 @@ export function processFutureSessions(
       const sessionTypeCode = session.session_type?.code;
       if (sessionTypeCode === 'seft') icon = '⚡';
       else if (sessionTypeCode === 'intake') icon = '📝';
-      else if (sessionTypeCode === 'regular') icon = '👤';
-      else icon = '👤'; // ודא שתמיד יהיה משהו
-
+      else if (sessionTypeCode === 'regular') icon = '⭐';
+      else icon = '⭐'; // ודא שתמיד יהיה משהו
+      summaryString+=icon;
       // Debug always
       console.log(`[ICON_DEBUG] [FUTURE] summary="${summaryString}", type="${sessionTypeCode}" -> icon="${icon}" | session=`, session);
 
