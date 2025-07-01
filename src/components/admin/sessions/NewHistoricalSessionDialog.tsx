@@ -4,7 +4,7 @@ import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
-import { NewHistoricalSessionFormData } from '@/types/session';
+import { NewHistoricalSessionFormData, FutureSession } from '@/types/session';
 import { convertLocalToUTC } from '@/utils/dateUtils';
 import { useSessionTypes } from '@/hooks/useSessionTypes';
 import SessionAttachmentsManager from './SessionAttachmentsManager';
@@ -38,19 +38,23 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 
 interface NewHistoricalSessionDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   patientId: number;
   onSessionCreated: () => void;
   sessionPrice?: number | null;
+  fromFutureSession?: FutureSession | null;
+  onDeleteFutureSession?: () => Promise<void>;
 }
 
 const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
-  isOpen,
-  onClose,
+  open,
+  onOpenChange,
   patientId,
   onSessionCreated,
   sessionPrice,
+  fromFutureSession,
+  onDeleteFutureSession,
 }) => {
   const { toast } = useToast();
   const { data: sessionTypes, isLoading: isLoadingSessionTypes } = useSessionTypes();
@@ -98,31 +102,56 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     fetchExercises();
   }, []);
 
-  // Reset form when dialog opens
+  // Reset form when dialog opens or populate from future session
   useEffect(() => {
-    if (isOpen) {
-      const now = new Date();
-      setDate(now);
-      setTime('12:00');
-      setPaymentDate(now);
-      setSelectedExercises([]);
-      
-      setFormData({
-        session_date: now,
-        meeting_type: 'In-Person',
-        session_type_id: null,
-        summary: '',
-        sent_exercises: false,
-        exercise_list: [],
-        paid_amount: sessionPrice || 0,
-        payment_status: 'pending',
-        payment_method: null,
-        payment_date: null,
-        payment_notes: '',
-        attachment_urls: [],
-      });
+    if (open) {
+      if (fromFutureSession) {
+        // Pre-populate from future session
+        const sessionDate = new Date(fromFutureSession.session_date);
+        setDate(sessionDate);
+        setTime(format(sessionDate, 'HH:mm'));
+        setPaymentDate(new Date());
+        setSelectedExercises([]);
+        
+        setFormData({
+          session_date: sessionDate,
+          meeting_type: fromFutureSession.meeting_type || 'In-Person',
+          session_type_id: fromFutureSession.session_type_id || null,
+          summary: '',
+          sent_exercises: false,
+          exercise_list: [],
+          paid_amount: sessionPrice || 0,
+          payment_status: 'pending',
+          payment_method: null,
+          payment_date: null,
+          payment_notes: '',
+          attachment_urls: [],
+        });
+      } else {
+        // New session
+        const now = new Date();
+        setDate(now);
+        setTime('12:00');
+        setPaymentDate(now);
+        setSelectedExercises([]);
+        
+        setFormData({
+          session_date: now,
+          meeting_type: 'In-Person',
+          session_type_id: null,
+          summary: '',
+          sent_exercises: false,
+          exercise_list: [],
+          paid_amount: sessionPrice || 0,
+          payment_status: 'pending',
+          payment_method: null,
+          payment_date: null,
+          payment_notes: '',
+          attachment_urls: [],
+        });
+      }
     }
-  }, [isOpen, sessionPrice]);
+  }, [open, sessionPrice, fromFutureSession]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -240,6 +269,11 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
 
     setIsSubmitting(true);
     try {
+      // Delete future session if converting from future session
+      if (fromFutureSession && onDeleteFutureSession) {
+        await onDeleteFutureSession();
+      }
+
       // Format the combined date and time for database
       const combinedDate = date;
       if (time) {
@@ -276,11 +310,11 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
 
       toast({
         title: "פגישה נוצרה בהצלחה",
-        description: "הפגישה ההיסטורית נוספה למערכת",
+        description: fromFutureSession ? "הפגישה הועברה לפגישות קודמות" : "הפגישה ההיסטורית נוספה למערכת",
       });
 
       onSessionCreated();
-      onClose();
+      onOpenChange(false);
     } catch (error: any) {
       console.error('Error creating session:', error);
       toast({
@@ -293,12 +327,16 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     }
   };
 
+  const handleClose = () => {
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-purple-800">
-            הוספת פגישה היסטורית
+            {fromFutureSession ? 'העברת פגישה להיסטוריה' : 'הוספת פגישה היסטורית'}
           </DialogTitle>
         </DialogHeader>
 
@@ -537,11 +575,11 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
             disabled={isSubmitting}
             className="bg-purple-600 hover:bg-purple-700"
           >
-            {isSubmitting ? 'יוצר...' : 'צור פגישה'}
+            {isSubmitting ? 'יוצר...' : fromFutureSession ? 'העבר לפגישות קודמות' : 'צור פגישה'}
           </Button>
           <Button
             variant="outline"
-            onClick={onClose}
+            onClick={handleClose}
             className="border-purple-200 text-purple-700 hover:bg-purple-50"
           >
             ביטול
