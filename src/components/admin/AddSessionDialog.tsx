@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -282,8 +283,10 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
       }));
     } else if (name === 'meeting_type') {
       setFormData((prev) => ({ ...prev, meeting_type: value as 'Zoom' | 'Phone' | 'In-Person' }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+    } else if (name === 'payment_status') {
+      setFormData((prev) => ({ ...prev, payment_status: value as 'paid' | 'partial' | 'pending' }));
+    } else if (name === 'payment_method') {
+      setFormData((prev) => ({ ...prev, payment_method: value as 'cash' | 'bit' | 'transfer' | null }));
     }
     
     // Reset payment_date if payment_status is "pending"
