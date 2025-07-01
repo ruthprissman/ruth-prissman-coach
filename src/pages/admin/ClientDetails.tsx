@@ -687,7 +687,7 @@ const ClientDetails: React.FC = () => {
           open={isNewFutureSessionDialogOpen}
           onOpenChange={setIsNewFutureSessionDialogOpen}
           patientId={Number(id)}
-          patientName={client.name}
+          sessionPrice={client.session_price}
           onSessionCreated={fetchClientDetails}
         />
       )}
@@ -754,6 +754,7 @@ const ClientDetails: React.FC = () => {
           open={isNewHistoricalSessionDialogOpen}
           onOpenChange={setIsNewHistoricalSessionDialogOpen}
           patientId={Number(id)}
+          sessionPrice={client.session_price}
           onSessionCreated={fetchClientDetails}
         />
       )}
