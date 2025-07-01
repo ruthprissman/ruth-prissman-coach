@@ -43,6 +43,7 @@ export interface NewSessionFormData {
   payment_method: 'cash' | 'bit' | 'transfer' | null;
   payment_date: Date | null;
   payment_notes: string | null;
+  attachment_urls?: string[] | null; // New field for file attachments
 }
 
 export interface NewHistoricalSessionFormData {
@@ -57,4 +58,5 @@ export interface NewHistoricalSessionFormData {
   payment_method: 'cash' | 'bit' | 'transfer' | null;
   payment_date: Date | null;
   payment_notes: string | null;
+  attachment_urls?: string[] | null; // New field for file attachments
 }

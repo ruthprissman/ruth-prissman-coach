@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Session } from '@/types/patient';
 import { formatDateInIsraelTimeZone, convertLocalToUTC } from '@/utils/dateUtils';
 import { useSessionTypes } from '@/hooks/useSessionTypes';
+import SessionAttachmentsManager from './sessions/SessionAttachmentsManager';
 
 import {
   Dialog,
@@ -75,6 +76,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
     payment_method: session.payment_method,
     payment_date: session.payment_date ? new Date(session.payment_date) : null,
     payment_notes: session.payment_notes,
+    attachment_urls: (session as any).attachment_urls || [],
   });
 
   // Fetch available exercises
@@ -124,6 +126,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
         payment_method: session.payment_method,
         payment_date: session.payment_date ? new Date(session.payment_date) : null,
         payment_notes: session.payment_notes,
+        attachment_urls: (session as any).attachment_urls || [],
       });
       
       setSelectedExercises(session.exercise_list || []);
@@ -230,6 +233,10 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
     setFormData((prev) => ({ ...prev, payment_date: newDate || null }));
   };
 
+  const handleAttachmentsChange = (urls: string[]) => {
+    setFormData((prev) => ({ ...prev, attachment_urls: urls }));
+  };
+
   const handleSubmit = async () => {
     if (!date) {
       toast({
@@ -270,6 +277,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
         payment_method: formData.payment_method,
         payment_date: formData.payment_date ? convertLocalToUTC(formData.payment_date) : null,
         payment_notes: formData.payment_notes,
+        attachment_urls: formData.attachment_urls,
       };
 
       console.log('Updating session data:', sessionData);
@@ -399,6 +407,13 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
               className="min-h-[100px] border-purple-200 focus-visible:ring-purple-500"
             />
           </div>
+
+          {/* Attachments Section */}
+          <SessionAttachmentsManager
+            attachmentUrls={formData.attachment_urls}
+            onAttachmentsChange={handleAttachmentsChange}
+            maxFiles={5}
+          />
 
           <div className="space-y-4">
             <div className="flex items-center gap-2">

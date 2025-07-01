@@ -30,6 +30,7 @@ export interface Session {
   payment_method?: 'cash' | 'bit' | 'transfer' | null;
   payment_date?: string | null;
   payment_notes?: string | null;
+  attachment_urls?: string[] | null; // New field for file attachments
   created_at?: string;
   updated_at?: string;
 }

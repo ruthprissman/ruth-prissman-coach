@@ -477,6 +477,7 @@ export type Database = {
       }
       sessions: {
         Row: {
+          attachment_urls: string[] | null
           exercise: string | null
           exercise_list: string[] | null
           id: number
@@ -493,6 +494,7 @@ export type Database = {
           summary: string | null
         }
         Insert: {
+          attachment_urls?: string[] | null
           exercise?: string | null
           exercise_list?: string[] | null
           id?: number
@@ -509,6 +511,7 @@ export type Database = {
           summary?: string | null
         }
         Update: {
+          attachment_urls?: string[] | null
           exercise?: string | null
           exercise_list?: string[] | null
           id?: number

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
-import { Calendar, Loader2 } from 'lucide-react';
+import { Calendar } from 'lucide-react';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { NewHistoricalSessionFormData } from '@/types/session';
-import { Patient } from '@/types/patient';
-import { FutureSession } from '@/types/session';
-import { supabaseClient } from '@/lib/supabaseClient';
 import { convertLocalToUTC } from '@/utils/dateUtils';
 import { useSessionTypes } from '@/hooks/useSessionTypes';
+import SessionAttachmentsManager from './SessionAttachmentsManager';
 
 import {
   Dialog,
@@ -39,73 +38,56 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 
 interface NewHistoricalSessionDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen: boolean;
+  onClose: () => void;
   patientId: number;
   onSessionCreated: () => void;
-  fromFutureSession?: FutureSession | null;
-  onDeleteFutureSession?: () => Promise<void>;
+  sessionPrice?: number | null;
 }
 
 const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
-  open,
-  onOpenChange,
+  isOpen,
+  onClose,
   patientId,
   onSessionCreated,
-  fromFutureSession,
-  onDeleteFutureSession,
+  sessionPrice,
 }) => {
   const { toast } = useToast();
   const { data: sessionTypes, isLoading: isLoadingSessionTypes } = useSessionTypes();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [exercises, setExercises] = useState<{ id: number; name: string }[]>([]);
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
-  const [patient, setPatient] = useState<Patient | null>(null);
   
-  const [date, setDate] = useState<Date | undefined>(
-    fromFutureSession ? new Date(fromFutureSession.session_date) : new Date()
-  );
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string>('12:00');
-  const [paymentDate, setPaymentDate] = useState<Date | undefined>(undefined);
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(new Date());
   
-  const [formData, setFormData] = useState<NewHistoricalSessionFormData>({
-    session_date: fromFutureSession ? new Date(fromFutureSession.session_date) : new Date(),
-    meeting_type: fromFutureSession?.meeting_type || 'Zoom',
-    session_type_id: fromFutureSession?.session_type_id || null,
+  const [formData, setFormData] = useState<NewHistoricalSessionFormData & { attachment_urls: string[] }>({
+    session_date: new Date(),
+    meeting_type: 'In-Person',
+    session_type_id: null,
     summary: '',
     sent_exercises: false,
     exercise_list: [],
-    paid_amount: 0,
+    paid_amount: sessionPrice || 0,
     payment_status: 'pending',
-    payment_method: 'cash',
+    payment_method: null,
     payment_date: null,
     payment_notes: '',
+    attachment_urls: [],
   });
 
+  // Fetch available exercises
   useEffect(() => {
     const fetchExercises = async () => {
       try {
         const supabase = supabaseClient();
-        // Try to fetch with 'name' column first, if it fails, try 'exercise_name'
-        let { data, error } = await supabase
+        const { data, error } = await supabase
           .from('exercises')
           .select('id, name')
           .order('name');
           
-        if (error && error.code === '42703') {
-          // Column 'name' doesn't exist, try 'exercise_name'
-          const { data: exerciseData, error: exerciseError } = await supabase
-            .from('exercises')
-            .select('id, exercise_name')
-            .order('exercise_name');
-            
-          if (exerciseError) throw exerciseError;
-          
-          // Map exercise_name to name for consistency
-          data = exerciseData?.map(ex => ({ id: ex.id, name: ex.exercise_name })) || [];
-        } else if (error) {
-          throw error;
-        }
+        if (error) throw error;
         
         setExercises(data || []);
       } catch (error) {
@@ -113,73 +95,34 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
       }
     };
     
-    const fetchPatient = async () => {
-      try {
-        const supabase = supabaseClient();
-        const { data, error } = await supabase
-          .from('patients')
-          .select('*')
-          .eq('id', patientId)
-          .single();
-          
-        if (error) throw error;
-        setPatient(data as Patient);
-        
-        // Set default paid amount to patient's session price
-        if (data.session_price) {
-          setFormData(prev => ({ ...prev, paid_amount: data.session_price }));
-        }
-      } catch (error) {
-        console.error('Error fetching patient:', error);
-      }
-    };
-    
-    if (open) {
-      fetchExercises();
-      fetchPatient();
-    }
-  }, [open, patientId]);
+    fetchExercises();
+  }, []);
 
-  // Initialize form when dialog opens
+  // Reset form when dialog opens
   useEffect(() => {
-    if (open) {
-      if (fromFutureSession) {
-        const sessionDate = new Date(fromFutureSession.session_date);
-        setDate(sessionDate);
-        setTime(
-          sessionDate.getHours().toString().padStart(2, '0') + 
-          ':' + 
-          sessionDate.getMinutes().toString().padStart(2, '0')
-        );
-        setFormData(prev => ({
-          ...prev,
-          session_date: sessionDate,
-          meeting_type: fromFutureSession.meeting_type || 'Zoom',
-          session_type_id: fromFutureSession.session_type_id || null,
-        }));
-      } else {
-        // Reset form for new session
-        const now = new Date();
-        setDate(now);
-        setTime('12:00');
-        setPaymentDate(undefined);
-        setSelectedExercises([]);
-        setFormData({
-          session_date: now,
-          meeting_type: 'Zoom',
-          session_type_id: null,
-          summary: '',
-          sent_exercises: false,
-          exercise_list: [],
-          paid_amount: patient?.session_price || 0,
-          payment_status: 'pending',
-          payment_method: 'cash',
-          payment_date: null,
-          payment_notes: '',
-        });
-      }
+    if (isOpen) {
+      const now = new Date();
+      setDate(now);
+      setTime('12:00');
+      setPaymentDate(now);
+      setSelectedExercises([]);
+      
+      setFormData({
+        session_date: now,
+        meeting_type: 'In-Person',
+        session_type_id: null,
+        summary: '',
+        sent_exercises: false,
+        exercise_list: [],
+        paid_amount: sessionPrice || 0,
+        payment_status: 'pending',
+        payment_method: null,
+        payment_date: null,
+        payment_notes: '',
+        attachment_urls: [],
+      });
     }
-  }, [open, fromFutureSession, patient]);
+  }, [isOpen, sessionPrice]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -193,13 +136,15 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     setFormData((prev) => ({ ...prev, [name]: numValue }));
     
     // Update payment status based on paid amount
-    if (name === 'paid_amount' && patient?.session_price) {
-      if (numValue === null || numValue === 0) {
-        setFormData(prev => ({ ...prev, payment_status: 'pending' }));
-      } else if (numValue < patient.session_price) {
-        setFormData(prev => ({ ...prev, payment_status: 'partial' }));
-      } else {
-        setFormData(prev => ({ ...prev, payment_status: 'paid' }));
+    if (name === 'paid_amount') {
+      if (sessionPrice) {
+        if (numValue === null || numValue === 0) {
+          setFormData(prev => ({ ...prev, payment_status: 'pending' }));
+        } else if (numValue < sessionPrice) {
+          setFormData(prev => ({ ...prev, payment_status: 'partial' }));
+        } else {
+          setFormData(prev => ({ ...prev, payment_status: 'paid' }));
+        }
       }
     }
   };
@@ -279,6 +224,10 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     setFormData((prev) => ({ ...prev, payment_date: newDate || null }));
   };
 
+  const handleAttachmentsChange = (urls: string[]) => {
+    setFormData((prev) => ({ ...prev, attachment_urls: urls }));
+  };
+
   const handleSubmit = async () => {
     if (!date) {
       toast({
@@ -291,6 +240,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
 
     setIsSubmitting(true);
     try {
+      // Format the combined date and time for database
       const combinedDate = date;
       if (time) {
         const [hours, minutes] = time.split(':').map(Number);
@@ -299,44 +249,40 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
 
       const isoDate = convertLocalToUTC(combinedDate);
 
-      const supabase = supabaseClient();
-      
-      // Convert to historical session format - using correct database values
       const sessionData = {
         patient_id: patientId,
-        session_date: isoDate,
         meeting_type: formData.meeting_type,
+        session_date: isoDate,
         session_type_id: formData.session_type_id,
-        summary: formData.summary,
+        summary: formData.summary || null,
         sent_exercises: formData.sent_exercises,
         exercise_list: formData.sent_exercises ? formData.exercise_list : [],
         paid_amount: formData.paid_amount,
-        payment_status: formData.payment_status, // Keep the original values: 'paid', 'partial', 'pending'
+        payment_status: formData.payment_status,
         payment_method: formData.payment_method,
         payment_date: formData.payment_date ? convertLocalToUTC(formData.payment_date) : null,
-        payment_notes: formData.payment_notes,
+        payment_notes: formData.payment_notes || null,
+        attachment_urls: formData.attachment_urls,
       };
 
+      console.log('Creating session data:', sessionData);
+
+      const supabase = supabaseClient();
       const { error } = await supabase
         .from('sessions')
         .insert(sessionData);
 
       if (error) throw error;
 
-      // If converting from future session, delete the future session
-      if (fromFutureSession && onDeleteFutureSession) {
-        await onDeleteFutureSession();
-      }
-
       toast({
-        title: "פגישה היסטורית נוצרה בהצלחה",
-        description: "הפגישה נוספה להיסטוריה",
+        title: "פגישה נוצרה בהצלחה",
+        description: "הפגישה ההיסטורית נוספה למערכת",
       });
 
       onSessionCreated();
-      onOpenChange(false);
+      onClose();
     } catch (error: any) {
-      console.error('Error creating historical session:', error);
+      console.error('Error creating session:', error);
       toast({
         title: "שגיאה ביצירת פגישה",
         description: error.message || "אנא נסה שוב מאוחר יותר",
@@ -348,17 +294,17 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-purple-800">
-            {fromFutureSession ? 'המרת פגישה עתידית לפגישה היסטורית' : 'יצירת פגישה היסטורית חדשה'}
+            הוספת פגישה היסטורית
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2" dir="rtl">
           <div className="space-y-2">
-            <Label className="text-purple-700">תאריך ושעה</Label>
+            <Label htmlFor="date" className="text-purple-700">תאריך ושעה</Label>
             <div className="flex gap-2">
               <Popover>
                 <PopoverTrigger asChild>
@@ -379,27 +325,29 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
                     selected={date}
                     onSelect={handleDateChange}
                     initialFocus
+                    className={cn("p-3 pointer-events-auto")}
                   />
                 </PopoverContent>
               </Popover>
 
               <Input
+                id="time"
                 type="time"
                 value={time}
                 onChange={handleTimeChange}
-                className="max-w-[120px] border-purple-200"
+                className="max-w-[120px] border-purple-200 focus-visible:ring-purple-500"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-purple-700">סוג פגישה</Label>
+            <Label htmlFor="meeting_type" className="text-purple-700">סוג פגישה</Label>
             <Select
-              value={formData.meeting_type || 'Zoom'}
+              value={formData.meeting_type}
               onValueChange={(value) => handleSelectChange('meeting_type', value)}
             >
-              <SelectTrigger className="border-purple-200">
-                <SelectValue />
+              <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
+                <SelectValue placeholder="בחר סוג פגישה" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Zoom">זום</SelectItem>
@@ -410,17 +358,17 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-purple-700">סוג פגישה</Label>
+            <Label htmlFor="session_type" className="text-purple-700">סוג פגישה</Label>
             <Select
-              value={formData.session_type_id?.toString() || ''}
+              value={formData.session_type_id ? formData.session_type_id.toString() : undefined}
               onValueChange={(value) => handleSelectChange('session_type_id', value)}
             >
-              <SelectTrigger className="border-purple-200">
+              <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
                 <SelectValue placeholder="בחר סוג פגישה" />
               </SelectTrigger>
               <SelectContent>
                 {isLoadingSessionTypes ? (
-                  <SelectItem value="loading" disabled>טוען...</SelectItem>
+                  <div className="py-2 px-4 text-sm text-muted-foreground">טוען...</div>
                 ) : (
                   sessionTypes?.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
@@ -433,15 +381,23 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-purple-700">סיכום פגישה</Label>
+            <Label htmlFor="summary" className="text-purple-700">סיכום פגישה</Label>
             <Textarea
+              id="summary"
               name="summary"
               placeholder="הזן סיכום פגישה..."
               value={formData.summary || ''}
               onChange={handleTextChange}
-              className="border-purple-200 min-h-[100px]"
+              className="min-h-[100px] border-purple-200 focus-visible:ring-purple-500"
             />
           </div>
+
+          {/* Attachments Section */}
+          <SessionAttachmentsManager
+            attachmentUrls={formData.attachment_urls}
+            onAttachmentsChange={handleAttachmentsChange}
+            maxFiles={5}
+          />
 
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -486,23 +442,24 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
           <h3 className="text-lg font-semibold text-purple-700">פרטי תשלום</h3>
 
           <div className="space-y-2">
-            <Label className="text-purple-700">סכום ששולם (₪)</Label>
+            <Label htmlFor="paid_amount" className="text-purple-700">סכום ששולם (₪)</Label>
             <Input
+              id="paid_amount"
               name="paid_amount"
               type="number"
               value={formData.paid_amount === null ? '' : formData.paid_amount}
               onChange={handleNumberChange}
-              className="border-purple-200"
+              className="border-purple-200 focus-visible:ring-purple-500"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-purple-700">סטטוס תשלום</Label>
+            <Label htmlFor="payment_status" className="text-purple-700">סטטוס תשלום</Label>
             <Select
-              value={formData.payment_status || 'pending'}
+              value={formData.payment_status}
               onValueChange={(value) => handleSelectChange('payment_status', value)}
             >
-              <SelectTrigger className="border-purple-200">
+              <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
                 <SelectValue placeholder="בחר סטטוס תשלום" />
               </SelectTrigger>
               <SelectContent>
@@ -516,12 +473,12 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
           {(formData.payment_status === 'paid' || formData.payment_status === 'partial') && (
             <>
               <div className="space-y-2">
-                <Label className="text-purple-700">אמצעי תשלום</Label>
+                <Label htmlFor="payment_method" className="text-purple-700">אמצעי תשלום</Label>
                 <Select
-                  value={formData.payment_method || 'cash'}
+                  value={formData.payment_method || ''}
                   onValueChange={(value) => handleSelectChange('payment_method', value)}
                 >
-                  <SelectTrigger className="border-purple-200">
+                  <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
                     <SelectValue placeholder="בחר אמצעי תשלום" />
                   </SelectTrigger>
                   <SelectContent>
@@ -533,7 +490,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-purple-700">תאריך תשלום</Label>
+                <Label htmlFor="payment_date" className="text-purple-700">תאריך תשלום</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -553,19 +510,21 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
                       selected={paymentDate}
                       onSelect={handlePaymentDateChange}
                       initialFocus
+                      className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-purple-700">הערות לתשלום</Label>
+                <Label htmlFor="payment_notes" className="text-purple-700">הערות לתשלום</Label>
                 <Textarea
+                  id="payment_notes"
                   name="payment_notes"
                   placeholder="הזן הערות לתשלום..."
                   value={formData.payment_notes || ''}
                   onChange={handleTextChange}
-                  className="border-purple-200"
+                  className="border-purple-200 focus-visible:ring-purple-500"
                 />
               </div>
             </>
@@ -578,16 +537,11 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
             disabled={isSubmitting}
             className="bg-purple-600 hover:bg-purple-700"
           >
-            {isSubmitting ? (
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                יוצר פגישה...
-              </div>
-            ) : fromFutureSession ? 'המר לפגישה היסטורית' : 'צור פגישה'}
+            {isSubmitting ? 'יוצר...' : 'צור פגישה'}
           </Button>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={onClose}
             className="border-purple-200 text-purple-700 hover:bg-purple-50"
           >
             ביטול
