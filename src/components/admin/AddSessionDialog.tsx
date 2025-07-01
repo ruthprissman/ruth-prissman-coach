@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
@@ -375,7 +376,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
             <Label htmlFor="meeting_type" className="text-purple-700">סוג פגישה</Label>
             <Select
               value={formData.meeting_type}
-              onValueChange={(value) => setFormData((prev) => ({ ...prev, meeting_type: value }))}
+              onValueChange={(value) => handleSelectChange('meeting_type', value)}
             >
               <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
                 <SelectValue placeholder="בחר סוג פגישה" />
@@ -594,3 +595,4 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
 };
 
 export default AddSessionDialog;
+
