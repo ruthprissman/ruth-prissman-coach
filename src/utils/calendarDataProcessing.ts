@@ -2,9 +2,9 @@
 import { CalendarSlot, GoogleCalendarEvent } from '@/types/calendar';
 import { format, parseISO, getDay, getHours, getMinutes, addHours, differenceInMinutes, startOfHour, addMinutes, startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { he } from 'date-fns/locale';
-import { getMeetingIcon, getMeetingIconByTypeId } from './meetingIconUtils';
+import { getMeetingIcon, getMeetingIconByTypeId, isSeftSession, isPatientMeeting } from './meetingIconUtils';
 
-const COMPONENT_VERSION = "1.0.22";
+const COMPONENT_VERSION = "1.0.23";
 console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Component loaded, version ${COMPONENT_VERSION}`);
 
 /**
@@ -93,17 +93,27 @@ export function processGoogleCalendarEvents(
       const dateStr = format(startDate, 'yyyy-MM-dd');
       const dayOfWeek = getDay(startDate);
 
-      // Check if this is a patient meeting
+      // Check if this is a patient meeting using the improved logic
       const summary = event.summary || '';
-      const isPatientMeeting = summary.trim().startsWith('פגישה עם');
+      const isPatientMeetingEvent = isPatientMeeting(summary);
+      const isSeft = isSeftSession(summary);
       
-      // For patient meetings from Google Calendar, ensure minimum 90 minutes duration
+      console.log(`[ICON_DEBUG] [GOOGLE] Event analysis: summary="${summary}", isPatient=${isPatientMeetingEvent}, isSeft=${isSeft}`);
+      
+      // For patient meetings from Google Calendar, determine duration based on type
       let actualEndDate = endDate;
-      if (isPatientMeeting) {
+      if (isPatientMeetingEvent) {
         const actualDuration = differenceInMinutes(endDate, startDate);
-        if (actualDuration < 90) {
-          console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Patient meeting duration is ${actualDuration} minutes, extending to 90 minutes`);
-          actualEndDate = addMinutes(startDate, 90);
+        let requiredDuration = 90; // Default for regular sessions
+        
+        if (isSeft) {
+          requiredDuration = 180; // SEFT sessions are 3 hours
+          console.log(`LOV_DEBUG_CALENDAR_PROCESSING: SEFT session detected, setting duration to 180 minutes`);
+        }
+        
+        if (actualDuration < requiredDuration) {
+          console.log(`LOV_DEBUG_CALENDAR_PROCESSING: Patient meeting duration is ${actualDuration} minutes, extending to ${requiredDuration} minutes`);
+          actualEndDate = addMinutes(startDate, requiredDuration);
         }
       }
 
@@ -126,14 +136,17 @@ export function processGoogleCalendarEvents(
       // --- USE UNIFIED ICON LOGIC ---
       let sessionIcon = getMeetingIcon(summary);
       
-      // For patient meetings, prepend the icon to the summary text
+      // For patient meetings, prepend the icon to the summary text if not already there
       let displaySummary = summary;
-      if (isPatientMeeting && sessionIcon) {
-        displaySummary = `${sessionIcon} ${summary}`;
+      if (isPatientMeetingEvent && sessionIcon) {
+        // Only add icon if it's not already at the beginning
+        if (!summary.startsWith(sessionIcon)) {
+          displaySummary = `${sessionIcon} ${summary}`;
+        }
       }
 
       // DEBUG: Always log icon logic (even if icon is missing)
-      console.log(`[ICON_DEBUG] [GOOGLE] summary="${summary}" -> icon="${sessionIcon}" | event=`, event);
+      console.log(`[ICON_DEBUG] [GOOGLE] summary="${summary}" -> icon="${sessionIcon}" displaySummary="${displaySummary}" | event=`, event);
 
       while (currentHour <= endHour) {
         const hourStr = `${String(currentHour).padStart(2, '0')}:00`;
@@ -161,13 +174,20 @@ export function processGoogleCalendarEvents(
           startMinute: isFirstHour ? startMinute : 0,
           endMinute: isLastHour ? endMinute : 60,
           isPartialHour: startMinute !== 0 || endMinute !== 60 || durationMinutes > 60,
-          isPatientMeeting: isPatientMeeting,
+          isPatientMeeting: isPatientMeetingEvent,
           showBorder: true,
           icon: sessionIcon ?? '⭐'
         };
 
         // Always log out for debug
-        console.log(`[ICON_DEBUG] [GOOGLE] Creating slot:`, slot);
+        console.log(`[ICON_DEBUG] [GOOGLE] Creating slot:`, {
+          hour: hourStr,
+          summary: displaySummary,
+          icon: slot.icon,
+          isPatient: isPatientMeetingEvent,
+          isSeft,
+          duration: durationMinutes
+        });
 
         dayMap.set(hourStr, slot);
 
