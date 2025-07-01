@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Upload, X, Download, FileText, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -78,6 +77,68 @@ const SessionAttachmentsManager: React.FC<SessionAttachmentsManagerProps> = ({
     }
   };
 
+  // Function to compress images to under 500KB
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Start with original dimensions
+        let { width, height } = img;
+        
+        // Reduce dimensions if file is too large
+        const maxDimension = 1200;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = (height * maxDimension) / width;
+            width = maxDimension;
+          } else {
+            width = (width * maxDimension) / height;
+            height = maxDimension;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Try different quality levels to get under 500KB
+          const tryCompress = (quality: number) => {
+            canvas.toBlob((blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                
+                // If still too large and quality can be reduced further, try again
+                if (blob.size > 500 * 1024 && quality > 0.1) {
+                  tryCompress(quality - 0.1);
+                } else {
+                  resolve(compressedFile);
+                }
+              } else {
+                resolve(file); // Fallback to original if compression fails
+              }
+            }, 'image/jpeg', quality);
+          };
+          
+          // Start with 80% quality
+          tryCompress(0.8);
+        } else {
+          resolve(file);
+        }
+      };
+      
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
@@ -110,11 +171,24 @@ const SessionAttachmentsManager: React.FC<SessionAttachmentsManagerProps> = ({
           continue;
         }
 
-        // Validate file size (max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
+        let processedFile = file;
+
+        // Compress images if they're over 500KB
+        const imageTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (imageTypes.includes(extension) && file.size > 500 * 1024) {
+          console.log(`דחיסת תמונה: ${file.name} (${Math.round(file.size / 1024)}KB)`);
+          processedFile = await compressImage(file);
+          console.log(`תמונה נדחסה: ${processedFile.name} (${Math.round(processedFile.size / 1024)}KB)`);
+          
+          toast({
+            title: "תמונה נדחסה",
+            description: `${file.name} נדחסה מ-${Math.round(file.size / 1024)}KB ל-${Math.round(processedFile.size / 1024)}KB`,
+          });
+        } else if (!imageTypes.includes(extension) && file.size > 10 * 1024 * 1024) {
+          // For non-image files, keep the 10MB limit
           toast({
             title: "קובץ גדול מדי",
-            description: `הקובץ ${file.name} גדול מדי. הגודל המקסימלי הוא 10MB`,
+            description: `הקובץ ${file.name} גדול מדי. הגודל המקסימלי לקבצי PDF/Word הוא 10MB`,
             variant: "destructive",
           });
           continue;
@@ -122,19 +196,19 @@ const SessionAttachmentsManager: React.FC<SessionAttachmentsManagerProps> = ({
 
         // Generate unique filename
         const timestamp = Date.now();
-        const fileName = `${timestamp}_${file.name}`;
+        const fileName = `${timestamp}_${processedFile.name}`;
 
         // Upload file to Supabase Storage
         const { data, error } = await supabaseClient()
           .storage
           .from('session-attachments')
-          .upload(fileName, file);
+          .upload(fileName, processedFile);
 
         if (error) {
           console.error('Upload error:', error);
           toast({
             title: "שגיאה בהעלאת קובץ",
-            description: `נכשל בהעלאת ${file.name}: ${error.message}`,
+            description: `נכשל בהעלאת ${processedFile.name}: ${error.message}`,
             variant: "destructive",
           });
           continue;
@@ -226,6 +300,9 @@ const SessionAttachmentsManager: React.FC<SessionAttachmentsManagerProps> = ({
     <div className="space-y-4" dir="rtl">
       <div className="space-y-2">
         <Label className="text-purple-700">קבצים מצורפים (עד {maxFiles} קבצים)</Label>
+        <p className="text-sm text-muted-foreground">
+          תמונות יידחסו אוטומטית ל-500KB, קבצי PDF/Word עד 10MB
+        </p>
         
         {/* Upload Button */}
         <div className="flex items-center gap-2">
