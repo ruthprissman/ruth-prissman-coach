@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { NewFutureSessionFormData } from '@/types/session';
 import { supabaseClient } from '@/lib/supabaseClient';
-import { convertLocalToUTC } from '@/utils/dateUtils';
+import { formatDateInIsraelTimeZone, convertLocalToUTC } from '@/utils/dateUtils';
 import { useSessionTypes } from '@/hooks/useSessionTypes';
 
 import {
@@ -34,24 +34,23 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 
 interface NewFutureSessionDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen: boolean;
+  onClose: (open: boolean) => void;
   patientId: number;
-  patientName?: string;
-  onCreated?: () => void;
+  sessionPrice?: number;
   onSessionCreated?: () => void;
 }
 
 const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
-  open,
-  onOpenChange,
+  isOpen,
+  onClose,
   patientId,
-  patientName,
-  onCreated,
+  sessionPrice,
   onSessionCreated,
 }) => {
   const { toast } = useToast();
   const { data: sessionTypes, isLoading: isLoadingSessionTypes } = useSessionTypes();
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [time, setTime] = useState<string>('12:00');
@@ -63,6 +62,20 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
     status: 'Scheduled',
     zoom_link: '',
   });
+
+  // Calculate session price based on session type - for display purposes
+  const getDisplayPrice = (sessionTypeId?: number | null): number => {
+    if (!sessionPrice) return 0;
+    
+    if (sessionTypeId && sessionTypes) {
+      const sessionType = sessionTypes.find(type => type.id === sessionTypeId);
+      if (sessionType && sessionType.code === 'seft') {
+        return sessionPrice * 3; // SEFT sessions cost 3x the regular price
+      }
+    }
+    
+    return sessionPrice;
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -162,10 +175,9 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
         description: "הפגישה נוספה ללוח הפגישות",
       });
 
-      if (onCreated) onCreated();
       if (onSessionCreated) onSessionCreated();
       resetForm();
-      onOpenChange(false);
+      onClose(false);
     } catch (error: any) {
       console.error('Error creating future session:', error);
       toast({
@@ -179,13 +191,11 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-purple-800">
-            {patientName 
-              ? `יצירת פגישה עתידית חדשה עבור ${patientName}` 
-              : "יצירת פגישה עתידית חדשה"}
+            הוספת פגישה עתידית
           </DialogTitle>
         </DialogHeader>
 
@@ -248,7 +258,7 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
             <Label htmlFor="session_type" className="text-purple-700">סוג פגישה</Label>
             <Select
               value={formData.session_type_id ? formData.session_type_id.toString() : undefined}
-              onValueChange={(value) => handleSelectChange('session_type_id', value)}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, session_type_id: value ? Number(value) : null }))}
             >
               <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
                 <SelectValue placeholder="בחר סוג פגישה" />
@@ -260,11 +270,19 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
                   sessionTypes?.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
                       {type.name} ({type.duration_minutes} דקות)
+                      {type.code === 'seft' && sessionPrice && ` - ₪${sessionPrice * 3}`}
                     </SelectItem>
                   ))
                 )}
               </SelectContent>
             </Select>
+            {formData.session_type_id && (
+              <div className="text-sm text-muted-foreground">
+                מחיר פגישה: ₪{getDisplayPrice(formData.session_type_id)}
+                {sessionTypes?.find(type => type.id === formData.session_type_id)?.code === 'seft' && 
+                  ' (פי 3 מהמחיר הרגיל)'}
+              </div>
+            )}
           </div>
 
           {formData.meeting_type === 'Zoom' && (
@@ -292,7 +310,7 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
           </Button>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => onClose(false)}
             className="border-purple-200 text-purple-700 hover:bg-purple-50"
           >
             ביטול
