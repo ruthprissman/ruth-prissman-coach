@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/use-toast';
-import { NewHistoricalSessionFormData } from '@/types/session';
+import { NewHistoricalSessionFormData, FutureSession } from '@/types/session';
 import { formatDateInIsraelTimeZone, convertLocalToUTC } from '@/utils/dateUtils';
 import { useSessionTypes } from '@/hooks/useSessionTypes';
 import SessionAttachmentsManager from './SessionAttachmentsManager';
@@ -66,7 +67,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   const [time, setTime] = useState<string>('12:00');
   const [paymentDate, setPaymentDate] = useState<Date | undefined>(new Date());
   
-  const [formData, setFormData] = useState<NewHistoricalSessionFormData & { attachment_urls: string[] }>({
+  const [formData, setFormData] = useState<NewHistoricalSessionFormData>({
     session_date: new Date(),
     meeting_type: 'In-Person',
     session_type_id: null,

@@ -34,16 +34,16 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 
 interface NewFutureSessionDialogProps {
-  isOpen: boolean;
-  onClose: (open: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   patientId: number;
   sessionPrice?: number;
   onSessionCreated?: () => void;
 }
 
 const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
-  isOpen,
-  onClose,
+  open,
+  onOpenChange,
   patientId,
   sessionPrice,
   onSessionCreated,
@@ -177,7 +177,7 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
 
       if (onSessionCreated) onSessionCreated();
       resetForm();
-      onClose(false);
+      onOpenChange(false);
     } catch (error: any) {
       console.error('Error creating future session:', error);
       toast({
@@ -191,7 +191,7 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-purple-800">
@@ -310,7 +310,7 @@ const NewFutureSessionDialog: React.FC<NewFutureSessionDialogProps> = ({
           </Button>
           <Button
             variant="outline"
-            onClick={() => onClose(false)}
+            onClick={() => onOpenChange(false)}
             className="border-purple-200 text-purple-700 hover:bg-purple-50"
           >
             ביטול

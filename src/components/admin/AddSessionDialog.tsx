@@ -280,6 +280,8 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
         [name]: sessionTypeId,
         paid_amount: calculatedPrice
       }));
+    } else if (name === 'meeting_type') {
+      setFormData((prev) => ({ ...prev, meeting_type: value as 'Zoom' | 'Phone' | 'In-Person' }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
