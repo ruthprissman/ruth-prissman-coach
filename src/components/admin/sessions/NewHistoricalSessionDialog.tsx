@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 import { Calendar } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { NewHistoricalSessionFormData, FutureSession } from '@/types/session';
-import { formatDateInIsraelTimeZone, convertLocalToUTC } from '@/utils/dateUtils';
+import { convertLocalToUTC } from '@/utils/dateUtils';
 import { useSessionTypes } from '@/hooks/useSessionTypes';
 import SessionAttachmentsManager from './SessionAttachmentsManager';
 
@@ -49,11 +48,11 @@ interface NewHistoricalSessionDialogProps {
 }
 
 const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
-  open = false,
+  open,
   onOpenChange,
   patientId,
-  sessionPrice,
   onSessionCreated,
+  sessionPrice,
   fromFutureSession,
   onDeleteFutureSession,
 }) => {
@@ -67,7 +66,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   const [time, setTime] = useState<string>('12:00');
   const [paymentDate, setPaymentDate] = useState<Date | undefined>(new Date());
   
-  const [formData, setFormData] = useState<NewHistoricalSessionFormData>({
+  const [formData, setFormData] = useState<NewHistoricalSessionFormData & { attachment_urls: string[] }>({
     session_date: new Date(),
     meeting_type: 'In-Person',
     session_type_id: null,
@@ -81,20 +80,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     payment_notes: '',
     attachment_urls: [],
   });
-
-  // Calculate session price based on session type
-  const calculateSessionPrice = (sessionTypeId?: number | null): number => {
-    if (!sessionPrice) return 0;
-    
-    if (sessionTypeId && sessionTypes) {
-      const sessionType = sessionTypes.find(type => type.id === sessionTypeId);
-      if (sessionType && sessionType.code === 'seft') {
-        return sessionPrice * 3; // SEFT sessions cost 3x the regular price
-      }
-    }
-    
-    return sessionPrice;
-  };
 
   // Fetch available exercises
   useEffect(() => {
@@ -120,62 +105,53 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
   // Reset form when dialog opens or populate from future session
   useEffect(() => {
     if (open) {
-      const today = new Date();
-      today.setHours(12, 0, 0, 0);
-      
-      let initialData: NewHistoricalSessionFormData;
-      
       if (fromFutureSession) {
+        // Pre-populate from future session
         const sessionDate = new Date(fromFutureSession.session_date);
-        const calculatedPrice = calculateSessionPrice(fromFutureSession.session_type_id);
+        setDate(sessionDate);
+        setTime(format(sessionDate, 'HH:mm'));
+        setPaymentDate(new Date());
+        setSelectedExercises([]);
         
-        initialData = {
+        setFormData({
           session_date: sessionDate,
-          meeting_type: fromFutureSession.meeting_type,
-          session_type_id: fromFutureSession.session_type_id,
-          summary: null,
+          meeting_type: fromFutureSession.meeting_type || 'In-Person',
+          session_type_id: fromFutureSession.session_type_id || null,
+          summary: '',
           sent_exercises: false,
-          exercise_list: null,
-          paid_amount: calculatedPrice,
+          exercise_list: [],
+          paid_amount: sessionPrice || 0,
           payment_status: 'pending',
           payment_method: null,
           payment_date: null,
-          payment_notes: null,
+          payment_notes: '',
           attachment_urls: [],
-        };
-        
-        const timeString = sessionDate.getHours().toString().padStart(2, '0') + 
-                          ':' + 
-                          sessionDate.getMinutes().toString().padStart(2, '0');
-        setTime(timeString);
-        setDate(sessionDate);
+        });
       } else {
-        const calculatedPrice = calculateSessionPrice();
+        // New session
+        const now = new Date();
+        setDate(now);
+        setTime('12:00');
+        setPaymentDate(now);
+        setSelectedExercises([]);
         
-        initialData = {
-          session_date: today,
+        setFormData({
+          session_date: now,
           meeting_type: 'In-Person',
           session_type_id: null,
-          summary: null,
+          summary: '',
           sent_exercises: false,
-          exercise_list: null,
-          paid_amount: calculatedPrice,
+          exercise_list: [],
+          paid_amount: sessionPrice || 0,
           payment_status: 'pending',
           payment_method: null,
           payment_date: null,
-          payment_notes: null,
+          payment_notes: '',
           attachment_urls: [],
-        };
-        
-        setTime('12:00');
-        setDate(today);
+        });
       }
-      
-      setFormData(initialData);
-      setSelectedExercises([]);
-      setPaymentDate(initialData.payment_date ? new Date(initialData.payment_date) : undefined);
     }
-  }, [open, fromFutureSession, sessionPrice, sessionTypes]);
+  }, [open, sessionPrice, fromFutureSession]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -190,11 +166,10 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
     
     // Update payment status based on paid amount
     if (name === 'paid_amount') {
-      const currentSessionPrice = calculateSessionPrice(formData.session_type_id);
-      if (currentSessionPrice > 0) {
+      if (sessionPrice) {
         if (numValue === null || numValue === 0) {
           setFormData(prev => ({ ...prev, payment_status: 'pending' }));
-        } else if (numValue < currentSessionPrice) {
+        } else if (numValue < sessionPrice) {
           setFormData(prev => ({ ...prev, payment_status: 'partial' }));
         } else {
           setFormData(prev => ({ ...prev, payment_status: 'paid' }));
@@ -205,14 +180,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
 
   const handleSelectChange = (name: string, value: string) => {
     if (name === 'session_type_id') {
-      const sessionTypeId = value ? Number(value) : null;
-      const calculatedPrice = calculateSessionPrice(sessionTypeId);
-      
-      setFormData((prev) => ({ 
-        ...prev, 
-        [name]: sessionTypeId,
-        paid_amount: calculatedPrice
-      }));
+      setFormData((prev) => ({ ...prev, [name]: value ? Number(value) : null }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -368,7 +336,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-purple-800">
-            {fromFutureSession ? 'המרת פגישה עתידית לביצוע' : 'הוספת פגישה היסטורית'}
+            {fromFutureSession ? 'העברת פגישה להיסטוריה' : 'הוספת פגישה היסטורית'}
           </DialogTitle>
         </DialogHeader>
 
@@ -443,7 +411,6 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
                   sessionTypes?.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
                       {type.name} ({type.duration_minutes} דקות)
-                      {type.code === 'seft' && sessionPrice && ` - ₪${sessionPrice * 3}`}
                     </SelectItem>
                   ))
                 )}
@@ -513,16 +480,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
           <h3 className="text-lg font-semibold text-purple-700">פרטי תשלום</h3>
 
           <div className="space-y-2">
-            <Label htmlFor="paid_amount" className="text-purple-700">
-              סכום ששולם (₪)
-              {formData.session_type_id && sessionTypes && (() => {
-                const sessionType = sessionTypes.find(type => type.id === formData.session_type_id);
-                if (sessionType?.code === 'seft') {
-                  return <span className="text-sm text-muted-foreground ml-2">(פגישת SEFT - פי 3 מהמחיר הרגיל)</span>;
-                }
-                return null;
-              })()}
-            </Label>
+            <Label htmlFor="paid_amount" className="text-purple-700">סכום ששולם (₪)</Label>
             <Input
               id="paid_amount"
               name="paid_amount"

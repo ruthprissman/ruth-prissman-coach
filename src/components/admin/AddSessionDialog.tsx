@@ -1,15 +1,13 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
-import { Calendar } from 'lucide-react';
-import { supabaseClient } from '@/lib/supabaseClient';
-import { useToast } from '@/components/ui/use-toast';
+import { Calendar, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { NewSessionFormData } from '@/types/session';
-import { formatDateInIsraelTimeZone, convertLocalToUTC } from '@/utils/dateUtils';
-import { useSessionTypes } from '@/hooks/useSessionTypes';
-import SessionAttachmentsManager from './sessions/SessionAttachmentsManager';
+import { Patient } from '@/types/patient';
+import { supabaseClient } from '@/lib/supabaseClient';
+import { convertLocalToUTC } from '@/utils/dateUtils';
 
 import {
   Dialog,
@@ -42,21 +40,19 @@ import { cn } from '@/lib/utils';
 interface AddSessionDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  patientId: number;
-  sessionPrice?: number | null;
+  patient: Patient;
   onSessionAdded: () => void;
+  sessionPrice?: number | null;
 }
 
 const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
   isOpen,
   onClose,
-  patientId,
-  sessionPrice,
+  patient,
   onSessionAdded,
+  sessionPrice,
 }) => {
   const { toast } = useToast();
-  const { data: sessionTypes, isLoading: isLoadingSessionTypes } = useSessionTypes();
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [exercises, setExercises] = useState<{ id: number; name: string }[]>([]);
   const [selectedExercises, setSelectedExercises] = useState<string[]>([]);
@@ -67,17 +63,15 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
   
   const [formData, setFormData] = useState<NewSessionFormData>({
     session_date: new Date(),
-    meeting_type: 'In-Person',
-    session_type_id: null,
-    summary: null,
+    meeting_type: 'Zoom',
+    summary: '',
     sent_exercises: false,
-    exercise_list: null,
+    exercise_list: [],
     paid_amount: sessionPrice || 0,
     payment_status: 'pending',
-    payment_method: null,
+    payment_method: 'cash',
     payment_date: null,
-    payment_notes: null,
-    attachment_urls: [],
+    payment_notes: '',
   });
 
   // Fetch available exercises
@@ -101,53 +95,46 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     fetchExercises();
   }, []);
 
-  // Calculate session price based on session type
-  const calculateSessionPrice = (sessionTypeId?: number | null): number => {
-    if (!sessionPrice) return 0;
-    
-    if (sessionTypeId && sessionTypes) {
-      const sessionType = sessionTypes.find(type => type.id === sessionTypeId);
-      if (sessionType && sessionType.code === 'seft') {
-        return sessionPrice * 3; // SEFT sessions cost 3x the regular price
-      }
-    }
-    
-    return sessionPrice;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Initialize form data
-  useEffect(() => {
-    if (isOpen) {
-      const today = new Date();
-      today.setHours(12, 0, 0, 0);
-      
-      const calculatedPrice = calculateSessionPrice();
-      
-      setFormData({
-        session_date: today,
-        meeting_type: 'In-Person',
-        session_type_id: null,
-        summary: null,
-        sent_exercises: false,
-        exercise_list: null,
-        paid_amount: calculatedPrice,
-        payment_status: 'pending',
-        payment_method: null,
-        payment_date: null,
-        payment_notes: null,
-        attachment_urls: [],
-      });
-      
-      setSelectedExercises([]);
-      setTime('12:00');
-      setDate(today);
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const numValue = value === '' ? null : Number(value);
+    
+    setFormData((prev) => ({ ...prev, [name]: numValue }));
+    
+    // Update payment status based on paid amount
+    if (name === 'paid_amount') {
+      if (sessionPrice) {
+        if (numValue === null || numValue === 0) {
+          setFormData(prev => ({ ...prev, payment_status: 'pending' }));
+        } else if (numValue < sessionPrice) {
+          setFormData(prev => ({ ...prev, payment_status: 'partial' }));
+        } else {
+          setFormData(prev => ({ ...prev, payment_status: 'paid' }));
+        }
+      }
+    }
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Reset payment_date if payment_status is "pending"
+    if (name === 'payment_status' && value === 'pending') {
+      setFormData((prev) => ({ ...prev, payment_date: null }));
       setPaymentDate(undefined);
     }
-  }, [isOpen, sessionPrice, sessionTypes]);
-
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value || null }));
+    
+    // Set payment_date to today if payment_status changed to "paid" or "partial" and there's no date
+    if (name === 'payment_status' && (value === 'paid' || value === 'partial') && !formData.payment_date) {
+      const today = new Date();
+      setFormData((prev) => ({ ...prev, payment_date: today }));
+      setPaymentDate(today);
+    }
   };
 
   const handleCheckboxChange = (checked: boolean) => {
@@ -204,8 +191,24 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
     setFormData((prev) => ({ ...prev, payment_date: newDate || null }));
   };
 
-  const handleAttachmentsChange = (urls: string[]) => {
-    setFormData((prev) => ({ ...prev, attachment_urls: urls }));
+  const resetForm = () => {
+    setFormData({
+      session_date: new Date(),
+      meeting_type: 'Zoom',
+      summary: '',
+      sent_exercises: false,
+      exercise_list: [],
+      paid_amount: sessionPrice || 0,
+      payment_status: 'pending',
+      payment_method: 'cash',
+      payment_date: null,
+      payment_notes: '',
+    });
+    setDate(new Date());
+    setTime('12:00');
+    setPaymentDate(undefined);
+    setSelectedExercises([]);
+    setIsSubmitting(false);
   };
 
   const handleSubmit = async () => {
@@ -227,38 +230,35 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
         combinedDate.setHours(hours, minutes);
       }
 
-      // Use convertLocalToUTC to properly format the date for database storage
+      // Convert to UTC before saving to database
       const isoDate = convertLocalToUTC(combinedDate);
-
-      const sessionData = {
-        patient_id: patientId,
-        meeting_type: formData.meeting_type,
-        session_date: isoDate,
-        session_type_id: formData.session_type_id,
-        summary: formData.summary,
-        sent_exercises: formData.sent_exercises,
-        exercise_list: formData.sent_exercises ? formData.exercise_list : [],
-        paid_amount: formData.paid_amount,
-        payment_status: formData.payment_status,
-        payment_method: formData.payment_method,
-        payment_date: formData.payment_date ? convertLocalToUTC(formData.payment_date) : null,
-        payment_notes: formData.payment_notes,
-        attachment_urls: formData.attachment_urls,
-      };
 
       const supabase = supabaseClient();
       const { error } = await supabase
         .from('sessions')
-        .insert([sessionData]);
+        .insert({
+          patient_id: patient.id,
+          session_date: isoDate,
+          meeting_type: formData.meeting_type,
+          summary: formData.summary,
+          sent_exercises: formData.sent_exercises,
+          exercise_list: formData.sent_exercises ? formData.exercise_list : [],
+          paid_amount: formData.paid_amount,
+          payment_status: formData.payment_status,
+          payment_method: formData.payment_method,
+          payment_date: formData.payment_date ? convertLocalToUTC(formData.payment_date) : null,
+          payment_notes: formData.payment_notes,
+        });
 
       if (error) throw error;
 
       toast({
         title: "פגישה נוצרה בהצלחה",
-        description: "הפגישה נוספה בהצלחה",
+        description: "הפגישה נוספה לפרופיל המטופל",
       });
 
       onSessionAdded();
+      resetForm();
       onClose();
     } catch (error: any) {
       console.error('Error creating session:', error);
@@ -269,59 +269,6 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
       });
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    if (name === 'session_type_id') {
-      const sessionTypeId = value ? Number(value) : null;
-      const calculatedPrice = calculateSessionPrice(sessionTypeId);
-      
-      setFormData((prev) => ({ 
-        ...prev, 
-        [name]: sessionTypeId,
-        paid_amount: calculatedPrice
-      }));
-    } else if (name === 'meeting_type') {
-      setFormData((prev) => ({ ...prev, meeting_type: value as 'Zoom' | 'Phone' | 'In-Person' }));
-    } else if (name === 'payment_status') {
-      setFormData((prev) => ({ ...prev, payment_status: value as 'paid' | 'partial' | 'pending' }));
-    } else if (name === 'payment_method') {
-      setFormData((prev) => ({ ...prev, payment_method: value as 'cash' | 'bit' | 'transfer' | null }));
-    }
-    
-    // Reset payment_date if payment_status is "pending"
-    if (name === 'payment_status' && value === 'pending') {
-      setFormData((prev) => ({ ...prev, payment_date: null }));
-      setPaymentDate(undefined);
-    }
-    
-    // Set payment_date to today if payment_status changed to "paid" or "partial" and there's no date
-    if (name === 'payment_status' && (value === 'paid' || value === 'partial') && !formData.payment_date) {
-      const today = new Date();
-      setFormData((prev) => ({ ...prev, payment_date: today }));
-      setPaymentDate(today);
-    }
-  };
-
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const numValue = value === '' ? null : Number(value);
-    
-    setFormData((prev) => ({ ...prev, [name]: numValue }));
-    
-    // Update payment status based on paid amount
-    if (name === 'paid_amount') {
-      const currentSessionPrice = calculateSessionPrice(formData.session_type_id);
-      if (currentSessionPrice > 0) {
-        if (numValue === null || numValue === 0) {
-          setFormData(prev => ({ ...prev, payment_status: 'pending' }));
-        } else if (numValue < currentSessionPrice) {
-          setFormData(prev => ({ ...prev, payment_status: 'partial' }));
-        } else {
-          setFormData(prev => ({ ...prev, payment_status: 'paid' }));
-        }
-      }
     }
   };
 
@@ -390,47 +337,16 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="session_type" className="text-purple-700">סוג פגישה</Label>
-            <Select
-              value={formData.session_type_id ? formData.session_type_id.toString() : undefined}
-              onValueChange={(value) => handleSelectChange('session_type_id', value)}
-            >
-              <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
-                <SelectValue placeholder="בחר סוג פגישה" />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingSessionTypes ? (
-                  <div className="py-2 px-4 text-sm text-muted-foreground">טוען...</div>
-                ) : (
-                  sessionTypes?.map((type) => (
-                    <SelectItem key={type.id} value={type.id.toString()}>
-                      {type.name} ({type.duration_minutes} דקות)
-                      {type.code === 'seft' && sessionPrice && ` - ₪${sessionPrice * 3}`}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="summary" className="text-purple-700">סיכום פגישה</Label>
             <Textarea
               id="summary"
               name="summary"
               placeholder="הזן סיכום פגישה..."
-              value={formData.summary || ''}
-              onChange={handleTextChange}
+              value={formData.summary}
+              onChange={handleInputChange}
               className="min-h-[100px] border-purple-200 focus-visible:ring-purple-500"
             />
           </div>
-
-          {/* Attachments Section */}
-          <SessionAttachmentsManager
-            attachmentUrls={formData.attachment_urls}
-            onAttachmentsChange={handleAttachmentsChange}
-            maxFiles={5}
-          />
 
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -475,16 +391,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
           <h3 className="text-lg font-semibold text-purple-700">פרטי תשלום</h3>
 
           <div className="space-y-2">
-            <Label htmlFor="paid_amount" className="text-purple-700">
-              סכום ששולם (₪)
-              {formData.session_type_id && sessionTypes && (() => {
-                const sessionType = sessionTypes.find(type => type.id === formData.session_type_id);
-                if (sessionType?.code === 'seft') {
-                  return <span className="text-sm text-muted-foreground ml-2">(פגישת SEFT - פי 3 מהמחיר הרגיל)</span>;
-                }
-                return null;
-              })()}
-            </Label>
+            <Label htmlFor="paid_amount" className="text-purple-700">סכום ששולם (₪)</Label>
             <Input
               id="paid_amount"
               name="paid_amount"
@@ -517,7 +424,7 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="payment_method" className="text-purple-700">אמצעי תשלום</Label>
                 <Select
-                  value={formData.payment_method || ''}
+                  value={formData.payment_method}
                   onValueChange={(value) => handleSelectChange('payment_method', value)}
                 >
                   <SelectTrigger className="border-purple-200 focus-visible:ring-purple-500">
@@ -564,8 +471,8 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                   id="payment_notes"
                   name="payment_notes"
                   placeholder="הזן הערות לתשלום..."
-                  value={formData.payment_notes || ''}
-                  onChange={handleTextChange}
+                  value={formData.payment_notes}
+                  onChange={handleInputChange}
                   className="border-purple-200 focus-visible:ring-purple-500"
                 />
               </div>
@@ -579,7 +486,12 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
             disabled={isSubmitting}
             className="bg-purple-600 hover:bg-purple-700"
           >
-            {isSubmitting ? 'יוצר...' : 'שמור'}
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                יוצר פגישה...
+              </div>
+            ) : 'צור פגישה'}
           </Button>
           <Button
             variant="outline"
@@ -595,4 +507,3 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
 };
 
 export default AddSessionDialog;
-
