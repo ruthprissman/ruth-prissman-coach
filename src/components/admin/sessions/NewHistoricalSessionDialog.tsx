@@ -84,7 +84,7 @@ const NewHistoricalSessionDialog: React.FC<NewHistoricalSessionDialogProps> = ({
 
   // Calculate session price based on session type
   const calculateSessionPrice = (sessionTypeId?: number | null): number => {
-    if (!sessionPrice) return 0;
+    if (sessionPrice === null || sessionPrice === undefined) return 0;
     
     if (sessionTypeId && sessionTypes) {
       const sessionType = sessionTypes.find(type => type.id === sessionTypeId);

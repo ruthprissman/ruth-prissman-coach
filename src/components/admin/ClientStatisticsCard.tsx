@@ -20,7 +20,7 @@ const ClientStatisticsCard: React.FC<ClientStatisticsCardProps> = ({
 }) => {
   // Calculate outstanding balance based on sessions
   const calculateOutstandingBalance = () => {
-    if (!sessionPrice) return 0;
+    if (sessionPrice === null || sessionPrice === undefined) return 0;
     
     const unpaidSessions = sessions.filter(session => 
       session.payment_status === 'pending' || session.payment_status === 'partial'

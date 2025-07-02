@@ -457,7 +457,7 @@ const ClientDetails: React.FC = () => {
                 
                 <div className="flex items-center">
                   <span className="text-gray-500 w-24">מחיר פגישה:</span>
-                  <span>{client.session_price ? `₪${client.session_price}` : 'לא הוגדר'}</span>
+                  <span>{client.session_price !== null && client.session_price !== undefined ? `₪${client.session_price}` : 'לא הוגדר'}</span>
                 </div>
               </div>
               

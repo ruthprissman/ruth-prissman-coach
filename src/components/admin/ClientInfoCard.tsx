@@ -65,7 +65,7 @@ const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ patient, onPatientUpdat
               <div>
                 <div className="text-xs text-purple-600 font-medium">מחיר לפגישה</div>
                 <div className="text-sm font-medium">
-                  {patient.session_price ? `₪${patient.session_price}` : 'לא צוין'}
+                  {patient.session_price !== null && patient.session_price !== undefined ? `₪${patient.session_price}` : 'לא צוין'}
                 </div>
               </div>
             </div>
