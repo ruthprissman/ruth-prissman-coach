@@ -417,11 +417,30 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     if (!isWorkMeetingSlot) return null;
     const clientName = extractClientName(slot.notes);
 
-    // NEW: Show ONLY trash icon if meeting is in the past
+    // NEW: Show edit and delete icons for past meetings
     if (isPastMeeting(slot)) {
-      // --- NEW: אפשרות למחוק גם פגישות ממקור Google בלבד
       return (
         <div className="absolute top-0 right-0 p-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          {/* Edit button for past meetings */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Navigate to sessions page with client name filter to allow editing
+                  navigateToSessions(clientName);
+                }}
+                className="bg-white p-1 rounded-full shadow hover:bg-purple-50"
+              >
+                <Pencil className="w-3.5 h-3.5 text-purple-600" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>ערוך פגישה</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          {/* Delete button for past meetings */}
           <Tooltip>
             <TooltipTrigger asChild>
               <button 
