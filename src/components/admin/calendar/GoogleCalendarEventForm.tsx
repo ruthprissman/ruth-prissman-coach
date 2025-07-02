@@ -13,6 +13,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import AddPatientDialog from '@/components/admin/AddPatientDialog';
 import { Patient } from '@/types/patient';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { getMeetingIconByTypeId } from '@/utils/meetingIconUtils';
 
 interface GoogleCalendarEventFormProps {
   onCreateEvent?: (summary: string, startDateTime: string, endDateTime: string, description?: string) => Promise<string | null>;
@@ -46,7 +47,9 @@ export function GoogleCalendarEventForm({ onCreateEvent }: GoogleCalendarEventFo
       if (formData.meetingWith) {
         const selectedPatient = patients.find(p => p.id.toString() === formData.meetingWith);
         if (selectedPatient) {
-          newSubject = `פגישה עם ${selectedPatient.name}`;
+          // Get the appropriate icon based on session type
+          const sessionIcon = getMeetingIconByTypeId(parseInt(formData.sessionTypeId));
+          newSubject = `${sessionIcon} פגישה עם ${selectedPatient.name}`;
           
           // Auto-calculate end time based on session type duration
           if (formData.startTime && formData.sessionTypeId) {
