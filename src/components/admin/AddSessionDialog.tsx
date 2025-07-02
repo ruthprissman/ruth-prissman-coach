@@ -411,6 +411,13 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
                 )}
               </SelectContent>
             </Select>
+            {formData.session_type_id && (
+              <div className="text-sm text-muted-foreground">
+                מחיר פגישה: ₪{calculateSessionPrice(formData.session_type_id)}
+                {sessionTypes?.find(type => type.id === formData.session_type_id)?.code === 'seft' && 
+                  ' (פי 3 מהמחיר הרגיל)'}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

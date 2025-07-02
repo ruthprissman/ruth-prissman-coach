@@ -146,10 +146,11 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
     
     // Update payment status based on paid amount
     if (name === 'paid_amount') {
-      if (sessionPrice) {
+      const currentSessionPrice = calculateSessionPrice(formData.session_type_id);
+      if (currentSessionPrice > 0) {
         if (numValue === null || numValue === 0) {
           setFormData(prev => ({ ...prev, payment_status: 'pending' }));
-        } else if (numValue < sessionPrice) {
+        } else if (numValue < currentSessionPrice) {
           setFormData(prev => ({ ...prev, payment_status: 'partial' }));
         } else {
           setFormData(prev => ({ ...prev, payment_status: 'paid' }));
@@ -158,9 +159,29 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
     }
   };
 
+  // Calculate session price based on session type
+  const calculateSessionPrice = (sessionTypeId?: number | null): number => {
+    if (sessionPrice === null || sessionPrice === undefined) return 0;
+    
+    if (sessionTypeId && sessionTypes) {
+      const sessionType = sessionTypes.find(type => type.id === sessionTypeId);
+      if (sessionType && sessionType.code === 'seft') {
+        return sessionPrice * 3; // SEFT sessions cost 3x the regular price
+      }
+    }
+    
+    return sessionPrice;
+  };
+
   const handleSelectChange = (name: string, value: string) => {
     if (name === 'session_type_id') {
-      setFormData((prev) => ({ ...prev, [name]: value ? Number(value) : null }));
+      const sessionTypeId = value ? Number(value) : null;
+      setFormData((prev) => ({ 
+        ...prev, 
+        [name]: sessionTypeId,
+        // Update paid_amount based on session type
+        paid_amount: calculateSessionPrice(sessionTypeId)
+      }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -389,11 +410,19 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
                   sessionTypes?.map((type) => (
                     <SelectItem key={type.id} value={type.id.toString()}>
                       {type.name} ({type.duration_minutes} דקות)
+                      {type.code === 'seft' && sessionPrice && ` - ₪${sessionPrice * 3}`}
                     </SelectItem>
                   ))
                 )}
               </SelectContent>
             </Select>
+            {formData.session_type_id && (
+              <div className="text-sm text-muted-foreground">
+                מחיר פגישה: ₪{calculateSessionPrice(formData.session_type_id)}
+                {sessionTypes?.find(type => type.id === formData.session_type_id)?.code === 'seft' && 
+                  ' (פי 3 מהמחיר הרגיל)'}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
