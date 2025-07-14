@@ -7,6 +7,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Stories from './pages/Stories';
 import Articles from './pages/Articles';
+import LargeWords from './pages/LargeWords';
 import Poems from './pages/Poems';
 import Humor from './pages/Humor';
 import ArticleView from './pages/ArticleView';
@@ -54,17 +55,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Component to wrap just the article management routes with PublicationProvider
-const ArticleRoutes = () => (
-  <PublicationProvider>
-    <Routes>
-      <Route path="/admin/articles" element={<ProtectedRoute><ArticlesManagement /></ProtectedRoute>} />
-      <Route path="/admin/articles/new" element={<ProtectedRoute><ArticleEditor /></ProtectedRoute>} />
-      <Route path="/admin/articles/edit/:id" element={<ProtectedRoute><ArticleEditor /></ProtectedRoute>} />
-    </Routes>
-  </PublicationProvider>
-);
-
 function App() {
   console.log('App component rendering');
   
@@ -82,9 +72,11 @@ function App() {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/stories" element={<Stories />} />
                 <Route path="/articles" element={<Articles />} />
+                <Route path="/large-words" element={<LargeWords />} />
                 <Route path="/poems" element={<Poems />} />
                 <Route path="/humor" element={<Humor />} />
                 <Route path="/articles/:id" element={<ArticleView />} />
+                <Route path="/large-words/:id" element={<ArticleView />} />
                 <Route path="/poems/:id" element={<PoemView />} />
                 <Route path="/humor/:id" element={<HumorView />} />
                 <Route path="/unsubscribe" element={<Unsubscribe />} />

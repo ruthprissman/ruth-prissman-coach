@@ -1,8 +1,11 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
+
 export function Footer() {
-  return <footer className="bg-white/80 backdrop-blur-sm mt-12 py-8 border-t border-gray-200">
+  return (
+    <footer className="bg-white/80 backdrop-blur-sm mt-12 py-8 border-t border-gray-200">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="text-right">
@@ -24,6 +27,7 @@ export function Footer() {
             <h4 className="font-alef text-xl text-purple-dark mb-4 gold-text-shadow">קישורים</h4>
             <ul className="space-y-2">
               <li><Link to="/about" className="text-purple-dark hover:text-gold transition-colors">אודות</Link></li>
+              <li><Link to="/large-words" className="text-purple-dark hover:text-gold transition-colors">מילים גדולות</Link></li>
               <li><Link to="/poems" className="text-purple-dark hover:text-gold transition-colors">שירים</Link></li>
               <li><Link to="/stories" className="text-purple-dark hover:text-gold transition-colors">סיפורים קצרים</Link></li>
               <li><Link to="/humor" className="text-purple-dark hover:text-gold transition-colors">לצחוק ברצינות</Link></li>
@@ -54,5 +58,6 @@ export function Footer() {
           </div>
         </div>
       </div>
-    </footer>;
+    </footer>
+  );
 }

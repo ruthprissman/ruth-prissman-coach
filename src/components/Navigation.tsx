@@ -19,6 +19,7 @@ const navItems = [
   },
   { name: 'אודות', path: '/about' },
   { name: 'סיפורים קצרים', path: '/stories' },
+  { name: 'מילים גדולות', path: '/large-words' },
   { name: 'שירים', path: '/poems' },
   { name: 'לצחוק ברצינות', path: '/humor' },
   { name: 'שאלות ותשובות', path: '/faq' },
