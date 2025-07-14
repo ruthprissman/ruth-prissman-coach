@@ -216,8 +216,10 @@ const LargeWords = () => {
       
       <main className="flex-grow pt-24 pb-16">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold text-purple-darkest mb-4 text-center">חיבורים קטנים למילים גדולות</h1>
-          <p className="text-lg text-center text-purple-dark mb-8 max-w-2xl mx-auto">
+          <h1 className="text-4xl md:text-5xl font-alef text-center text-[#4A235A] mb-10 gold-text-shadow">
+            חיבורים קטנים למילים גדולות
+          </h1>
+          <p className="text-center text-lg md:text-xl text-[#4A235A] mb-8 max-w-3xl mx-auto font-alef">
             מבט חדש על מילות התפילה – רגע של חיבור בתוך שגרת היום.
           </p>
           
