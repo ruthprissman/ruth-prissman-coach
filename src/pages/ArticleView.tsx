@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Article } from '@/types/article';
@@ -18,10 +18,26 @@ const ARTICLE_DEFAULT_IMAGE = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/
 
 const ArticleView = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const [article, setArticle] = useState<Article | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [siteLinks, setSiteLinks] = useState<SiteLink[]>([]);
   const [hebrewDate, setHebrewDate] = useState('');
+  
+  // Determine the back link based on the current URL path
+  const getBackLink = () => {
+    const currentPath = location.pathname;
+    if (currentPath.includes('/large-words/')) {
+      return '/large-words';
+    }
+    // Default to articles if not coming from large-words
+    return '/articles';
+  };
+  
+  const getBackButtonText = () => {
+    const backLink = getBackLink();
+    return backLink === '/large-words' ? 'חזרה למילים גדולות' : 'חזרה למאמרים';
+  };
   
   useEffect(() => {
     const fetchArticle = async () => {
@@ -177,10 +193,10 @@ const ArticleView = () => {
       <main className="flex-grow pt-24 pb-16">
         <div className="container mx-auto px-4">
           <div className="mb-6">
-            <Link to="/articles">
+            <Link to={getBackLink()}>
               <Button variant="ghost" className="text-purple-dark hover:text-purple-darkest">
                 <ChevronRight className="ml-1" size={16} />
-                חזרה למאמרים
+                {getBackButtonText()}
               </Button>
             </Link>
           </div>
@@ -282,9 +298,9 @@ const ArticleView = () => {
           ) : (
             <div className="text-center py-16">
               <p className="text-xl text-gray-500">המאמר לא נמצא</p>
-              <Link to="/articles">
+              <Link to={getBackLink()}>
                 <Button variant="outline" className="mt-4">
-                  חזרה למאמרים
+                  {getBackButtonText()}
                 </Button>
               </Link>
             </div>
