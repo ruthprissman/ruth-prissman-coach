@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
@@ -12,7 +11,7 @@ export function Footer() {
             <h4 className="font-alef text-xl text-purple-dark mb-4 gold-text-shadow">רות פריסמן - מאמנת וסופרת</h4>
             <p className="text-purple-light mb-2">מבט חדש על חיים מוכרים</p>
             <p className="text-purple-dark">טלפון: 055-6620273</p>
-            <p className="text-purple-dark">אימייל: RuthPrissman@gmail.com</p>
+            <p className="text-purple-dark">אימייל: Ruth@RuthPrissman.co.il</p>
             <ul className="space-y-2 mt-2">
               <li>
                 <a href="https://wa.me/972556620273" className="text-purple-dark hover:text-gold transition-colors inline-flex items-center" target="_blank" rel="noopener noreferrer">

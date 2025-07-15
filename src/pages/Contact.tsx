@@ -55,7 +55,7 @@ export default function Contact() {
       הודעה: ${formValues.message || ''}
     `);
     
-    return `mailto:RuthPrissman@gmail.com?subject=${subject}&body=${body}`;
+    return `mailto:Ruth@RuthPrissman.co.il?subject=${subject}&body=${body}`;
   };
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export default function Contact() {
           <div className="text-right">
             <p>אנא נסה ליצור קשר ישירות:</p>
             <p><a href="tel:+972556620273" className="underline">055-6620273</a></p>
-            <p><a href="mailto:RuthPrissman@gmail.com" className="underline">RuthPrissman@gmail.com</a></p>
+            <p><a href="mailto:Ruth@RuthPrissman.co.il" className="underline">Ruth@RuthPrissman.co.il</a></p>
           </div>
         ),
         duration: 10000,
@@ -154,8 +154,8 @@ export default function Contact() {
                   <Mail className="text-gold-DEFAULT flex-shrink-0" size={24} />
                   <div className="flex-grow text-right">
                     <p className="text-lg font-medium">אימייל</p>
-                    <a href="mailto:RuthPrissman@gmail.com" className="text-[#4A235A] hover:text-gold-DEFAULT transition-colors">
-                      RuthPrissman@gmail.com
+                    <a href="mailto:Ruth@RuthPrissman.co.il" className="text-[#4A235A] hover:text-gold-DEFAULT transition-colors">
+                      Ruth@RuthPrissman.co.il
                     </a>
                   </div>
                 </div>
@@ -321,8 +321,8 @@ export default function Contact() {
                             <a href="tel:+972556620273" className="text-[#4A235A] hover:text-gold-DEFAULT underline">
                               055-6620273
                             </a>
-                            <a href="mailto:RuthPrissman@gmail.com" className="text-[#4A235A] hover:text-gold-DEFAULT underline">
-                              RuthPrissman@gmail.com
+                            <a href="mailto:Ruth@RuthPrissman.co.il" className="text-[#4A235A] hover:text-gold-DEFAULT underline">
+                              Ruth@RuthPrissman.co.il
                             </a>
                           </div>
                         </div>
