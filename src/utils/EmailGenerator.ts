@@ -121,7 +121,7 @@ export class EmailGenerator {
           <div class="footer">
             <p>ברכה והערכה,<br>רות פריסמן</p>
             <p>
-              <a href="mailto:Ruth@RuthPrissman.co.il">Ruth@RuthPrissman.co.il</a> | 
+              <a href="mailto:ruth@ruthprissman.co.il">ruth@ruthprissman.co.il</a> | 
               <a href="https://ruthprissman.co.il">ruthprissman.co.il</a>
             </p>
             
