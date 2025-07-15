@@ -7,7 +7,7 @@ export class EmailGenerator {
    * @param article The article data
    * @returns HTML email content
    */
-  public generateEmailContent(article: {
+  public async generateEmailContent(article: {
     title: string;
     content: string;
     staticLinks?: Array<{
@@ -17,9 +17,9 @@ export class EmailGenerator {
       fixed_text: string | null;
       list_type: string | null;
     }>;
-  }): string {
+  }): Promise<string> {
     // Process the markdown content
-    const htmlContent = this.markdownToHtml(article.content);
+    const htmlContent = await this.markdownToHtml(article.content);
     
     // Generate the links section
     const linksSection = this.generateLinksSection(article.staticLinks || []);
@@ -113,10 +113,10 @@ export class EmailGenerator {
           </div>
           
           <div class="content">
-            ${this.markdownToHtml(article.content)}
+            ${htmlContent}
           </div>
           
-          ${this.generateLinksSection(article.staticLinks || [])}
+          ${linksSection}
           
           <div class="footer">
             <p>ברכה והערכה,<br>רות פריסמן</p>
@@ -144,14 +144,14 @@ export class EmailGenerator {
    * @param markdown Markdown content
    * @returns HTML content
    */
-  private markdownToHtml(markdown: string): string {
+  private async markdownToHtml(markdown: string): Promise<string> {
     // Use marked to convert markdown to HTML
-    let html = marked(markdown, { breaks: true });
+    const html = await marked(markdown, { breaks: true });
 
     // Sanitize the HTML to prevent XSS attacks
-    html = DOMPurify.sanitize(html);
+    const sanitizedHtml = DOMPurify.sanitize(html);
     
-    return html;
+    return sanitizedHtml;
   }
 
   /**
