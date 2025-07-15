@@ -125,8 +125,8 @@ export class EmailPublicationService {
         titleContainsSpecialChars: /[^\w\s\u0590-\u05FF\u200f\u200e\-:,.?!]/g.test(emailTitle)
       });
       
-      // 3. Generate email HTML content with transformed title
-      const emailContent = this.emailGenerator.generateEmailContent({
+      // 3. Generate email HTML content with transformed title - NOW PROPERLY AWAITED
+      const emailContent = await this.emailGenerator.generateEmailContent({
         title: emailTitle || 'No Title', // Use transformed title
         content: article.content_markdown || '',
         staticLinks: staticLinks || []
