@@ -129,6 +129,7 @@ export class EmailPublicationService {
       const emailContent = await this.emailGenerator.generateEmailContent({
         title: emailTitle || 'No Title', // Use transformed title
         content: article.content_markdown || '',
+        image_url: article.image_url || null,
         staticLinks: staticLinks || []
       });
       

@@ -10,6 +10,7 @@ export class EmailGenerator {
   public async generateEmailContent(article: {
     title: string;
     content: string;
+    image_url?: string | null;
     staticLinks?: Array<{
       id: number;
       name: string;
@@ -20,6 +21,11 @@ export class EmailGenerator {
   }): Promise<string> {
     // Process the markdown content
     const htmlContent = await this.markdownToHtml(article.content);
+    
+    // Generate the image section if image exists
+    const imageSection = article.image_url 
+      ? `<div style="text-align: center; margin: 20px 0;"><img src="${article.image_url}" alt="${article.title}" style="max-width: 100%; height: auto; border-radius: 8px;" /></div>`
+      : '';
     
     // Generate the links section
     const linksSection = this.generateLinksSection(article.staticLinks || []);
@@ -111,6 +117,8 @@ export class EmailGenerator {
             <h1 class="title">${article.title}</h1>
             <p style="color: #666;">מאת: רות פריסמן - קוד הנפש</p>
           </div>
+          
+          ${imageSection}
           
           <div class="content">
             ${htmlContent}
