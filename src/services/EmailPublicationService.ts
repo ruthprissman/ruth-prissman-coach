@@ -1,4 +1,3 @@
-
 import { supabaseClient, getFreshSupabaseClient, executeWithRetry } from '@/lib/supabaseClient';
 import { EmailDeliveryStats } from './PublicationService';
 import { DatabaseService } from './DatabaseService';
@@ -192,7 +191,7 @@ export class EmailPublicationService {
         subject: emailTitle,
         sender: { 
           email: "ruth@ruthprissman.co.il", 
-          name: "רות פריסמן - קוד הנפש" 
+          name: "רות פריסמן" 
         },
         htmlContent: emailContent
       };
@@ -242,7 +241,7 @@ export class EmailPublicationService {
                   subject: emailTitle, 
                   sender: { 
                     email: "ruth@ruthprissman.co.il", 
-                    name: "רות פריסמן - קוד הנפש" 
+                    name: "רות פריסמן" 
                   },
                   htmlContent: emailContent
                 })
