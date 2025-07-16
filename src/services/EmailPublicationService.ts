@@ -1,3 +1,4 @@
+
 import { supabaseClient, getFreshSupabaseClient, executeWithRetry } from '@/lib/supabaseClient';
 import { EmailDeliveryStats } from './PublicationService';
 import { DatabaseService } from './DatabaseService';
@@ -190,7 +191,7 @@ export class EmailPublicationService {
         emailList: [recipientsToSend[0]], // Just for logging
         subject: emailTitle,
         sender: { 
-          email: "Ruth@RuthPrissman.co.il", 
+          email: "ruth@ruthprissman.co.il", 
           name: "רות פריסמן - קוד הנפש" 
         },
         htmlContent: emailContent
@@ -240,7 +241,7 @@ export class EmailPublicationService {
                   emailList: [recipientEmail],
                   subject: emailTitle, 
                   sender: { 
-                    email: "Ruth@RuthPrissman.co.il", 
+                    email: "ruth@ruthprissman.co.il", 
                     name: "רות פריסמן - קוד הנפש" 
                   },
                   htmlContent: emailContent
