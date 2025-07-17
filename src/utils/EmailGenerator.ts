@@ -355,3 +355,13 @@ export class EmailGenerator {
       .replace(/'/g, "&#039;");
   }
 }
+
+// Create a singleton instance and export the function
+const emailGenerator = new EmailGenerator();
+
+export const generateEmailContent = (article: { title: string; content_markdown: string }) => {
+  return emailGenerator.generateEmailContent({
+    title: article.title,
+    content: article.content_markdown
+  });
+};
