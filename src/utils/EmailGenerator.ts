@@ -178,6 +178,9 @@ export class EmailGenerator {
     // Process any markdown links in the content to ensure they use Heebo font
     let processedContent = content;
     
+    // First, convert line breaks to <br> tags to preserve formatting
+    processedContent = processedContent.replace(/\n/g, '<br>');
+    
     // Replace markdown links with HTML links that use Heebo font
     processedContent = processedContent.replace(/\[(.*?)\]\((.*?)\)/g, (match, linkText, url) => {
       // Check if link text has punctuation and should break
