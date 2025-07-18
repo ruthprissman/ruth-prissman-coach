@@ -50,8 +50,6 @@ const Index = () => {
       <AppInitializer />
       
       <div className="min-h-screen relative w-full h-full">
-        <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]"></div>
-        
         <Navigation />
         
         <main className="flex-grow">
