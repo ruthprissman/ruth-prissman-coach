@@ -116,14 +116,14 @@ const Subscribe = () => {
       </Helmet>
       <Navigation />
       <main className="flex-grow relative z-10">
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 py-24 md:py-32">
           <Card className="w-full max-w-md mx-auto shadow-lg">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-foreground">
+          <CardTitle className="text-2xl font-bold text-foreground text-center">
             הצטרף/י לרשימות התפוצה
           </CardTitle>
-          <p className="text-muted-foreground mt-2">
-            וקבל/ני תוכן חדש וסיפורים ישירות למייל
+          <p className="text-muted-foreground mt-2 text-center">
+            וקבל/י תוכן חדש וסיפורים ישירות למייל
           </p>
         </CardHeader>
         
