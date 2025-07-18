@@ -172,38 +172,38 @@ const Index = () => {
           
           <section className="py-16 px-4">
             <div className="container mx-auto">
-              <Card className="w-full max-w-md mx-auto shadow-lg border-2 border-[#D4C5B9]">
-                <CardHeader className="text-center">
+              <Card className="w-full max-w-md mx-auto shadow-xl border-2 border-[#D4C5B9] bg-white">
+                <CardHeader className="text-center bg-gradient-to-b from-[#F5F1EB] to-white">
                   <CardTitle className="text-2xl font-bold text-[#4A235A] text-center">
                     הצטרף/י לרשימות התפוצה
                   </CardTitle>
-                  <p className="text-[#4A235A]/80 mt-2 text-center">
+                  <p className="text-[#4A235A] mt-2 text-center">
                     קבל/י תוכן חדש ועדכונים ישירות למייל
                   </p>
                 </CardHeader>
                 
                 <CardContent className="text-center">
-                  <p className="text-[#4A235A]/70 mb-6">
+                  <p className="text-[#4A235A] mb-6">
                     בחר/י את רשימות התפוצה המעניינות אותך והישאר/י מעודכן/ת
                   </p>
                   
                   <Link to="/subscribe">
                     <Button 
-                      className="bg-[#D4C5B9] hover:bg-[#C5B3A3] text-[#4A235A] font-semibold px-8 py-3 text-lg w-full"
+                      className="bg-[#D4C5B9] hover:bg-[#C5B3A3] text-[#4A235A] font-semibold px-8 py-3 text-lg w-full border-2 border-[#4A235A]/20 hover:border-[#4A235A]/40 transition-all duration-200 shadow-md hover:shadow-lg"
                     >
                       <ArrowLeft className="mr-2 h-5 w-5" />
                       להצטרפות לרשימות התפוצה
                     </Button>
                   </Link>
                   
-                  <p className="text-xs text-[#4A235A]/60 mt-4 leading-relaxed">
+                  <p className="text-xs text-[#4A235A]/80 mt-4 leading-relaxed">
                     אפשרות להירשם לתוכן מקצועי או לסיפורים
                     <br />
-                    <Link to="/privacy-policy" className="text-[#4A235A] hover:underline mx-1">
+                    <Link to="/privacy-policy" className="text-[#4A235A] hover:underline mx-1 font-medium">
                       מדיניות הפרטיות
                     </Link>
                     |
-                    <Link to="/unsubscribe" className="text-[#4A235A] hover:underline mx-1">
+                    <Link to="/unsubscribe" className="text-[#4A235A] hover:underline mx-1 font-medium">
                       להסרה מרשימת התפוצה
                     </Link>
                   </p>
