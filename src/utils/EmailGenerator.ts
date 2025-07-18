@@ -167,7 +167,7 @@ export class EmailGenerator {
   }
   
   /**
-   * Process content for email to preserve all line breaks and formatting
+   * Process content for email to preserve meaningful line breaks only
    * 
    * @param content The content to process
    * @returns Processed content with proper line breaks
@@ -177,21 +177,26 @@ export class EmailGenerator {
     
     let processedContent = content;
     
-    // First, replace double line breaks (paragraph breaks) with a special marker
-    processedContent = processedContent.replace(/\n\s*\n/g, '|||PARAGRAPH_BREAK|||');
-    
-    // Then replace single line breaks with <br> tags
-    processedContent = processedContent.replace(/\n/g, '<br>');
-    
-    // Now convert paragraph breaks to proper paragraph tags
-    const paragraphs = processedContent.split('|||PARAGRAPH_BREAK|||');
+    // Split into paragraphs by double line breaks
+    const paragraphs = processedContent.split(/\n\s*\n/);
     
     let formattedContent = '';
     for (let i = 0; i < paragraphs.length; i++) {
       const paragraph = paragraphs[i].trim();
       if (paragraph) {
+        // For each paragraph, only preserve intentional line breaks 
+        // (not random word wrapping line breaks)
+        // Replace only line breaks that come after punctuation or are truly intentional
+        let cleanParagraph = paragraph
+          // Remove line breaks that appear to be just word wrapping
+          .replace(/(\S)\n(\S)/g, '$1 $2')
+          // Keep line breaks after punctuation
+          .replace(/([.!?:,])\s*\n/g, '$1<br>')
+          // Keep line breaks before new sentences (capital letters)
+          .replace(/\n([A-Z\u05D0-\u05EA])/g, '<br>$1');
+        
         // Process links within this paragraph
-        const paragraphWithLinks = this.processLinksInParagraph(paragraph);
+        const paragraphWithLinks = this.processLinksInParagraph(cleanParagraph);
         formattedContent += '<p>' + paragraphWithLinks + '</p>';
       }
     }
