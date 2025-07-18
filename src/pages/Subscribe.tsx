@@ -4,9 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Navigation } from "@/components/Navigation";
+import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 const Subscribe = () => {
   const [firstName, setFirstName] = useState("");
@@ -106,8 +109,15 @@ const Subscribe = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <Card className="w-full max-w-md mx-auto shadow-lg">
+    <div className="min-h-screen flex flex-col">
+      <Helmet>
+        <title>הצטרפות לרשימות תפוצה - רות פריסמן</title>
+        <meta name="description" content="הצטרפי לרשימות התפוצה של רות פריסמן וקבלי תוכן מקצועי וסיפורים מרתקים ישירות למייל" />
+      </Helmet>
+      <Navigation />
+      <main className="flex-grow relative z-10">
+        <div className="container mx-auto px-4 py-12">
+          <Card className="w-full max-w-md mx-auto shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-foreground">
             הצטרף/י לרשימות התפוצה
@@ -197,9 +207,12 @@ const Subscribe = () => {
               </Link>
             </p>
           </form>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </div>
+    </main>
+    <Footer />
+  </div>
   );
 };
 
