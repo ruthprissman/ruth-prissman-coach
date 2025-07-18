@@ -197,7 +197,12 @@ export class EmailGenerator {
         
         // Process links within this paragraph
         const paragraphWithLinks = this.processLinksInParagraph(cleanParagraph);
-        formattedContent += '<p>' + paragraphWithLinks + '</p>';
+        
+        // Add spacing between paragraphs
+        if (formattedContent) {
+          formattedContent += '<br><br>';
+        }
+        formattedContent += paragraphWithLinks;
       }
     }
     
