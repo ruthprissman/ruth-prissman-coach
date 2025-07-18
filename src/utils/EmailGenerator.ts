@@ -175,32 +175,23 @@ export class EmailGenerator {
   private processContentForEmail(content: string): string {
     if (!content) return '';
     
-    let processedContent = content;
-    
-    // Split into paragraphs by double line breaks
-    const paragraphs = processedContent.split(/\n\s*\n/);
+    // Split into paragraphs by double line breaks (this preserves original paragraph structure)
+    const paragraphs = content.split(/\n\s*\n/);
     
     let formattedContent = '';
     for (let i = 0; i < paragraphs.length; i++) {
       const paragraph = paragraphs[i].trim();
       if (paragraph) {
-        // For each paragraph, only preserve intentional line breaks 
-        // (not random word wrapping line breaks)
-        // Replace only line breaks that come after punctuation or are truly intentional
-        let cleanParagraph = paragraph
-          // Remove line breaks that appear to be just word wrapping
-          .replace(/(\S)\n(\S)/g, '$1 $2')
-          // Keep line breaks after punctuation
-          .replace(/([.!?:,])\s*\n/g, '$1<br>')
-          // Keep line breaks before new sentences (capital letters)
-          .replace(/\n([A-Z\u05D0-\u05EA])/g, '<br>$1');
+        // For each paragraph, simply replace single line breaks with <br>
+        // This preserves the exact formatting from the original content
+        let cleanParagraph = paragraph.replace(/\n/g, '<br>');
         
         // Process links within this paragraph
         const paragraphWithLinks = this.processLinksInParagraph(cleanParagraph);
         
-        // Add spacing between paragraphs
+        // Add single line break between paragraphs (only if there's already content)
         if (formattedContent) {
-          formattedContent += '<br><br>';
+          formattedContent += '<br>';
         }
         formattedContent += paragraphWithLinks;
       }
