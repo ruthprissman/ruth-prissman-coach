@@ -14,6 +14,7 @@ import ArticleView from './pages/ArticleView';
 import PoemView from './pages/PoemView';
 import HumorView from './pages/HumorView';
 import Unsubscribe from './pages/Unsubscribe';
+import Subscribe from './pages/Subscribe';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import NotFound from './pages/NotFound';
 import Login from './pages/admin/Login';
@@ -79,7 +80,8 @@ function App() {
                 <Route path="/large-words/:id" element={<ArticleView />} />
                 <Route path="/poems/:id" element={<PoemView />} />
                 <Route path="/humor/:id" element={<HumorView />} />
-                <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route path="/subscribe" element={<Subscribe />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/faq" element={<FAQ />} />

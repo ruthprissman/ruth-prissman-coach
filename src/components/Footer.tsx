@@ -31,6 +31,7 @@ export function Footer() {
               <li><Link to="/stories" className="text-purple-dark hover:text-gold transition-colors">סיפורים קצרים</Link></li>
               <li><Link to="/humor" className="text-purple-dark hover:text-gold transition-colors">לצחוק ברצינות</Link></li>
               <li><Link to="/faq" className="text-purple-dark hover:text-gold transition-colors">שאלות ותשובות</Link></li>
+              <li><Link to="/subscribe" className="text-purple-dark hover:text-gold transition-colors">הצטרפות לרשימות תפוצה</Link></li>
               <li><Link to="/unsubscribe" className="text-purple-dark hover:text-gold transition-colors">הסרה מרשימת תפוצה</Link></li>
             </ul>
           </div>
