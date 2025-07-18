@@ -106,8 +106,8 @@ const Subscribe = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md mx-auto">
+    <div className="container mx-auto px-4 py-12">
+      <Card className="w-full max-w-md mx-auto shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-foreground">
             הצטרף/י לרשימות התפוצה
