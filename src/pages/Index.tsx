@@ -4,8 +4,11 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { TestimonialsCarousel } from '@/components/TestimonialsCarousel';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AppInitializer } from '@/components/AppInitializer';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft } from 'lucide-react';
 
 const Index = () => {
   const isMobile = useIsMobile();
@@ -166,6 +169,48 @@ const Index = () => {
           </section>
           
           <TestimonialsCarousel />
+          
+          <section className="py-16 px-4">
+            <div className="container mx-auto">
+              <Card className="w-full max-w-md mx-auto shadow-lg border-2 border-[#D4C5B9]">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl font-bold text-[#4A235A] text-center">
+                    הצטרף/י לרשימות התפוצה
+                  </CardTitle>
+                  <p className="text-[#4A235A]/80 mt-2 text-center">
+                    קבל/י תוכן חדש ועדכונים ישירות למייל
+                  </p>
+                </CardHeader>
+                
+                <CardContent className="text-center">
+                  <p className="text-[#4A235A]/70 mb-6">
+                    בחר/י את רשימות התפוצה המעניינות אותך והישאר/י מעודכן/ת
+                  </p>
+                  
+                  <Link to="/subscribe">
+                    <Button 
+                      className="bg-[#D4C5B9] hover:bg-[#C5B3A3] text-[#4A235A] font-semibold px-8 py-3 text-lg w-full"
+                    >
+                      <ArrowLeft className="mr-2 h-5 w-5" />
+                      להצטרפות לרשימות התפוצה
+                    </Button>
+                  </Link>
+                  
+                  <p className="text-xs text-[#4A235A]/60 mt-4 leading-relaxed">
+                    אפשרות להירשם לתוכן מקצועי או לסיפורים
+                    <br />
+                    <Link to="/privacy-policy" className="text-[#4A235A] hover:underline mx-1">
+                      מדיניות הפרטיות
+                    </Link>
+                    |
+                    <Link to="/unsubscribe" className="text-[#4A235A] hover:underline mx-1">
+                      להסרה מרשימת התפוצה
+                    </Link>
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
         </main>
         
         <Footer />
