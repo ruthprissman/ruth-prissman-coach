@@ -161,7 +161,7 @@ const Subscribe = () => {
                     onCheckedChange={(checked) => setSubscribeToContent(checked === true)}
                   />
                   <Label htmlFor="content" className="text-right">
-                    רשימת תפוצה לתוכן מקצועי (מאמרים, שירים, הומור)
+                    רשימת תפוצה לתוכן מקצועי - מייל שבועי מרתק
                   </Label>
                 </div>
 
@@ -172,7 +172,7 @@ const Subscribe = () => {
                     onCheckedChange={(checked) => setSubscribeToStories(checked === true)}
                   />
                   <Label htmlFor="stories" className="text-right">
-                    רשימת תפוצה לסיפורים
+                    רשימת תפוצה לסיפורים - מייל שבועי מרתק
                   </Label>
                 </div>
               </div>
