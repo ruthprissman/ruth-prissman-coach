@@ -118,9 +118,9 @@ export class EmailGenerator {
     html += '<h1>' + safeTitle + '</h1>';
     html += '</div>';
     
-    // Content - process content to ensure all links use Heebo font
+    // Content - process content to ensure all line breaks are preserved
     html += '<div class="content" style="text-align: center; direction: rtl;">';
-    const processedContent = this.processContentLinks(options.content);
+    const processedContent = this.processContentForEmail(options.content);
     html += processedContent;
     html += '</div>';
     
@@ -167,22 +167,49 @@ export class EmailGenerator {
   }
   
   /**
-   * Process content links to ensure they use Heebo font and handle punctuation breaks
+   * Process content for email to preserve all line breaks and formatting
    * 
    * @param content The content to process
-   * @returns Processed content with updated link styling
+   * @returns Processed content with proper line breaks
    */
-  private processContentLinks(content: string): string {
+  private processContentForEmail(content: string): string {
     if (!content) return '';
     
-    // Process any markdown links in the content to ensure they use Heebo font
     let processedContent = content;
     
-    // First, convert line breaks to <br> tags to preserve formatting
+    // First, replace double line breaks (paragraph breaks) with a special marker
+    processedContent = processedContent.replace(/\n\s*\n/g, '|||PARAGRAPH_BREAK|||');
+    
+    // Then replace single line breaks with <br> tags
     processedContent = processedContent.replace(/\n/g, '<br>');
     
+    // Now convert paragraph breaks to proper paragraph tags
+    const paragraphs = processedContent.split('|||PARAGRAPH_BREAK|||');
+    
+    let formattedContent = '';
+    for (let i = 0; i < paragraphs.length; i++) {
+      const paragraph = paragraphs[i].trim();
+      if (paragraph) {
+        // Process links within this paragraph
+        const paragraphWithLinks = this.processLinksInParagraph(paragraph);
+        formattedContent += '<p>' + paragraphWithLinks + '</p>';
+      }
+    }
+    
+    return formattedContent;
+  }
+  
+  /**
+   * Process links within a paragraph
+   * 
+   * @param paragraph The paragraph content to process
+   * @returns Processed paragraph with updated link styling
+   */
+  private processLinksInParagraph(paragraph: string): string {
+    let processedParagraph = paragraph;
+    
     // Replace markdown links with HTML links that use Heebo font
-    processedContent = processedContent.replace(/\[(.*?)\]\((.*?)\)/g, (match, linkText, url) => {
+    processedParagraph = processedParagraph.replace(/\[(.*?)\]\((.*?)\)/g, (match, linkText, url) => {
       // Check if link text has punctuation and should break
       const hasPunctuation = /[,.?!;:]/.test(linkText);
       let processedLinkText = this.escapeHtml(linkText);
@@ -205,7 +232,7 @@ export class EmailGenerator {
       }
     });
     
-    return processedContent;
+    return processedParagraph;
   }
   
   /**
