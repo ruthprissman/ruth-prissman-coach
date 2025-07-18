@@ -175,29 +175,16 @@ export class EmailGenerator {
   private processContentForEmail(content: string): string {
     if (!content) return '';
     
-    // Split into paragraphs by double line breaks (this preserves original paragraph structure)
-    const paragraphs = content.split(/\n\s*\n/);
+    // First handle double line breaks (paragraph breaks) - these should become <br><br>
+    let processedContent = content.replace(/\n\s*\n/g, '<br><br>');
     
-    let formattedContent = '';
-    for (let i = 0; i < paragraphs.length; i++) {
-      const paragraph = paragraphs[i].trim();
-      if (paragraph) {
-        // For each paragraph, simply replace single line breaks with <br>
-        // This preserves the exact formatting from the original content
-        let cleanParagraph = paragraph.replace(/\n/g, '<br>');
-        
-        // Process links within this paragraph
-        const paragraphWithLinks = this.processLinksInParagraph(cleanParagraph);
-        
-        // Add single line break between paragraphs (only if there's already content)
-        if (formattedContent) {
-          formattedContent += '<br>';
-        }
-        formattedContent += paragraphWithLinks;
-      }
-    }
+    // Then handle single line breaks - these should become just a space (word wrap)
+    processedContent = processedContent.replace(/\n/g, ' ');
     
-    return formattedContent;
+    // Process links within the content
+    const contentWithLinks = this.processLinksInParagraph(processedContent);
+    
+    return contentWithLinks;
   }
   
   /**
