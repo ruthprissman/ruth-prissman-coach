@@ -15,7 +15,7 @@ import { Footer } from '@/components/Footer';
 import { Navigation } from '@/components/Navigation';
 
 const formSchema = z.object({
-  email: z.string().email({ message: 'נא להזין כתובת אימייל תקינה' }),
+  email: z.string().min(1, { message: 'נא להזין כתובת אימייל' }),
   listType: z.enum(['general', 'stories', 'all'], {
     required_error: 'נא לבחור רשימת תפוצה',
   }),
@@ -33,6 +33,7 @@ const UnsubscribePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [step, setStep] = useState<'input' | 'confirm' | 'success' | 'notFound' | 'resubscribed' | 'alreadyUnsubscribed'>('input');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [emailError, setEmailError] = useState('');
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -41,6 +42,22 @@ const UnsubscribePage: React.FC = () => {
       listType: (searchParams.get('list') as 'general' | 'stories' | 'all') || 'general',
     },
   });
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    form.setValue('email', email);
+    
+    if (email && !validateEmail(email)) {
+      setEmailError('נא להזין כתובת אימייל תקינה');
+    } else {
+      setEmailError('');
+    }
+  };
 
   useEffect(() => {
     const email = searchParams.get('email');
@@ -144,12 +161,19 @@ const UnsubscribePage: React.FC = () => {
 
   const handleConfirm = () => {
     const values = form.getValues();
-    const result = formSchema.safeParse(values);
-    if (!result.success) {
-      form.trigger();
+    const email = values.email;
+    
+    if (!email) {
+      setEmailError('נא להזין כתובת אימייל');
       return;
     }
     
+    if (!validateEmail(email)) {
+      setEmailError('נא להזין כתובת אימייל תקינה');
+      return;
+    }
+    
+    setEmailError('');
     setStep('confirm');
   };
   
@@ -252,12 +276,17 @@ const UnsubscribePage: React.FC = () => {
                         <FormLabel>כתובת אימייל</FormLabel>
                         <FormControl>
                           <Input 
+                            type="text"
                             placeholder="הזן את כתובת האימייל שלך" 
-                            {...field} 
+                            value={field.value}
+                            onChange={handleEmailChange}
                             dir="ltr"
                             className="text-left"
                           />
                         </FormControl>
+                        {emailError && (
+                          <p className="text-sm text-red-500 mt-1">{emailError}</p>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
