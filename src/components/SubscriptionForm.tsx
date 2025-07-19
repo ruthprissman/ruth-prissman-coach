@@ -120,6 +120,9 @@ export function SubscriptionForm() {
           onChange={(e) => setEmail(e.target.value)}
           className="w-full text-right border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-gold/30 focus:border-gold/60 transition-all duration-200"
           dir="rtl"
+          required
+          pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+          title="נא להזין כתובת אימייל תקינה"
         />
         <Button 
           type="submit" 
