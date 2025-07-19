@@ -118,6 +118,10 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
     }
   };
 
+  const handleTestModeChange = (checked: boolean | "indeterminate") => {
+    setIsTestMode(checked === true);
+  };
+
   if (!story) return null;
 
   return (
@@ -145,7 +149,7 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
             <Checkbox
               id="testMode"
               checked={isTestMode}
-              onCheckedChange={setIsTestMode}
+              onCheckedChange={handleTestModeChange}
             />
           </div>
 
