@@ -66,7 +66,8 @@ export function SubscriptionForm() {
           .insert({ 
             email, 
             is_subscribed: true,
-            name: name || null
+            name: name || null,
+            joined_at: new Date().toISOString()
           });
           
         toast({
