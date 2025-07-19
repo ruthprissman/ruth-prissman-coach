@@ -56,8 +56,14 @@ export const processEmailContent = (content: string): string => {
   
   console.log('[EmailContent] Processing email content');
   
-  // First handle ^^^ markers using the same strategy as regular content
-  let processedContent = processContentSpacing(content);
+  // For email, handle ^^^ differently - replace with single <br>
+  let processedContent = content;
+  
+  // Strategy 1: Lines that contain only ^^^ (with optional whitespace) become single <br>
+  processedContent = processedContent.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<br>');
+  
+  // Strategy 2: ^^^ anywhere in a line becomes single <br>
+  processedContent = processedContent.replace(/\^\^\^/g, '<br>');
   
   // Then handle double line breaks (paragraph breaks) - these should become <br><br>
   processedContent = processedContent.replace(/\n\s*\n/g, '<br><br>');
