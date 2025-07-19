@@ -5,7 +5,7 @@ import * as z from 'zod';
 export const sanitizeString = (input: string): string => {
   return input
     .trim()
-    .replace(/[<>'"&]/g, '') // Remove potentially harmful characters
+    .replace(/[<>'"]/g, '') // Remove potentially harmful characters but keep @ for emails
     .substring(0, 1000); // Limit length
 };
 
