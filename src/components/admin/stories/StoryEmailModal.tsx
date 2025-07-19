@@ -54,7 +54,7 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
         return;
       }
 
-      // Prepare email content with improved styling and embedded signature image
+      // Prepare email content with improved styling and Google Drive signature image
       const subject = `סיפור חדש: ${story.title}`;
       const emailContent = `
         <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, Helvetica, sans-serif; line-height: 1.8; color: #333; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
@@ -76,7 +76,7 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
             <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto; text-align: center;">
               <tr>
                 <td style="text-align: center;">
-                  <img src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/ruth-signature.png" 
+                  <img src="https://drive.google.com/uc?export=view&id=1HSpCu_iV7E7uTk3rxtideWZd8FwHfaX1" 
                        alt="רות פריסמן - חתימה" 
                        style="max-width: 250px; width: 100%; height: auto; margin-bottom: 15px; border-radius: 10px; display: block;" />
                 </td>
