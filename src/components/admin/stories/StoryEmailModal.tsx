@@ -54,7 +54,7 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
         return;
       }
 
-      // Prepare email content with improved styling
+      // Prepare email content with improved styling and embedded signature image
       const subject = `סיפור חדש: ${story.title}`;
       const emailContent = `
         <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, Helvetica, sans-serif; line-height: 1.8; color: #333; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
@@ -73,7 +73,7 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
           </div>
           
           <div style="text-align: center; margin-top: 50px; padding: 30px 20px; border-top: 1px solid #e0e0e0; background: linear-gradient(135deg, #f8f4f1 0%, #f0ede8 100%);">
-            <img src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/ruth-signature.png" alt="רות פריסמן" style="max-width: 300px; height: auto; margin-bottom: 15px; border-radius: 10px;">
+            <img src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/ruth-signature.png" alt="רות פריסמן" style="max-width: 300px; height: auto; margin-bottom: 15px; border-radius: 10px; display: block; margin-left: auto; margin-right: auto;">
             <div style="margin-top: 20px;">
               <p style="margin: 5px 0; color: #4A235A; font-size: 18px; font-weight: 600;">רות פריסמן - קוד הנפש</p>
               <p style="margin: 5px 0; color: #666; font-size: 14px;">מאמנת בגישה טיפולית | קוד הנפש | SEFT</p>
@@ -97,6 +97,16 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
         </div>
       `;
 
+      // Prepare attachments array - make sure PDF URL is valid
+      let attachments = undefined;
+      if (story.pdf_url) {
+        console.log('Preparing PDF attachment:', story.pdf_url);
+        attachments = [{
+          filename: `${story.title}.pdf`,
+          url: story.pdf_url
+        }];
+      }
+
       // Call the send-email edge function with attachment
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
@@ -107,22 +117,22 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
             name: "רות פריסמן"
           },
           htmlContent: emailContent,
-          attachments: story.pdf_url ? [{
-            filename: `${story.title}.pdf`,
-            url: story.pdf_url
-          }] : undefined
+          attachments: attachments
         }
       });
 
       if (error) {
+        console.error('Edge function error:', error);
         throw error;
       }
+
+      console.log('Email sent successfully:', data);
 
       toast({
         title: isTestMode ? "מייל בדיקה נשלח" : "הסיפור נשלח בהצלחה",
         description: isTestMode 
           ? "מייל הבדיקה נשלח לכתובת ruth@ruthprissman.co.il"
-          : `הסיפור נשלח ל-${recipientEmails.length} נמענים`
+          : `הסיפור נשלח ל-${recipientEmails.length} נמענים${data?.attachmentsProcessed ? ` עם ${data.attachmentsProcessed} קבצים מצורפים` : ''}`
       });
 
       onClose();

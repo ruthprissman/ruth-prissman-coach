@@ -92,23 +92,42 @@ const handler = async (req: Request): Promise<Response> => {
         try {
           console.log('Fetching attachment from URL:', attachment.url);
           
-          // Fetch the file from the URL
-          const fileResponse = await fetch(attachment.url);
+          // Create a more robust fetch with proper error handling
+          const fileResponse = await fetch(attachment.url, {
+            method: 'GET',
+            headers: {
+              'User-Agent': 'Supabase-Functions/1.0'
+            }
+          });
+          
           if (!fileResponse.ok) {
-            console.error('Failed to fetch attachment:', fileResponse.status, fileResponse.statusText);
+            console.error('Failed to fetch attachment:', {
+              url: attachment.url,
+              status: fileResponse.status,
+              statusText: fileResponse.statusText
+            });
             continue;
           }
           
-          // Convert to base64
+          // Get the file as array buffer
           const fileBuffer = await fileResponse.arrayBuffer();
-          const base64Content = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+          const uint8Array = new Uint8Array(fileBuffer);
+          
+          // Convert to base64 more safely
+          let binary = '';
+          const chunkSize = 0x8000; // 32KB chunks to avoid stack overflow
+          for (let i = 0; i < uint8Array.length; i += chunkSize) {
+            const chunk = uint8Array.subarray(i, i + chunkSize);
+            binary += String.fromCharCode.apply(null, Array.from(chunk));
+          }
+          const base64Content = btoa(binary);
           
           brevoAttachments.push({
             name: attachment.filename,
             content: base64Content
           });
           
-          console.log('Successfully processed attachment:', attachment.filename);
+          console.log('Successfully processed attachment:', attachment.filename, 'Size:', uint8Array.length, 'bytes');
         } catch (attachmentError) {
           console.error('Error processing attachment:', attachment.filename, attachmentError);
           // Continue with other attachments
