@@ -73,7 +73,15 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
           </div>
           
           <div style="text-align: center; margin-top: 50px; padding: 30px 20px; border-top: 1px solid #e0e0e0; background: linear-gradient(135deg, #f8f4f1 0%, #f0ede8 100%);">
-            <img src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/ruth-signature.png" alt="רות פריסמן" style="max-width: 300px; height: auto; margin-bottom: 15px; border-radius: 10px; display: block; margin-left: auto; margin-right: auto;">
+            <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto; text-align: center;">
+              <tr>
+                <td style="text-align: center;">
+                  <img src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/ruth-signature.png" 
+                       alt="רות פריסמן - חתימה" 
+                       style="max-width: 250px; width: 100%; height: auto; margin-bottom: 15px; border-radius: 10px; display: block;" />
+                </td>
+              </tr>
+            </table>
             <div style="margin-top: 20px;">
               <p style="margin: 5px 0; color: #4A235A; font-size: 18px; font-weight: 600;">רות פריסמן - קוד הנפש</p>
               <p style="margin: 5px 0; color: #666; font-size: 14px;">מאמנת בגישה טיפולית | קוד הנפש | SEFT</p>
