@@ -19,6 +19,11 @@ const Subscribe = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -26,6 +31,15 @@ const Subscribe = () => {
       toast({
         title: "שגיאה",
         description: "נא להזין כתובת אימייל",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validateEmail(email.trim())) {
+      toast({
+        title: "שגיאה",
+        description: "נא להזין כתובת אימייל תקינה",
         variant: "destructive",
       });
       return;
@@ -150,12 +164,11 @@ const Subscribe = () => {
                 </Label>
                 <Input
                   id="email"
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="האימייל שלך"
                   className="text-right"
-                  required
                 />
               </div>
 
