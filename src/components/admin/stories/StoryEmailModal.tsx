@@ -54,30 +54,50 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
         return;
       }
 
-      // Prepare email content
+      // Prepare email content with improved styling
       const subject = `סיפור חדש: ${story.title}`;
       const emailContent = `
-        <div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <h2 style="color: #4A235A; text-align: center;">${story.title}</h2>
-          
-          <div style="margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-right: 4px solid #D4C5B9;">
-            <p style="margin: 0; white-space: pre-line;">${story.description}</p>
+        <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Arial, Helvetica, sans-serif; line-height: 1.8; color: #333; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #4A235A;">
+            <h1 style="color: #4A235A; font-size: 28px; margin: 0; font-weight: 300;">${story.title}</h1>
           </div>
           
-          <div style="text-align: center; margin: 30px 0;">
-            <p>הסיפור המלא מצורף כקובץ PDF</p>
+          <div style="padding: 30px 20px;">
+            <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 15px; border-right: 5px solid #D4C5B9; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <p style="margin: 0; font-size: 16px; line-height: 1.8; color: #2c3e50; white-space: pre-line;">${story.description}</p>
+            </div>
+            
+            <div style="text-align: center; margin: 40px 0; padding: 20px; background-color: #f8f4f1; border-radius: 10px;">
+              <p style="margin: 0; font-size: 16px; color: #4A235A; font-weight: 500;">📖 הסיפור המלא מצורף כקובץ PDF</p>
+            </div>
           </div>
           
-          <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
-            <p>נשלח מאת רות פריסמן - קוד הנפש</p>
-            <p>
-              <a href="${window.location.origin}/unsubscribe" style="color: #4A235A;">לביטול המנוי</a>
-            </p>
+          <div style="text-align: center; margin-top: 50px; padding: 30px 20px; border-top: 1px solid #e0e0e0; background: linear-gradient(135deg, #f8f4f1 0%, #f0ede8 100%);">
+            <img src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/ruth-signature.png" alt="רות פריסמן" style="max-width: 300px; height: auto; margin-bottom: 15px; border-radius: 10px;">
+            <div style="margin-top: 20px;">
+              <p style="margin: 5px 0; color: #4A235A; font-size: 18px; font-weight: 600;">רות פריסמן - קוד הנפש</p>
+              <p style="margin: 5px 0; color: #666; font-size: 14px;">מאמנת בגישה טיפולית | קוד הנפש | SEFT</p>
+              <p style="margin: 5px 0; color: #666; font-size: 14px;">מבט חדש על חיים מובנים</p>
+              <div style="margin-top: 15px;">
+                <p style="margin: 3px 0; color: #4A235A; font-size: 14px;">
+                  📧 <a href="mailto:Ruth@RuthPrissman.co.il" style="color: #4A235A; text-decoration: none;">Ruth@RuthPrissman.co.il</a>
+                </p>
+                <p style="margin: 3px 0; color: #4A235A; font-size: 14px;">📱 0556620273</p>
+                <p style="margin: 3px 0;">
+                  <a href="https://coach.ruthprissman.co.il" style="color: #4A235A; text-decoration: none; font-size: 14px;">🌐 https://coach.ruthprissman.co.il</a>
+                </p>
+              </div>
+            </div>
+            <div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
+              <p style="margin: 0; color: #888; font-size: 12px;">
+                <a href="${window.location.origin}/unsubscribe" style="color: #4A235A; text-decoration: underline;">לביטול המנוי לחץ כאן</a>
+              </p>
+            </div>
           </div>
         </div>
       `;
 
-      // Call the send-email edge function
+      // Call the send-email edge function with attachment
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
           emailList: recipientEmails,
@@ -140,6 +160,9 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
             <p className="text-sm text-right"><strong>כותרת:</strong> {story.title}</p>
             <p className="text-sm text-right mt-2"><strong>תיאור:</strong></p>
             <p className="text-sm text-gray-600 text-right mt-1">{story.description.substring(0, 150)}...</p>
+            {story.pdf_url && (
+              <p className="text-sm text-right mt-2"><strong>קובץ PDF:</strong> <span className="text-green-600">✓ קיים</span></p>
+            )}
           </div>
 
           <div className="flex items-center space-x-2 justify-end">

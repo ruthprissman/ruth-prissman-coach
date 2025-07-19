@@ -14,6 +14,10 @@ interface EmailRequest {
     name: string;
   };
   htmlContent: string;
+  attachments?: Array<{
+    filename: string;
+    url: string;
+  }>;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -50,7 +54,8 @@ const handler = async (req: Request): Promise<Response> => {
       emailListLength: emailData.emailList?.length,
       subject: emailData.subject,
       sender: emailData.sender,
-      contentLength: emailData.htmlContent?.length
+      contentLength: emailData.htmlContent?.length,
+      hasAttachments: !!emailData.attachments && emailData.attachments.length > 0
     });
 
     // Validate request data
@@ -77,8 +82,42 @@ const handler = async (req: Request): Promise<Response> => {
     // Prepare recipients for Brevo format
     const to = emailData.emailList.map(email => ({ email }));
 
+    // Process attachments if provided
+    let brevoAttachments = undefined;
+    if (emailData.attachments && emailData.attachments.length > 0) {
+      console.log('Processing attachments:', emailData.attachments.length);
+      
+      brevoAttachments = [];
+      for (const attachment of emailData.attachments) {
+        try {
+          console.log('Fetching attachment from URL:', attachment.url);
+          
+          // Fetch the file from the URL
+          const fileResponse = await fetch(attachment.url);
+          if (!fileResponse.ok) {
+            console.error('Failed to fetch attachment:', fileResponse.status, fileResponse.statusText);
+            continue;
+          }
+          
+          // Convert to base64
+          const fileBuffer = await fileResponse.arrayBuffer();
+          const base64Content = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+          
+          brevoAttachments.push({
+            name: attachment.filename,
+            content: base64Content
+          });
+          
+          console.log('Successfully processed attachment:', attachment.filename);
+        } catch (attachmentError) {
+          console.error('Error processing attachment:', attachment.filename, attachmentError);
+          // Continue with other attachments
+        }
+      }
+    }
+
     // Prepare Brevo email payload
-    const brevoPayload = {
+    const brevoPayload: any = {
       sender: {
         name: emailData.sender.name,
         email: emailData.sender.email
@@ -87,6 +126,12 @@ const handler = async (req: Request): Promise<Response> => {
       subject: emailData.subject,
       htmlContent: emailData.htmlContent
     };
+
+    // Add attachments if any were successfully processed
+    if (brevoAttachments && brevoAttachments.length > 0) {
+      brevoPayload.attachment = brevoAttachments;
+      console.log('Added attachments to payload:', brevoAttachments.length);
+    }
 
     console.log('Sending email via Brevo API to:', to.length, 'recipients');
 
@@ -128,7 +173,8 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         messageId: responseData.messageId,
-        sentTo: emailData.emailList.length
+        sentTo: emailData.emailList.length,
+        attachmentsProcessed: brevoAttachments?.length || 0
       }),
       { 
         status: 200, 
