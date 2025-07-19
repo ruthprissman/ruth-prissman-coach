@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -85,7 +84,7 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
             <div style="margin-top: 20px;">
               <p style="margin: 5px 0; color: #4A235A; font-size: 18px; font-weight: 600;">רות פריסמן - קוד הנפש</p>
               <p style="margin: 5px 0; color: #666; font-size: 14px;">מאמנת בגישה טיפולית | קוד הנפש | SEFT</p>
-              <p style="margin: 5px 0; color: #666; font-size: 14px;">מבט חדש על חיים מובנים</p>
+              <p style="margin: 5px 0; color: #666; font-size: 14px;">מבט חדש על חיים מוכרים</p>
               <div style="margin-top: 15px;">
                 <p style="margin: 3px 0; color: #4A235A; font-size: 14px;">
                   📧 <a href="mailto:Ruth@RuthPrissman.co.il" style="color: #4A235A; text-decoration: none;">Ruth@RuthPrissman.co.il</a>
