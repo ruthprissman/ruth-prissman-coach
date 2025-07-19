@@ -11,6 +11,7 @@ import { ArticlePublication } from '@/types/article';
 import { FutureSession } from '@/types/session';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getCookie, deleteCookie } from '@/utils/cookieUtils';
+import { SubscriptionListModal } from '@/components/admin/SubscriptionListModal';
 
 const Dashboard: React.FC = () => {
   const {
@@ -38,6 +39,7 @@ const Dashboard: React.FC = () => {
     }
   });
   const paymentStats = usePaymentStats();
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
 
   useEffect(() => {
     const env = getCookie('auth_env');
@@ -426,7 +428,15 @@ const Dashboard: React.FC = () => {
               <Card className="w-full flex flex-col">
                 <CardHeader className="flex items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xl font-bold text-right">סטטיסטיקות מנויים</CardTitle>
-                  <div className="w-6"></div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsSubscriptionModalOpen(true)}
+                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                  >
+                    <span>צפה ברשימות</span>
+                    <ArrowUpRight className="w-4 h-4 ms-1" />
+                  </Button>
                 </CardHeader>
                 <CardContent className="pt-4 text-right flex-1">
                   {subscriptionStats.contentSubscribers.loading || subscriptionStats.storySubscribers.loading ? <div className="flex justify-center items-center py-8">
@@ -527,6 +537,11 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </main>
+
+      <SubscriptionListModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={() => setIsSubscriptionModalOpen(false)}
+      />
     </div>;
 };
 
