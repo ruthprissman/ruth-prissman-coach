@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -14,8 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { PencilIcon, TrashIcon } from 'lucide-react';
+import { PencilIcon, TrashIcon, Send } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import StoryEmailModal from './StoryEmailModal';
 
 interface StoriesListProps {
   onEditStory: (storyId: number) => void;
@@ -27,6 +29,8 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [storyToDelete, setStoryToDelete] = useState<Story | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [storyToEmail, setStoryToEmail] = useState<Story | null>(null);
   const { toast } = useToast();
 
   const fetchStories = async () => {
@@ -68,6 +72,11 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
   const handleDeleteClick = (story: Story) => {
     setStoryToDelete(story);
     setDeleteDialogOpen(true);
+  };
+
+  const handleEmailClick = (story: Story) => {
+    setStoryToEmail(story);
+    setEmailModalOpen(true);
   };
 
   const handleDeleteStory = async () => {
@@ -188,6 +197,7 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
                         size="sm"
                         variant="ghost"
                         onClick={() => onEditStory(story.id)}
+                        title="ערוך סיפור"
                       >
                         <PencilIcon className="h-4 w-4" />
                         <span className="sr-only">ערוך</span>
@@ -195,8 +205,19 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
                       <Button
                         size="sm"
                         variant="ghost"
+                        onClick={() => handleEmailClick(story)}
+                        title="שלח במייל"
+                        className="text-blue-600 hover:text-blue-900 hover:bg-blue-100"
+                      >
+                        <Send className="h-4 w-4" />
+                        <span className="sr-only">שלח במייל</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
                         className="text-red-600 hover:text-red-900 hover:bg-red-100"
                         onClick={() => handleDeleteClick(story)}
+                        title="מחק סיפור"
                       >
                         <TrashIcon className="h-4 w-4" />
                         <span className="sr-only">מחק</span>
@@ -236,6 +257,12 @@ const StoriesList: React.FC<StoriesListProps> = ({ onEditStory }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <StoryEmailModal
+        isOpen={emailModalOpen}
+        onClose={() => setEmailModalOpen(false)}
+        story={storyToEmail}
+      />
     </div>
   );
 };
