@@ -10,8 +10,9 @@
 export const processContentSpacing = (content: string): string => {
   if (!content) return '';
   
-  // Replace lines that contain only ^^^ (with optional whitespace) with a single empty line
-  const processedContent = content.replace(/^\s*\^\^\^\s*$/gm, '\n');
+  // Replace lines that contain only ^^^ (with optional whitespace) with empty lines
+  // This creates paragraph breaks where ^^^ markers appear
+  const processedContent = content.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '');
   
   return processedContent;
 };
@@ -35,8 +36,8 @@ export const processMarkdownContent = (content: string): string => {
 export const processEmailContent = (content: string): string => {
   if (!content) return '';
   
-  // First handle ^^^ markers
-  let processedContent = processContentSpacing(content);
+  // First handle ^^^ markers by removing them and creating empty lines
+  let processedContent = content.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '\n');
   
   // Then handle double line breaks (paragraph breaks) - these should become <br><br>
   processedContent = processedContent.replace(/\n\s*\n/g, '<br><br>');
