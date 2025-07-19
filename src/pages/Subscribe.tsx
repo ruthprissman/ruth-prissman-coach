@@ -156,6 +156,8 @@ const Subscribe = () => {
                   placeholder="האימייל שלך"
                   className="text-right"
                   required
+                  pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                  title="נא להזין כתובת אימייל תקינה"
                 />
               </div>
 
