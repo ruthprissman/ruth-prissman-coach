@@ -13,6 +13,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { format, parseISO } from 'date-fns';
 import { he } from 'date-fns/locale';
 import MarkdownPreview from '@/components/admin/articles/MarkdownPreview';
+import { processMarkdownContent } from '@/utils/contentFormatter';
 
 const ARTICLE_DEFAULT_IMAGE = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/stories_img//content-tree.PNG';
 
@@ -244,12 +245,12 @@ const ArticleView = () => {
               <div className="prose prose-lg max-w-none">
                 {article.content_markdown?.startsWith('<') ? (
                   <div 
-                    dangerouslySetInnerHTML={{ __html: article.content_markdown }} 
+                    dangerouslySetInnerHTML={{ __html: processMarkdownContent(article.content_markdown) }} 
                     className="text-gray-800 leading-relaxed article-html-content"
                   />
                 ) : (
                   <MarkdownPreview
-                    markdown={article.content_markdown || ''}
+                    markdown={processMarkdownContent(article.content_markdown || '')}
                     className="text-gray-800 leading-relaxed text-center"
                   />
                 )}

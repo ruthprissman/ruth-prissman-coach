@@ -1,3 +1,5 @@
+import { processEmailContent } from './contentFormatter';
+
 /**
  * Generator for email HTML content
  */
@@ -120,7 +122,7 @@ export class EmailGenerator {
     
     // Content - process content to ensure all line breaks are preserved
     html += '<div class="content" style="text-align: center; direction: rtl;">';
-    const processedContent = this.processContentForEmail(options.content);
+    const processedContent = this.processContentForEmail(processEmailContent(options.content));
     html += processedContent;
     html += '</div>';
     
