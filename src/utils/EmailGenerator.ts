@@ -376,9 +376,10 @@ export class EmailGenerator {
 // Create a singleton instance and export the function
 const emailGenerator = new EmailGenerator();
 
-export const generateEmailContent = (article: { title: string; content_markdown: string }) => {
+export const generateEmailContent = (article: { title: string; content_markdown: string }, staticLinks?: Array<{id: number, fixed_text: string, url: string}>) => {
   return emailGenerator.generateEmailContent({
     title: article.title,
-    content: article.content_markdown
+    content: article.content_markdown,
+    staticLinks: staticLinks
   });
 };
