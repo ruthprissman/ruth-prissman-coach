@@ -233,49 +233,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Email sent successfully via Brevo');
 
-    // Log email sends to database if articleId or storyId is provided
-    const contentId = emailData.articleId || emailData.storyId;
-    if (contentId) {
-      console.log('Logging email sends to database for content:', contentId);
-      
-      try {
-        // Initialize Supabase client with service role key
-        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-        // Create email log entries for each recipient
-        const emailLogs = cleanedEmails.map(email => ({
-          email: email,
-          article_id: emailData.articleId,
-          story_id: emailData.storyId,
-          status: 'success',
-          sent_at: new Date().toISOString()
-        }));
-
-        const { error: logError } = await supabase
-          .from('email_logs')
-          .insert(emailLogs);
-
-        if (logError) {
-          console.error('Error logging email sends:', logError);
-          // Don't fail the main request, just log the error
-        } else {
-          console.log('Successfully logged', emailLogs.length, 'email sends');
-        }
-      } catch (dbError) {
-        console.error('Database logging error:', dbError);
-        // Don't fail the main request, just log the error
-      }
-    }
+    // Skip database logging for now
+    console.log('Skipping database logging as requested');
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         messageId: responseData.messageId,
         sentTo: cleanedEmails.length,
-        attachmentsProcessed: brevoAttachments?.length || 0,
-        emailsLogged: (emailData.articleId || emailData.storyId) ? cleanedEmails.length : 0
+        attachmentsProcessed: brevoAttachments?.length || 0
       }),
       { 
         status: 200, 
