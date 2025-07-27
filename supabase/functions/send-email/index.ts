@@ -98,15 +98,18 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Validate email addresses
+    // Clean and validate email addresses
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const invalidEmails = emailData.emailList.filter(email => !emailRegex.test(email));
-    if (invalidEmails.length > 0) {
-      console.error('Invalid email addresses found:', invalidEmails);
+    const cleanedEmails = emailData.emailList
+      .map(email => email.trim().toLowerCase()) // Clean whitespace and normalize
+      .filter(email => email && emailRegex.test(email)); // Filter valid emails only
+    
+    if (cleanedEmails.length === 0) {
+      console.error('No valid email addresses found in list:', emailData.emailList);
       return new Response(
         JSON.stringify({ 
-          error: 'Invalid email addresses found', 
-          invalidEmails: invalidEmails 
+          error: 'No valid email addresses found',
+          originalList: emailData.emailList 
         }),
         { 
           status: 400, 
@@ -115,8 +118,13 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    const invalidEmails = emailData.emailList.filter(email => !cleanedEmails.includes(email.trim().toLowerCase()));
+    if (invalidEmails.length > 0) {
+      console.warn('Some invalid emails were filtered out:', invalidEmails);
+    }
+
     // Prepare recipients for Brevo format
-    const to = emailData.emailList.map(email => ({ email }));
+    const to = cleanedEmails.map(email => ({ email }));
 
     // Process attachments if provided
     let brevoAttachments = undefined;
@@ -237,7 +245,7 @@ const handler = async (req: Request): Promise<Response> => {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // Create email log entries for each recipient
-        const emailLogs = emailData.emailList.map(email => ({
+        const emailLogs = cleanedEmails.map(email => ({
           email: email,
           article_id: emailData.articleId,
           story_id: emailData.storyId,
@@ -265,9 +273,9 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         messageId: responseData.messageId,
-        sentTo: emailData.emailList.length,
+        sentTo: cleanedEmails.length,
         attachmentsProcessed: brevoAttachments?.length || 0,
-        emailsLogged: (emailData.articleId || emailData.storyId) ? emailData.emailList.length : 0
+        emailsLogged: (emailData.articleId || emailData.storyId) ? cleanedEmails.length : 0
       }),
       { 
         status: 200, 
