@@ -239,6 +239,7 @@ export class EmailPublicationService {
                 body: JSON.stringify({
                   emailList: [recipientEmail],
                   subject: emailTitle, 
+                  articleId: article.id, // Add articleId for email_logs tracking
                   sender: { 
                     email: "ruth@ruthprissman.co.il", 
                     name: "רות פריסמן" 

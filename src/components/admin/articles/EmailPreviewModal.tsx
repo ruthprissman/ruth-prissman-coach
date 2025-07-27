@@ -139,7 +139,16 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
         return;
       }
 
-      // Call the regular publish function
+      // Call the regular publish function but first update the expected parameters
+      // We need to modify the service to include the selected recipients
+      if (isSpecificRecipientsMode && selectedRecipients.length > 0) {
+        // Store the selected recipients globally or pass them through the publish process
+        (window as any).selectedEmailRecipients = selectedRecipients;
+      } else {
+        // Clear any previous selection
+        delete (window as any).selectedEmailRecipients;
+      }
+      
       onConfirm();
       
     } catch (error: any) {
@@ -161,6 +170,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
         body: {
           emailList: ['Ruth@Ruthprissman.co.il'],
           subject: `[טסט] ${article.title}`,
+          articleId: article.id, // Add articleId for email_logs tracking
           sender: {
             email: 'ruth@ruthprissman.co.il',
             name: 'רות פריסמן'
