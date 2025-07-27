@@ -181,7 +181,7 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
       const { data: sentEmails, error: sentError } = await supabase
         .from('email_logs')
         .select('email')
-        .eq('article_id', story.id)
+        .eq('story_id', story.id)
         .eq('status', 'success');
 
       if (sentError) throw sentError;

@@ -206,7 +206,8 @@ const handler = async (req: Request): Promise<Response> => {
         // Create email log entries for each recipient
         const emailLogs = emailData.emailList.map(email => ({
           email: email,
-          article_id: contentId,
+          article_id: emailData.articleId,
+          story_id: emailData.storyId,
           status: 'success',
           sent_at: new Date().toISOString()
         }));

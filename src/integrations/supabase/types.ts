@@ -168,6 +168,33 @@ export type Database = {
         }
         Relationships: []
       }
+      content_subscribers_TEST: {
+        Row: {
+          email: string
+          first_name: string | null
+          id: number
+          is_subscribed: boolean | null
+          joined_at: string | null
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          email: string
+          first_name?: string | null
+          id?: number
+          is_subscribed?: boolean | null
+          joined_at?: string | null
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          email?: string
+          first_name?: string | null
+          id?: number
+          is_subscribed?: boolean | null
+          joined_at?: string | null
+          unsubscribed_at?: string | null
+        }
+        Relationships: []
+      }
       email_campaigns: {
         Row: {
           content_id: number | null
@@ -210,6 +237,7 @@ export type Database = {
           id: number
           sent_at: string | null
           status: string
+          story_id: number | null
         }
         Insert: {
           article_id?: number | null
@@ -217,6 +245,7 @@ export type Database = {
           id?: number
           sent_at?: string | null
           status: string
+          story_id?: number | null
         }
         Update: {
           article_id?: number | null
@@ -224,6 +253,7 @@ export type Database = {
           id?: number
           sent_at?: string | null
           status?: string
+          story_id?: number | null
         }
         Relationships: [
           {
