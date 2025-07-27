@@ -380,7 +380,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
                             id={`location-${index}`}
                             checked={option.isSelected}
                             onCheckedChange={() => handleToggleOption(index)}
-                            disabled={isSubmitting || option.isPublished}
+                            disabled={isSubmitting}
                           />
                           <Label htmlFor={`location-${index}`} className="mr-2">
                             {option.publish_location}
@@ -392,10 +392,15 @@ const PublishModal: React.FC<PublishModalProps> = ({
                           </Label>
                           
                           {option.isPublished && (
-                            <Badge variant="outline" className="bg-green-100 text-green-800 mr-2">
-                              <Check className="h-3 w-3 ml-1" />
-                              פורסם
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="bg-green-100 text-green-800">
+                                <Check className="h-3 w-3 ml-1" />
+                                פורסם
+                              </Badge>
+                              <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                                פרסם שוב
+                              </Badge>
+                            </div>
                           )}
                         </div>
                         
