@@ -63,6 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Validate request data
     if (!emailData.emailList || !Array.isArray(emailData.emailList) || emailData.emailList.length === 0) {
+      console.error('Invalid email list:', emailData.emailList);
       return new Response(
         JSON.stringify({ error: 'Email list is required and must be a non-empty array' }),
         { 
@@ -73,8 +74,40 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (!emailData.subject || !emailData.htmlContent) {
+      console.error('Missing required fields:', {
+        hasSubject: !!emailData.subject,
+        hasHtmlContent: !!emailData.htmlContent
+      });
       return new Response(
         JSON.stringify({ error: 'Subject and htmlContent are required' }),
+        { 
+          status: 400, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        }
+      );
+    }
+
+    if (!emailData.sender || !emailData.sender.email || !emailData.sender.name) {
+      console.error('Invalid sender:', emailData.sender);
+      return new Response(
+        JSON.stringify({ error: 'Sender email and name are required' }),
+        { 
+          status: 400, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        }
+      );
+    }
+
+    // Validate email addresses
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidEmails = emailData.emailList.filter(email => !emailRegex.test(email));
+    if (invalidEmails.length > 0) {
+      console.error('Invalid email addresses found:', invalidEmails);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid email addresses found', 
+          invalidEmails: invalidEmails 
+        }),
         { 
           status: 400, 
           headers: { 'Content-Type': 'application/json', ...corsHeaders } 
