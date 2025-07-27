@@ -256,7 +256,7 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div className="flex items-center space-x-2 justify-end">
               <label htmlFor="testMode" className="text-sm font-medium text-right">
                 שליחת מייל בדיקה (רק לכתובת ruth@ruthprissman.co.il)
