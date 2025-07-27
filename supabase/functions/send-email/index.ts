@@ -98,18 +98,17 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Clean and validate email addresses
+    // Validate email addresses (simple validation like the working function)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const cleanedEmails = emailData.emailList
-      .map(email => email.trim().toLowerCase()) // Clean whitespace and normalize
-      .filter(email => email && emailRegex.test(email)); // Filter valid emails only
+    const invalidEmails = emailData.emailList.filter(email => !emailRegex.test(email));
     
-    if (cleanedEmails.length === 0) {
-      console.error('No valid email addresses found in list:', emailData.emailList);
+    if (invalidEmails.length > 0) {
+      console.error('Invalid email addresses found:', invalidEmails);
+      console.log('All emails in list:', emailData.emailList);
       return new Response(
         JSON.stringify({ 
-          error: 'No valid email addresses found',
-          originalList: emailData.emailList 
+          error: 'Invalid email addresses found',
+          invalidEmails: invalidEmails
         }),
         { 
           status: 400, 
@@ -118,13 +117,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const invalidEmails = emailData.emailList.filter(email => !cleanedEmails.includes(email.trim().toLowerCase()));
-    if (invalidEmails.length > 0) {
-      console.warn('Some invalid emails were filtered out:', invalidEmails);
-    }
-
-    // Prepare recipients for Brevo format
-    const to = cleanedEmails.map(email => ({ email }));
+    // Prepare recipients for Brevo format (exactly like the working function)
+    const to = emailData.emailList.map(email => ({ email }));
+    
+    console.log('Email recipients being sent to Brevo:', to);
 
     // Process attachments if provided
     let brevoAttachments = undefined;
@@ -240,7 +236,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         messageId: responseData.messageId,
-        sentTo: cleanedEmails.length,
+        sentTo: emailData.emailList.length,
         attachmentsProcessed: brevoAttachments?.length || 0
       }),
       { 
