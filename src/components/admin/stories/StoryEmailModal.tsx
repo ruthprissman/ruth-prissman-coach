@@ -16,6 +16,10 @@ interface StoryEmailModalProps {
 const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, story }) => {
   const [isSending, setIsSending] = useState(false);
   const [isTestMode, setIsTestMode] = useState(false);
+  const [isSpecificRecipientsMode, setIsSpecificRecipientsMode] = useState(false);
+  const [allSubscribers, setAllSubscribers] = useState<Array<{email: string, firstName?: string, alreadySent: boolean}>>([]);
+  const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
+  const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
   const { toast } = useToast();
 
   const handleSendStoryEmail = async () => {
@@ -31,6 +35,8 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
       
       if (isTestMode) {
         recipientEmails = ['ruth@ruthprissman.co.il'];
+      } else if (isSpecificRecipientsMode) {
+        recipientEmails = selectedRecipients;
       } else {
         const { data: subscribers, error: subscribersError } = await supabase
           .from('story_subscribers')
@@ -155,8 +161,76 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
     }
   };
 
+  const loadSubscribersWithSentStatus = async () => {
+    if (!story) return;
+    
+    setIsLoadingSubscribers(true);
+    try {
+      const supabase = supabaseClient();
+      
+      // Get all active subscribers
+      const { data: subscribers, error: subscribersError } = await supabase
+        .from('story_subscribers')
+        .select('email, first_name')
+        .eq('is_subscribed', true);
+
+      if (subscribersError) throw subscribersError;
+
+      // Get emails that already received this story
+      const { data: sentEmails, error: sentError } = await supabase
+        .from('email_logs')
+        .select('email')
+        .eq('article_id', story.id)
+        .eq('status', 'success');
+
+      if (sentError) throw sentError;
+
+      const sentEmailSet = new Set(sentEmails?.map(log => log.email) || []);
+      
+      const subscribersWithStatus = subscribers?.map(sub => ({
+        email: sub.email,
+        firstName: sub.first_name,
+        alreadySent: sentEmailSet.has(sub.email)
+      })) || [];
+
+      setAllSubscribers(subscribersWithStatus);
+      // Pre-select recipients who haven't received the email yet
+      setSelectedRecipients(subscribersWithStatus.filter(s => !s.alreadySent).map(s => s.email));
+      
+    } catch (error: any) {
+      console.error('Error loading subscribers:', error);
+      toast({
+        title: "שגיאה בטעינת נמענים",
+        description: error.message || "לא ניתן לטעון את רשימת הנמענים",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingSubscribers(false);
+    }
+  };
+
+  const handleSpecificRecipientsChange = async (checked: boolean | "indeterminate") => {
+    const isChecked = checked === true;
+    setIsSpecificRecipientsMode(isChecked);
+    
+    if (isChecked && allSubscribers.length === 0) {
+      await loadSubscribersWithSentStatus();
+    }
+  };
+
+  const handleRecipientToggle = (email: string) => {
+    setSelectedRecipients(prev => 
+      prev.includes(email) 
+        ? prev.filter(e => e !== email)
+        : [...prev, email]
+    );
+  };
+
   const handleTestModeChange = (checked: boolean | "indeterminate") => {
     setIsTestMode(checked === true);
+    if (checked) {
+      setIsSpecificRecipientsMode(false);
+    }
   };
 
   if (!story) return null;
@@ -192,6 +266,62 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
               onCheckedChange={handleTestModeChange}
             />
           </div>
+
+          {!isTestMode && (
+            <div className="flex items-center space-x-2 justify-end">
+              <label htmlFor="specificRecipients" className="text-sm font-medium text-right">
+                בחירת נמענים ספציפיים
+              </label>
+              <Checkbox
+                id="specificRecipients"
+                checked={isSpecificRecipientsMode}
+                onCheckedChange={handleSpecificRecipientsChange}
+              />
+            </div>
+          )}
+
+          {isSpecificRecipientsMode && !isTestMode && (
+            <div className="border rounded-md p-4 max-h-60 overflow-y-auto">
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-medium text-right">בחירת נמענים:</h4>
+                {isLoadingSubscribers && <span className="text-sm text-gray-500">טוען...</span>}
+              </div>
+              
+              {allSubscribers.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs text-gray-500 text-right mb-2">
+                    נמענים שטרם קיבלו את הסיפור מודגשים בכחול
+                  </div>
+                  
+                  {allSubscribers.map((subscriber) => (
+                    <div key={subscriber.email} className={`flex items-center justify-between p-2 rounded ${
+                      !subscriber.alreadySent ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+                    }`}>
+                      <div className="text-right">
+                        <div className="text-sm font-medium">
+                          {subscriber.firstName || subscriber.email}
+                        </div>
+                        {subscriber.firstName && (
+                          <div className="text-xs text-gray-500">{subscriber.email}</div>
+                        )}
+                        {subscriber.alreadySent && (
+                          <div className="text-xs text-green-600">✓ כבר נשלח</div>
+                        )}
+                      </div>
+                      <Checkbox
+                        checked={selectedRecipients.includes(subscriber.email)}
+                        onCheckedChange={() => handleRecipientToggle(subscriber.email)}
+                      />
+                    </div>
+                  ))}
+                  
+                  <div className="text-sm text-gray-600 text-right mt-3">
+                    נבחרו {selectedRecipients.length} מתוך {allSubscribers.length} נמענים
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-between pt-4">
             <Button variant="outline" onClick={onClose}>
