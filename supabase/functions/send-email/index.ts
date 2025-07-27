@@ -16,6 +16,7 @@ interface EmailRequest {
   };
   htmlContent: string;
   articleId?: number; // Add articleId field for email_logs tracking
+  storyId?: number; // Add storyId field for email_logs tracking
   attachments?: Array<{
     filename: string;
     url: string;
@@ -191,9 +192,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Email sent successfully via Brevo');
 
-    // Log email sends to database if articleId is provided
-    if (emailData.articleId) {
-      console.log('Logging email sends to database for article:', emailData.articleId);
+    // Log email sends to database if articleId or storyId is provided
+    const contentId = emailData.articleId || emailData.storyId;
+    if (contentId) {
+      console.log('Logging email sends to database for content:', contentId);
       
       try {
         // Initialize Supabase client with service role key
@@ -204,7 +206,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Create email log entries for each recipient
         const emailLogs = emailData.emailList.map(email => ({
           email: email,
-          article_id: emailData.articleId,
+          article_id: contentId,
           status: 'success',
           sent_at: new Date().toISOString()
         }));
@@ -231,7 +233,7 @@ const handler = async (req: Request): Promise<Response> => {
         messageId: responseData.messageId,
         sentTo: emailData.emailList.length,
         attachmentsProcessed: brevoAttachments?.length || 0,
-        emailsLogged: emailData.articleId ? emailData.emailList.length : 0
+        emailsLogged: (emailData.articleId || emailData.storyId) ? emailData.emailList.length : 0
       }),
       { 
         status: 200, 

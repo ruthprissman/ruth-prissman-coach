@@ -130,7 +130,8 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
             name: "רות פריסמן"
           },
           htmlContent: emailContent,
-          attachments: attachments
+          attachments: attachments,
+          storyId: story.id  // Add story ID for logging
         }
       });
 
