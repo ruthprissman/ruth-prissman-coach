@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -106,11 +105,9 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   const handleShowRecipientsList = async () => {
     try {
       const supabase = supabaseClient();
-      let recipientEmails: string[] = [];
       let recipientsData: Array<{email: string, firstName?: string}> = [];
 
       if (isSpecificRecipientsMode) {
-        recipientEmails = selectedRecipients;
         recipientsData = allSubscribers
           .filter(sub => selectedRecipients.includes(sub.email))
           .map(sub => ({ email: sub.email, firstName: sub.firstName }));
@@ -191,13 +188,44 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
         return;
       }
 
-      // Store the selected recipients for the service
+      // Store the selected recipients for the service - THIS IS THE KEY FIX
       if (isSpecificRecipientsMode && selectedRecipients.length > 0) {
         (window as any).selectedEmailRecipients = selectedRecipients;
       } else {
         delete (window as any).selectedEmailRecipients;
       }
       
+      onConfirm();
+      
+    } catch (error: any) {
+      console.error('Error preparing to send emails:', error);
+      toast({
+        title: "שגיאה",
+        description: error.message || "אירעה שגיאה בהכנת השליחה",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSendToSelectedFromList = async () => {
+    try {
+      // Use the final recipients list that was already prepared
+      const emailsToSend = finalRecipientsList.map(recipient => recipient.email);
+      
+      if (emailsToSend.length === 0) {
+        toast({
+          title: "אין נמענים",
+          description: "לא נמצאו נמענים לשליחה",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Store the exact recipients for the service
+      (window as any).selectedEmailRecipients = emailsToSend;
+      
+      // Close the recipients list view and trigger the send
+      setShowRecipientsList(false);
       onConfirm();
       
     } catch (error: any) {
@@ -294,7 +322,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
             
             <Button
               type="button"
-              onClick={handleSendToAll}
+              onClick={handleSendToSelectedFromList}
               className="gap-2"
             >
               <Send className="h-4 w-4" />
