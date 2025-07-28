@@ -100,14 +100,26 @@ export class EmailPublicationService {
         return false;
       }
       
-      // 1. Fetch all active email subscribers
-      const subscribers = await this.databaseService.fetchActiveSubscribers();
-      if (!subscribers || subscribers.length === 0) {
-        console.log('[Email Publication] No active subscribers found for article ' + article.id);
-        return false;
+      // 1. Check if specific recipients were selected from the preview modal
+      const selectedRecipients = (window as any).selectedEmailRecipients;
+      let subscribers: any[];
+      
+      if (selectedRecipients && Array.isArray(selectedRecipients) && selectedRecipients.length > 0) {
+        console.log('[Email Publication] Using specific recipients:', selectedRecipients.length);
+        subscribers = selectedRecipients.map(email => ({ email }));
+        // Clear the selection after use
+        delete (window as any).selectedEmailRecipients;
+      } else {
+        // Fetch all active email subscribers
+        subscribers = await this.databaseService.fetchActiveSubscribers();
+        if (!subscribers || subscribers.length === 0) {
+          console.log('[Email Publication] No active subscribers found for article ' + article.id);
+          return false;
+        }
+        console.log('[Email Publication] Using all active subscribers');
       }
       
-      console.log('[Email Publication] Found ' + subscribers.length + ' active subscribers for article ' + article.id);
+      console.log('[Email Publication] Found ' + subscribers.length + ' subscribers for article ' + article.id);
       
       // 2. Fetch any static links to include in the email
       const staticLinks = await this.databaseService.fetchStaticLinks();

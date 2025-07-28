@@ -298,13 +298,13 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
             </Button>
           </div>
           
-          <Button
-            type="button"
-            onClick={handleSendToAll}
-            className="gap-2"
-          >
-            <Send className="h-4 w-4" />
-            {isSpecificRecipientsMode ? `שלח ל-${selectedRecipients.length} נמענים` : "שלח לכולם"}
+            <Button
+              type="button"
+              onClick={handleSendToAll}
+              className="gap-2"
+            >
+              <Send className="h-4 w-4" />
+              {isSpecificRecipientsMode ? `הצג רשימת נמענים ושלח ל-${selectedRecipients.length} נמענים` : "הצג רשימת נמענים לפני שליחה"}
           </Button>
         </DialogFooter>
       </DialogContent>
