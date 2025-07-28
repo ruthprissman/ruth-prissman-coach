@@ -188,11 +188,15 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
         return;
       }
 
+      console.log('[EmailPreview] About to call onConfirm with selected recipients:', selectedRecipients);
+      
       // Store the selected recipients for the service - THIS IS THE KEY FIX
       if (isSpecificRecipientsMode && selectedRecipients.length > 0) {
         (window as any).selectedEmailRecipients = selectedRecipients;
+        console.log('[EmailPreview] Stored selected recipients:', (window as any).selectedEmailRecipients);
       } else {
         delete (window as any).selectedEmailRecipients;
+        console.log('[EmailPreview] Using all subscribers - cleared specific recipients');
       }
       
       onConfirm();

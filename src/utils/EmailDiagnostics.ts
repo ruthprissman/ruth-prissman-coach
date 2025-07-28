@@ -18,6 +18,12 @@ export class EmailDiagnostics {
     const issues: string[] = [];
     let isValid = true;
     
+    // Ensure emailHtml is a string
+    if (!emailHtml || typeof emailHtml !== 'string') {
+      console.error('[Email Diagnostics] Invalid emailHtml provided:', typeof emailHtml);
+      emailHtml = String(emailHtml || '');
+    }
+    
     // 1. Log the full content length
     const contentLength = emailHtml.length;
     console.log('[Email Diagnostics] Article #' + articleId + ' - Email content length: ' + contentLength + ' characters');
@@ -98,6 +104,12 @@ export class EmailDiagnostics {
   public logContentIntegrityHash(emailHtml: string, stage: string, articleId: number): string {
     // Simple hash function for content verification
     // This is not for security, just for integrity checking
+    
+    // Ensure emailHtml is a string
+    if (!emailHtml || typeof emailHtml !== 'string') {
+      emailHtml = String(emailHtml || '');
+    }
+    
     let hash = 0;
     if (emailHtml.length === 0) return '0';
     

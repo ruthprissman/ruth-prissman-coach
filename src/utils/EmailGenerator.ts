@@ -15,23 +15,27 @@ export class EmailGenerator {
     content: string;
     staticLinks?: Array<{id: number, fixed_text: string, url: string}>;
   }): string {
-    console.log('[EmailGenerator] Starting to generate email with title:', options.title);
-    console.log('[EmailGenerator] Content length:', options.content?.length || 0);
+    // Ensure all inputs are strings
+    const safeTitle = String(options.title || '');
+    const safeContent = String(options.content || '');
+    
+    console.log('[EmailGenerator] Starting to generate email with title:', safeTitle);
+    console.log('[EmailGenerator] Content length:', safeContent.length);
     console.log('[EmailGenerator] Static links:', options.staticLinks?.length || 0);
     
     // Check for potential problematic characters in the title
     const problematicCharsRegex = /[^\w\s\u0590-\u05FF\u200f\u200e\-:,.?!]/g;
-    const problematicChars = options.title.match(problematicCharsRegex);
+    const problematicChars = safeTitle.match(problematicCharsRegex);
     if (problematicChars) {
       console.warn('[EmailGenerator] Warning: Title contains potentially problematic characters:', 
         problematicChars.join(', '), 
         'at positions:', 
-        problematicChars.map(c => options.title.indexOf(c))
+        problematicChars.map(c => safeTitle.indexOf(c))
       );
     }
     
     // Safe title handling - ensure we have valid text
-    const safeTitle = this.escapeHtml(options.title || 'No Title');
+    const safeTitleForHtml = this.escapeHtml(safeTitle || 'No Title');
     
     // Using string concatenation instead of template literals to avoid issues
     let html = '<!DOCTYPE html>';
@@ -39,7 +43,7 @@ export class EmailGenerator {
     html += '<head>';
     html += '<meta charset="UTF-8">';
     html += '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
-    html += '<title>' + safeTitle + '</title>';
+    html += '<title>' + safeTitleForHtml + '</title>';
     html += '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />';
     html += '<!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge" /><!--<![endif]-->';
     html += '<style type="text/css">';
@@ -117,12 +121,12 @@ export class EmailGenerator {
     
     // Header with safely escaped title
     html += '<div class="header">';
-    html += '<h1>' + safeTitle + '</h1>';
+    html += '<h1>' + safeTitleForHtml + '</h1>';
     html += '</div>';
     
     // Content - process content to ensure all line breaks are preserved
     html += '<div class="content" style="text-align: center; direction: rtl;">';
-    const processedContent = this.processContentForEmail(processEmailContent(options.content));
+    const processedContent = this.processContentForEmail(processEmailContent(safeContent));
     html += processedContent;
     html += '</div>';
     
