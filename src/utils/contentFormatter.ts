@@ -8,13 +8,13 @@
  * @returns Processed content with ^^^ lines converted to spacing
  */
 export const processContentSpacing = (content: string): string => {
-  if (!content) return '';
+  if (!content || typeof content !== 'string') return '';
   
   console.log('[ContentFormatter] Original content:', content);
   console.log('[ContentFormatter] Looking for ^^^ patterns');
   
   // Multiple strategies to catch ^^^ patterns
-  let processedContent = content;
+  let processedContent = String(content);
   
   // Strategy 1: Lines that contain only ^^^ (with optional whitespace)
   processedContent = processedContent.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '');
@@ -37,7 +37,7 @@ export const processContentSpacing = (content: string): string => {
  * @returns Processed content ready for display
  */
 export const processMarkdownContent = (content: string): string => {
-  if (!content) return '';
+  if (!content || typeof content !== 'string') return '';
   
   console.log('[processMarkdownContent] Processing content');
   const result = processContentSpacing(content);
@@ -52,12 +52,12 @@ export const processMarkdownContent = (content: string): string => {
  * @returns Processed content ready for email
  */
 export const processEmailContent = (content: string): string => {
-  if (!content) return '';
+  if (!content || typeof content !== 'string') return '';
   
   console.log('[EmailContent] Processing email content');
   
   // For email, handle ^^^ differently - replace with single <br>
-  let processedContent = content;
+  let processedContent = String(content);
   
   // Strategy 1: Lines that contain only ^^^ (with optional whitespace) become single <br>
   processedContent = processedContent.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<br>');
