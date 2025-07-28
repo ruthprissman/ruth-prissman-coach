@@ -78,8 +78,14 @@ export class EmailDiagnostics {
     
     // 8. Log masked version of the content for debugging (first 500 chars)
     // Replace any potential sensitive data like emails with masked versions
-    const maskedEmail = recipientEmail.replace(/(.{2})(.*)(@.*)/, "$1***$3");
-    
+    //const maskedEmail = recipientEmail.replace(/(.{2})(.*)(@.*)/, "$1***$3");
+    let maskedEmail = "";
+
+    if (typeof recipientEmail === "string") {
+      maskedEmail = recipientEmail.replace(/(.{2})(.*)(@.*)/, "$1***$3");
+    } else if (recipientEmail && typeof recipientEmail.email === "string") {
+      maskedEmail = recipientEmail.email.replace(/(.{2})(.*)(@.*)/, "$1***$3");
+    }
     console.log('[Email Diagnostics] Article #' + articleId + ' - Sending to: ' + maskedEmail);
     console.log('[Email Diagnostics] Article #' + articleId + ' - Email content preview (first 500 chars):');
     
