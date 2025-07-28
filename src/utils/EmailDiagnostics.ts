@@ -83,8 +83,11 @@ export class EmailDiagnostics {
 
     if (typeof recipientEmail === "string") {
       maskedEmail = recipientEmail.replace(/(.{2})(.*)(@.*)/, "$1***$3");
-    } else if (recipientEmail && typeof recipientEmail.email === "string") {
-      maskedEmail = recipientEmail.email.replace(/(.{2})(.*)(@.*)/, "$1***$3");
+    } else if (
+      recipientEmail &&
+      typeof (recipientEmail as { email?: string }).email === "string"
+    ) {
+      maskedEmail = (recipientEmail as { email: string }).email.replace(/(.{2})(.*)(@.*)/, "$1***$3");
     }
     console.log('[Email Diagnostics] Article #' + articleId + ' - Sending to: ' + maskedEmail);
     console.log('[Email Diagnostics] Article #' + articleId + ' - Email content preview (first 500 chars):');
