@@ -15,7 +15,7 @@ import { Article } from '@/types/article';
 import { generateEmailContent } from '@/utils/EmailGenerator';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
-import { Send, TestTube } from 'lucide-react';
+import { Send, TestTube, Users, Eye } from 'lucide-react';
 
 interface EmailPreviewModalProps {
   isOpen: boolean;
@@ -36,6 +36,8 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   const [allSubscribers, setAllSubscribers] = useState<Array<{email: string, firstName?: string, alreadySent: boolean}>>([]);
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
+  const [showRecipientsList, setShowRecipientsList] = useState(false);
+  const [finalRecipientsList, setFinalRecipientsList] = useState<Array<{email: string, firstName?: string}>>([]);
   const emailContent = generateEmailContent(article);
 
   const loadSubscribersWithSentStatus = async () => {
@@ -101,6 +103,56 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
     );
   };
 
+  const handleShowRecipientsList = async () => {
+    try {
+      const supabase = supabaseClient();
+      let recipientEmails: string[] = [];
+      let recipientsData: Array<{email: string, firstName?: string}> = [];
+
+      if (isSpecificRecipientsMode) {
+        recipientEmails = selectedRecipients;
+        recipientsData = allSubscribers
+          .filter(sub => selectedRecipients.includes(sub.email))
+          .map(sub => ({ email: sub.email, firstName: sub.firstName }));
+      } else {
+        // Get all subscribers
+        const { data: subscribers, error: subscribersError } = await supabase
+          .from('content_subscribers')
+          .select('email, first_name')
+          .eq('is_subscribed', true);
+
+        if (subscribersError) {
+          throw subscribersError;
+        }
+
+        recipientsData = subscribers?.map(sub => ({
+          email: sub.email,
+          firstName: sub.first_name
+        })) || [];
+      }
+
+      if (recipientsData.length === 0) {
+        toast({
+          title: "אין נמענים",
+          description: "לא נמצאו נמענים פעילים",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setFinalRecipientsList(recipientsData);
+      setShowRecipientsList(true);
+      
+    } catch (error: any) {
+      console.error('Error loading final recipients:', error);
+      toast({
+        title: "שגיאה",
+        description: error.message || "אירעה שגיאה בטעינת הנמענים",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSendToAll = async () => {
     try {
       const supabase = supabaseClient();
@@ -139,13 +191,10 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
         return;
       }
 
-      // Call the regular publish function but first update the expected parameters
-      // We need to modify the service to include the selected recipients
+      // Store the selected recipients for the service
       if (isSpecificRecipientsMode && selectedRecipients.length > 0) {
-        // Store the selected recipients globally or pass them through the publish process
         (window as any).selectedEmailRecipients = selectedRecipients;
       } else {
-        // Clear any previous selection
         delete (window as any).selectedEmailRecipients;
       }
       
@@ -198,6 +247,64 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
       setIsSendingTest(false);
     }
   };
+
+  if (showRecipientsList) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-2xl" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">רשימת נמענים לשליחה</DialogTitle>
+            <DialogDescription>
+              המייל יישלח לנמענים הבאים:
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600">
+              סה"כ {finalRecipientsList.length} נמענים
+            </div>
+            
+            <ScrollArea className="h-64 border rounded-md p-4">
+              <div className="space-y-2">
+                {finalRecipientsList.map((recipient, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div className="text-right">
+                      <div className="font-medium">
+                        {recipient.firstName || recipient.email}
+                      </div>
+                      {recipient.firstName && (
+                        <div className="text-sm text-gray-500">{recipient.email}</div>
+                      )}
+                    </div>
+                    <Users className="h-4 w-4 text-gray-400" />
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+
+          <DialogFooter className="flex justify-between sm:justify-between gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowRecipientsList(false)}
+            >
+              חזור
+            </Button>
+            
+            <Button
+              type="button"
+              onClick={handleSendToAll}
+              className="gap-2"
+            >
+              <Send className="h-4 w-4" />
+              שלח ל-{finalRecipientsList.length} נמענים
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -298,14 +405,26 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
             </Button>
           </div>
           
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleShowRecipientsList}
+              className="gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              הצג רשימת נמענים
+            </Button>
+            
             <Button
               type="button"
               onClick={handleSendToAll}
               className="gap-2"
             >
               <Send className="h-4 w-4" />
-              {isSpecificRecipientsMode ? `הצג רשימת נמענים ושלח ל-${selectedRecipients.length} נמענים` : "הצג רשימת נמענים לפני שליחה"}
-          </Button>
+              שלח עכשיו
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
