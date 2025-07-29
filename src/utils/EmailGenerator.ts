@@ -421,11 +421,21 @@ export class EmailGenerator {
    * @returns HTML with base64 images
    */
   private async convertImagesToBase64(html: string): Promise<string> {
-    const supabaseImageRegex = /https:\/\/uwqwlltrfvokjlaufguz\.supabase\.co\/storage\/v1\/object\/public\/[^"'\s)]+/g;
+    console.log('[EmailGenerator] Starting image conversion process...');
+    console.log('[EmailGenerator] HTML length:', html.length);
+    console.log('[EmailGenerator] Looking for Supabase URLs in HTML...');
+    
+    // More flexible regex that captures any Supabase storage URL
+    const supabaseImageRegex = /https:\/\/uwqwlltrfvokjlaufguz\.supabase\.co\/storage\/v1\/object\/public\/[^"'\s)]+/gi;
     const matches = html.match(supabaseImageRegex);
+    
+    console.log('[EmailGenerator] Regex matches found:', matches);
     
     if (!matches || matches.length === 0) {
       console.log('[EmailGenerator] No Supabase images found in HTML content');
+      // Let's also check for any Supabase URLs at all
+      const anySupabaseUrl = html.match(/uwqwlltrfvokjlaufguz\.supabase\.co/gi);
+      console.log('[EmailGenerator] Any Supabase URLs found:', anySupabaseUrl?.length || 0);
       return html;
     }
 
