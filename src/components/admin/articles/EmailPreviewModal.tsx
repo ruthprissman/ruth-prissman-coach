@@ -37,7 +37,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
   const [showRecipientsList, setShowRecipientsList] = useState(false);
   const [finalRecipientsList, setFinalRecipientsList] = useState<Array<{email: string, firstName?: string}>>([]);
-  const emailContent = generateEmailContent(article);
+  const emailContent = generateEmailContent(article, article.staticLinks);
 
   const loadSubscribersWithSentStatus = async () => {
     setIsLoadingSubscribers(true);
