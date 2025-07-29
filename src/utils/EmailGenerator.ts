@@ -14,6 +14,7 @@ export class EmailGenerator {
     title: string;
     content: string;
     staticLinks?: Array<{id: number, fixed_text: string, url: string}>;
+    image_url?: string | null;
   }): string {
     // Ensure all inputs are strings
     const safeTitle = String(options.title || '');
@@ -122,6 +123,14 @@ export class EmailGenerator {
     // Header with safely escaped title
     html += '<div class="header">';
     html += '<h1>' + safeTitleForHtml + '</h1>';
+    
+    // Add article image if provided
+    if (options.image_url) {
+      html += '<div style="text-align: center; margin: 20px 0;">';
+      html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
+      html += '</div>';
+    }
+    
     html += '</div>';
     
     // Content - process content to ensure all line breaks are preserved
@@ -373,10 +382,11 @@ export class EmailGenerator {
 // Create a singleton instance and export the function
 const emailGenerator = new EmailGenerator();
 
-export const generateEmailContent = (article: { title: string; content_markdown: string }, staticLinks?: Array<{id: number, fixed_text: string, url: string}>) => {
+export const generateEmailContent = (article: { title: string; content_markdown: string; image_url?: string | null }, staticLinks?: Array<{id: number, fixed_text: string, url: string}>) => {
   return emailGenerator.generateEmailContent({
     title: article.title,
     content: article.content_markdown,
-    staticLinks: staticLinks
+    staticLinks: staticLinks,
+    image_url: article.image_url
   });
 };
