@@ -224,8 +224,11 @@ export class EmailGenerator {
     html += '</body>';
     html += '</html>';
     
+    // Convert any Supabase images to base64 for better email compatibility
+    const finalHtml = await this.convertImagesToBase64(html);
+    
     // Log information about the generated HTML
-    const contentSize = new Blob([html]).size / 1024;
+    const contentSize = new Blob([finalHtml]).size / 1024;
     console.log(`[EmailGenerator] Generated HTML content size: ${contentSize.toFixed(2)} KB`);
     
     // Check for overly large content
@@ -233,7 +236,7 @@ export class EmailGenerator {
       console.warn('[EmailGenerator] Warning: Email content is quite large:', contentSize.toFixed(2), 'KB');
     }
     
-    return html;
+    return finalHtml;
   }
   
   /**
@@ -410,6 +413,69 @@ export class EmailGenerator {
     return formatted;
   }
   
+  /**
+   * Convert Supabase image URLs to base64 for better email compatibility
+   * Handles both img src and CSS background-image URLs
+   * 
+   * @param html HTML content with potential image URLs
+   * @returns HTML with base64 images
+   */
+  private async convertImagesToBase64(html: string): Promise<string> {
+    const supabaseImageRegex = /https:\/\/uwqwlltrfvokjlaufguz\.supabase\.co\/storage\/v1\/object\/public\/[^"'\s)]+/g;
+    const matches = html.match(supabaseImageRegex);
+    
+    if (!matches || matches.length === 0) {
+      console.log('[EmailGenerator] No Supabase images found in HTML content');
+      return html;
+    }
+
+    console.log('[EmailGenerator] Found Supabase images to convert:', matches);
+    
+    let processedHtml = html;
+    
+    for (const imageUrl of matches) {
+      try {
+        console.log('[EmailGenerator] Converting image to base64:', imageUrl);
+        const response = await fetch(imageUrl);
+        
+        if (!response.ok) {
+          console.warn(`[EmailGenerator] Failed to fetch image: ${imageUrl}`, response.status, response.statusText);
+          continue;
+        }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        
+        // Get content type
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+        const base64DataUrl = `data:${contentType};base64,${base64}`;
+        
+        // Replace the URL in HTML - handles both img src and CSS background-image
+        const escapedUrl = imageUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        processedHtml = processedHtml.replace(new RegExp(escapedUrl, 'g'), base64DataUrl);
+        
+        console.log(`[EmailGenerator] Successfully converted image: ${imageUrl} -> base64 (${base64.length} chars)`);
+      } catch (error) {
+        console.error(`[EmailGenerator] Error converting image ${imageUrl}:`, error);
+      }
+    }
+    
+    // Add additional debugging
+    const hasImageTag = processedHtml.includes('<img');
+    const hasBackgroundImage = processedHtml.includes('background-image:');
+    const hasBase64 = processedHtml.includes('data:image');
+    
+    console.log('[EmailGenerator] Image conversion results:', {
+      hasImageTag,
+      hasBackgroundImage, 
+      hasBase64,
+      originalMatches: matches.length,
+      processedHtmlLength: processedHtml.length
+    });
+    
+    return processedHtml;
+  }
+
   /**
    * Escape HTML special characters
    * 
