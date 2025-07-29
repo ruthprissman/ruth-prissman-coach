@@ -102,6 +102,10 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
     );
   };
 
+  const handleDeselectAll = () => {
+    setSelectedRecipients([]);
+  };
+
   const handleShowRecipientsList = async () => {
     try {
       const supabase = supabaseClient();
@@ -376,8 +380,19 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
               
               {allSubscribers.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-xs text-gray-500 text-right mb-2">
-                    נמענים שטרם קיבלו את המאמר מודגשים בכחול
+                  <div className="flex justify-between items-center mb-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDeselectAll}
+                      className="text-xs h-7"
+                    >
+                      בטל בחירה מכל הנמענים
+                    </Button>
+                    <div className="text-xs text-gray-500 text-right">
+                      נמענים שטרם קיבלו את המאמר מודגשים בכחול
+                    </div>
                   </div>
                   
                   {allSubscribers.map((subscriber) => (
