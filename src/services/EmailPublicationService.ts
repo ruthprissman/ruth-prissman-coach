@@ -138,12 +138,14 @@ export class EmailPublicationService {
       });
       
       // 3. Generate email HTML content with transformed title
+      console.log('[Email Publication] About to generate email with image_url:', article.image_url);
       const emailContent = await this.emailGenerator.generateEmailContent({
         title: emailTitle || 'No Title', // Use transformed title
         content: article.content_markdown || '',
         staticLinks: staticLinks || [],
         image_url: article.image_url
       });
+      console.log('[Email Publication] Email content generated, checking for img tag:', emailContent.includes('<img'));
       
       // Log email content size and first/last 100 characters for debugging
       console.log('[Email Publication] Generated email content stats:', {

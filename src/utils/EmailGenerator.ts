@@ -23,7 +23,9 @@ export class EmailGenerator {
     console.log('[EmailGenerator] Starting to generate email with title:', safeTitle);
     console.log('[EmailGenerator] Content length:', safeContent.length);
     console.log('[EmailGenerator] Static links:', options.staticLinks?.length || 0);
-     console.log('[EmailGenerator] Starting to generate email with image:', options.image_url);
+    console.log('[EmailGenerator] DEBUGGING IMAGE URL:', options.image_url);
+    console.log('[EmailGenerator] IMAGE URL TYPE:', typeof options.image_url);
+    console.log('[EmailGenerator] IMAGE URL TRUTHY?:', !!options.image_url);
     
     // Check for potential problematic characters in the title
     const problematicCharsRegex = /[^\w\s\u0590-\u05FF\u200f\u200e\-:,.?!]/g;
