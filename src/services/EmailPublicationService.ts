@@ -141,7 +141,8 @@ export class EmailPublicationService {
       const emailContent = this.emailGenerator.generateEmailContent({
         title: emailTitle || 'No Title', // Use transformed title
         content: article.content_markdown || '',
-        staticLinks: staticLinks || []
+        staticLinks: staticLinks || [],
+        image_url: article.image_url
       });
       
       // Log email content size and first/last 100 characters for debugging
