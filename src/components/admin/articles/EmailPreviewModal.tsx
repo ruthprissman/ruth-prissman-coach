@@ -276,7 +276,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
       
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
-          emailList: ['Ruth@Ruthprissman.co.il'],
+          emailList: ['Ruth@Ruthprissman.co.il'], // Fixed: array of strings, not objects
           subject: `[טסט] ${article.title}`,
           articleId: article.id, // Add articleId for email_logs tracking
           sender: {

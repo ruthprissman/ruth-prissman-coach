@@ -131,8 +131,12 @@ export class EmailGenerator {
       
       try {
         // Fetch the image and convert to base64
+        console.log('[EmailGenerator] Fetching image from URL...');
         const imageResponse = await fetch(options.image_url);
+        console.log('[EmailGenerator] Image fetch response status:', imageResponse.status);
+        
         if (imageResponse.ok) {
+          console.log('[EmailGenerator] Converting image to base64...');
           const imageBuffer = await imageResponse.arrayBuffer();
           const uint8Array = new Uint8Array(imageBuffer);
           
@@ -156,6 +160,7 @@ export class EmailGenerator {
           }
           
           const base64Url = `data:${contentType};base64,${base64Content}`;
+          console.log('[EmailGenerator] Created base64 URL, length:', base64Url.length);
           
           html += '<div style="text-align: center; margin: 20px 0;">';
           html += '<img src="' + base64Url + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
@@ -167,6 +172,7 @@ export class EmailGenerator {
           html += '<div style="text-align: center; margin: 20px 0;">';
           html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
           html += '</div>';
+          console.log('[EmailGenerator] Using fallback URL for image');
         }
       } catch (error) {
         console.error('[EmailGenerator] Error converting image to base64:', error);
@@ -174,6 +180,7 @@ export class EmailGenerator {
         html += '<div style="text-align: center; margin: 20px 0;">';
         html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
         html += '</div>';
+        console.log('[EmailGenerator] Using fallback URL for image after error');
       }
     } else {
       console.log('[EmailGenerator] No image_url provided, skipping image');
