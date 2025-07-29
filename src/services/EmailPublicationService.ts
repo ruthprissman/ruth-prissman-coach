@@ -198,114 +198,90 @@ export class EmailPublicationService {
         ? subscribers.slice(0, 2) 
         : subscribers;
       
-      // Prepare the payload once for logging and reuse
-      const emailPayload = {
-        emailList: [recipientsToSend[0]], // Just for logging
-        subject: emailTitle,
-        sender: { 
-          email: "ruth@ruthprissman.co.il", 
-          name: "רות פריסמן" 
-        },
-        htmlContent: emailContent
-      };
+      console.log('[Email Publication] Sending single email to ' + recipientsToSend.length + ' recipients');
       
-      // Log the prepared payload structure (excluding actual HTML content for brevity)
-      console.log('[Email Publication] Email payload structure:', {
-        emailListType: Array.isArray(emailPayload.emailList) ? 'array' : typeof emailPayload.emailList,
-        emailListLength: emailPayload.emailList.length,
-        subject: emailPayload.subject,
-        sender: emailPayload.sender,
-        htmlContentLength: emailPayload.htmlContent.length
-      });
-
-      for (const recipient of recipientsToSend) {
-        try {
-          // All recipients should now be strings since subscribers is string[]
-          const recipientEmail = recipient;
-          console.log('[Email Publication] Preparing to send email to: ' + recipientEmail);
+      try {
+        // Clean up any previous failed attempts for all recipients
+        await this.cleanupFailedEmails(article.id, recipientsToSend);
+        
+        // Send the email using the Supabase Edge Function with retry capability
+        console.log('[Email Publication] Sending API request to edge function with full recipient list');
+        
+        await executeWithRetry(async () => {
+          // Get a fresh token
+          const freshClient = await getFreshSupabaseClient();
+          const { data } = await freshClient.auth.getSession();
+          const freshToken = data.session?.access_token;
           
-          // First clean up any previous failed attempts for this recipient
-          await this.cleanupFailedEmails(article.id, [recipientEmail]);
+          if (!freshToken) {
+            throw new Error('No valid token available for edge function call');
+          }
           
-          // Send the email using the Supabase Edge Function with retry capability
-          console.log('[Email Publication] Sending API request to edge function for: ' + recipientEmail);
-          
-          await executeWithRetry(async () => {
-            // Get a fresh token each time to ensure it's valid
-            const freshClient = await getFreshSupabaseClient();
-            const { data } = await freshClient.auth.getSession();
-            const freshToken = data.session?.access_token;
+          // Enhanced error handling and response processing
+          try {
+            // Log the request being made
+            console.log('[Email Publication] Making fetch request to:', this.supabaseEdgeFunctionUrl);
             
-            if (!freshToken) {
-              throw new Error('No valid token available for edge function call');
-            }
-            
-            // Enhanced error handling and response processing
-            try {
-              // Log the request being made
-              console.log('[Email Publication] Making fetch request to:', this.supabaseEdgeFunctionUrl);
-              
-              const response = await fetch(this.supabaseEdgeFunctionUrl, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${freshToken}`
+            const response = await fetch(this.supabaseEdgeFunctionUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${freshToken}`
+              },
+              body: JSON.stringify({
+                emailList: recipientsToSend, // Send all recipients at once
+                subject: emailTitle, 
+                articleId: article.id, // Add articleId for email_logs tracking
+                sender: { 
+                  email: "ruth@ruthprissman.co.il", 
+                  name: "רות פריסמן" 
                 },
-                body: JSON.stringify({
-                  emailList: [recipientEmail], // This should already be a string
-                  subject: emailTitle, 
-                  articleId: article.id, // Add articleId for email_logs tracking
-                  sender: { 
-                    email: "ruth@ruthprissman.co.il", 
-                    name: "רות פריסמן" 
-                  },
-                  htmlContent: emailContent
-                })
-              });
-              
-              // Log complete response information
-              console.log('[Email Publication] Edge function response:', {
-                status: response.status,
-                statusText: response.statusText,
-                headers: Object.fromEntries(response.headers.entries()),
-                type: response.type,
-                url: response.url,
-                redirected: response.redirected
-              });
-              
-              // Handle response status
-              if (!response.ok) {
-                // Safely read the response body only once
-                let errorBody = '';
-                try {
-                  errorBody = await response.text();
-                } catch (textError) {
-                  errorBody = 'Could not read response body: ' + String(textError);
-                }
-                
-                console.error(`[Email Publication] Failed API response: ${response.status}, Body: ${errorBody}`);
-                throw new Error(`Failed with status ${response.status}: ${errorBody}`);
+                htmlContent: emailContent
+              })
+            });
+            
+            // Log complete response information
+            console.log('[Email Publication] Edge function response:', {
+              status: response.status,
+              statusText: response.statusText,
+              headers: Object.fromEntries(response.headers.entries()),
+              type: response.type,
+              url: response.url,
+              redirected: response.redirected
+            });
+            
+            // Handle response status
+            if (!response.ok) {
+              // Safely read the response body only once
+              let errorBody = '';
+              try {
+                errorBody = await response.text();
+              } catch (textError) {
+                errorBody = 'Could not read response body: ' + String(textError);
               }
               
-              // For successful responses, don't read the body unless needed
-              // Just return a success indicator instead of the response object
-              return {
-                success: true,
-                status: response.status
-              };
-              
-            } catch (fetchError: any) {
-              console.error('[Email Publication] Fetch error details:', fetchError.message);
-              throw fetchError;
+              console.error(`[Email Publication] Failed API response: ${response.status}, Body: ${errorBody}`);
+              throw new Error(`Failed with status ${response.status}: ${errorBody}`);
             }
-          });
-          
-          console.log('[Email Publication] Successfully sent email to: ' + recipientEmail);
-          successfulEmails.push(recipientEmail);
-        } catch (error: any) {
-          console.error('[Email Publication] Error sending to ' + recipient + ':', error);
-          failedEmails.push(recipient);
-        }
+            
+            // For successful responses, don't read the body unless needed
+            // Just return a success indicator instead of the response object
+            return {
+              success: true,
+              status: response.status
+            };
+            
+          } catch (fetchError: any) {
+            console.error('[Email Publication] Fetch error details:', fetchError.message);
+            throw fetchError;
+          }
+        });
+        
+        console.log('[Email Publication] Successfully sent email to all ' + recipientsToSend.length + ' recipients');
+        successfulEmails.push(...recipientsToSend);
+      } catch (error: any) {
+        console.error('[Email Publication] Error sending to all recipients:', error);
+        failedEmails.push(...recipientsToSend);
       }
       
       // 8. Log email sending results
