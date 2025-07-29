@@ -10,12 +10,12 @@ export class EmailGenerator {
    * @param options Options for email generation
    * @returns The generated HTML content
    */
-  public generateEmailContent(options: {
+  public async generateEmailContent(options: {
     title: string;
     content: string;
     staticLinks?: Array<{id: number, fixed_text: string, url: string}>;
     image_url?: string | null;
-  }): string {
+  }): Promise<string> {
     // Ensure all inputs are strings
     const safeTitle = String(options.title || '');
     const safeContent = String(options.content || '');
@@ -23,6 +23,7 @@ export class EmailGenerator {
     console.log('[EmailGenerator] Starting to generate email with title:', safeTitle);
     console.log('[EmailGenerator] Content length:', safeContent.length);
     console.log('[EmailGenerator] Static links:', options.staticLinks?.length || 0);
+     console.log('[EmailGenerator] Starting to generate email with image:', options.image_url);
     
     // Check for potential problematic characters in the title
     const problematicCharsRegex = /[^\w\s\u0590-\u05FF\u200f\u200e\-:,.?!]/g;
@@ -126,9 +127,63 @@ export class EmailGenerator {
     
     // Add article image if provided
     if (options.image_url) {
-      html += '<div style="text-align: center; margin: 20px 0;">';
-      html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
-      html += '</div>';
+      console.log('[EmailGenerator] Adding image to email HTML:', options.image_url);
+      
+      try {
+        // Fetch the image and convert to base64
+        console.log('[EmailGenerator] Fetching image from URL...');
+        const imageResponse = await fetch(options.image_url);
+        console.log('[EmailGenerator] Image fetch response status:', imageResponse.status);
+        
+        if (imageResponse.ok) {
+          console.log('[EmailGenerator] Converting image to base64...');
+          const imageBuffer = await imageResponse.arrayBuffer();
+          const uint8Array = new Uint8Array(imageBuffer);
+          
+          // Convert to base64
+          let binary = '';
+          const chunkSize = 0x8000;
+          for (let i = 0; i < uint8Array.length; i += chunkSize) {
+            const chunk = uint8Array.subarray(i, i + chunkSize);
+            binary += String.fromCharCode.apply(null, Array.from(chunk));
+          }
+          const base64Content = btoa(binary);
+          
+          // Determine content type based on URL
+          let contentType = 'image/jpeg'; // default
+          if (options.image_url.toLowerCase().includes('.png')) {
+            contentType = 'image/png';
+          } else if (options.image_url.toLowerCase().includes('.gif')) {
+            contentType = 'image/gif';
+          } else if (options.image_url.toLowerCase().includes('.webp')) {
+            contentType = 'image/webp';
+          }
+          
+          const base64Url = `data:${contentType};base64,${base64Content}`;
+          console.log('[EmailGenerator] Created base64 URL, length:', base64Url.length);
+          
+          html += '<div style="text-align: center; margin: 20px 0;">';
+          html += '<img src="' + base64Url + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
+          html += '</div>';
+          console.log('[EmailGenerator] Image converted to base64 and added to HTML');
+        } else {
+          console.error('[EmailGenerator] Failed to fetch image:', options.image_url, imageResponse.status);
+          // Fallback to original URL
+          html += '<div style="text-align: center; margin: 20px 0;">';
+          html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
+          html += '</div>';
+          console.log('[EmailGenerator] Using fallback URL for image');
+        }
+      } catch (error) {
+        console.error('[EmailGenerator] Error converting image to base64:', error);
+        // Fallback to original URL
+        html += '<div style="text-align: center; margin: 20px 0;">';
+        html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
+        html += '</div>';
+        console.log('[EmailGenerator] Using fallback URL for image after error');
+      }
+    } else {
+      console.log('[EmailGenerator] No image_url provided, skipping image');
     }
     
     html += '</div>';
@@ -169,8 +224,11 @@ export class EmailGenerator {
     html += '</body>';
     html += '</html>';
     
+    // Convert any Supabase images to base64 for better email compatibility
+    const finalHtml = await this.convertImagesToBase64(html);
+    
     // Log information about the generated HTML
-    const contentSize = new Blob([html]).size / 1024;
+    const contentSize = new Blob([finalHtml]).size / 1024;
     console.log(`[EmailGenerator] Generated HTML content size: ${contentSize.toFixed(2)} KB`);
     
     // Check for overly large content
@@ -178,7 +236,7 @@ export class EmailGenerator {
       console.warn('[EmailGenerator] Warning: Email content is quite large:', contentSize.toFixed(2), 'KB');
     }
     
-    return html;
+    return finalHtml;
   }
   
   /**
@@ -356,6 +414,79 @@ export class EmailGenerator {
   }
   
   /**
+   * Convert Supabase image URLs to base64 for better email compatibility
+   * Handles both img src and CSS background-image URLs
+   * 
+   * @param html HTML content with potential image URLs
+   * @returns HTML with base64 images
+   */
+  private async convertImagesToBase64(html: string): Promise<string> {
+    console.log('[EmailGenerator] Starting image conversion process...');
+    console.log('[EmailGenerator] HTML length:', html.length);
+    console.log('[EmailGenerator] Looking for Supabase URLs in HTML...');
+    
+    // More flexible regex that captures any Supabase storage URL
+    const supabaseImageRegex = /https:\/\/uwqwlltrfvokjlaufguz\.supabase\.co\/storage\/v1\/object\/public\/[^"'\s)]+/gi;
+    const matches = html.match(supabaseImageRegex);
+    
+    console.log('[EmailGenerator] Regex matches found:', matches);
+    
+    if (!matches || matches.length === 0) {
+      console.log('[EmailGenerator] No Supabase images found in HTML content');
+      // Let's also check for any Supabase URLs at all
+      const anySupabaseUrl = html.match(/uwqwlltrfvokjlaufguz\.supabase\.co/gi);
+      console.log('[EmailGenerator] Any Supabase URLs found:', anySupabaseUrl?.length || 0);
+      return html;
+    }
+
+    console.log('[EmailGenerator] Found Supabase images to convert:', matches);
+    
+    let processedHtml = html;
+    
+    for (const imageUrl of matches) {
+      try {
+        console.log('[EmailGenerator] Converting image to base64:', imageUrl);
+        const response = await fetch(imageUrl);
+        
+        if (!response.ok) {
+          console.warn(`[EmailGenerator] Failed to fetch image: ${imageUrl}`, response.status, response.statusText);
+          continue;
+        }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        
+        // Get content type
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+        const base64DataUrl = `data:${contentType};base64,${base64}`;
+        
+        // Replace the URL in HTML - handles both img src and CSS background-image
+        const escapedUrl = imageUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        processedHtml = processedHtml.replace(new RegExp(escapedUrl, 'g'), base64DataUrl);
+        
+        console.log(`[EmailGenerator] Successfully converted image: ${imageUrl} -> base64 (${base64.length} chars)`);
+      } catch (error) {
+        console.error(`[EmailGenerator] Error converting image ${imageUrl}:`, error);
+      }
+    }
+    
+    // Add additional debugging
+    const hasImageTag = processedHtml.includes('<img');
+    const hasBackgroundImage = processedHtml.includes('background-image:');
+    const hasBase64 = processedHtml.includes('data:image');
+    
+    console.log('[EmailGenerator] Image conversion results:', {
+      hasImageTag,
+      hasBackgroundImage, 
+      hasBase64,
+      originalMatches: matches.length,
+      processedHtmlLength: processedHtml.length
+    });
+    
+    return processedHtml;
+  }
+
+  /**
    * Escape HTML special characters
    * 
    * @param text Text to escape
@@ -382,8 +513,9 @@ export class EmailGenerator {
 // Create a singleton instance and export the function
 const emailGenerator = new EmailGenerator();
 
-export const generateEmailContent = (article: { title: string; content_markdown: string; image_url?: string | null }, staticLinks?: Array<{id: number, fixed_text: string, url: string}>) => {
-  return emailGenerator.generateEmailContent({
+export const generateEmailContent = async (article: { title: string; content_markdown: string; image_url?: string | null }, staticLinks?: Array<{id: number, fixed_text: string, url: string}>) => {
+ 
+  return await emailGenerator.generateEmailContent({
     title: article.title,
     content: article.content_markdown,
     staticLinks: staticLinks,

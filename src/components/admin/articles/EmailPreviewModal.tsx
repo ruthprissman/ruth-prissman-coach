@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Article } from '@/types/article';
-import { generateEmailContent } from '@/utils/EmailGenerator';
+import { EmailGenerator } from '@/utils/EmailGenerator';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { Send, TestTube, Users, Eye } from 'lucide-react';
@@ -37,7 +37,30 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
   const [showRecipientsList, setShowRecipientsList] = useState(false);
   const [finalRecipientsList, setFinalRecipientsList] = useState<Array<{email: string, firstName?: string}>>([]);
-  const emailContent = generateEmailContent(article);
+  const emailGenerator = new EmailGenerator();
+  const [emailContent, setEmailContent] = useState<string>('');
+  
+  console.log('[EmailPreviewModal] Article data:', {
+    id: article.id,
+    title: article.title,
+    hasImageUrl: !!article.image_url,
+    imageUrl: article.image_url,
+    staticLinksCount: article.staticLinks?.length || 0
+  });
+  
+  useEffect(() => {
+    const generateContent = async () => {
+      const content = await emailGenerator.generateEmailContent({
+        title: article.title,
+        content: article.content_markdown,
+        staticLinks: article.staticLinks,
+        image_url: article.image_url
+      });
+      setEmailContent(content);
+    };
+    
+    generateContent();
+  }, [article.id, article.title, article.content_markdown, article.image_url]);
 
   const loadSubscribersWithSentStatus = async () => {
     setIsLoadingSubscribers(true);
@@ -253,7 +276,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
       
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
-          emailList: ['Ruth@Ruthprissman.co.il'],
+          emailList: ['Ruth@Ruthprissman.co.il'], // Fixed: array of strings, not objects
           subject: `[טסט] ${article.title}`,
           articleId: article.id, // Add articleId for email_logs tracking
           sender: {
@@ -353,10 +376,19 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
         </DialogHeader>
 
         <ScrollArea className="flex-1 border rounded-md p-4 bg-gray-50">
-          <div 
-            className="max-w-2xl mx-auto bg-white shadow-sm"
-            dangerouslySetInnerHTML={{ __html: emailContent }}
-          />
+          {emailContent ? (
+            <div 
+              className="max-w-2xl mx-auto bg-white shadow-sm"
+              dangerouslySetInnerHTML={{ __html: emailContent }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                <p className="text-gray-600">יוצר תצוגה מקדימה...</p>
+              </div>
+            </div>
+          )}
         </ScrollArea>
 
         <div className="space-y-4 p-4 border-t">
