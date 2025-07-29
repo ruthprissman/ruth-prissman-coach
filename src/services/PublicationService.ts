@@ -202,7 +202,7 @@ class PublicationService {
           id: articleId,
           availableFields: Object.keys(professionalContent),
           image_url: professionalContent.image_url,
-          fullContent: professionalContent
+          fullContent: JSON.stringify(professionalContent, null, 2)
         });
 
         if (!articlePublicationsMap.has(articleId)) {
