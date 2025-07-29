@@ -197,6 +197,14 @@ class PublicationService {
           continue;
         }
         
+        // Debug: Log the professional content to see what image fields are available
+        console.log('[Publication Service] Professional content fields:', {
+          id: articleId,
+          availableFields: Object.keys(professionalContent),
+          image_url: professionalContent.image_url,
+          fullContent: professionalContent
+        });
+
         if (!articlePublicationsMap.has(articleId)) {
           // Initialize with article data
           articlePublicationsMap.set(articleId, {
