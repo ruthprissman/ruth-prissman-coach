@@ -121,11 +121,7 @@ export class EmailGenerator {
     // Container
     html += '<div class="container">';
     
-    // Header with safely escaped title
-    html += '<div class="header">';
-    html += '<h1>' + safeTitleForHtml + '</h1>';
-    
-    // Add article image if provided
+    // Add article image if provided - at the top, before header
     if (options.image_url) {
       console.log('[EmailGenerator] Adding image to email HTML:', options.image_url);
       
@@ -185,6 +181,10 @@ export class EmailGenerator {
     } else {
       console.log('[EmailGenerator] No image_url provided, skipping image');
     }
+
+    // Header with safely escaped title
+    html += '<div class="header">';
+    html += '<h1>' + safeTitleForHtml + '</h1>';
     
     html += '</div>';
     
