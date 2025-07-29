@@ -38,6 +38,15 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   const [showRecipientsList, setShowRecipientsList] = useState(false);
   const [finalRecipientsList, setFinalRecipientsList] = useState<Array<{email: string, firstName?: string}>>([]);
   const emailGenerator = new EmailGenerator();
+  
+  console.log('[EmailPreviewModal] Article data:', {
+    id: article.id,
+    title: article.title,
+    hasImageUrl: !!article.image_url,
+    imageUrl: article.image_url,
+    staticLinksCount: article.staticLinks?.length || 0
+  });
+  
   const emailContent = emailGenerator.generateEmailContent({
     title: article.title,
     content: article.content_markdown,

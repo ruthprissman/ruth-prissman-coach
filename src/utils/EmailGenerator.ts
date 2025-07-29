@@ -127,9 +127,13 @@ export class EmailGenerator {
     
     // Add article image if provided
     if (options.image_url) {
+      console.log('[EmailGenerator] Adding image to email HTML:', options.image_url);
       html += '<div style="text-align: center; margin: 20px 0;">';
       html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
       html += '</div>';
+      console.log('[EmailGenerator] Image div added to HTML');
+    } else {
+      console.log('[EmailGenerator] No image_url provided, skipping image');
     }
     
     html += '</div>';
