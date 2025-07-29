@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Article } from '@/types/article';
-import { generateEmailContent } from '@/utils/EmailGenerator';
+import { EmailGenerator } from '@/utils/EmailGenerator';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { Send, TestTube, Users, Eye } from 'lucide-react';
@@ -37,7 +37,13 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
   const [showRecipientsList, setShowRecipientsList] = useState(false);
   const [finalRecipientsList, setFinalRecipientsList] = useState<Array<{email: string, firstName?: string}>>([]);
-  const emailContent = generateEmailContent(article, article.staticLinks);
+  const emailGenerator = new EmailGenerator();
+  const emailContent = emailGenerator.generateEmailContent({
+    title: article.title,
+    content: article.content_markdown,
+    staticLinks: article.staticLinks,
+    image_url: article.image_url
+  });
 
   const loadSubscribersWithSentStatus = async () => {
     setIsLoadingSubscribers(true);
