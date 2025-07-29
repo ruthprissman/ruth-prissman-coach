@@ -13,6 +13,7 @@ interface PublishReadyArticle {
   content_markdown: string;
   category_id: number | null;
   contact_email: string | null;
+  image_url: string | null;
   article_publications: ArticlePublication[];
 }
 
@@ -204,6 +205,7 @@ class PublicationService {
             content_markdown: professionalContent.content_markdown || "",
             category_id: professionalContent.category_id || null,
             contact_email: professionalContent.contact_email || null,
+            image_url: professionalContent.image_url || null,
             article_publications: []
           });
         }
