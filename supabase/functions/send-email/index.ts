@@ -126,10 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Prepare recipients for Brevo format (exactly like the working function)
-    const to = emailData.emailList.map(email => ({ email }));
-    
-    console.log('Email recipients being sent to Brevo:', to);
+    console.log('Will send emails to:', emailData.emailList.length, 'recipients individually');
 
     // Process attachments if provided
     let brevoAttachments = undefined;
@@ -184,59 +181,67 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Prepare Brevo email payload
-    const brevoPayload: any = {
-      sender: {
-        name: emailData.sender.name,
-        email: emailData.sender.email
-      },
-      to: to,
-      subject: emailData.subject,
-      htmlContent: emailData.htmlContent
-    };
+    // Send email to each recipient individually
+    let successCount = 0;
+    let failureCount = 0;
+    const errors: any[] = [];
 
-    // Add attachments if any were successfully processed
-    if (brevoAttachments && brevoAttachments.length > 0) {
-      brevoPayload.attachment = brevoAttachments;
-      console.log('Added attachments to payload:', brevoAttachments.length);
-    }
+    for (const email of emailData.emailList) {
+      try {
+        console.log('Sending email to:', email);
 
-    console.log('Sending email via Brevo API to:', to.length, 'recipients');
+        // Prepare Brevo email payload for single recipient
+        const brevoPayload: any = {
+          sender: {
+            name: emailData.sender.name,
+            email: emailData.sender.email
+          },
+          to: [{ email: email }], // Single recipient
+          subject: emailData.subject,
+          htmlContent: emailData.htmlContent
+        };
 
-    // Send email via Brevo API
-    const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'api-key': brevoApiKey
-      },
-      body: JSON.stringify(brevoPayload)
-    });
-
-    const responseData = await brevoResponse.json();
-    
-    console.log('Brevo API response:', {
-      status: brevoResponse.status,
-      statusText: brevoResponse.statusText,
-      data: responseData
-    });
-
-    if (!brevoResponse.ok) {
-      console.error('Brevo API error:', responseData);
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to send email',
-          details: responseData 
-        }),
-        { 
-          status: brevoResponse.status, 
-          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        // Add attachments if any were successfully processed
+        if (brevoAttachments && brevoAttachments.length > 0) {
+          brevoPayload.attachment = brevoAttachments;
         }
-      );
+
+        // Send email via Brevo API
+        const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'api-key': brevoApiKey
+          },
+          body: JSON.stringify(brevoPayload)
+        });
+
+        const responseData = await brevoResponse.json();
+        
+        console.log('Brevo API response for', email, ':', {
+          status: brevoResponse.status,
+          statusText: brevoResponse.statusText,
+          data: responseData
+        });
+
+        if (!brevoResponse.ok) {
+          console.error('Brevo API error for', email, ':', responseData);
+          failureCount++;
+          errors.push({ email, error: responseData });
+        } else {
+          console.log('Email sent successfully to:', email);
+          successCount++;
+        }
+
+      } catch (error: any) {
+        console.error('Error sending email to', email, ':', error);
+        failureCount++;
+        errors.push({ email, error: error.message });
+      }
     }
 
-    console.log('Email sent successfully via Brevo');
+    console.log('Email sending completed. Success:', successCount, 'Failures:', failureCount);
 
     // Skip database logging for now
     console.log('Skipping database logging as requested');
@@ -244,9 +249,11 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        messageId: responseData.messageId,
-        sentTo: emailData.emailList.length,
-        attachmentsProcessed: brevoAttachments?.length || 0
+        totalEmails: emailData.emailList.length,
+        successCount: successCount,
+        failureCount: failureCount,
+        attachmentsProcessed: brevoAttachments?.length || 0,
+        errors: errors.length > 0 ? errors : undefined
       }),
       { 
         status: 200, 
