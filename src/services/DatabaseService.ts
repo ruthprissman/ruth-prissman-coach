@@ -26,7 +26,8 @@ export class DatabaseService {
           content_markdown,
           category_id,
           contact_email,
-          published_at
+          published_at,
+          image_url
         )
       `)
       .lte('scheduled_date', currentDate)
