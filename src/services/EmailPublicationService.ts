@@ -102,11 +102,11 @@ export class EmailPublicationService {
       
       // 1. Check if specific recipients were selected from the preview modal
       const selectedRecipients = (window as any).selectedEmailRecipients;
-      let subscribers: any[];
+      let subscribers: string[]; // Array of email strings
       
       if (selectedRecipients && Array.isArray(selectedRecipients) && selectedRecipients.length > 0) {
         console.log('[Email Publication] Using specific recipients:', selectedRecipients.length);
-        subscribers = selectedRecipients.map(email => ({ email }));
+        subscribers = selectedRecipients; // These are already email strings
         // Clear the selection after use
         delete (window as any).selectedEmailRecipients;
       } else {
@@ -218,8 +218,10 @@ export class EmailPublicationService {
         htmlContentLength: emailPayload.htmlContent.length
       });
 
-      for (const recipientEmail of recipientsToSend) {
+      for (const recipient of recipientsToSend) {
         try {
+          // All recipients should now be strings since subscribers is string[]
+          const recipientEmail = recipient;
           console.log('[Email Publication] Preparing to send email to: ' + recipientEmail);
           
           // First clean up any previous failed attempts for this recipient
@@ -250,7 +252,7 @@ export class EmailPublicationService {
                   'Authorization': `Bearer ${freshToken}`
                 },
                 body: JSON.stringify({
-                  emailList: [recipientEmail],
+                  emailList: [recipientEmail], // This should already be a string
                   subject: emailTitle, 
                   articleId: article.id, // Add articleId for email_logs tracking
                   sender: { 
@@ -301,8 +303,8 @@ export class EmailPublicationService {
           console.log('[Email Publication] Successfully sent email to: ' + recipientEmail);
           successfulEmails.push(recipientEmail);
         } catch (error: any) {
-          console.error('[Email Publication] Error sending to ' + recipientEmail + ':', error);
-          failedEmails.push(recipientEmail);
+          console.error('[Email Publication] Error sending to ' + recipient + ':', error);
+          failedEmails.push(recipient);
         }
       }
       
