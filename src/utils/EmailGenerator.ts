@@ -125,59 +125,10 @@ export class EmailGenerator {
     if (options.image_url) {
       console.log('[EmailGenerator] Adding image to email HTML:', options.image_url);
       
-      try {
-        // Fetch the image and convert to base64
-        console.log('[EmailGenerator] Fetching image from URL...');
-        const imageResponse = await fetch(options.image_url);
-        console.log('[EmailGenerator] Image fetch response status:', imageResponse.status);
-        
-        if (imageResponse.ok) {
-          console.log('[EmailGenerator] Converting image to base64...');
-          const imageBuffer = await imageResponse.arrayBuffer();
-          const uint8Array = new Uint8Array(imageBuffer);
-          
-          // Convert to base64
-          let binary = '';
-          const chunkSize = 0x8000;
-          for (let i = 0; i < uint8Array.length; i += chunkSize) {
-            const chunk = uint8Array.subarray(i, i + chunkSize);
-            binary += String.fromCharCode.apply(null, Array.from(chunk));
-          }
-          const base64Content = btoa(binary);
-          
-          // Determine content type based on URL
-          let contentType = 'image/jpeg'; // default
-          if (options.image_url.toLowerCase().includes('.png')) {
-            contentType = 'image/png';
-          } else if (options.image_url.toLowerCase().includes('.gif')) {
-            contentType = 'image/gif';
-          } else if (options.image_url.toLowerCase().includes('.webp')) {
-            contentType = 'image/webp';
-          }
-          
-          const base64Url = `data:${contentType};base64,${base64Content}`;
-          console.log('[EmailGenerator] Created base64 URL, length:', base64Url.length);
-          
-          html += '<div style="text-align: center; margin: 20px 0;">';
-          html += '<img src="' + base64Url + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
-          html += '</div>';
-          console.log('[EmailGenerator] Image converted to base64 and added to HTML');
-        } else {
-          console.error('[EmailGenerator] Failed to fetch image:', options.image_url, imageResponse.status);
-          // Fallback to original URL
-          html += '<div style="text-align: center; margin: 20px 0;">';
-          html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
-          html += '</div>';
-          console.log('[EmailGenerator] Using fallback URL for image');
-        }
-      } catch (error) {
-        console.error('[EmailGenerator] Error converting image to base64:', error);
-        // Fallback to original URL
-        html += '<div style="text-align: center; margin: 20px 0;">';
-        html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
-        html += '</div>';
-        console.log('[EmailGenerator] Using fallback URL for image after error');
-      }
+      html += '<div style="text-align: center; margin: 20px 0;">';
+      html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
+      html += '</div>';
+      console.log('[EmailGenerator] Image added to HTML with URL:', options.image_url);
     } else {
       console.log('[EmailGenerator] No image_url provided, skipping image');
     }
