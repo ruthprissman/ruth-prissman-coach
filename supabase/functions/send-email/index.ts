@@ -61,15 +61,6 @@ const handler = async (req: Request): Promise<Response> => {
       hasAttachments: !!emailData.attachments && emailData.attachments.length > 0
     });
 
-    // Debug: Check if image is in the HTML content
-    const hasImageTag = emailData.htmlContent?.includes('<img');
-    const hasSupabaseImageUrl = emailData.htmlContent?.includes('uwqwlltrfvokjlaufguz.supabase.co');
-    console.log('HTML content debug:', {
-      hasImageTag,
-      hasSupabaseImageUrl,
-      firstImageSrc: hasImageTag ? emailData.htmlContent.match(/src="([^"]*)"/) : null
-    });
-
     // Validate request data
     if (!emailData.emailList || !Array.isArray(emailData.emailList) || emailData.emailList.length === 0) {
       console.error('Invalid email list:', emailData.emailList);

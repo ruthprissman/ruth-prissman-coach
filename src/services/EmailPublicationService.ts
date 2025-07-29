@@ -102,11 +102,11 @@ export class EmailPublicationService {
       
       // 1. Check if specific recipients were selected from the preview modal
       const selectedRecipients = (window as any).selectedEmailRecipients;
-      let subscribers: string[]; // Array of email strings
+      let subscribers: any[];
       
       if (selectedRecipients && Array.isArray(selectedRecipients) && selectedRecipients.length > 0) {
         console.log('[Email Publication] Using specific recipients:', selectedRecipients.length);
-        subscribers = selectedRecipients; // These are already email strings
+        subscribers = selectedRecipients.map(email => ({ email }));
         // Clear the selection after use
         delete (window as any).selectedEmailRecipients;
       } else {
@@ -138,11 +138,10 @@ export class EmailPublicationService {
       });
       
       // 3. Generate email HTML content with transformed title
-      const emailContent = await this.emailGenerator.generateEmailContent({
+      const emailContent = this.emailGenerator.generateEmailContent({
         title: emailTitle || 'No Title', // Use transformed title
         content: article.content_markdown || '',
-        staticLinks: staticLinks || [],
-        image_url: article.image_url
+        staticLinks: staticLinks || []
       });
       
       // Log email content size and first/last 100 characters for debugging
@@ -218,10 +217,8 @@ export class EmailPublicationService {
         htmlContentLength: emailPayload.htmlContent.length
       });
 
-      for (const recipient of recipientsToSend) {
+      for (const recipientEmail of recipientsToSend) {
         try {
-          // All recipients should now be strings since subscribers is string[]
-          const recipientEmail = recipient;
           console.log('[Email Publication] Preparing to send email to: ' + recipientEmail);
           
           // First clean up any previous failed attempts for this recipient
@@ -252,7 +249,7 @@ export class EmailPublicationService {
                   'Authorization': `Bearer ${freshToken}`
                 },
                 body: JSON.stringify({
-                  emailList: [recipientEmail], // This should already be a string
+                  emailList: [recipientEmail],
                   subject: emailTitle, 
                   articleId: article.id, // Add articleId for email_logs tracking
                   sender: { 
@@ -303,8 +300,8 @@ export class EmailPublicationService {
           console.log('[Email Publication] Successfully sent email to: ' + recipientEmail);
           successfulEmails.push(recipientEmail);
         } catch (error: any) {
-          console.error('[Email Publication] Error sending to ' + recipient + ':', error);
-          failedEmails.push(recipient);
+          console.error('[Email Publication] Error sending to ' + recipientEmail + ':', error);
+          failedEmails.push(recipientEmail);
         }
       }
       
