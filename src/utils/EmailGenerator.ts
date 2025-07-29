@@ -10,12 +10,12 @@ export class EmailGenerator {
    * @param options Options for email generation
    * @returns The generated HTML content
    */
-  public generateEmailContent(options: {
+  public async generateEmailContent(options: {
     title: string;
     content: string;
     staticLinks?: Array<{id: number, fixed_text: string, url: string}>;
     image_url?: string | null;
-  }): string {
+  }): Promise<string> {
     // Ensure all inputs are strings
     const safeTitle = String(options.title || '');
     const safeContent = String(options.content || '');
@@ -128,10 +128,53 @@ export class EmailGenerator {
     // Add article image if provided
     if (options.image_url) {
       console.log('[EmailGenerator] Adding image to email HTML:', options.image_url);
-      html += '<div style="text-align: center; margin: 20px 0;">';
-      html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
-      html += '</div>';
-      console.log('[EmailGenerator] Image div added to HTML');
+      
+      try {
+        // Fetch the image and convert to base64
+        const imageResponse = await fetch(options.image_url);
+        if (imageResponse.ok) {
+          const imageBuffer = await imageResponse.arrayBuffer();
+          const uint8Array = new Uint8Array(imageBuffer);
+          
+          // Convert to base64
+          let binary = '';
+          const chunkSize = 0x8000;
+          for (let i = 0; i < uint8Array.length; i += chunkSize) {
+            const chunk = uint8Array.subarray(i, i + chunkSize);
+            binary += String.fromCharCode.apply(null, Array.from(chunk));
+          }
+          const base64Content = btoa(binary);
+          
+          // Determine content type based on URL
+          let contentType = 'image/jpeg'; // default
+          if (options.image_url.toLowerCase().includes('.png')) {
+            contentType = 'image/png';
+          } else if (options.image_url.toLowerCase().includes('.gif')) {
+            contentType = 'image/gif';
+          } else if (options.image_url.toLowerCase().includes('.webp')) {
+            contentType = 'image/webp';
+          }
+          
+          const base64Url = `data:${contentType};base64,${base64Content}`;
+          
+          html += '<div style="text-align: center; margin: 20px 0;">';
+          html += '<img src="' + base64Url + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
+          html += '</div>';
+          console.log('[EmailGenerator] Image converted to base64 and added to HTML');
+        } else {
+          console.error('[EmailGenerator] Failed to fetch image:', options.image_url, imageResponse.status);
+          // Fallback to original URL
+          html += '<div style="text-align: center; margin: 20px 0;">';
+          html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
+          html += '</div>';
+        }
+      } catch (error) {
+        console.error('[EmailGenerator] Error converting image to base64:', error);
+        // Fallback to original URL
+        html += '<div style="text-align: center; margin: 20px 0;">';
+        html += '<img src="' + this.escapeHtml(options.image_url) + '" alt="' + safeTitleForHtml + '" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);" />';
+        html += '</div>';
+      }
     } else {
       console.log('[EmailGenerator] No image_url provided, skipping image');
     }
@@ -387,9 +430,9 @@ export class EmailGenerator {
 // Create a singleton instance and export the function
 const emailGenerator = new EmailGenerator();
 
-export const generateEmailContent = (article: { title: string; content_markdown: string; image_url?: string | null }, staticLinks?: Array<{id: number, fixed_text: string, url: string}>) => {
+export const generateEmailContent = async (article: { title: string; content_markdown: string; image_url?: string | null }, staticLinks?: Array<{id: number, fixed_text: string, url: string}>) => {
  
-  return emailGenerator.generateEmailContent({
+  return await emailGenerator.generateEmailContent({
     title: article.title,
     content: article.content_markdown,
     staticLinks: staticLinks,

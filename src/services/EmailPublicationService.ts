@@ -138,7 +138,7 @@ export class EmailPublicationService {
       });
       
       // 3. Generate email HTML content with transformed title
-      const emailContent = this.emailGenerator.generateEmailContent({
+      const emailContent = await this.emailGenerator.generateEmailContent({
         title: emailTitle || 'No Title', // Use transformed title
         content: article.content_markdown || '',
         staticLinks: staticLinks || [],
