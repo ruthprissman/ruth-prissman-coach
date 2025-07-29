@@ -398,6 +398,12 @@ export class EmailGenerator {
     
     for (const imageUrl of matches) {
       try {
+        // Skip background images as they are usually too large and cause stack overflow
+        if (imageUrl.includes('email-background') || imageUrl.includes('background')) {
+          console.log('[EmailGenerator] Skipping background image conversion:', imageUrl);
+          continue;
+        }
+        
         console.log('[EmailGenerator] Converting image to base64:', imageUrl);
         const response = await fetch(imageUrl);
         
