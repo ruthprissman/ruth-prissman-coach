@@ -5,7 +5,7 @@ import { Footer } from '@/components/Footer';
 import { Article } from '@/types/article';
 import { SiteLink } from '@/types/links';
 import { supabaseClient } from '@/lib/supabaseClient';
-import { ChevronRight, Calendar, MessageSquare } from 'lucide-react';
+import { ChevronRight, Calendar, MessageSquare, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { convertToHebrewDateSync, formatDateInIsraelTimeZone } from '@/utils/dateUtils';
@@ -38,6 +38,10 @@ const ArticleView = () => {
   const getBackButtonText = () => {
     const backLink = getBackLink();
     return backLink === '/large-words' ? 'חזרה למילים גדולות' : 'חזרה למאמרים';
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
   
   useEffect(() => {
@@ -193,13 +197,21 @@ const ArticleView = () => {
       
       <main className="flex-grow pt-24 pb-16">
         <div className="container mx-auto px-4">
-          <div className="mb-6">
+          <div className="mb-6 flex justify-between items-center print:hidden">
             <Link to={getBackLink()}>
               <Button variant="ghost" className="text-purple-dark hover:text-purple-darkest">
                 <ChevronRight className="ml-1" size={16} />
                 {getBackButtonText()}
               </Button>
             </Link>
+            <Button 
+              variant="outline" 
+              onClick={handlePrint}
+              className="flex items-center gap-2 text-purple-dark border-purple-light hover:bg-purple-light/10"
+            >
+              <Printer size={16} />
+              הדפס / ייצוא לPDF
+            </Button>
           </div>
           
           {isLoading ? (
@@ -373,6 +385,60 @@ const ArticleView = () => {
         
         .article-html-content a:hover {
           color: #7E69AB;
+        }
+
+        /* Print Styles */
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          
+          .container, .container * {
+            visibility: visible;
+          }
+          
+          .print\\:hidden {
+            display: none !important;
+          }
+          
+          .max-w-3xl {
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+          }
+          
+          h1 {
+            font-size: 24pt !important;
+            margin-bottom: 12pt !important;
+            page-break-after: avoid;
+          }
+          
+          .prose {
+            font-size: 12pt !important;
+            line-height: 1.4 !important;
+          }
+          
+          img {
+            max-width: 100% !important;
+            height: auto !important;
+            page-break-inside: avoid;
+          }
+          
+          .article-links {
+            page-break-inside: avoid;
+          }
+          
+          a {
+            color: #000 !important;
+            text-decoration: underline !important;
+          }
+          
+          .bg-purple-light\\/5 {
+            background: #f9f9f9 !important;
+            border: 1px solid #ddd !important;
+          }
         }
         `}
       </style>
