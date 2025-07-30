@@ -207,10 +207,9 @@ const ArticleView = () => {
             <Button 
               variant="outline" 
               onClick={handlePrint}
-              className="flex items-center gap-2 text-purple-dark border-purple-light hover:bg-purple-light/10"
+              className="flex items-center justify-center text-purple-dark border-purple-light hover:bg-purple-light/10 w-10 h-10 p-0"
             >
               <Printer size={16} />
-              הדפס / ייצוא לPDF
             </Button>
           </div>
           
@@ -421,9 +420,7 @@ const ArticleView = () => {
           }
           
           img {
-            max-width: 100% !important;
-            height: auto !important;
-            page-break-inside: avoid;
+            display: none !important;
           }
           
           .article-links {
