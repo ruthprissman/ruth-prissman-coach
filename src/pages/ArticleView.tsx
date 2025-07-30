@@ -267,6 +267,11 @@ const ArticleView = () => {
                 )}
               </div>
               
+              {/* Copyright notice for print only */}
+              <div className="hidden print:block mt-8 pt-4 border-t border-gray-300 text-center text-sm text-gray-600">
+                נכתב על ידי רות פריסמן - כל הזכויות שמורות
+              </div>
+              
               {article.contact_email && (
                 <div className="mt-8 p-4 bg-purple-light/5 rounded-lg border border-purple-light/20 text-center">
                   <a href={`mailto:${article.contact_email}`} className="write-to-me flex items-center justify-center">
@@ -419,7 +424,12 @@ const ArticleView = () => {
             line-height: 1.4 !important;
           }
           
-          img {
+          .aspect-\\[16\\/9\\] {
+            display: none !important;
+          }
+          
+          .article-links,
+          footer {
             display: none !important;
           }
           
