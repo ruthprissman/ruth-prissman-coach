@@ -170,12 +170,15 @@ class PublicationService {
     }, this.MAX_PROCESSING_TIME);
     
     try {
-      // Get current timestamp
-      const now = new Date().toISOString();
-      console.log(`[Publication Service] Checking for scheduled publications at ${now}`);
+      // Get current timestamp in Israel timezone for accurate comparison
+      const now = new Date();
+      const israelNow = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jerusalem"}));
+      const nowISOString = israelNow.toISOString();
+      
+      console.log(`[Publication Service] Checking for scheduled publications at Israel time: ${israelNow.toLocaleString('he-IL')} (ISO: ${nowISOString})`);
 
       // Get all publications that are scheduled and not yet published
-      const scheduledPublications = await this.databaseService.getScheduledPublications(now);
+      const scheduledPublications = await this.databaseService.getScheduledPublications(nowISOString);
 
       if (!scheduledPublications || scheduledPublications.length === 0) {
         console.log("[Publication Service] No publications scheduled for now");

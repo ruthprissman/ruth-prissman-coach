@@ -60,7 +60,8 @@ export type PublishLocationType = 'Website' | 'Email' | 'WhatsApp' | 'All' | 'Ot
 export interface PublicationFormData {
   id?: number;
   publish_location: PublishLocationType;
-  scheduled_date: Date | null;
+  scheduled_date: Date | null; // Full date and time
+  scheduled_time?: string; // Time component (HH:mm format)
   published_date: string | null;
   isDeleted?: boolean;
 }

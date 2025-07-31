@@ -125,14 +125,14 @@ const PublishModal: React.FC<PublishModalProps> = ({
     if (!exists) {
       setPublishOptions(prev => [
         ...prev,
-        {
-          content_id: article.id,
-          publish_location: newLocation as PublishLocationType,
-          scheduled_date: new Date().toISOString(),
-          isSelected: true,
-          isPublished: false,
-          isNew: true
-        }
+          {
+            content_id: article.id,
+            publish_location: newLocation as PublishLocationType,
+            scheduled_date: null, // Let user choose when to schedule
+            isSelected: true,
+            isPublished: false,
+            isNew: true
+          }
       ]);
       
       setNewLocation('');
@@ -165,7 +165,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
     const locationsToInsert = newLocations.map(loc => ({
       content_id: article.id,
       publish_location: loc.publish_location,
-      scheduled_date: loc.scheduled_date || new Date().toISOString(),
+      scheduled_date: loc.scheduled_date || null, // Allow null for immediate publishing
     }));
     
     try {
@@ -279,7 +279,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
                 .insert({
                   content_id: article.id,
                   publish_location: option.publish_location,
-                  scheduled_date: new Date().toISOString()
+                  scheduled_date: option.scheduled_date || new Date().toISOString()
                 })
                 .select('id')
                 .single();
@@ -346,7 +346,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
 
   const formatScheduledDate = (date: string | null | undefined) => {
     if (!date) return '';
-    return formatInTimeZone(new Date(date), 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he });
+    return formatInTimeZone(new Date(date), 'Asia/Jerusalem', 'dd/MM/yyyy HH:mm', { locale: he });
   };
 
   return (
@@ -354,7 +354,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
       <Dialog open={isOpen} onOpenChange={isSubmitting ? undefined : onClose}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>בחר היכן לפרסם את המאמר</DialogTitle>
+            <DialogTitle>תזמן פרסום מאמר</DialogTitle>
           </DialogHeader>
           
           {loading ? (
@@ -382,13 +382,15 @@ const PublishModal: React.FC<PublishModalProps> = ({
                             onCheckedChange={() => handleToggleOption(index)}
                             disabled={isSubmitting}
                           />
-                          <Label htmlFor={`location-${index}`} className="mr-2">
+                           <Label htmlFor={`location-${index}`} className="mr-2">
                             {option.publish_location}
-                            {option.scheduled_date && (
-                              <span className="text-xs text-gray-500 mr-2">
-                                ({formatScheduledDate(option.scheduled_date)})
-                              </span>
-                            )}
+                            <div className="text-xs text-gray-500 mt-1">
+                              {option.scheduled_date ? (
+                                <>מתוכנן ל: {formatScheduledDate(option.scheduled_date)}</>
+                              ) : (
+                                <>יפורסם מיד</>
+                              )}
+                            </div>
                           </Label>
                           
                           {option.isPublished && (
@@ -513,9 +515,9 @@ const PublishModal: React.FC<PublishModalProps> = ({
                   )}
                 </>
               )}
-              {isSubmitting ? "מפרסם..." : (
+              {isSubmitting ? "מתזמן פרסום..." : (
                 publishOptions.some(opt => opt.isSelected && opt.publish_location === 'Email') ? 
-                "תצוגה מקדימה ופרסום" : "פרסם עכשיו"
+                "תצוגה מקדימה ותזמן" : "תזמן פרסום"
               )}
             </Button>
           </DialogFooter>

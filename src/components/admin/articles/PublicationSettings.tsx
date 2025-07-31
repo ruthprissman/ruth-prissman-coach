@@ -1,7 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
-import { Trash2, Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { Trash2, Calendar as CalendarIcon, Plus, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -56,6 +57,7 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
 }) => {
   const [newLocation, setNewLocation] = React.useState<PublishLocationType | ''>('');
   const [newScheduledDate, setNewScheduledDate] = React.useState<Date | null>(null);
+  const [newScheduledTime, setNewScheduledTime] = React.useState<string>('09:00');
   const [error, setError] = React.useState<string | null>(null);
 
   const availableLocations = PUBLISH_LOCATIONS.filter(
@@ -68,25 +70,82 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
       return;
     }
 
+    // Combine date and time into a single timestamp in Israel timezone
+    let finalDate = null;
+    if (newScheduledDate && newScheduledTime) {
+      const [hours, minutes] = newScheduledTime.split(':').map(Number);
+      const combinedDate = new Date(newScheduledDate);
+      combinedDate.setHours(hours, minutes, 0, 0);
+      finalDate = combinedDate;
+    } else if (newScheduledDate) {
+      // If only date is provided, use current time
+      const now = new Date();
+      const combinedDate = new Date(newScheduledDate);
+      combinedDate.setHours(now.getHours(), now.getMinutes(), 0, 0);
+      finalDate = combinedDate;
+    }
+
+    // Validate that the scheduled time is not in the past
+    if (finalDate && finalDate < new Date()) {
+      setError('לא ניתן לתזמן פרסום לזמן שכבר עבר');
+      return;
+    }
+
     onAdd({
       publish_location: newLocation as PublishLocationType,
-      scheduled_date: newScheduledDate,
+      scheduled_date: finalDate,
       published_date: null
     });
 
     setNewLocation('');
     setNewScheduledDate(null);
+    setNewScheduledTime('09:00');
     setError(null);
   };
 
   const handleDateChange = (index: number, date: Date | null) => {
-    const updated = { ...publications[index], scheduled_date: date };
+    const publication = publications[index];
+    let finalDate = date;
+    
+    // If we have both date and existing time, preserve the time
+    if (date && publication.scheduled_date) {
+      const existingDate = new Date(publication.scheduled_date);
+      const newDate = new Date(date);
+      newDate.setHours(existingDate.getHours(), existingDate.getMinutes(), 0, 0);
+      finalDate = newDate;
+    } else if (date) {
+      // If only date is provided, use current time
+      const now = new Date();
+      finalDate = new Date(date);
+      finalDate.setHours(now.getHours(), now.getMinutes(), 0, 0);
+    }
+    
+    const updated = { ...publication, scheduled_date: finalDate };
+    onUpdate(index, updated);
+  };
+
+  const handleTimeChange = (index: number, time: string) => {
+    const publication = publications[index];
+    let finalDate = null;
+    
+    if (publication.scheduled_date && time) {
+      const [hours, minutes] = time.split(':').map(Number);
+      finalDate = new Date(publication.scheduled_date);
+      finalDate.setHours(hours, minutes, 0, 0);
+    }
+    
+    const updated = { ...publication, scheduled_date: finalDate };
     onUpdate(index, updated);
   };
 
   const formatDateDisplay = (date: Date | null) => {
-    if (!date) return <span>בחר תאריך</span>;
-    return formatInTimeZone(date, 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he });
+    if (!date) return <span>בחר תאריך ושעה</span>;
+    return formatInTimeZone(date, 'Asia/Jerusalem', 'dd/MM/yyyy HH:mm', { locale: he });
+  };
+
+  const extractTimeFromDate = (date: Date | null): string => {
+    if (!date) return '09:00';
+    return formatInTimeZone(date, 'Asia/Jerusalem', 'HH:mm');
   };
 
   return (
@@ -98,7 +157,7 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
           <TableHeader>
             <TableRow>
               <TableHead>מיקום פרסום</TableHead>
-              <TableHead>תאריך פרסום מתוכנן</TableHead>
+              <TableHead>תאריך ושעת פרסום מתוכנים</TableHead>
               <TableHead>תאריך פרסום בפועל</TableHead>
               <TableHead className="w-[100px]">פעולות</TableHead>
             </TableRow>
@@ -108,39 +167,64 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
               <TableRow key={index}>
                 <TableCell>{publication.publish_location}</TableCell>
                 <TableCell>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "pl-3 text-left font-normal",
-                          !publication.scheduled_date && "text-muted-foreground"
-                        )}
-                      >
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "pl-3 text-left font-normal flex-1",
+                              !publication.scheduled_date && "text-muted-foreground"
+                            )}
+                          >
+                            {publication.scheduled_date ? (
+                              formatInTimeZone(publication.scheduled_date, 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he })
+                            ) : (
+                              <span>בחר תאריך</span>
+                            )}
+                            <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={publication.scheduled_date || undefined}
+                            onSelect={(date) => handleDateChange(index, date)}
+                            disabled={(date) => date < new Date("1900-01-01")}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4 opacity-50" />
+                        <Input
+                          type="time"
+                          value={extractTimeFromDate(publication.scheduled_date)}
+                          onChange={(e) => handleTimeChange(index, e.target.value)}
+                          className="w-20 text-sm"
+                        />
+                      </div>
+                    </div>
+                    
+                    {publication.scheduled_date && (
+                      <div className="text-xs text-gray-600">
                         {formatDateDisplay(publication.scheduled_date)}
-                        <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={publication.scheduled_date || undefined}
-                        onSelect={(date) => handleDateChange(index, date)}
-                        disabled={(date) => date < new Date("1900-01-01")}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {publication.scheduled_date && publication.scheduled_date < new Date() && (
-                    <p className="text-yellow-600 text-xs mt-1">
-                      ⚠️ תאריך זה כבר עבר
-                    </p>
-                  )}
+                      </div>
+                    )}
+                    
+                    {publication.scheduled_date && publication.scheduled_date < new Date() && (
+                      <p className="text-yellow-600 text-xs">
+                        ⚠️ זמן זה כבר עבר
+                      </p>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   {publication.published_date 
-                    ? formatInTimeZone(new Date(publication.published_date), 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he })
+                    ? formatInTimeZone(new Date(publication.published_date), 'Asia/Jerusalem', 'dd/MM/yyyy HH:mm', { locale: he })
                     : 'טרם פורסם'}
                 </TableCell>
                 <TableCell>
@@ -202,41 +286,70 @@ const PublicationSettings: React.FC<PublicationSettingsProps> = ({
                 )}
               </SelectContent>
             </Select>
-            {error && <p className="text-destructive text-sm mt-1">{error}</p>}
+            
           </div>
           
-          <div>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "pl-3 text-left font-normal",
-                    !newScheduledDate && "text-muted-foreground"
-                  )}
-                >
-                  {newScheduledDate ? (
-                    formatInTimeZone(newScheduledDate, 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he })
-                  ) : (
-                    <span>בחר תאריך פרסום</span>
-                  )}
-                  <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={newScheduledDate}
-                  onSelect={setNewScheduledDate}
-                  disabled={(date) => date < new Date("1900-01-01")}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "pl-3 text-left font-normal flex-1",
+                      !newScheduledDate && "text-muted-foreground"
+                    )}
+                  >
+                    {newScheduledDate ? (
+                      formatInTimeZone(newScheduledDate, 'Asia/Jerusalem', 'dd/MM/yyyy', { locale: he })
+                    ) : (
+                      <span>בחר תאריך</span>
+                    )}
+                    <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={newScheduledDate}
+                    onSelect={setNewScheduledDate}
+                    disabled={(date) => date < new Date("1900-01-01")}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4 opacity-50" />
+                <Input
+                  type="time"
+                  value={newScheduledTime}
+                  onChange={(e) => setNewScheduledTime(e.target.value)}
+                  className="w-20 text-sm"
                 />
-              </PopoverContent>
-            </Popover>
-            {newScheduledDate && newScheduledDate < new Date() && (
-              <p className="text-yellow-600 text-xs mt-1">
-                ⚠️ תאריך זה כבר עבר
+              </div>
+            </div>
+            
+            {newScheduledDate && newScheduledTime && (
+              <div className="text-xs text-gray-600">
+                יתקיים ב: {formatInTimeZone(
+                  (() => {
+                    const [hours, minutes] = newScheduledTime.split(':').map(Number);
+                    const date = new Date(newScheduledDate);
+                    date.setHours(hours, minutes, 0, 0);
+                    return date;
+                  })(),
+                  'Asia/Jerusalem',
+                  'dd/MM/yyyy HH:mm',
+                  { locale: he }
+                )}
+              </div>
+            )}
+            
+            {error && (
+              <p className="text-destructive text-xs">
+                {error}
               </p>
             )}
           </div>
