@@ -32,6 +32,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
 }) => {
   const { toast } = useToast();
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [isSpecificRecipientsMode, setIsSpecificRecipientsMode] = useState(false);
   const [allSubscribers, setAllSubscribers] = useState<Array<{email: string, firstName?: string, alreadySent: boolean}>>([]);
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
@@ -180,6 +181,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   };
 
   const handleSendToAll = async () => {
+    setIsSending(true);
     try {
       const supabase = supabaseClient();
       let recipientEmails: string[] = [];
@@ -237,10 +239,13 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
         description: error.message || "אירעה שגיאה בהכנת השליחה",
         variant: "destructive"
       });
+    } finally {
+      setIsSending(false);
     }
   };
 
   const handleSendToSelectedFromList = async () => {
+    setIsSending(true);
     try {
       // Use the final recipients list that was already prepared
       const emailsToSend = finalRecipientsList.map(recipient => recipient.email);
@@ -268,6 +273,8 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
         description: error.message || "אירעה שגיאה בהכנת השליחה",
         variant: "destructive"
       });
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -418,9 +425,14 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
             <Button
               type="button"
               onClick={handleSendToSelectedFromList}
+              disabled={isSending}
               className="gap-2"
             >
-              <Send className="h-4 w-4" />
+              {isSending ? (
+                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
               שלח ל-{finalRecipientsList.length} נמענים
             </Button>
           </DialogFooter>
@@ -572,9 +584,14 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
             <Button
               type="button"
               onClick={handleSendToAll}
+              disabled={isSending}
               className="gap-2"
             >
-              <Send className="h-4 w-4" />
+              {isSending ? (
+                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
               שלח עכשיו
             </Button>
           </div>
