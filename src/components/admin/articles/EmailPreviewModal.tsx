@@ -42,6 +42,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   const emailGenerator = new EmailGenerator();
   const [emailContent, setEmailContent] = useState<string>('');
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduleMode, setScheduleMode] = useState<'all' | 'selected' | 'test'>('all');
   
   console.log('[EmailPreviewModal] Article data:', {
     id: article.id,
@@ -283,8 +284,14 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
       const supabase = supabaseClient();
       
       let finalRecipients: string[] = [];
-      if (isSpecificRecipientsMode) {
+      let subject = '';
+      
+      if (scheduleMode === 'test') {
+        finalRecipients = ['Ruth@Ruthprissman.co.il'];
+        subject = `[טסט] ${article.title}`;
+      } else if (scheduleMode === 'selected') {
         finalRecipients = selectedRecipients;
+        subject = `מאמר חדש: ${article.title}`;
       } else {
         // Get all active subscribers
         const { data: subscribers, error: subscribersError } = await supabase
@@ -294,6 +301,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
 
         if (subscribersError) throw subscribersError;
         finalRecipients = subscribers?.map(sub => sub.email) || [];
+        subject = `מאמר חדש: ${article.title}`;
       }
 
       if (finalRecipients.length === 0) {
@@ -308,7 +316,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
       const { error } = await supabase.functions.invoke('schedule-email', {
         body: {
           recipients: finalRecipients,
-          subject: `מאמר חדש: ${article.title}`,
+          subject: subject,
           htmlContent: emailContent,
           articleId: article.id,
           scheduledDatetime: scheduledDate.toISOString()
@@ -319,9 +327,11 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
         throw error;
       }
 
+      const modeText = scheduleMode === 'test' ? 'טסט' : scheduleMode === 'selected' ? `נמענים נבחרים (${finalRecipients.length})` : 'כל הנמענים';
+      
       toast({
         title: "המייל נתזמן בהצלחה",
-        description: `המייל ישלח ב-${scheduledDate.toLocaleDateString('he-IL')} בשעה ${scheduledDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`,
+        description: `מייל ${modeText} ישלח ב-${scheduledDate.toLocaleDateString('he-IL')} בשעה ${scheduledDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`,
       });
 
       onClose();
@@ -337,7 +347,26 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
 
   const handleSendNow = () => {
     setShowScheduleModal(false);
-    handleSendToAll();
+    if (scheduleMode === 'test') {
+      handleSendTest();
+    } else {
+      handleSendToAll();
+    }
+  };
+
+  const handleScheduleTest = () => {
+    setScheduleMode('test');
+    setShowScheduleModal(true);
+  };
+
+  const handleScheduleSelected = () => {
+    setScheduleMode('selected');
+    setShowScheduleModal(true);
+  };
+
+  const handleScheduleAll = () => {
+    setScheduleMode('all');
+    setShowScheduleModal(true);
   };
 
   const handleSendTest = async () => {
@@ -574,11 +603,33 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setShowScheduleModal(true)}
+              onClick={handleScheduleTest}
               className="gap-2"
             >
               <Clock className="h-4 w-4" />
-              תזמן שליחה
+              תזמן טסט
+            </Button>
+            
+            {isSpecificRecipientsMode && selectedRecipients.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleScheduleSelected}
+                className="gap-2"
+              >
+                <Clock className="h-4 w-4" />
+                תזמן נבחרים
+              </Button>
+            )}
+            
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleScheduleAll}
+              className="gap-2"
+            >
+              <Clock className="h-4 w-4" />
+              תזמן לכולם
             </Button>
             
             <Button
@@ -603,7 +654,13 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
         onClose={() => setShowScheduleModal(false)}
         onSchedule={handleScheduleEmail}
         onSendNow={handleSendNow}
-        title={`מאמר: ${article?.title || ''}`}
+        title={
+          scheduleMode === 'test' 
+            ? `תזמון טסט: ${article?.title || ''}` 
+            : scheduleMode === 'selected' 
+              ? `תזמון לנמענים נבחרים (${selectedRecipients.length}): ${article?.title || ''}`
+              : `תזמון לכל הנמענים: ${article?.title || ''}`
+        }
       />
     </Dialog>
   );
