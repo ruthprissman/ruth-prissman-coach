@@ -480,6 +480,53 @@ export type Database = {
           },
         ]
       }
+      scheduled_emails: {
+        Row: {
+          article_id: number | null
+          created_at: string
+          error_message: string | null
+          html_content: string
+          id: string
+          recipients: string[]
+          scheduled_datetime: string
+          sent_at: string | null
+          status: string
+          subject: string
+        }
+        Insert: {
+          article_id?: number | null
+          created_at?: string
+          error_message?: string | null
+          html_content: string
+          id?: string
+          recipients: string[]
+          scheduled_datetime: string
+          sent_at?: string | null
+          status?: string
+          subject: string
+        }
+        Update: {
+          article_id?: number | null
+          created_at?: string
+          error_message?: string | null
+          html_content?: string
+          id?: string
+          recipients?: string[]
+          scheduled_datetime?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_emails_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "professional_content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_types: {
         Row: {
           code: string

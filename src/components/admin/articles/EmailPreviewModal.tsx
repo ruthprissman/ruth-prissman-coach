@@ -14,7 +14,8 @@ import { Article } from '@/types/article';
 import { EmailGenerator } from '@/utils/EmailGenerator';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
-import { Send, TestTube, Users, Eye } from 'lucide-react';
+import { Send, TestTube, Users, Eye, Clock } from 'lucide-react';
+import EmailScheduleModal from './EmailScheduleModal';
 
 interface EmailPreviewModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
   const [finalRecipientsList, setFinalRecipientsList] = useState<Array<{email: string, firstName?: string}>>([]);
   const emailGenerator = new EmailGenerator();
   const [emailContent, setEmailContent] = useState<string>('');
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   
   console.log('[EmailPreviewModal] Article data:', {
     id: article.id,
@@ -269,6 +271,68 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
     }
   };
 
+  const handleScheduleEmail = async (scheduledDate: Date) => {
+    try {
+      const supabase = supabaseClient();
+      
+      let finalRecipients: string[] = [];
+      if (isSpecificRecipientsMode) {
+        finalRecipients = selectedRecipients;
+      } else {
+        // Get all active subscribers
+        const { data: subscribers, error: subscribersError } = await supabase
+          .from('content_subscribers')
+          .select('email')
+          .eq('is_subscribed', true);
+
+        if (subscribersError) throw subscribersError;
+        finalRecipients = subscribers?.map(sub => sub.email) || [];
+      }
+
+      if (finalRecipients.length === 0) {
+        toast({
+          title: "אין נמענים",
+          description: "לא נמצאו נמענים פעילים",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { error } = await supabase.functions.invoke('schedule-email', {
+        body: {
+          recipients: finalRecipients,
+          subject: `מאמר חדש: ${article.title}`,
+          htmlContent: emailContent,
+          articleId: article.id,
+          scheduledDatetime: scheduledDate.toISOString()
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "המייל נתזמן בהצלחה",
+        description: `המייל ישלח ב-${scheduledDate.toLocaleDateString('he-IL')} בשעה ${scheduledDate.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}`,
+      });
+
+      onClose();
+    } catch (error: any) {
+      console.error('Error scheduling email:', error);
+      toast({
+        title: "שגיאה",
+        description: error.message || "שגיאה בתזמון המייל",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSendNow = () => {
+    setShowScheduleModal(false);
+    handleSendToAll();
+  };
+
   const handleSendTest = async () => {
     setIsSendingTest(true);
     try {
@@ -497,6 +561,16 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
             
             <Button
               type="button"
+              variant="outline"
+              onClick={() => setShowScheduleModal(true)}
+              className="gap-2"
+            >
+              <Clock className="h-4 w-4" />
+              תזמן שליחה
+            </Button>
+            
+            <Button
+              type="button"
               onClick={handleSendToAll}
               className="gap-2"
             >
@@ -506,6 +580,14 @@ const EmailPreviewModal: React.FC<EmailPreviewModalProps> = ({
           </div>
         </DialogFooter>
       </DialogContent>
+
+      <EmailScheduleModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        onSchedule={handleScheduleEmail}
+        onSendNow={handleSendNow}
+        title={`מאמר: ${article?.title || ''}`}
+      />
     </Dialog>
   );
 };
