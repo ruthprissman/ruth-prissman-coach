@@ -12,9 +12,10 @@ import { Article } from '@/types/article';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronRight, SplitSquareVertical, Eye, Smartphone, ImageIcon } from 'lucide-react';
+import { ChevronRight, SplitSquareVertical, Eye, Smartphone, ImageIcon, Upload } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 
 interface WhatsAppPublicationModalProps {
   isOpen: boolean;
@@ -219,6 +220,8 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
   const [content, setContent] = useState('');
   const [splits, setSplits] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('edit');
+  const [customImageUrl, setCustomImageUrl] = useState<string>('');
+  const [customImageFile, setCustomImageFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (article && isOpen) {
@@ -263,11 +266,26 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
     }
   };
 
+  const handleCustomImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCustomImageFile(file);
+      const url = URL.createObjectURL(file);
+      setCustomImageUrl(url);
+      toast({
+        title: "תמונה הועלתה",
+        description: "התמונה המותאמת אישית הועלתה בהצלחה",
+      });
+    }
+  };
+
   const generateStatusImages = async () => {
-    if (!article || !article.image_url) {
+    const imageToUse = customImageUrl || article?.image_url;
+    
+    if (!imageToUse) {
       toast({
         title: "שגיאה",
-        description: "חייבת להיות תמונה מצורפת למאמר כדי ליצור תמונות סטטוס",
+        description: "חייבת להיות תמונה כדי ליצור תמונות סטטוס",
         variant: "destructive",
       });
       return;
@@ -290,7 +308,7 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
       await new Promise((resolve, reject) => {
         backgroundImage.onload = resolve;
         backgroundImage.onerror = reject;
-        backgroundImage.src = article.image_url!;
+        backgroundImage.src = imageToUse;
       });
 
       // יצירת תמונות לכל חלק
@@ -299,19 +317,20 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
         const ctx = canvas.getContext('2d');
         if (!ctx) continue;
 
-        // הגדרת גודל 1:1 (מתאים לסטטוס WhatsApp)
-        const size = 1080;
-        canvas.width = size;
-        canvas.height = size;
+        // הגדרת גודל 3:4 (מתאים לסטטוס WhatsApp Stories)
+        const width = 1080;
+        const height = 1440; // יחס 3:4
+        canvas.width = width;
+        canvas.height = height;
 
         // ציור רקע התמונה (מתיחה למילוי המסגרת)
-        ctx.drawImage(backgroundImage, 0, 0, size, size);
+        ctx.drawImage(backgroundImage, 0, 0, width, height);
 
         // הוספת שכבת שקיפות כהה לקריאות טובה יותר
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(0, 0, size, size);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(0, 0, width, height);
 
-        // הגדרות טקסט
+        // הגדרות טקסט עם פונט ALEF
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -320,17 +339,17 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
         const splitContent = splits[i];
         const lines = splitContent.split('\n').filter(line => line.trim() !== '');
         
-        // חישוב גודל פונט בהתאם לכמות השורות
+        // חישוב גודל פונט בהתאם לכמות השורות וגובה הקנבס
         const lineCount = lines.length;
-        const baseFontSize = Math.max(28, Math.min(48, size / (lineCount + 8)));
-        ctx.font = `bold ${baseFontSize}px Arial, sans-serif`;
+        const baseFontSize = Math.max(40, Math.min(80, height / (lineCount + 10)));
+        ctx.font = `bold ${baseFontSize}px Alef, Arial, sans-serif`;
 
         // ציור הטקסט ממורכז
-        const startY = size / 2 - (lineCount * baseFontSize * 1.3) / 2;
+        const startY = height / 2 - (lineCount * baseFontSize * 1.3) / 2;
         
         lines.forEach((line, lineIndex) => {
           const y = startY + (lineIndex * baseFontSize * 1.3);
-          ctx.fillText(line.trim(), size / 2, y);
+          ctx.fillText(line.trim(), width / 2, y);
         });
 
         // הורדת התמונה
@@ -399,7 +418,38 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
           </TabsList>
 
           <TabsContent value="edit" className="space-y-4">
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                <Label className="text-md font-medium mb-2 block">תמונה לתמונות הסטטוס</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCustomImageUpload}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setCustomImageUrl('');
+                      setCustomImageFile(null);
+                    }}
+                  >
+                    נקה
+                  </Button>
+                </div>
+                {customImageUrl && (
+                  <div className="mt-2">
+                    <img src={customImageUrl} alt="תמונה מותאמת אישית" className="w-20 h-20 object-cover rounded" />
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-2">
+                  אם לא מועלית תמונה, תשתמש התמונה המקורית של המאמר
+                </p>
+              </div>
+              
               <div className="flex justify-between items-center">
                 <Label htmlFor="whatsapp-content" className="text-md font-medium">
                   תוכן המאמר
@@ -421,7 +471,7 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
                 onChange={handleContentChange}
                 placeholder="תוכן המאמר..."
                 dir="rtl"
-                className="min-h-[350px] text-right font-heebo border-2 p-4"
+                className="min-h-[300px] text-right font-heebo border-2 p-4"
               />
               
               <p className="text-sm text-gray-500">
