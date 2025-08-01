@@ -335,6 +335,11 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
         ctx.direction = 'rtl';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+
+        // פונקציות עזר לטקסט RTL
+        const wrapRtl = (s: string) => `\u202B${s}\u202C`; // עוטף כל שורה ב־RLE/PDF
+        const fixPunc = (s: string) => s.replace(/([?!.,;:])\s*$/, '\u200F$1'); // מחזק סימני פיסוק לסוף ימין
+
         
         // חלוקת הטקסט לשורות
         const splitContent = splits[i];
@@ -348,9 +353,15 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
         // ציור הטקסט ממורכז
         const startY = height / 2 - (lineCount * baseFontSize * 1.3) / 2;
         
+        // lines.forEach((line, lineIndex) => {
+        //   const y = startY + (lineIndex * baseFontSize * 1.3);
+        //   ctx.fillText(line.trim(), width / 2, y);
+        // });
         lines.forEach((line, lineIndex) => {
           const y = startY + (lineIndex * baseFontSize * 1.3);
-          ctx.fillText(line.trim(), width / 2, y);
+          const clean = fixPunc(line.trim());
+          const draw  = wrapRtl(clean);
+          ctx.fillText(draw, width / 2, y);
         });
 
         // הורדת התמונה
