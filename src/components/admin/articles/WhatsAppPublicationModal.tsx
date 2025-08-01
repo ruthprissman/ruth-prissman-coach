@@ -263,20 +263,6 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
     }
   };
 
-  const extractOpeningBulletPoints = (content: string): string[] => {
-    const lines = content.split('\n').filter(line => line.trim() !== '');
-    const bulletPoints: string[] = [];
-    
-    for (const line of lines) {
-      const trimmedLine = line.trim();
-      if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
-        bulletPoints.push(trimmedLine);
-      }
-    }
-    
-    return bulletPoints;
-  };
-
   const generateStatusImages = async () => {
     if (!article || !article.image_url) {
       toast({
@@ -287,26 +273,16 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
       return;
     }
 
+    if (splits.length === 0) {
+      toast({
+        title: "שגיאה",
+        description: "אין תוכן לייצוא. נא להוסיף תוכן תחילה",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // חילוץ הפתיח המנוקד מהתוכן הראשון
-      const firstContent = splits[0] || content;
-      const bulletPoints = extractOpeningBulletPoints(firstContent);
-      
-      if (bulletPoints.length === 0) {
-        toast({
-          title: "שגיאה",
-          description: "לא נמצא פתיח מנוקד בתוכן",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // חלוקה לקבוצות של עד 10 שורות
-      const chunks: string[][] = [];
-      for (let i = 0; i < bulletPoints.length; i += 10) {
-        chunks.push(bulletPoints.slice(i, i + 10));
-      }
-
       // טעינת התמונה הרקע
       const backgroundImage = new Image();
       backgroundImage.crossOrigin = 'anonymous';
@@ -317,8 +293,8 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
         backgroundImage.src = article.image_url!;
       });
 
-      // יצירת תמונות
-      for (let i = 0; i < chunks.length; i++) {
+      // יצירת תמונות לכל חלק
+      for (let i = 0; i < splits.length; i++) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (!ctx) continue;
@@ -340,29 +316,33 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
+        // חלוקת הטקסט לשורות
+        const splitContent = splits[i];
+        const lines = splitContent.split('\n').filter(line => line.trim() !== '');
+        
         // חישוב גודל פונט בהתאם לכמות השורות
-        const lineCount = chunks[i].length;
-        const baseFontSize = Math.max(36, Math.min(60, size / (lineCount + 5)));
+        const lineCount = lines.length;
+        const baseFontSize = Math.max(28, Math.min(48, size / (lineCount + 8)));
         ctx.font = `bold ${baseFontSize}px Arial, sans-serif`;
 
         // ציור הטקסט ממורכז
-        const startY = size / 2 - (lineCount * baseFontSize * 1.2) / 2;
+        const startY = size / 2 - (lineCount * baseFontSize * 1.3) / 2;
         
-        chunks[i].forEach((line, lineIndex) => {
-          const y = startY + (lineIndex * baseFontSize * 1.2);
-          ctx.fillText(line, size / 2, y);
+        lines.forEach((line, lineIndex) => {
+          const y = startY + (lineIndex * baseFontSize * 1.3);
+          ctx.fillText(line.trim(), size / 2, y);
         });
 
         // הורדת התמונה
         const link = document.createElement('a');
-        link.download = `status-${i + 1}-of-${chunks.length}.png`;
+        link.download = `status-${i + 1}-of-${splits.length}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
       }
 
       toast({
         title: "תמונות נוצרו בהצלחה",
-        description: `נוצרו ${chunks.length} תמונות לסטטוס WhatsApp`,
+        description: `נוצרו ${splits.length} תמונות לסטטוס WhatsApp`,
       });
 
     } catch (error) {
