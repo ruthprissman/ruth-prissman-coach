@@ -332,6 +332,7 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
 
         // הגדרות טקסט עם פונט ALEF
         ctx.fillStyle = 'white';
+        ctx.direction = 'rtl';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
