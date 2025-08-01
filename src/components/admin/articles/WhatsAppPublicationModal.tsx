@@ -12,7 +12,7 @@ import { Article } from '@/types/article';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronRight, SplitSquareVertical, Eye, Smartphone } from 'lucide-react';
+import { ChevronRight, SplitSquareVertical, Eye, Smartphone, ImageIcon } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -263,6 +263,118 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
     }
   };
 
+  const extractOpeningBulletPoints = (content: string): string[] => {
+    const lines = content.split('\n').filter(line => line.trim() !== '');
+    const bulletPoints: string[] = [];
+    
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
+        bulletPoints.push(trimmedLine);
+      }
+    }
+    
+    return bulletPoints;
+  };
+
+  const generateStatusImages = async () => {
+    if (!article || !article.image_url) {
+      toast({
+        title: "שגיאה",
+        description: "חייבת להיות תמונה מצורפת למאמר כדי ליצור תמונות סטטוס",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // חילוץ הפתיח המנוקד מהתוכן הראשון
+      const firstContent = splits[0] || content;
+      const bulletPoints = extractOpeningBulletPoints(firstContent);
+      
+      if (bulletPoints.length === 0) {
+        toast({
+          title: "שגיאה",
+          description: "לא נמצא פתיח מנוקד בתוכן",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // חלוקה לקבוצות של עד 10 שורות
+      const chunks: string[][] = [];
+      for (let i = 0; i < bulletPoints.length; i += 10) {
+        chunks.push(bulletPoints.slice(i, i + 10));
+      }
+
+      // טעינת התמונה הרקע
+      const backgroundImage = new Image();
+      backgroundImage.crossOrigin = 'anonymous';
+      
+      await new Promise((resolve, reject) => {
+        backgroundImage.onload = resolve;
+        backgroundImage.onerror = reject;
+        backgroundImage.src = article.image_url!;
+      });
+
+      // יצירת תמונות
+      for (let i = 0; i < chunks.length; i++) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) continue;
+
+        // הגדרת גודל 1:1 (מתאים לסטטוס WhatsApp)
+        const size = 1080;
+        canvas.width = size;
+        canvas.height = size;
+
+        // ציור רקע התמונה (מתיחה למילוי המסגרת)
+        ctx.drawImage(backgroundImage, 0, 0, size, size);
+
+        // הוספת שכבת שקיפות כהה לקריאות טובה יותר
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, size, size);
+
+        // הגדרות טקסט
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // חישוב גודל פונט בהתאם לכמות השורות
+        const lineCount = chunks[i].length;
+        const baseFontSize = Math.max(36, Math.min(60, size / (lineCount + 5)));
+        ctx.font = `bold ${baseFontSize}px Arial, sans-serif`;
+
+        // ציור הטקסט ממורכז
+        const startY = size / 2 - (lineCount * baseFontSize * 1.2) / 2;
+        
+        chunks[i].forEach((line, lineIndex) => {
+          const y = startY + (lineIndex * baseFontSize * 1.2);
+          ctx.fillText(line, size / 2, y);
+        });
+
+        // הורדת התמונה
+        const link = document.createElement('a');
+        link.download = `status-${i + 1}-of-${chunks.length}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
+
+      toast({
+        title: "תמונות נוצרו בהצלחה",
+        description: `נוצרו ${chunks.length} תמונות לסטטוס WhatsApp`,
+      });
+
+    } catch (error) {
+      console.error('Error generating status images:', error);
+      toast({
+        title: "שגיאה ביצירת תמונות",
+        description: "אנא נסה שוב מאוחר יותר",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleContinue = () => {
     if (splits.length === 0) {
       toast({
@@ -382,14 +494,26 @@ const WhatsAppPublicationModal: React.FC<WhatsAppPublicationModalProps> = ({
             ביטול
           </Button>
           
-          <Button
-            type="button"
-            onClick={handleContinue}
-            className="gap-2"
-          >
-            המשך
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              onClick={generateStatusImages}
+              variant="outline"
+              className="gap-2"
+            >
+              <ImageIcon className="h-4 w-4" />
+              יצר תמונות לסטטוס
+            </Button>
+            
+            <Button
+              type="button"
+              onClick={handleContinue}
+              className="gap-2"
+            >
+              המשך
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
