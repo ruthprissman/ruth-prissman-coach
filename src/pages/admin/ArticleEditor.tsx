@@ -12,7 +12,8 @@ import {
   Trash2, 
   Send,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Article, Category, PublicationFormData, PublishLocationType } from '@/types/article';
@@ -602,6 +603,82 @@ const ArticleEditor: React.FC = () => {
     fetchArticleData();
   }, [fetchArticleData]);
 
+  const handleExportToPDF = async () => {
+    if (!article) return;
+    
+    try {
+      const jsPDF = (await import('jspdf')).default;
+      const html2canvas = (await import('html2canvas')).default;
+      const { EmailGenerator } = await import('@/utils/EmailGenerator');
+      
+      // Generate the same email content that would be sent
+      const emailGenerator = new EmailGenerator();
+      const emailContent = await emailGenerator.generateEmailContent({
+        title: article.title,
+        content: article.content_markdown,
+        image_url: article.image_url,
+        staticLinks: article.staticLinks
+      });
+      
+      // Create a temporary div to render the email content
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = emailContent;
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.width = '800px';
+      tempDiv.style.background = 'white';
+      tempDiv.style.padding = '20px';
+      document.body.appendChild(tempDiv);
+      
+      // Convert to canvas
+      const canvas = await html2canvas(tempDiv, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 2,
+        backgroundColor: '#ffffff'
+      });
+      
+      // Remove temp div
+      document.body.removeChild(tempDiv);
+      
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      // Save the PDF
+      pdf.save(`${article.title}.pdf`);
+      
+      toast({
+        title: "PDF נוצר בהצלחה",
+        description: "המאמר יוצא ל-PDF בהצלחה",
+      });
+    } catch (error) {
+      console.error('Error creating PDF:', error);
+      toast({
+        title: "שגיאה ביצירת PDF",
+        description: "אנא נסה שוב מאוחר יותר",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     const warningText = 'יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?';
     
@@ -665,6 +742,18 @@ const ArticleEditor: React.FC = () => {
                 >
                   <Send className="h-4 w-4" />
                   פרסם עכשיו
+                </Button>
+              )}
+              
+              {isEditMode && (
+                <Button 
+                  onClick={handleExportToPDF} 
+                  variant="outline"
+                  disabled={isSaving || !form.formState.isValid}
+                  className="gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  ייצא ל-PDF
                 </Button>
               )}
               
