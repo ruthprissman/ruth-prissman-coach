@@ -208,8 +208,54 @@ const Articles = () => {
     <div className="min-h-screen flex flex-col">
       <Helmet>
         <title>מאמרים מקצועיים - רות פריסמן | קוד הנפש</title>
-        <meta name="description" content="מאמרים מקצועיים מאת רות פריסמן, העוסקים באימון רגשי, קוד הנפש, תהליכי התפתחות, תובנות מעמיקות וכלים לנשים במסע אישי." />
+        <meta name="description" content="מאמרים קצרים ומעוררי השראה על רגעים מהחיים, מתוך מבט רוחני ואנושי. מתעדכן בכל שבוע מחדש." />
         <meta name="keywords" content="מאמרים רגשיים, אימון רגשי, רות פריסמן, כתיבה טיפולית, העצמה נשית, קואצ'ינג, קוד הנפש, רגש, התפתחות, תהליך אישי, גישת קוד הנפש" />
+        <link rel="canonical" href="https://coach.ruthprissman.co.il/articles" />
+        <meta name="robots" content="index,follow" />
+        
+        {/* Open Graph tags */}
+        <meta property="og:title" content="מילים גדולות – מאמרים שבועיים מאת רות פריסמן" />
+        <meta property="og:description" content="מאמרים מעוררי השראה על החיים, מתוך תבונה נשית, רוחנית ורגשית." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://coach.ruthprissman.co.il/articles" />
+        <meta property="og:image" content="https://coach.ruthprissman.co.il/images/og-articles.jpg" />
+        
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="מילים גדולות – מאמרים שבועיים מאת רות פריסמן" />
+        <meta name="twitter:description" content="מאמרים מעוררי השראה על החיים, מתוך תבונה נשית, רוחנית ורגשית." />
+        <meta name="twitter:image" content="https://coach.ruthprissman.co.il/images/og-articles.jpg" />
+        
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": "מילים גדולות",
+            "description": "מאמרים שבועיים מאת רות פריסמן – על חיבורים אנושיים, נשיים ורוחניים.",
+            "url": "https://coach.ruthprissman.co.il/articles",
+            "hasPart": [
+              {
+                "@type": "Article",
+                "headline": "בין המילים: נטילת ידיים",
+                "author": "רות פריסמן",
+                "datePublished": "2025-07-20"
+              },
+              {
+                "@type": "Article",
+                "headline": "בין המילים: תשעת הימים",
+                "author": "רות פריסמן",
+                "datePublished": "2025-07-26"
+              },
+              {
+                "@type": "Article",
+                "headline": "מילים לזמנים מיוחדים: תשעה באב",
+                "author": "רות פריסמן",
+                "datePublished": "2025-07-31"
+              }
+            ]
+          })}
+        </script>
       </Helmet>
       
       <Navigation />
