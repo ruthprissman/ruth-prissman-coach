@@ -122,8 +122,41 @@ export default function Contact() {
       style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/mn961lxdmrzb3hu61jr8c/clear-background.jpg?rlkey=te75ba634sz277355u5onqvuy&st=qxb55gpi&raw=1)' }}>
       <Helmet>
         <title>צור קשר - רות פריסמן | אימון רגשי בגישת קוד הנפש</title>
-        <meta name="description" content="רוצה להתחיל תהליך אישי עם רות פריסמן? כאן תוכלי ליצור קשר, להשאיר פרטים ולקבל ליווי רגשי בגישת קוד הנפש." />
+        <meta name="description" content="צור קשר עם רות פריסמן – מאמנת אישית בגישה טיפולית. ניתן לפנות לתיאום פגישה, שיחה או ייעוץ אישי בטלפון, מייל או וואטסאפ." />
         <meta name="keywords" content="צור קשר, רות פריסמן, אימון רגשי, קוד הנפש, טופס יצירת קשר, ליווי אישי, התחלת תהליך, אימון לנשים, פנייה לרות פריסמן" />
+        <link rel="canonical" href="https://coach.ruthprissman.co.il/contact" />
+        <meta name="robots" content="index,follow" />
+        
+        {/* Open Graph tags */}
+        <meta property="og:title" content="צור קשר עם רות פריסמן" />
+        <meta property="og:description" content="מאמנת אישית וסופרת – זמינה לפגישות, שיחות או הודעות. בואו לדבר איתי." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://coach.ruthprissman.co.il/contact" />
+        <meta property="og:image" content="https://coach.ruthprissman.co.il/images/og-contact.jpg" />
+        
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="צור קשר עם רות פריסמן" />
+        <meta name="twitter:description" content="מאמנת אישית וסופרת – זמינה לפגישות, שיחות או הודעות. בואו לדבר איתי." />
+        <meta name="twitter:image" content="https://coach.ruthprissman.co.il/images/og-contact.jpg" />
+        
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ContactPage",
+            "name": "צור קשר עם רות פריסמן",
+            "description": "תיאום פגישה או שיחה עם רות פריסמן – מאמנת אישית בגישה טיפולית.",
+            "url": "https://coach.ruthprissman.co.il/contact",
+            "mainEntity": {
+              "@type": "Person",
+              "name": "רות פריסמן",
+              "jobTitle": "מאמנת אישית וסופרת",
+              "email": "Ruth@RuthPrissman.co.il",
+              "telephone": "055-6620273"
+            }
+          })}
+        </script>
       </Helmet>
       
       <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]"></div>
