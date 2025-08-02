@@ -187,8 +187,54 @@ const Stories = () => {
     <div className="relative min-h-screen flex flex-col bg-white">
       <Helmet>
         <title>סיפורים קצרים - רות פריסמן | קוד הנפש</title>
-        <meta name="description" content="סיפורים קצרים שנכתבו על ידי רות פריסמן, המעבירים עומק רגשי, תובנות נשיות ומסע פנימי בגישת קוד הנפש. כתיבה שנוגעת בנפש." />
+        <meta name="description" content="סיפורים קצרים על החיים מנקודת מבט פנימית, עמוקה ומאירה. פרי עטה של רות פריסמן – מאמנת אישית וסופרת." />
         <meta name="keywords" content="סיפורים קצרים, כתיבה רגשית, רות פריסמן, קוד הנפש, כתיבה נשית, סיפור אישי, העצמה רגשית, סיפורים טיפוליים, תהליך רגשי" />
+        <link rel="canonical" href="https://coach.ruthprissman.co.il/stories" />
+        <meta name="robots" content="index,follow" />
+        
+        {/* Open Graph tags */}
+        <meta property="og:title" content="סיפורים קצרים מאת רות פריסמן" />
+        <meta property="og:description" content="סיפורים קצרים על החיים מנקודת מבט פנימית, עמוקה ומאירה." />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="https://coach.ruthprissman.co.il/stories" />
+        <meta property="og:image" content="https://coach.ruthprissman.co.il/images/og-stories.jpg" />
+        
+        {/* Twitter Card tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="סיפורים קצרים מאת רות פריסמן" />
+        <meta name="twitter:description" content="סיפורים קצרים על החיים מנקודת מבט פנימית, עמוקה ומאירה." />
+        <meta name="twitter:image" content="https://coach.ruthprissman.co.il/images/og-stories.jpg" />
+        
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": "סיפורים קצרים",
+            "description": "אוסף סיפורים קצרים מעוררי מחשבה ורגש מאת רות פריסמן – מאמנת אישית וסופרת.",
+            "url": "https://coach.ruthprissman.co.il/stories",
+            "hasPart": [
+              {
+                "@type": "Article",
+                "headline": "בביש פנוי מיידי",
+                "author": "רות פריסמן",
+                "datePublished": "2025-06-03"
+              },
+              {
+                "@type": "Article",
+                "headline": "טיפול מקפיץ",
+                "author": "רות פריסמן",
+                "datePublished": "2025-06-22"
+              },
+              {
+                "@type": "Article",
+                "headline": "יום חד פעמי",
+                "author": "רות פריסמן",
+                "datePublished": "2025-06-24"
+              }
+            ]
+          })}
+        </script>
       </Helmet>
       
       <div 
