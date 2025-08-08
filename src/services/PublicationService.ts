@@ -285,9 +285,19 @@ class PublicationService {
       
       const needsWebsitePublishing = !existingArticle?.published_at;
       
+      // Ensure we only execute each location once per article (avoid duplicates)
+      const processedLocations = new Set<string>();
+      
       // Process each publication location
       for (const publication of article.article_publications) {
         try {
+          // If we already processed this location (e.g., multiple Email rows), skip sending again
+          if (processedLocations.has(publication.publish_location)) {
+            console.warn(`[Publication Service] Duplicate publication location detected for article ${article.id}: ${publication.publish_location}. Skipping duplicate send and marking as completed.`);
+            await this.markPublicationAsDone(publication.id as number);
+            continue;
+          }
+          
           console.log(`[Publication Service] Publishing article ${article.id} to ${publication.publish_location}`);
           
           switch (publication.publish_location) {
@@ -314,8 +324,9 @@ class PublicationService {
               console.log("[Publication Service] Unknown publication location: " + publication.publish_location);
           }
           
-          // Mark this publication as published
+          // Mark this publication as published and record location as processed
           await this.markPublicationAsDone(publication.id as number);
+          processedLocations.add(publication.publish_location);
           console.log(`[Publication Service] Successfully published article ${article.id} to ${publication.publish_location}`);
           
         } catch (pubError) {
