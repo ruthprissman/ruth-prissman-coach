@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import ReceiptButtons from '@/components/admin/finances/ReceiptButtons';
 
 interface SessionEditDialogProps {
   isOpen: boolean;
@@ -78,6 +79,10 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
     payment_notes: session.payment_notes,
     attachment_urls: (session as any).attachment_urls || [],
   });
+
+  const [transactionId, setTransactionId] = useState<number | null>(null);
+  const [receiptPath, setReceiptPath] = useState<string | null>(null);
+  const [isTxnLoading, setIsTxnLoading] = useState(false);
 
   // Fetch available exercises
   useEffect(() => {
@@ -132,6 +137,29 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       setSelectedExercises(session.exercise_list || []);
     }
   }, [isOpen, session, sessionPrice]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setIsTxnLoading(true);
+    const supabase = supabaseClient();
+    supabase
+      .from('transactions')
+      .select('id, receipt_path')
+      .eq('session_id', session.id)
+      .eq('type', 'income')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ data, error }: any) => {
+        if (!error && data && data.length) {
+          setTransactionId((data[0] as any).id);
+          setReceiptPath((data[0] as any).receipt_path || null);
+        } else {
+          setTransactionId(null);
+          setReceiptPath(null);
+        }
+      })
+      .finally(() => setIsTxnLoading(false));
+  }, [isOpen, session.id]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -327,6 +355,44 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const createIncomeTransaction = async () => {
+    try {
+      setIsTxnLoading(true);
+      const client = supabaseClient();
+      const status = formData.payment_status === 'paid' || formData.payment_status === 'partial' ? 'confirmed' : 'draft';
+      const baseDate: Date = (formData.payment_date as Date) || (formData.session_date as Date);
+      const dateStr = new Date(baseDate).toISOString().split('T')[0];
+
+      const { data, error } = await client
+        .from('transactions')
+        .insert({
+          date: dateStr,
+          amount: formData.paid_amount || 0,
+          type: 'income',
+          category: 'therapy',
+          client_id: session.patient_id,
+          client_name: null,
+          payment_method: formData.payment_method || null,
+          reference_number: null,
+          receipt_number: null,
+          session_id: session.id,
+          status,
+        })
+        .select('id, receipt_path')
+        .single();
+
+      if (error) throw error;
+      setTransactionId((data as any).id);
+      setReceiptPath((data as any).receipt_path || null);
+      toast({ title: 'נוצרה רשומת הכנסה', description: 'כעת ניתן להעלות קבלה' });
+    } catch (error: any) {
+      console.error('Failed to create income transaction', error);
+      toast({ title: 'שגיאה ביצירת רשומת הכנסה', description: error.message || 'אנא נסי שוב', variant: 'destructive' });
+    } finally {
+      setIsTxnLoading(false);
     }
   };
 
@@ -575,6 +641,33 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
             </>
           )}
         </div>
+
+        <Separator className="my-4" />
+        <h3 className="text-lg font-semibold text-purple-700">קבלה</h3>
+        {transactionId ? (
+          <div className="mt-2">
+            <ReceiptButtons
+              transactionId={transactionId}
+              receiptPath={receiptPath || undefined}
+              onUploaded={(newPath) => setReceiptPath(newPath)}
+              onDeleted={() => setReceiptPath(null)}
+            />
+          </div>
+        ) : (
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">כדי להעלות קבלה, צרי רשומת הכנסה לפגישה הזאת.</p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={createIncomeTransaction}
+              disabled={isTxnLoading}
+              className="border-purple-200 text-purple-700 hover:bg-purple-50"
+            >
+              {isTxnLoading ? 'יוצרת...' : 'צור רשומת הכנסה'}
+            </Button>
+          </div>
+        )}
+
 
         <DialogFooter className="gap-2 sm:gap-0 flex-row-reverse">
           <Button
