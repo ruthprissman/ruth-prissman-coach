@@ -308,9 +308,21 @@ class PublicationService {
               }
               
               console.log(`[Publication Service] Starting email publication for article ${article.id}`);
+              
+              // Mark Email as processed BEFORE sending to prevent multiple sends
+              processedLocations.add('Email');
+              
+              // Mark ALL Email publications as completed BEFORE sending
+              const emailPublications = article.article_publications.filter(p => p.publish_location === 'Email');
+              for (const emailPub of emailPublications) {
+                await this.markPublicationAsDone(emailPub.id as number);
+              }
+              
+              // Send email only once
               await this.publishToEmail(article);
-              processedLocations.add('Email'); // Mark Email as processed after successful send
-              break;
+              
+              // Skip marking this publication again since we already marked all Email publications
+              continue;
               
             case 'WhatsApp':
               await this.publishToWhatsApp(article);
@@ -324,7 +336,7 @@ class PublicationService {
               console.log("[Publication Service] Unknown publication location: " + publication.publish_location);
           }
           
-          // Mark this publication as published
+          // Mark this publication as published (for non-Email publications)
           await this.markPublicationAsDone(publication.id as number);
           console.log(`[Publication Service] Successfully published article ${article.id} to ${publication.publish_location}`);
           
