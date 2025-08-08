@@ -170,12 +170,10 @@ class PublicationService {
     }, this.MAX_PROCESSING_TIME);
     
     try {
-      // Get current timestamp in Israel timezone for accurate comparison
-      const now = new Date();
-      const israelNow = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Jerusalem"}));
-      const nowISOString = israelNow.toISOString();
+      // Get current timestamp in UTC for accurate comparison regardless of client timezone
+      const nowISOString = new Date().toISOString();
       
-      console.log(`[Publication Service] Checking for scheduled publications at Israel time: ${israelNow.toLocaleString('he-IL')} (ISO: ${nowISOString})`);
+      console.log(`[Publication Service] Checking for scheduled publications at: ${new Date().toISOString()} (ISO: ${nowISOString})`);
 
       // Get all publications that are scheduled and not yet published
       const scheduledPublications = await this.databaseService.getScheduledPublications(nowISOString);
