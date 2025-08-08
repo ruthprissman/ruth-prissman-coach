@@ -13,6 +13,7 @@ export class DatabaseService {
     const client = supabaseClient();
 
     // Get all publications that are scheduled and not yet published
+    // Include publications with null scheduled_date (immediate publishing) or scheduled_date in the past
     const { data: scheduledPublications, error: publicationsError } = await client
       .from('article_publications')
       .select(`
@@ -30,7 +31,7 @@ export class DatabaseService {
           image_url
         )
       `)
-      .lte('scheduled_date', currentDate)
+      .or(`scheduled_date.is.null,scheduled_date.lte.${currentDate}`)
       .is('published_date', null);
 
     if (publicationsError) {
