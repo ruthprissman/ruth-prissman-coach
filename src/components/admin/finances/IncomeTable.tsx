@@ -8,6 +8,7 @@ import AddIncomeModal from './AddIncomeModal';
 import EditIncomeModal from './EditIncomeModal';
 import ImportIncomeFromSessionsModal from './ImportIncomeFromSessionsModal';
 import { IncomeFilters } from './IncomeFilters';
+import ReceiptButtons from './ReceiptButtons';
 
 interface IncomeTableProps {
   dateRange: DateRange;
@@ -196,7 +197,13 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 items-center">
+                        <ReceiptButtons
+                          transactionId={row.id as number}
+                          receiptPath={row.receipt_path || null}
+                          onUploaded={onRefresh}
+                          onDeleted={onRefresh}
+                        />
                         <Button 
                           variant="ghost" 
                           size="sm" 
