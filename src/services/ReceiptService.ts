@@ -57,7 +57,7 @@ export async function uploadReceiptForTransaction(
   // Update transaction with new path
   const { error: updateError } = await client
     .from('transactions')
-    .update({ receipt_path: path })
+    .update({ attachment_url: path })
     .eq('id', transactionId);
 
   if (updateError) {
@@ -94,7 +94,7 @@ export async function deleteReceiptForTransaction(transactionId: number, path: s
   }
 
   // Clear path on transaction
-  const { error: updateErr } = await client.from('transactions').update({ receipt_path: null }).eq('id', transactionId);
+  const { error: updateErr } = await client.from('transactions').update({ attachment_url: null }).eq('id', transactionId);
   if (updateErr) {
     console.error('[ReceiptService] Failed to clear receipt_path on transaction:', updateErr);
     throw new Error(updateErr.message || 'שגיאה בעדכון הרשומה');

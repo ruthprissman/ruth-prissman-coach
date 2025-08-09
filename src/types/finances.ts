@@ -21,7 +21,7 @@ export interface Transaction {
   payment_method: string;
   reference_number?: string | null;
   receipt_number?: string | null;
-  receipt_path?: string | null;
+  attachment_url?: string | null;
   session_id?: number | null;
 }
 

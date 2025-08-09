@@ -200,7 +200,7 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
                       <div className="flex gap-1 items-center">
                         <ReceiptButtons
                           transactionId={row.id as number}
-                          receiptPath={row.receipt_path || null}
+                          receiptPath={row.attachment_url || null}
                           onUploaded={onRefresh}
                           onDeleted={onRefresh}
                         />

@@ -91,12 +91,12 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
         const supabase = supabaseClient();
         const { data, error } = await supabase
           .from('exercises')
-          .select('id, name')
-          .order('name');
+          .select('id, exercise_name')
+          .order('exercise_name');
           
         if (error) throw error;
         
-        setExercises(data || []);
+        setExercises(((data as any[]) || []).map((e: any) => ({ id: e.id, name: e.exercise_name })) );
       } catch (error) {
         console.error('Error fetching exercises:', error);
       }
@@ -146,14 +146,14 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
         const supabase = supabaseClient();
         const { data, error } = await supabase
           .from('transactions')
-          .select('id, receipt_path')
+          .select('id, attachment_url')
           .eq('session_id', session.id)
           .eq('type', 'income')
           .order('created_at', { ascending: false })
           .limit(1);
         if (!error && data && data.length) {
           setTransactionId((data[0] as any).id);
-          setReceiptPath((data[0] as any).receipt_path || null);
+          setReceiptPath((data[0] as any).attachment_url || null);
         } else {
           setTransactionId(null);
           setReceiptPath(null);
@@ -388,12 +388,12 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
           session_id: session.id,
           status,
         })
-        .select('id, receipt_path')
+        .select('id, attachment_url')
         .single();
 
       if (error) throw error;
       setTransactionId((data as any).id);
-      setReceiptPath((data as any).receipt_path || null);
+      setReceiptPath((data as any).attachment_url || null);
       toast({ title: 'נוצרה רשומת הכנסה', description: 'כעת ניתן להעלות קבלה' });
     } catch (error: any) {
       console.error('Failed to create income transaction', error);
