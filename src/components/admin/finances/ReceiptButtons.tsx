@@ -8,7 +8,7 @@ import { getReceiptSignedUrl, uploadReceiptForTransaction, deleteReceiptForTrans
 type Props = {
   transactionId: number;
   receiptPath?: string | null;
-  onUploaded?: () => void;
+  onUploaded?: (newPath?: string) => void;
   onDeleted?: () => void;
 };
 
@@ -26,9 +26,9 @@ const ReceiptButtons: React.FC<Props> = ({ transactionId, receiptPath, onUploade
     if (!file) return;
     setIsBusy(true);
     try {
-      await uploadReceiptForTransaction(transactionId, file, receiptPath || undefined);
+      const { path } = await uploadReceiptForTransaction(transactionId, file, receiptPath || undefined);
       toast({ title: 'הקבלה הועלתה', description: 'הקובץ נשמר בהצלחה' });
-      onUploaded?.();
+      onUploaded?.(path);
     } catch (err: any) {
       toast({ title: 'שגיאה בהעלאה', description: err.message || 'אירעה שגיאה', variant: 'destructive' });
     } finally {

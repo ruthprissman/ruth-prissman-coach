@@ -141,15 +141,16 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     setIsTxnLoading(true);
-    const supabase = supabaseClient();
-    supabase
-      .from('transactions')
-      .select('id, receipt_path')
-      .eq('session_id', session.id)
-      .eq('type', 'income')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .then(({ data, error }: any) => {
+    const run = async () => {
+      try {
+        const supabase = supabaseClient();
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('id, receipt_path')
+          .eq('session_id', session.id)
+          .eq('type', 'income')
+          .order('created_at', { ascending: false })
+          .limit(1);
         if (!error && data && data.length) {
           setTransactionId((data[0] as any).id);
           setReceiptPath((data[0] as any).receipt_path || null);
@@ -157,8 +158,14 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
           setTransactionId(null);
           setReceiptPath(null);
         }
-      })
-      .finally(() => setIsTxnLoading(false));
+      } catch (e) {
+        setTransactionId(null);
+        setReceiptPath(null);
+      } finally {
+        setIsTxnLoading(false);
+      }
+    };
+    run();
   }, [isOpen, session.id]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -649,7 +656,7 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
             <ReceiptButtons
               transactionId={transactionId}
               receiptPath={receiptPath || undefined}
-              onUploaded={(newPath) => setReceiptPath(newPath)}
+              onUploaded={(newPath) => setReceiptPath(newPath ?? null)}
               onDeleted={() => setReceiptPath(null)}
             />
           </div>
