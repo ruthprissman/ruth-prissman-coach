@@ -373,6 +373,14 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
       const baseDate: Date = (formData.payment_date as Date) || (formData.session_date as Date);
       const dateStr = new Date(baseDate).toISOString().split('T')[0];
 
+      // Fetch patient name (safe if missing)
+      const { data: patientRow } = await client
+        .from('patients')
+        .select('name')
+        .eq('id', session.patient_id)
+        .maybeSingle();
+      const clientName = (patientRow as any)?.name ?? null;
+
       const { data, error } = await client
         .from('transactions')
         .insert({
@@ -380,8 +388,9 @@ const SessionEditDialog: React.FC<SessionEditDialogProps> = ({
           amount: formData.paid_amount || 0,
           type: 'income',
           category: 'therapy',
+          source: 'session',
           client_id: session.patient_id,
-          client_name: null,
+          client_name: clientName,
           payment_method: formData.payment_method || null,
           reference_number: null,
           receipt_number: null,

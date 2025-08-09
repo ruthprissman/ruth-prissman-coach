@@ -87,12 +87,12 @@ const AddSessionDialog: React.FC<AddSessionDialogProps> = ({
         const supabase = supabaseClient();
         const { data, error } = await supabase
           .from('exercises')
-          .select('id, name')
-          .order('name');
+          .select('id, exercise_name')
+          .order('exercise_name');
           
         if (error) throw error;
         
-        setExercises(data || []);
+        setExercises(((data as any[]) || []).map((e: any) => ({ id: e.id, name: e.exercise_name })) );
       } catch (error) {
         console.error('Error fetching exercises:', error);
       }

@@ -33,7 +33,8 @@ export class FinanceService {
           payment_method,
           reference_number,
           receipt_number,
-          session_id
+          session_id,
+          attachment_url
         `)
         .eq('type', 'income')
         .gte('date', dateRange.start.toISOString().split('T')[0])
