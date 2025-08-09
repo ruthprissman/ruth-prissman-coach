@@ -91,6 +91,11 @@ const EditIncomeModal: React.FC<EditIncomeModalProps> = ({
       setSessionId(transaction.session_id?.toString() || '');
       setIsConfirmed(transaction.status === 'confirmed');
 
+      // אם מדובר בהכנסה שמקושרת לפגישה ואין מקור – נשתמש בערך ברירת מחדל "session"
+      if ((transaction.session_id !== null && transaction.session_id !== undefined) && (!transaction.source || transaction.source.trim() === '')) {
+        setSource('session');
+      }
+
       // בדוק אם הלקוח קיים ברשימה
       const existingPatient = patients.find(p => p.name === transaction.client_name);
       if (existingPatient) {

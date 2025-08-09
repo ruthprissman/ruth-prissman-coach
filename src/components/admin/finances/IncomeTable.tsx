@@ -9,6 +9,7 @@ import EditIncomeModal from './EditIncomeModal';
 import ImportIncomeFromSessionsModal from './ImportIncomeFromSessionsModal';
 import { IncomeFilters } from './IncomeFilters';
 import ReceiptButtons from './ReceiptButtons';
+import { getReceiptSignedUrl } from '@/services/ReceiptService';
 
 interface IncomeTableProps {
   dateRange: DateRange;
@@ -98,6 +99,14 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
     }
   };
 
+  const handleViewReceipt = async (path: string) => {
+    try {
+      const url = await getReceiptSignedUrl(path);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      console.error('Error opening receipt:', err);
+    }
+  };
   return (
     <div className="p-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
@@ -156,6 +165,7 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
                 <TableHead>אמצעי תשלום</TableHead>
                 <TableHead>מספר אסמכתא</TableHead>
                 <TableHead>מספר קבלה</TableHead>
+                <TableHead>קבלה</TableHead>
                 <TableHead>קישור לפגישה</TableHead>
                 <TableHead>סטטוס</TableHead>
                 <TableHead>פעולות</TableHead>
@@ -164,7 +174,7 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-6">
+                  <TableCell colSpan={12} className="text-center py-6">
                     <div className="flex justify-center">
                       <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
                     </div>
@@ -182,6 +192,18 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
                     <TableCell>{paymentMethodDisplayMapping[row.payment_method as keyof typeof paymentMethodDisplayMapping] || row.payment_method}</TableCell>
                     <TableCell>{row.reference_number || '-'}</TableCell>
                     <TableCell>{row.receipt_number || '-'}</TableCell>
+                    <TableCell>
+                      {row.attachment_url ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2"
+                          onClick={() => handleViewReceipt(row.attachment_url as string)}
+                        >
+                          צפייה
+                        </Button>
+                      ) : '-'}
+                    </TableCell>
                     <TableCell>
                       {row.session_id ? (
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -226,7 +248,7 @@ const IncomeTable: React.FC<IncomeTableProps> = ({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={12} className="text-center py-6 text-muted-foreground">
                     לא נמצאו רשומות מתאימות
                   </TableCell>
                 </TableRow>
