@@ -80,7 +80,7 @@ export class EmailGenerator {
     html += 'a:hover { text-decoration: none; }';
     
     // Rest of the styles
-    html += '.container { max-width: 600px; margin: 0 auto; background-color: transparent; border-radius: 8px; overflow: hidden; margin-top: 20px; margin-bottom: 20px; }';
+    html += '.container { max-width: 600px; margin: 0 auto; background-color: rgba(255, 255, 255, 0.96); border-radius: 8px; overflow: hidden; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }';
     html += '.header { padding: 20px; text-align: center; }';
     html += '.header h1 { color: #4A148C; margin: 0; font-size: 28px; font-weight: 700; text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.7); text-align: center; }';
     html += '.content { padding: 30px 20px; text-align: center; }';
@@ -96,7 +96,7 @@ export class EmailGenerator {
     
     // Responsive styles
     html += '@media only screen and (max-width: 620px) {';
-    html += '  .container { width: 100% !important; margin: 10px 0 !important; }';
+    html += '  .container { width: 100% !important; margin: 10px 0 !important; background-color: rgba(255, 255, 255, 0.98) !important; }';
     html += '  .header h1 { font-size: 22px !important; }';
     html += '  .content, .links, .footer { padding: 15px 10px !important; }';
     html += '  p, a { font-size: 16px !important; }';
@@ -114,7 +114,7 @@ export class EmailGenerator {
     html += '<![endif]-->';
     
     // Non-Outlook version
-    html += '<div style="background-image: url(\'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg\'); background-repeat: no-repeat; background-size: cover; background-position: center; background-attachment: fixed; width: 100%; height: 100%; padding: 20px 0;">';
+    html += '<div style="background-image: linear-gradient(0deg, rgba(255,255,255,0.94), rgba(255,255,255,0.94)), url(\'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg\'); background-repeat: no-repeat; background-size: cover; background-position: center; width: 100%; height: 100%; padding: 20px 0;">';
     
     // Table-based structure for better email client compatibility
     html += '<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" width="100%" style="max-width: 600px; margin: 0 auto;">';
