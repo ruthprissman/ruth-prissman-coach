@@ -110,11 +110,11 @@ export class EmailGenerator {
     html += '<!--[if mso]>';
     html += '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="background-color: #f9f9f9;">';
     html += '<tr>';
-    html += '<td style="background-image: url(\'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg\'); background-repeat: repeat; background-size: auto; background-position: center; width: 100%; height: 100%;">';
+    html += '<td style="background-image: url(\'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg\'); background-repeat: no-repeat; background-size: cover; background-position: center; background-attachment: fixed; width: 100%; height: 100%;">';
     html += '<![endif]-->';
     
     // Non-Outlook version
-    html += '<div style="background-image: linear-gradient(0deg, rgba(255,255,255,0.82), rgba(255,255,255,0.82)), url(\'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg\'); background-repeat: repeat; background-size: auto; background-position: center; width: 100%; height: 100%; padding: 20px 0;">';
+    html += '<div style="background-image: linear-gradient(0deg, rgba(255,255,255,0.4), rgba(255,255,255,0.4)), url(\'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-background.jpg\'); background-repeat: no-repeat; background-size: cover; background-position: center; background-attachment: fixed; width: 100%; height: 100%; padding: 20px 0;">';
     
     // Table-based structure for better email client compatibility
     html += '<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" width="100%" style="max-width: 600px; margin: 0 auto;">';
