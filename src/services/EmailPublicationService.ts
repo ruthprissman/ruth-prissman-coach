@@ -100,7 +100,7 @@ export class EmailPublicationService {
         return false;
       }
       
-      // 1. Check if specific recipients were selected from the preview modal
+      // 1. Check if specific recipients were selected from the preview modal or retry operation
       const selectedRecipients = (window as any).selectedEmailRecipients;
       let subscribers: string[]; // Array of email strings
       
@@ -110,13 +110,31 @@ export class EmailPublicationService {
         // Clear the selection after use
         delete (window as any).selectedEmailRecipients;
       } else {
-        // Fetch all active email subscribers
-        subscribers = await this.databaseService.fetchActiveSubscribers();
-        if (!subscribers || subscribers.length === 0) {
-          console.log('[Email Publication] No active subscribers found for article ' + article.id);
-          return false;
+        // Check if this article has any previous email delivery attempts
+        const undeliveredRecipients = await this.databaseService.getUndeliveredEmailRecipients(article.id);
+        
+        if (undeliveredRecipients.length > 0) {
+          // This is a retry scenario - only send to those who didn't receive it yet
+          console.log('[Email Publication] Retry detected - sending only to undelivered recipients:', undeliveredRecipients.length);
+          subscribers = undeliveredRecipients;
+        } else {
+          // First time or all subscribers already received - get all active subscribers
+          const allSubscribers = await this.databaseService.fetchActiveSubscribers();
+          if (!allSubscribers || allSubscribers.length === 0) {
+            console.log('[Email Publication] No active subscribers found for article ' + article.id);
+            return false;
+          }
+          
+          // Check if everyone already received this email
+          const isCompletelyDelivered = await this.databaseService.isArticleCompletelyDelivered(article.id);
+          if (isCompletelyDelivered) {
+            console.log('[Email Publication] All subscribers have already received this email for article ' + article.id);
+            return true; // Return true since email was "successfully" processed
+          }
+          
+          subscribers = allSubscribers;
+          console.log('[Email Publication] Using all active subscribers');
         }
-        console.log('[Email Publication] Using all active subscribers');
       }
       
       console.log('[Email Publication] Found ' + subscribers.length + ' subscribers for article ' + article.id);

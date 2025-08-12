@@ -705,4 +705,54 @@ export class DatabaseService {
       throw err;
     }
   }
+
+  /**
+   * Get all recipients who successfully received an email for an article
+   */
+  public async getSuccessfulEmailRecipients(articleId: number): Promise<string[]> {
+    const client = supabaseClient();
+    
+    const { data, error } = await client
+      .from('email_logs')
+      .select('email')
+      .eq('article_id', articleId)
+      .eq('status', 'sent');
+    
+    if (error) {
+      console.error('[DatabaseService] Error fetching successful email recipients:', error);
+      throw error;
+    }
+    
+    return data?.map(row => row.email) || [];
+  }
+
+  /**
+   * Get all recipients who haven't successfully received an email for an article
+   */
+  public async getUndeliveredEmailRecipients(articleId: number): Promise<string[]> {
+    const client = supabaseClient();
+    
+    // Get all active subscribers
+    const allSubscribers = await this.fetchActiveSubscribers();
+    
+    // Get successful recipients
+    const successfulRecipients = await this.getSuccessfulEmailRecipients(articleId);
+    
+    // Return the difference - those who haven't received the email
+    const undeliveredRecipients = allSubscribers.filter(email => 
+      !successfulRecipients.includes(email)
+    );
+    
+    console.log(`[DatabaseService] Found ${undeliveredRecipients.length} undelivered recipients for article ${articleId} out of ${allSubscribers.length} total subscribers`);
+    
+    return undeliveredRecipients;
+  }
+
+  /**
+   * Check if an article has been completely delivered to all subscribers
+   */
+  public async isArticleCompletelyDelivered(articleId: number): Promise<boolean> {
+    const undeliveredRecipients = await this.getUndeliveredEmailRecipients(articleId);
+    return undeliveredRecipients.length === 0;
+  }
 }

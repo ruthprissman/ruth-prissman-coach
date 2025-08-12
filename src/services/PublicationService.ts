@@ -315,27 +315,30 @@ class PublicationService {
               // Mark Email as processed IMMEDIATELY to prevent any duplicates
               processedLocations.add('Email');
               
-              // Check idempotency first
+              // Check if there are any undelivered recipients
+              const undeliveredRecipients = await this.databaseService.getUndeliveredEmailRecipients(article.id);
               const emailPublications = article.article_publications.filter(p => p.publish_location === 'Email');
-              let hasAnyAlreadyDelivered = false;
               
-              for (const emailPub of emailPublications) {
-                const alreadyDelivered = await this.databaseService.isEmailAlreadyDelivered(article.id, emailPub.id as number);
-                if (alreadyDelivered) {
-                  console.log(`[Publication Service] Email already delivered for article ${article.id}, publication ${emailPub.id}`);
-                  hasAnyAlreadyDelivered = true;
-                  break;
+              if (undeliveredRecipients.length === 0) {
+                // All subscribers have already received this email
+                console.log(`[Publication Service] All subscribers have already received email for article ${article.id}`);
+                
+                // Check if this article is completely delivered
+                const isCompletelyDelivered = await this.databaseService.isArticleCompletelyDelivered(article.id);
+                if (isCompletelyDelivered) {
+                  // Mark all email publications as completed since everyone received the email
+                  for (const emailPub of emailPublications) {
+                    await this.markPublicationAsDone(emailPub.id as number);
+                  }
+                  console.log(`[Publication Service] Email completely delivered to all subscribers, marked all email publications as completed for article ${article.id}`);
                 }
-              }
-              
-              if (hasAnyAlreadyDelivered) {
-                // Mark all email publications as completed since email was already sent
-                for (const emailPub of emailPublications) {
-                  await this.markPublicationAsDone(emailPub.id as number);
-                }
-                console.log(`[Publication Service] Email already delivered, marked all email publications as completed for article ${article.id}`);
                 continue;
               }
+              
+              console.log(`[Publication Service] Found ${undeliveredRecipients.length} recipients who haven't received email for article ${article.id}`);
+              
+              // Set the recipients for this email send to only undelivered ones
+              (window as any).selectedEmailRecipients = undeliveredRecipients;
               
               // Generate unique attempt ID for this delivery
               const attemptId = `${article.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
