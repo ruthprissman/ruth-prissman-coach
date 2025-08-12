@@ -300,19 +300,48 @@ const PublishModal: React.FC<PublishModalProps> = ({
         }
       }
       
+      // Get detailed email delivery status for better messaging
+      let emailDeliveryMessage = '';
+      if (optionsToPublish.some(opt => opt.publish_location === 'Email')) {
+        try {
+          const databaseService = new (await import('@/services/DatabaseService')).DatabaseService();
+          const totalSubscribers = (await databaseService.fetchActiveSubscribers()).length;
+          const deliveredCount = (await databaseService.getSuccessfulEmailRecipients(article.id)).length;
+          const undeliveredCount = totalSubscribers - deliveredCount;
+          
+          if (deliveredCount === totalSubscribers) {
+            emailDeliveryMessage = `המייל נשלח לכל ${totalSubscribers} הנמענים`;
+          } else if (deliveredCount > 0) {
+            emailDeliveryMessage = `המייל נשלח ל-${deliveredCount} מתוך ${totalSubscribers} נמענים`;
+          } else {
+            emailDeliveryMessage = 'שליחת המייל נכשלה';
+          }
+        } catch (emailStatusError) {
+          console.error('Error getting email status:', emailStatusError);
+        }
+      }
+      
       if (failedOnes.length > 0) {
         setFailedLocations(failedOnes);
         setPublishStatus('error');
+        let errorDescription = `פרסום נכשל בערוצים: ${failedOnes.join(', ')}`;
+        if (emailDeliveryMessage) {
+          errorDescription += `. ${emailDeliveryMessage}`;
+        }
         toast({
           title: "פרסום נכשל חלקית",
-          description: `פרסום נכשל בערוצים: ${failedOnes.join(', ')}`,
+          description: errorDescription,
           variant: "destructive",
         });
       } else {
         setPublishStatus('success');
+        let successDescription = "המאמר פורסם בכל המיקומים שנבחרו";
+        if (emailDeliveryMessage) {
+          successDescription += `. ${emailDeliveryMessage}`;
+        }
         toast({
           title: "פרסום הושלם בהצלחה",
-          description: "המאמר פורסם בכל המיקומים שנבחרו",
+          description: successDescription,
         });
         
         setTimeout(() => {

@@ -354,21 +354,68 @@ class PublicationService {
                   );
                 }
                 
-                // Send email
-                await this.publishToEmail(article);
+                // Send the email and get detailed status
+                const emailResult = await this.emailService.sendEmailPublication(article);
                 
-                // Record successful delivery and mark as completed
-                for (const emailPub of emailPublications) {
-                  await this.databaseService.recordEmailDeliveryAttempt(
-                    article.id, 
-                    emailPub.id as number, 
-                    attemptId, 
-                    'success'
-                  );
-                  await this.markPublicationAsDone(emailPub.id as number);
+                if (emailResult.sent) {
+                  console.log(`[Publication Service] Email sent successfully for article ${article.id}. Status: ${emailResult.status}, Delivered: ${emailResult.deliveredCount}/${emailResult.totalSubscribers}`);
+                  
+                  // Show appropriate success message based on delivery status
+                  const { status, deliveredCount, totalSubscribers, undeliveredCount } = emailResult;
+                  let message = '';
+                  
+                  switch (status) {
+                    case 'all_sent':
+                      message = `המייל נשלח בהצלחה לכל ${totalSubscribers} הנמענים`;
+                      break;
+                    case 'partial_sent':
+                      message = `המייל נשלח ל-${deliveredCount} נמענים נוספים (סה"כ ${deliveredCount}/${totalSubscribers})`;
+                      break;
+                    case 'new_send':
+                      message = `המייל נשלח בהצלחה ל-${deliveredCount} נמענים`;
+                      break;
+                  }
+                  
+                  if (message) {
+                    console.log(`[Publication Service] ${message}`);
+                  }
+                  
+                  // Record successful delivery
+                  for (const emailPub of emailPublications) {
+                    await this.databaseService.recordEmailDeliveryAttempt(
+                      article.id, 
+                      emailPub.id as number, 
+                      attemptId, 
+                      'success'
+                    );
+                  }
+                  
+                  // Only mark as completed if all subscribers received the email
+                  if (status === 'all_sent') {
+                    for (const emailPub of emailPublications) {
+                      await this.markPublicationAsDone(emailPub.id as number);
+                    }
+                    console.log(`[Publication Service] All email publications marked as completed for article ${article.id}`);
+                  } else {
+                    console.log(`[Publication Service] Email partially sent for article ${article.id}, keeping publication open for retry`);
+                  }
+                } else {
+                  console.error(`[Publication Service] Email sending failed for article ${article.id}. Status: ${emailResult.status}`);
+                  
+                  // Record failed delivery and release locks
+                  for (const emailPub of emailPublications) {
+                    await this.databaseService.recordEmailDeliveryAttempt(
+                      article.id, 
+                      emailPub.id as number, 
+                      attemptId, 
+                      'failed',
+                      undefined,
+                      'Email sending failed'
+                    );
+                    await this.databaseService.releaseLock(emailPub.id as number);
+                  }
+                  throw new Error(`Email sending failed: ${emailResult.status}`);
                 }
-                
-                console.log(`[Publication Service] Email sent and marked as completed for article ${article.id}`);
               } catch (emailError) {
                 console.error(`[Publication Service] Failed to send email for article ${article.id}:`, emailError);
                 

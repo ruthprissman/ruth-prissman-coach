@@ -76,18 +76,18 @@ export class EmailPublicationService {
   }
 
   /**
-   * Send email publication for an article
+   * Send email publication for an article with delivery status information
    * @param article The article to publish via email
-   * @returns Promise<boolean> Whether the email was sent successfully
+   * @returns Promise<{sent: boolean, status: 'all_sent' | 'partial_sent' | 'new_send' | 'no_subscribers', deliveredCount: number, totalSubscribers: number, undeliveredCount: number}> Email send status
    */
-  public async sendEmailPublication(article: any): Promise<boolean> {
+  public async sendEmailPublication(article: any): Promise<{sent: boolean, status: 'all_sent' | 'partial_sent' | 'new_send' | 'no_subscribers', deliveredCount: number, totalSubscribers: number, undeliveredCount: number}> {
     console.log('[Email Publication] Starting email publication process for article ' + article.id + ': "' + article.title + '"');
     
     try {
       // Validate that the article has the required properties
       if (!article || !article.id) {
         console.error('[Email Publication] Invalid article object provided');
-        return false;
+        return {sent: false, status: 'no_subscribers', deliveredCount: 0, totalSubscribers: 0, undeliveredCount: 0};
       }
       
       // Ensure article has title and content
@@ -97,8 +97,13 @@ export class EmailPublicationService {
           hasTitle: !!article.title,
           hasContent: !!article.content_markdown
         }));
-        return false;
+        return {sent: false, status: 'no_subscribers', deliveredCount: 0, totalSubscribers: 0, undeliveredCount: 0};
       }
+
+      // Get delivery status information first
+      const totalSubscribers = (await this.databaseService.fetchActiveSubscribers()).length;
+      const successfulRecipients = await this.databaseService.getSuccessfulEmailRecipients(article.id);
+      const deliveredCount = successfulRecipients.length;
       
       // 1. Check if specific recipients were selected from the preview modal or retry operation
       const selectedRecipients = (window as any).selectedEmailRecipients;
@@ -122,20 +127,22 @@ export class EmailPublicationService {
           const allSubscribers = await this.databaseService.fetchActiveSubscribers();
           if (!allSubscribers || allSubscribers.length === 0) {
             console.log('[Email Publication] No active subscribers found for article ' + article.id);
-            return false;
+            return {sent: false, status: 'no_subscribers', deliveredCount: 0, totalSubscribers: 0, undeliveredCount: 0};
           }
           
           // Check if everyone already received this email
           const isCompletelyDelivered = await this.databaseService.isArticleCompletelyDelivered(article.id);
           if (isCompletelyDelivered) {
             console.log('[Email Publication] All subscribers have already received this email for article ' + article.id);
-            return true; // Return true since email was "successfully" processed
+            return {sent: true, status: 'all_sent', deliveredCount, totalSubscribers, undeliveredCount: 0}; // Return success since everyone got it
           }
           
           subscribers = allSubscribers;
           console.log('[Email Publication] Using all active subscribers');
         }
       }
+      
+      const undeliveredCount = totalSubscribers - deliveredCount;
       
       console.log('[Email Publication] Found ' + subscribers.length + ' subscribers for article ' + article.id);
       
@@ -182,7 +189,7 @@ export class EmailPublicationService {
       
       if (!diagnosisResult.isValid) {
         console.error('[Email Publication] Email content validation failed for article ' + article.id + ': ' + diagnosisResult.issues.join('; '));
-        return false;
+        return {sent: false, status: 'no_subscribers', deliveredCount, totalSubscribers, undeliveredCount};
       }
       
       console.log('[Email Publication] Email content validated successfully');
@@ -207,7 +214,7 @@ export class EmailPublicationService {
       
       if (!token) {
         console.error('[Email Publication] No authentication token available, cannot send emails');
-        return false;
+        return {sent: false, status: 'no_subscribers', deliveredCount, totalSubscribers, undeliveredCount};
       }
       
       console.log('[Email Publication] Authentication token obtained, length: ' + token.length);
@@ -327,10 +334,31 @@ export class EmailPublicationService {
       // 10. Mark the article as published if needed
       await this.ensureArticleIsPublished(article.id);
       
-      return successfulEmails.length > 0;
+      // 11. Determine final status and return detailed information
+      const finalDeliveredCount = deliveredCount + successfulEmails.length;
+      const finalUndeliveredCount = totalSubscribers - finalDeliveredCount;
+      
+      let status: 'all_sent' | 'partial_sent' | 'new_send' | 'no_subscribers';
+      if (finalDeliveredCount === 0) {
+        status = 'no_subscribers';
+      } else if (finalDeliveredCount === totalSubscribers) {
+        status = 'all_sent';
+      } else if (deliveredCount > 0) {
+        status = 'partial_sent';
+      } else {
+        status = 'new_send';
+      }
+      
+      return {
+        sent: successfulEmails.length > 0,
+        status,
+        deliveredCount: finalDeliveredCount,
+        totalSubscribers,
+        undeliveredCount: finalUndeliveredCount
+      };
     } catch (error) {
       console.error('[Email Publication] Error in sendEmailPublication for article ' + (article?.id || 'unknown') + ':', error);
-      return false;
+      return {sent: false, status: 'no_subscribers', deliveredCount: 0, totalSubscribers: 0, undeliveredCount: 0};
     }
   }
 

@@ -91,19 +91,38 @@ const ArticlesList: React.FC<ArticlesListProps> = ({
       
       const retriedCount = await publicationService.retryFailedEmails(articleId);
       
+      // Get more detailed status information
+      const databaseService = new (await import('@/services/DatabaseService')).DatabaseService();
+      const totalSubscribers = (await databaseService.fetchActiveSubscribers()).length;
+      const undeliveredRecipients = await databaseService.getUndeliveredEmailRecipients(articleId);
+      
       if (retriedCount > 0) {
-        toast({
-          title: "מיילים נשלחו שוב",
-          description: `נשלחו ${retriedCount} מיילים שנכשלו בעבר`,
-        });
+        if (undeliveredRecipients.length === 0) {
+          toast({
+            title: "המייל נשלח לכולם!",
+            description: `המייל הושלם לכל ${totalSubscribers} הנמענים`,
+          });
+        } else {
+          toast({
+            title: "שליחה חלקית הושלמה",
+            description: `נשלח ל-${retriedCount} נמענים נוספים. נותרו ${undeliveredRecipients.length} נמענים`,
+          });
+        }
         
         // After successful retry, refresh the article list to update the status
         onRefresh();
       } else {
-        toast({
-          title: "אין מיילים לשליחה חוזרת",
-          description: "לא נמצאו מיילים שנכשלו לשליחה חוזרת",
-        });
+        if (undeliveredRecipients.length === 0) {
+          toast({
+            title: "כל הנמענים כבר קיבלו",
+            description: `המייל כבר נשלח לכל ${totalSubscribers} הנמענים`,
+          });
+        } else {
+          toast({
+            title: "אין מיילים לשליחה חוזרת",
+            description: "לא נמצאו מיילים שנכשלו לשליחה חוזרת",
+          });
+        }
       }
       
       // Update stats after retry
