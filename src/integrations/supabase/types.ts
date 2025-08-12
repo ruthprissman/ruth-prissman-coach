@@ -37,6 +37,9 @@ export type Database = {
           content_id: number | null
           created_at: string | null
           id: number
+          lock_expires_at: string | null
+          processing_lock_at: string | null
+          processing_lock_by: string | null
           publish_location: string
           published_date: string | null
           scheduled_date: string | null
@@ -45,6 +48,9 @@ export type Database = {
           content_id?: number | null
           created_at?: string | null
           id?: number
+          lock_expires_at?: string | null
+          processing_lock_at?: string | null
+          processing_lock_by?: string | null
           publish_location: string
           published_date?: string | null
           scheduled_date?: string | null
@@ -53,6 +59,9 @@ export type Database = {
           content_id?: number | null
           created_at?: string | null
           id?: number
+          lock_expires_at?: string | null
+          processing_lock_at?: string | null
+          processing_lock_by?: string | null
           publish_location?: string
           published_date?: string | null
           scheduled_date?: string | null
@@ -229,6 +238,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      email_delivery_attempts: {
+        Row: {
+          article_id: number
+          attempt_id: string
+          attempted_at: string | null
+          error_message: string | null
+          id: number
+          publication_id: number
+          recipient_count: number | null
+          status: string
+        }
+        Insert: {
+          article_id: number
+          attempt_id: string
+          attempted_at?: string | null
+          error_message?: string | null
+          id?: number
+          publication_id: number
+          recipient_count?: number | null
+          status?: string
+        }
+        Update: {
+          article_id?: number
+          attempt_id?: string
+          attempted_at?: string | null
+          error_message?: string | null
+          id?: number
+          publication_id?: number
+          recipient_count?: number | null
+          status?: string
+        }
+        Relationships: []
       }
       email_logs: {
         Row: {
@@ -814,7 +856,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      clean_expired_publication_locks: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
     }
     Enums: {
       content_type: "article" | "poem" | "humor"

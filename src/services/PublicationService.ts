@@ -41,10 +41,13 @@ class PublicationService {
   private isCurrentlyProcessing = false;
   private MAX_PROCESSING_TIME = 300000; // 5 minutes maximum processing time
   private lastProcessingStart: number | null = null;
+  private lockIdentifier: string;
 
   private constructor() {
     this.databaseService = new DatabaseService();
     this.emailService = new EmailPublicationService();
+    // Create unique identifier for this instance
+    this.lockIdentifier = `pub-service-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   /**
@@ -175,8 +178,8 @@ class PublicationService {
       
       console.log(`[Publication Service] Checking for scheduled publications at: ${new Date().toISOString()} (ISO: ${nowISOString})`);
 
-      // Get all publications that are scheduled and not yet published
-      const scheduledPublications = await this.databaseService.getScheduledPublications(nowISOString);
+      // Get all publications that are scheduled and not yet published, with atomic locking
+      const scheduledPublications = await this.databaseService.getScheduledPublications(nowISOString, this.lockIdentifier);
 
       if (!scheduledPublications || scheduledPublications.length === 0) {
         console.log("[Publication Service] No publications scheduled for now");
@@ -312,20 +315,72 @@ class PublicationService {
               // Mark Email as processed IMMEDIATELY to prevent any duplicates
               processedLocations.add('Email');
               
+              // Check idempotency first
+              const emailPublications = article.article_publications.filter(p => p.publish_location === 'Email');
+              let hasAnyAlreadyDelivered = false;
+              
+              for (const emailPub of emailPublications) {
+                const alreadyDelivered = await this.databaseService.isEmailAlreadyDelivered(article.id, emailPub.id as number);
+                if (alreadyDelivered) {
+                  console.log(`[Publication Service] Email already delivered for article ${article.id}, publication ${emailPub.id}`);
+                  hasAnyAlreadyDelivered = true;
+                  break;
+                }
+              }
+              
+              if (hasAnyAlreadyDelivered) {
+                // Mark all email publications as completed since email was already sent
+                for (const emailPub of emailPublications) {
+                  await this.markPublicationAsDone(emailPub.id as number);
+                }
+                console.log(`[Publication Service] Email already delivered, marked all email publications as completed for article ${article.id}`);
+                continue;
+              }
+              
+              // Generate unique attempt ID for this delivery
+              const attemptId = `${article.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+              
               try {
-                // Send email first
+                // Record that we're starting the email send
+                for (const emailPub of emailPublications) {
+                  await this.databaseService.recordEmailDeliveryAttempt(
+                    article.id, 
+                    emailPub.id as number, 
+                    attemptId, 
+                    'sending'
+                  );
+                }
+                
+                // Send email
                 await this.publishToEmail(article);
                 
-                // Only mark as completed AFTER successful send
-                const emailPublications = article.article_publications.filter(p => p.publish_location === 'Email');
+                // Record successful delivery and mark as completed
                 for (const emailPub of emailPublications) {
+                  await this.databaseService.recordEmailDeliveryAttempt(
+                    article.id, 
+                    emailPub.id as number, 
+                    attemptId, 
+                    'success'
+                  );
                   await this.markPublicationAsDone(emailPub.id as number);
                 }
                 
                 console.log(`[Publication Service] Email sent and marked as completed for article ${article.id}`);
               } catch (emailError) {
                 console.error(`[Publication Service] Failed to send email for article ${article.id}:`, emailError);
-                // Don't mark as completed if sending failed
+                
+                // Record failed delivery and release locks
+                for (const emailPub of emailPublications) {
+                  await this.databaseService.recordEmailDeliveryAttempt(
+                    article.id, 
+                    emailPub.id as number, 
+                    attemptId, 
+                    'failed',
+                    undefined,
+                    emailError.message
+                  );
+                  await this.databaseService.releaseLock(emailPub.id as number);
+                }
               }
               
               // Skip the generic marking below since we handle it specifically here
@@ -349,12 +404,26 @@ class PublicationService {
           
         } catch (pubError) {
           console.error(`[Publication Service] Error publishing article ${article.id} to ${publication.publish_location}:`, pubError);
+          // Release lock on failed publication
+          try {
+            await this.databaseService.releaseLock(publication.id as number);
+          } catch (lockError) {
+            console.error(`[Publication Service] Error releasing lock for publication ${publication.id}:`, lockError);
+          }
           // Continue with other publications
         }
       }
       
     } catch (error) {
       console.error(`[Publication Service] Error publishing article ${article.id}:`, error);
+      // Release locks on all publications for this article
+      for (const publication of article.article_publications) {
+        try {
+          await this.databaseService.releaseLock(publication.id as number);
+        } catch (lockError) {
+          console.error(`[Publication Service] Error releasing lock for publication ${publication.id}:`, lockError);
+        }
+      }
     }
   }
 

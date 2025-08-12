@@ -7,20 +7,57 @@ import { FutureSession } from '@/types/session';
  */
 export class DatabaseService {
   /**
-   * Get all scheduled publications that haven't been published yet
+   * Get all scheduled publications that haven't been published yet with atomic locking
    */
-  public async getScheduledPublications(currentDate: string): Promise<any[]> {
+  public async getScheduledPublications(currentDate: string, lockIdentifier?: string): Promise<any[]> {
     const client = supabaseClient();
 
-    // Get all publications that are scheduled and not yet published
-    // Include publications with null scheduled_date (immediate publishing) or scheduled_date in the past
-    const { data: scheduledPublications, error: publicationsError } = await client
+    // If no lock identifier provided, just return publications without locking
+    if (!lockIdentifier) {
+      const { data: scheduledPublications, error: publicationsError } = await client
+        .from('article_publications')
+        .select(`
+          id,
+          content_id,
+          publish_location,
+          scheduled_date,
+          processing_lock_at,
+          processing_lock_by,
+          lock_expires_at,
+          professional_content:content_id (
+            id,
+            title,
+            content_markdown,
+            category_id,
+            contact_email,
+            published_at,
+            image_url
+          )
+        `)
+        .or(`scheduled_date.is.null,scheduled_date.lte.${currentDate}`)
+        .is('published_date', null);
+
+      if (publicationsError) {
+        throw publicationsError;
+      }
+
+      return scheduledPublications || [];
+    }
+
+    // First, clean up expired locks
+    await this.cleanExpiredLocks();
+
+    // Get publications that are scheduled, not published, and not currently locked
+    const { data: availablePublications, error: fetchError } = await client
       .from('article_publications')
       .select(`
         id,
         content_id,
         publish_location,
         scheduled_date,
+        processing_lock_at,
+        processing_lock_by,
+        lock_expires_at,
         professional_content:content_id (
           id,
           title,
@@ -32,13 +69,74 @@ export class DatabaseService {
         )
       `)
       .or(`scheduled_date.is.null,scheduled_date.lte.${currentDate}`)
-      .is('published_date', null);
+      .is('published_date', null)
+      .is('processing_lock_at', null);
 
-    if (publicationsError) {
-      throw publicationsError;
+    if (fetchError) {
+      console.error('[DatabaseService] Error fetching available publications:', fetchError);
+      throw fetchError;
     }
 
-    return scheduledPublications || [];
+    if (!availablePublications || availablePublications.length === 0) {
+      console.log('[DatabaseService] No available publications found');
+      return [];
+    }
+
+    // Lock the publications atomically
+    const publicationIds = availablePublications.map(p => p.id);
+    const lockExpiry = new Date();
+    lockExpiry.setMinutes(lockExpiry.getMinutes() + 5); // 5 minute lock
+
+    const { data: lockedPublications, error: lockError } = await client
+      .from('article_publications')
+      .update({
+        processing_lock_at: new Date().toISOString(),
+        processing_lock_by: lockIdentifier,
+        lock_expires_at: lockExpiry.toISOString()
+      })
+      .in('id', publicationIds)
+      .is('processing_lock_at', null) // Only lock if not already locked
+      .select(`
+        id,
+        content_id,
+        publish_location,
+        scheduled_date,
+        processing_lock_at,
+        processing_lock_by,
+        lock_expires_at,
+        professional_content:content_id (
+          id,
+          title,
+          content_markdown,
+          category_id,
+          contact_email,
+          published_at,
+          image_url
+        )
+      `);
+
+    if (lockError) {
+      console.error('[DatabaseService] Error locking publications:', lockError);
+      throw lockError;
+    }
+
+    console.log(`[DatabaseService] Successfully locked ${lockedPublications?.length || 0} publications`);
+    return lockedPublications || [];
+  }
+
+  /**
+   * Clean up expired publication locks
+   */
+  public async cleanExpiredLocks(): Promise<void> {
+    try {
+      const client = supabaseClient();
+      const { error } = await client.rpc('clean_expired_publication_locks');
+      if (error) {
+        console.error('[DatabaseService] Error cleaning expired locks:', error);
+      }
+    } catch (error) {
+      console.error('[DatabaseService] Error in cleanExpiredLocks:', error);
+    }
   }
 
   /**
@@ -77,14 +175,39 @@ export class DatabaseService {
   }
 
   /**
-   * Mark publication as completed
+   * Mark publication as completed and release lock
    */
   public async markPublicationAsCompleted(publicationId: number): Promise<void> {
     const client = supabaseClient();
     
     const { error } = await client
       .from('article_publications')
-      .update({ published_date: new Date().toISOString() })
+      .update({ 
+        published_date: new Date().toISOString(),
+        processing_lock_at: null,
+        processing_lock_by: null,
+        lock_expires_at: null
+      })
+      .eq('id', publicationId);
+    
+    if (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Release lock on a publication without marking it as completed
+   */
+  public async releaseLock(publicationId: number): Promise<void> {
+    const client = supabaseClient();
+    
+    const { error } = await client
+      .from('article_publications')
+      .update({ 
+        processing_lock_at: null,
+        processing_lock_by: null,
+        lock_expires_at: null
+      })
       .eq('id', publicationId);
     
     if (error) {
@@ -112,18 +235,84 @@ export class DatabaseService {
   }
 
   /**
-   * Reset publication date for retry
+   * Reset publication date for retry and release lock
    */
   public async resetPublicationDate(publicationId: number): Promise<void> {
     const client = supabaseClient();
     
     const { error } = await client
       .from('article_publications')
-      .update({ published_date: null })
+      .update({ 
+        published_date: null,
+        processing_lock_at: null,
+        processing_lock_by: null,
+        lock_expires_at: null
+      })
       .eq('id', publicationId);
     
     if (error) {
       throw error;
+    }
+  }
+
+  /**
+   * Check if an email was already delivered for this article
+   */
+  public async isEmailAlreadyDelivered(articleId: number, publicationId: number): Promise<boolean> {
+    try {
+      const client = supabaseClient();
+      const { data, error } = await client
+        .from('email_delivery_attempts')
+        .select('id')
+        .eq('article_id', articleId)
+        .eq('publication_id', publicationId)
+        .eq('status', 'success')
+        .limit(1);
+
+      if (error) {
+        console.error(`[DatabaseService] Error checking email delivery status:`, error);
+        return false; // If we can't check, allow the attempt
+      }
+
+      return (data && data.length > 0);
+    } catch (error) {
+      console.error(`[DatabaseService] Error in isEmailAlreadyDelivered:`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Record email delivery attempt
+   */
+  public async recordEmailDeliveryAttempt(
+    articleId: number, 
+    publicationId: number, 
+    attemptId: string, 
+    status: 'sending' | 'success' | 'failed',
+    recipientCount?: number,
+    errorMessage?: string
+  ): Promise<void> {
+    try {
+      const client = supabaseClient();
+      const { error } = await client
+        .from('email_delivery_attempts')
+        .upsert({
+          article_id: articleId,
+          publication_id: publicationId,
+          attempt_id: attemptId,
+          status,
+          recipient_count: recipientCount,
+          error_message: errorMessage,
+          attempted_at: new Date().toISOString()
+        }, {
+          onConflict: 'attempt_id'
+        });
+
+      if (error) {
+        console.error(`[DatabaseService] Error recording email delivery attempt:`, error);
+      }
+    } catch (error) {
+      console.error(`[DatabaseService] Error in recordEmailDeliveryAttempt:`, error);
     }
   }
 
