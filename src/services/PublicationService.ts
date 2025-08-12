@@ -300,28 +300,35 @@ class PublicationService {
               break;
               
             case 'Email':
-              // If we already processed Email for this article, skip sending again
+              // If we already processed Email for this article, skip entirely
               if (processedLocations.has('Email')) {
-                console.warn(`[Publication Service] Email already sent for article ${article.id}. Skipping duplicate send and marking as completed.`);
+                console.warn(`[Publication Service] Email already processed for article ${article.id}. Skipping duplicate and marking as completed.`);
                 await this.markPublicationAsDone(publication.id as number);
                 continue;
               }
               
               console.log(`[Publication Service] Starting email publication for article ${article.id}`);
               
-              // Mark Email as processed BEFORE sending to prevent multiple sends
+              // Mark Email as processed IMMEDIATELY to prevent any duplicates
               processedLocations.add('Email');
               
-              // Mark ALL Email publications as completed BEFORE sending
-              const emailPublications = article.article_publications.filter(p => p.publish_location === 'Email');
-              for (const emailPub of emailPublications) {
-                await this.markPublicationAsDone(emailPub.id as number);
+              try {
+                // Send email first
+                await this.publishToEmail(article);
+                
+                // Only mark as completed AFTER successful send
+                const emailPublications = article.article_publications.filter(p => p.publish_location === 'Email');
+                for (const emailPub of emailPublications) {
+                  await this.markPublicationAsDone(emailPub.id as number);
+                }
+                
+                console.log(`[Publication Service] Email sent and marked as completed for article ${article.id}`);
+              } catch (emailError) {
+                console.error(`[Publication Service] Failed to send email for article ${article.id}:`, emailError);
+                // Don't mark as completed if sending failed
               }
               
-              // Send email only once
-              await this.publishToEmail(article);
-              
-              // Skip marking this publication again since we already marked all Email publications
+              // Skip the generic marking below since we handle it specifically here
               continue;
               
             case 'WhatsApp':
