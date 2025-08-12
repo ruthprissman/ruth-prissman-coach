@@ -337,8 +337,15 @@ class PublicationService {
               
               console.log(`[Publication Service] Found ${undeliveredRecipients.length} recipients who haven't received email for article ${article.id}`);
               
-              // Set the recipients for this email send to only undelivered ones
-              (window as any).selectedEmailRecipients = undeliveredRecipients;
+              // Only set undelivered recipients if no specific recipients were selected by user
+              const userSelectedRecipients = (window as any).selectedEmailRecipients;
+              if (!userSelectedRecipients || !Array.isArray(userSelectedRecipients) || userSelectedRecipients.length === 0) {
+                // Set the recipients for this email send to only undelivered ones (retry logic)
+                (window as any).selectedEmailRecipients = undeliveredRecipients;
+                console.log(`[Publication Service] No user selection found, using undelivered recipients for retry:`, undeliveredRecipients.length);
+              } else {
+                console.log(`[Publication Service] User selected ${userSelectedRecipients.length} specific recipients, preserving selection`);
+              }
               
               // Generate unique attempt ID for this delivery
               const attemptId = `${article.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
