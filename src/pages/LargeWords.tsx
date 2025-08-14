@@ -72,23 +72,35 @@ const LargeWords = () => {
           
           const hasValidWebsitePublication = article.article_publications.some(pub => {
             const isWebsite = pub.publish_location === 'Website';
-            const hasScheduledDate = !!pub.scheduled_date;
-            
-            const scheduledDateOnly = pub.scheduled_date ? pub.scheduled_date.split('T')[0] : null;
-            
-            const isScheduledForTodayOrEarlier = scheduledDateOnly && scheduledDateOnly <= todayDateOnly;
+            const isPublished = !!pub.published_date; // Check if publication was actually published
             
             if (!isWebsite) {
               console.log(`🔍 [LargeWords] Publication for article ID ${article.id} skipped: Not a Website publication (${pub.publish_location})`);
-            } else if (!hasScheduledDate) {
-              console.log(`🔍 [LargeWords] Website publication for article ID ${article.id} skipped: No scheduled_date`);
-            } else if (!isScheduledForTodayOrEarlier) {
-              console.log(`🔍 [LargeWords] Website publication for article ID ${article.id} skipped: scheduled_date (${scheduledDateOnly}) is in the future compared to today (${todayDateOnly})`);
-            } else {
-              console.log(`🔍 [LargeWords] Website publication for article ID ${article.id} INCLUDED: scheduled_date (${scheduledDateOnly}) is today or earlier`);
+              return false;
             }
             
-            return isWebsite && hasScheduledDate && isScheduledForTodayOrEarlier;
+            if (!isPublished) {
+              console.log(`🔍 [LargeWords] Website publication for article ID ${article.id} skipped: Not published yet (published_date is null)`);
+              return false;
+            }
+            
+            // For publications that were scheduled, check if they should be visible
+            if (pub.scheduled_date) {
+              const scheduledDateOnly = pub.scheduled_date.split('T')[0];
+              const isScheduledForTodayOrEarlier = scheduledDateOnly <= todayDateOnly;
+              
+              if (!isScheduledForTodayOrEarlier) {
+                console.log(`🔍 [LargeWords] Website publication for article ID ${article.id} skipped: scheduled_date (${scheduledDateOnly}) is in the future compared to today (${todayDateOnly})`);
+                return false;
+              } else {
+                console.log(`🔍 [LargeWords] Website publication for article ID ${article.id} INCLUDED: scheduled_date (${scheduledDateOnly}) is today or earlier`);
+              }
+            } else {
+              // For immediate publications (no scheduled_date), they're always visible if published
+              console.log(`🔍 [LargeWords] Website publication for article ID ${article.id} INCLUDED: Immediate publication (no scheduled_date)`);
+            }
+            
+            return true;
           });
           
           if (hasValidWebsitePublication) {
