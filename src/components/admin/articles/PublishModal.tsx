@@ -279,7 +279,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
                 .insert({
                   content_id: article.id,
                   publish_location: option.publish_location,
-                  scheduled_date: option.scheduled_date || new Date().toISOString()
+                  scheduled_date: option.scheduled_date // Allow null for immediate publishing
                 })
                 .select('id')
                 .single();
