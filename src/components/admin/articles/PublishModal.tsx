@@ -436,7 +436,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
       <Dialog open={isOpen} onOpenChange={isSubmitting ? undefined : onClose}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>תזמן פרסום מאמר</DialogTitle>
+            <DialogTitle>פרסום מאמר</DialogTitle>
           </DialogHeader>
           
           {loading ? (
@@ -597,9 +597,9 @@ const PublishModal: React.FC<PublishModalProps> = ({
                   )}
                 </>
               )}
-              {isSubmitting ? "מתזמן פרסום..." : (
+              {isSubmitting ? "מפרסם..." : (
                 publishOptions.some(opt => opt.isSelected && opt.publish_location === 'Email') ? 
-                "תצוגה מקדימה ותזמן" : "תזמן פרסום"
+                "תצוגה מקדימה ופרסום" : "פרסם עכשיו"
               )}
             </Button>
           </DialogFooter>
