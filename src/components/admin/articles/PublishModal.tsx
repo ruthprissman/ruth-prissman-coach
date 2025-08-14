@@ -162,11 +162,22 @@ const PublishModal: React.FC<PublishModalProps> = ({
     
     if (newLocations.length === 0) return;
     
-    const locationsToInsert = newLocations.map(loc => ({
-      content_id: article.id,
-      publish_location: loc.publish_location,
-      scheduled_date: loc.scheduled_date || null, // Allow null for immediate publishing
-    }));
+    const locationsToInsert = newLocations.map(loc => {
+      // For Website publishing without scheduling, publish immediately
+      if (loc.publish_location === 'Website' && !loc.scheduled_date) {
+        return {
+          content_id: article.id,
+          publish_location: loc.publish_location,
+          scheduled_date: null, // No scheduling for immediate website publishing
+        };
+      }
+      
+      return {
+        content_id: article.id,
+        publish_location: loc.publish_location,
+        scheduled_date: loc.scheduled_date || null,
+      };
+    });
     
     try {
       const { error } = await client
@@ -252,6 +263,48 @@ const PublishModal: React.FC<PublishModalProps> = ({
       for (const option of optionsToPublish) {
         try {
           console.log('PublishModal: Publishing to', option.publish_location);
+          
+          // Handle immediate website publishing (no scheduling)
+          if (option.publish_location === 'Website' && !option.scheduled_date) {
+            console.log('PublishModal: Immediate website publishing');
+            
+            // Publish directly to website
+            const freshClient = await getFreshSupabaseClient();
+            const { error: publishError } = await freshClient
+              .from('professional_content')
+              .update({ published_at: new Date().toISOString() })
+              .eq('id', article.id);
+              
+            if (publishError) throw publishError;
+            
+            // Mark publication as completed
+            if (option.id) {
+              await freshClient
+                .from('article_publications')
+                .update({ published_date: new Date().toISOString() })
+                .eq('id', option.id);
+            } else {
+              // For new publications, first save then mark as published
+              const { data, error } = await freshClient
+                .from('article_publications')
+                .select('id')
+                .eq('content_id', article.id)
+                .eq('publish_location', option.publish_location)
+                .single();
+                
+              if (error) throw error;
+              
+              if (data?.id) {
+                await freshClient
+                  .from('article_publications')
+                  .update({ published_date: new Date().toISOString() })
+                  .eq('id', data.id);
+              }
+            }
+            
+            console.log('PublishModal: Website published immediately');
+            continue;
+          }
           
           if (option.id) {
             await publicationService.retryPublication(option.id);
