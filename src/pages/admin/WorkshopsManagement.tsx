@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
-import { Plus, Edit2, CalendarDays, Trash2 } from 'lucide-react';
+import { Plus, Edit2, CalendarDays, Trash2, Users, Mail } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +35,14 @@ interface Workshop {
   updated_at: string;
 }
 
+interface Registrant {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  created_at: string;
+}
+
 const workshopSchema = z.object({
   title: z.string().min(1, 'כותרת נדרשת'),
   description: z.string().min(1, 'תיאור נדרש'),
@@ -50,6 +58,9 @@ type WorkshopFormData = z.infer<typeof workshopSchema>;
 const WorkshopsManagement: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingWorkshop, setEditingWorkshop] = useState<Workshop | null>(null);
+  const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
+  const [isRegistrantsModalOpen, setIsRegistrantsModalOpen] = useState(false);
+  const [zoomLink, setZoomLink] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -77,6 +88,24 @@ const WorkshopsManagement: React.FC = () => {
       if (error) throw error;
       return data as Workshop[];
     },
+  });
+
+  // Fetch registrants for a specific workshop
+  const { data: registrants = [], isLoading: isLoadingRegistrants } = useQuery({
+    queryKey: ['registrants', selectedWorkshop?.id],
+    queryFn: async () => {
+      if (!selectedWorkshop?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('registrations')
+        .select('*')
+        .eq('workshop_id', selectedWorkshop.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Registrant[];
+    },
+    enabled: !!selectedWorkshop?.id,
   });
 
   // Create workshop mutation
@@ -217,6 +246,37 @@ const WorkshopsManagement: React.FC = () => {
     },
   });
 
+  // Send workshop invitations mutation
+  const sendInvitationsMutation = useMutation({
+    mutationFn: async ({ workshopId, zoomLink }: { workshopId: string; zoomLink: string }) => {
+      const { data, error } = await supabase.functions.invoke('send-workshop-invitations', {
+        body: {
+          workshopId,
+          zoomLink,
+        },
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'הצלחה',
+        description: 'הזימונים נשלחו בהצלחה לכל הנרשמות',
+      });
+      setIsRegistrantsModalOpen(false);
+      setZoomLink('');
+    },
+    onError: (error) => {
+      console.error('Error sending invitations:', error);
+      toast({
+        title: 'שגיאה',
+        description: 'אירעה שגיאה בשליחת הזימונים',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleEdit = (workshop: Workshop) => {
     setEditingWorkshop(workshop);
     const workshopDate = new Date(workshop.date);
@@ -260,6 +320,27 @@ const WorkshopsManagement: React.FC = () => {
     });
   };
 
+  const handleViewRegistrants = (workshop: Workshop) => {
+    setSelectedWorkshop(workshop);
+    setIsRegistrantsModalOpen(true);
+  };
+
+  const handleSendInvitations = () => {
+    if (!selectedWorkshop || !zoomLink.trim()) {
+      toast({
+        title: 'שגיאה',
+        description: 'נדרש לקלוט לינק זום',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    sendInvitationsMutation.mutate({
+      workshopId: selectedWorkshop.id,
+      zoomLink: zoomLink.trim(),
+    });
+  };
+
   const formatWorkshopDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
@@ -267,6 +348,19 @@ const WorkshopsManagement: React.FC = () => {
     } catch {
       return 'תאריך לא תקין';
     }
+  };
+
+  const formatRegistrantDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return format(date, 'dd/MM/yyyy HH:mm', { locale: he });
+    } catch {
+      return 'תאריך לא תקין';
+    }
+  };
+
+  const isWorkshopInFuture = (dateString: string) => {
+    return new Date(dateString) >= new Date();
   };
 
   // Watch is_free to reset price when workshop becomes free
@@ -312,6 +406,7 @@ const WorkshopsManagement: React.FC = () => {
                     <TableHead className="text-right">תאריך</TableHead>
                     <TableHead className="text-center">פעילה</TableHead>
                     <TableHead className="text-center">מחיר</TableHead>
+                    <TableHead className="text-center">נרשמות / שלח מייל</TableHead>
                     <TableHead className="text-center">פעולות</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -331,6 +426,17 @@ const WorkshopsManagement: React.FC = () => {
                        </TableCell>
                       <TableCell className="text-center">
                         {workshop.is_free ? 'חינם' : `₪${workshop.price}`}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewRegistrants(workshop)}
+                          className="flex items-center gap-1"
+                        >
+                          <Users className="h-3 w-3" />
+                          נרשמות / שלח מייל
+                        </Button>
                       </TableCell>
                        <TableCell className="text-center">
                          <div className="flex items-center justify-center gap-2">
@@ -384,6 +490,7 @@ const WorkshopsManagement: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Workshop Form Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -564,6 +671,97 @@ const WorkshopsManagement: React.FC = () => {
                 </div>
               </form>
             </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Registrants Modal */}
+        <Dialog open={isRegistrantsModalOpen} onOpenChange={setIsRegistrantsModalOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                נרשמות לסדנה: {selectedWorkshop?.title}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {isLoadingRegistrants ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : registrants.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  אין נרשמות לסדנה זו
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    <h3 className="font-semibold">רשימת נרשמות ({registrants.length}):</h3>
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-right">שם מלא</TableHead>
+                            <TableHead className="text-right">אימייל</TableHead>
+                            <TableHead className="text-right">טלפון</TableHead>
+                            <TableHead className="text-right">תאריך הרשמה</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {registrants.map((registrant) => (
+                            <TableRow key={registrant.id}>
+                              <TableCell className="font-medium">{registrant.full_name}</TableCell>
+                              <TableCell>{registrant.email}</TableCell>
+                              <TableCell>{registrant.phone || '-'}</TableCell>
+                              <TableCell>{formatRegistrantDate(registrant.created_at)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+
+                  {selectedWorkshop && isWorkshopInFuture(selectedWorkshop.date) && (
+                    <div className="space-y-3 border-t pt-4">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        שליחת זימון לסדנה
+                      </h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            לינק זום לסדנה:
+                          </label>
+                          <Input
+                            placeholder="הכנס את לינק הזום לסדנה..."
+                            value={zoomLink}
+                            onChange={(e) => setZoomLink(e.target.value)}
+                            className="w-full"
+                          />
+                        </div>
+                        <Button
+                          onClick={handleSendInvitations}
+                          disabled={sendInvitationsMutation.isPending || !zoomLink.trim()}
+                          className="w-full flex items-center gap-2"
+                        >
+                          {sendInvitationsMutation.isPending ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              שולח זימונים...
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="h-4 w-4" />
+                              שלח מייל זימון לנרשמות ({registrants.length})
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>
