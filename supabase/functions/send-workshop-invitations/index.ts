@@ -120,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
       const emailData = {
         sender: {
           name: "רות פריסמן",
-          email: "ruthprissman@gmail.com"
+          email: "ruth@ruthprissman.co.il"
         },
         to: [{
           email: registrant.email,
