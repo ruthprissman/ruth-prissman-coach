@@ -147,9 +147,22 @@ const handler = async (req: Request): Promise<Response> => {
             
             <p>אני מצפה לראות אותך בסדנה!</p>
             
-            <p>בברכה,<br>
-            רות פריסמן<br>
-            <a href="mailto:ruthprissman@gmail.com" style="color: #2c5aa0;">ruthprissman@gmail.com</a></p>
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #2c5aa0;">
+              <p style="margin: 0; font-weight: bold; color: #2c5aa0; font-size: 18px;">רות פריסמן</p>
+              <p style="margin: 5px 0; color: #666; font-size: 14px;">מאמנת בגישה טיפולית | קוד הנפש | SEFT</p>
+              <p style="margin: 5px 0; color: #666; font-size: 14px;">מבט חדש על חיים מוכרים</p>
+              <p style="margin: 5px 0; color: #666; font-size: 14px;">צמיחה אישית | זוגית | ילדים | טראומות</p>
+              
+              <div style="margin-top: 15px;">
+                <p style="margin: 2px 0; color: #2c5aa0; font-size: 14px;">
+                  📧 <a href="mailto:ruth@ruthprissman.co.il" style="color: #2c5aa0; text-decoration: none;">Ruth@RuthPrissman.co.il</a>
+                </p>
+                <p style="margin: 2px 0; color: #2c5aa0; font-size: 14px;">📱 0556620273</p>
+                <p style="margin: 2px 0; color: #2c5aa0; font-size: 14px;">
+                  🌐 <a href="https://coach.ruthprissman.co.il" style="color: #2c5aa0; text-decoration: none;">https://coach.ruthprissman.co.il</a>
+                </p>
+              </div>
+            </div>
             
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
             <p style="font-size: 12px; color: #666;">
