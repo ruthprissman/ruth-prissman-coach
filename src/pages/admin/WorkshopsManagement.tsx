@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
-import { Plus, Edit2, CalendarDays } from 'lucide-react';
+import { Plus, Edit2, CalendarDays, Trash2 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -189,6 +190,33 @@ const WorkshopsManagement: React.FC = () => {
     },
   });
 
+  // Delete workshop mutation
+  const deleteWorkshopMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('workshops')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workshops'] });
+      toast({
+        title: 'הצלחה',
+        description: 'הסדנה נמחקה בהצלחה',
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting workshop:', error);
+      toast({
+        title: 'שגיאה',
+        description: 'אירעה שגיאה במחיקת הסדנה',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleEdit = (workshop: Workshop) => {
     setEditingWorkshop(workshop);
     const workshopDate = new Date(workshop.date);
@@ -304,17 +332,50 @@ const WorkshopsManagement: React.FC = () => {
                       <TableCell className="text-center">
                         {workshop.is_free ? 'חינם' : `₪${workshop.price}`}
                       </TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(workshop)}
-                          className="flex items-center gap-1"
-                        >
-                          <Edit2 className="h-3 w-3" />
-                          עריכה
-                        </Button>
-                      </TableCell>
+                       <TableCell className="text-center">
+                         <div className="flex items-center justify-center gap-2">
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleEdit(workshop)}
+                             className="flex items-center gap-1"
+                           >
+                             <Edit2 className="h-3 w-3" />
+                             עריכה
+                           </Button>
+                           <AlertDialog>
+                             <AlertDialogTrigger asChild>
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 className="flex items-center gap-1 text-destructive hover:text-destructive"
+                               >
+                                 <Trash2 className="h-3 w-3" />
+                                 מחיקה
+                               </Button>
+                             </AlertDialogTrigger>
+                             <AlertDialogContent>
+                               <AlertDialogHeader>
+                                 <AlertDialogTitle>אישור מחיקה</AlertDialogTitle>
+                                 <AlertDialogDescription>
+                                   האם אתה בטוח שברצונך למחוק את הסדנה "{workshop.title}"?
+                                   פעולה זו לא ניתנת לביטול.
+                                 </AlertDialogDescription>
+                               </AlertDialogHeader>
+                               <AlertDialogFooter>
+                                 <AlertDialogCancel>ביטול</AlertDialogCancel>
+                                 <AlertDialogAction
+                                   onClick={() => deleteWorkshopMutation.mutate(workshop.id)}
+                                   disabled={deleteWorkshopMutation.isPending}
+                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                 >
+                                   מחק
+                                 </AlertDialogAction>
+                               </AlertDialogFooter>
+                             </AlertDialogContent>
+                           </AlertDialog>
+                         </div>
+                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
