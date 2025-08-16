@@ -38,6 +38,7 @@ import { PublicationProvider } from './contexts/PublicationContext';
 import { Toaster } from './components/ui/toaster';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
+import WorkshopLanding from './pages/WorkshopLanding';
 import { ScrollToTop } from './components/ScrollToTop';
 import { runSessionDiagnostics } from './utils/SessionDiagnostics';
 
@@ -85,6 +86,7 @@ function App() {
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/faq" element={<FAQ />} />
+                <Route path="/workshop" element={<WorkshopLanding />} />
 
                 {/* Admin auth routes */}
                 <Route path="/admin/login" element={<Login />} />
