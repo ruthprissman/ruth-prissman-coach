@@ -173,6 +173,15 @@ const handler = async (req: Request): Promise<Response> => {
         `
       };
 
+      // Add signature image as attachment
+      const emailDataWithAttachment = {
+        ...emailData,
+        attachment: [{
+          name: "חתימה-רות-פריסמן.png",
+          url: "/lovable-uploads/74b61a26-f5ad-41fd-8cf7-6100846b6e6e.png"
+        }]
+      };
+
       // Send email via Brevo
       const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
@@ -181,7 +190,7 @@ const handler = async (req: Request): Promise<Response> => {
           'Content-Type': 'application/json',
           'api-key': Deno.env.get('BREVO_API_KEY') ?? ''
         },
-        body: JSON.stringify(emailData)
+        body: JSON.stringify(emailDataWithAttachment)
       });
 
       if (!brevoResponse.ok) {
