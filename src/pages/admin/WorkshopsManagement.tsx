@@ -38,6 +38,7 @@ const workshopSchema = z.object({
   title: z.string().min(1, 'כותרת נדרשת'),
   description: z.string().min(1, 'תיאור נדרש'),
   date: z.date({ required_error: 'תאריך נדרש' }),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'שעה לא תקינה'),
   is_free: z.boolean().default(false),
   price: z.number().min(0, 'מחיר חייב להיות חיובי').default(0),
   is_active: z.boolean().default(true),
@@ -56,6 +57,7 @@ const WorkshopsManagement: React.FC = () => {
     defaultValues: {
       title: '',
       description: '',
+      time: '',
       is_free: false,
       price: 0,
       is_active: true,
@@ -79,12 +81,16 @@ const WorkshopsManagement: React.FC = () => {
   // Create workshop mutation
   const createWorkshopMutation = useMutation({
     mutationFn: async (data: WorkshopFormData) => {
+      const [hours, minutes] = data.time.split(':').map(Number);
+      const dateWithTime = new Date(data.date);
+      dateWithTime.setHours(hours, minutes, 0, 0);
+      
       const { error } = await supabase
         .from('workshops')
         .insert([{
           title: data.title,
           description: data.description,
-          date: data.date.toISOString(),
+          date: dateWithTime.toISOString(),
           is_free: data.is_free,
           price: data.is_free ? 0 : data.price,
           is_active: data.is_active,
@@ -114,12 +120,16 @@ const WorkshopsManagement: React.FC = () => {
   // Update workshop mutation
   const updateWorkshopMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: WorkshopFormData }) => {
+      const [hours, minutes] = data.time.split(':').map(Number);
+      const dateWithTime = new Date(data.date);
+      dateWithTime.setHours(hours, minutes, 0, 0);
+      
       const { error } = await supabase
         .from('workshops')
         .update({
           title: data.title,
           description: data.description,
-          date: data.date.toISOString(),
+          date: dateWithTime.toISOString(),
           is_free: data.is_free,
           price: data.is_free ? 0 : data.price,
           is_active: data.is_active,
@@ -181,10 +191,12 @@ const WorkshopsManagement: React.FC = () => {
 
   const handleEdit = (workshop: Workshop) => {
     setEditingWorkshop(workshop);
+    const workshopDate = new Date(workshop.date);
     form.reset({
       title: workshop.title,
       description: workshop.description,
-      date: new Date(workshop.date),
+      date: workshopDate,
+      time: format(workshopDate, 'HH:mm'),
       is_free: workshop.is_free,
       price: workshop.price,
       is_active: workshop.is_active,
@@ -205,6 +217,7 @@ const WorkshopsManagement: React.FC = () => {
     form.reset({
       title: '',
       description: '',
+      time: '',
       is_free: false,
       price: 0,
       is_active: true,
@@ -279,13 +292,15 @@ const WorkshopsManagement: React.FC = () => {
                     <TableRow key={workshop.id}>
                       <TableCell className="font-medium">{workshop.title}</TableCell>
                       <TableCell>{formatWorkshopDate(workshop.date)}</TableCell>
-                      <TableCell className="text-center">
-                        <Switch
-                          checked={workshop.is_active}
-                          onCheckedChange={() => handleToggleActive(workshop)}
-                          disabled={toggleActiveMutation.isPending}
-                        />
-                      </TableCell>
+                       <TableCell className="text-center">
+                         <div className="flex justify-center">
+                           <Switch
+                             checked={workshop.is_active}
+                             onCheckedChange={() => handleToggleActive(workshop)}
+                             disabled={toggleActiveMutation.isPending}
+                           />
+                         </div>
+                       </TableCell>
                       <TableCell className="text-center">
                         {workshop.is_free ? 'חינם' : `₪${workshop.price}`}
                       </TableCell>
@@ -350,64 +365,83 @@ const WorkshopsManagement: React.FC = () => {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="date"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>תאריך ושעה</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP", { locale: he })
-                              ) : (
-                                <span>בחר תאריך</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date < new Date()}
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                 <div className="grid grid-cols-2 gap-4">
+                   <FormField
+                     control={form.control}
+                     name="date"
+                     render={({ field }) => (
+                       <FormItem className="flex flex-col">
+                         <FormLabel>תאריך</FormLabel>
+                         <Popover>
+                           <PopoverTrigger asChild>
+                             <FormControl>
+                               <Button
+                                 variant="outline"
+                                 className={cn(
+                                   "pl-3 text-left font-normal",
+                                   !field.value && "text-muted-foreground"
+                                 )}
+                               >
+                                 {field.value ? (
+                                   format(field.value, "PPP", { locale: he })
+                                 ) : (
+                                   <span>בחר תאריך</span>
+                                 )}
+                                 <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                               </Button>
+                             </FormControl>
+                           </PopoverTrigger>
+                           <PopoverContent className="w-auto p-0" align="start">
+                             <Calendar
+                               mode="single"
+                               selected={field.value}
+                               onSelect={field.onChange}
+                               disabled={(date) => date < new Date()}
+                               initialFocus
+                               className={cn("p-3 pointer-events-auto")}
+                             />
+                           </PopoverContent>
+                         </Popover>
+                         <FormMessage />
+                       </FormItem>
+                     )}
+                   />
 
-                <FormField
-                  control={form.control}
-                  name="is_free"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                      <div className="space-y-0.5">
-                        <FormLabel>סדנה חינמית</FormLabel>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                   <FormField
+                     control={form.control}
+                     name="time"
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel>שעה</FormLabel>
+                         <FormControl>
+                           <Input
+                             type="time"
+                             {...field}
+                           />
+                         </FormControl>
+                         <FormMessage />
+                       </FormItem>
+                     )}
+                   />
+                 </div>
+
+                 <FormField
+                   control={form.control}
+                   name="is_free"
+                   render={({ field }) => (
+                     <FormItem className="flex flex-row-reverse items-center justify-between rounded-lg border p-3">
+                       <FormControl>
+                         <Switch
+                           checked={field.value}
+                           onCheckedChange={field.onChange}
+                         />
+                       </FormControl>
+                       <div className="space-y-0.5">
+                         <FormLabel>סדנה חינמית</FormLabel>
+                       </div>
+                     </FormItem>
+                   )}
+                 />
 
                 {!isFree && (
                   <FormField
@@ -432,23 +466,23 @@ const WorkshopsManagement: React.FC = () => {
                   />
                 )}
 
-                <FormField
-                  control={form.control}
-                  name="is_active"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                      <div className="space-y-0.5">
-                        <FormLabel>סדנה פעילה</FormLabel>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                 <FormField
+                   control={form.control}
+                   name="is_active"
+                   render={({ field }) => (
+                     <FormItem className="flex flex-row-reverse items-center justify-between rounded-lg border p-3">
+                       <FormControl>
+                         <Switch
+                           checked={field.value}
+                           onCheckedChange={field.onChange}
+                         />
+                       </FormControl>
+                       <div className="space-y-0.5">
+                         <FormLabel>סדנה פעילה</FormLabel>
+                       </div>
+                     </FormItem>
+                   )}
+                 />
 
                 <div className="flex gap-2 pt-4">
                   <Button
