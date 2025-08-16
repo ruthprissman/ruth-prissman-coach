@@ -522,6 +522,41 @@ export type Database = {
           },
         ]
       }
+      registrations: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          workshop_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          workshop_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          workshop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registrations_workshop_id_fkey"
+            columns: ["workshop_id"]
+            isOneToOne: false
+            referencedRelation: "workshops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scheduled_emails: {
         Row: {
           article_id: number | null
@@ -850,6 +885,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workshops: {
+        Row: {
+          created_at: string
+          date: string
+          description: string
+          id: string
+          is_active: boolean
+          is_free: boolean
+          price: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description: string
+          id?: string
+          is_active?: boolean
+          is_free?: boolean
+          price?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          is_free?: boolean
+          price?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
