@@ -620,86 +620,156 @@ const ArticleEditor: React.FC = () => {
         import('html2canvas')
       ]);
       
-      // Split content by page delimiter, but use the original formatted content
+      // Split content by page delimiter
       const PAGE_DELIMITER = '---page---';
+      let contentPages: string[];
       
-      // Use the original formatted content from the article
-      const originalFormattedContent = processMarkdownContent(article.content_markdown || '');
-      
-      // If user added page delimiters, we need to respect them but still use formatted content
-      let finalPages: string[];
       if (content.includes(PAGE_DELIMITER)) {
-        // Split the plain text content to see where page breaks are
-        const textPages = content.split(PAGE_DELIMITER).map(page => page.trim()).filter(page => page.length > 0);
-        
-        // For now, just use the formatted content as one page or split proportionally
-        // This is a simplified approach - in a real app you'd want more sophisticated splitting
-        finalPages = textPages.length > 1 
-          ? textPages.map(() => originalFormattedContent) // Each page gets the full formatted content (simplified)
-          : [originalFormattedContent];
+        // If user added page delimiters, split the edited content
+        const splitContent = content.split(PAGE_DELIMITER).map(page => page.trim()).filter(page => page.length > 0);
+        // Convert each page back to formatted HTML
+        contentPages = splitContent.map(pageText => processMarkdownContent(pageText));
       } else {
-        finalPages = [originalFormattedContent];
+        // Use the original formatted content as one page
+        contentPages = [processMarkdownContent(content)];
       }
       
       // Create PDF
       const pdf = new jsPDF.default('p', 'mm', 'a4');
       const pageWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
-      const margin = 20;
+      const margin = 15;
       
-      for (let i = 0; i < finalPages.length; i++) {
+      for (let i = 0; i < contentPages.length; i++) {
         if (i > 0) {
           pdf.addPage();
         }
         
-        // Create a temporary div for HTML content
+        // Create temporary div for rendering with proper styling
         const tempDiv = document.createElement('div');
         tempDiv.style.width = '794px'; // A4 width in pixels (210mm * 3.78)
+        tempDiv.style.minHeight = '1123px'; // A4 height in pixels
         tempDiv.style.padding = '40px';
-        tempDiv.style.fontFamily = 'inherit';
-        tempDiv.style.fontSize = '14px';
-        tempDiv.style.lineHeight = '1.6';
+        tempDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
+        tempDiv.style.fontSize = '16px';
+        tempDiv.style.lineHeight = '1.8';
         tempDiv.style.textAlign = 'right';
         tempDiv.style.direction = 'rtl';
-        tempDiv.style.backgroundColor = 'white';
+        tempDiv.style.backgroundColor = '#f8f9fa';
         tempDiv.style.position = 'absolute';
         tempDiv.style.left = '-9999px';
-        tempDiv.style.color = 'black';
+        tempDiv.style.color = '#6b46c1'; // Purple text color
+        tempDiv.style.border = '2px solid #e5e7eb';
+        tempDiv.style.borderRadius = '8px';
         
-        // Add title on first page
+        // Add image and title on first page
         if (i === 0) {
+          // Add image if exists
+          if (article.image_url) {
+            const imageDiv = document.createElement('div');
+            imageDiv.style.textAlign = 'center';
+            imageDiv.style.marginBottom = '30px';
+            
+            const img = document.createElement('img');
+            img.src = article.image_url;
+            img.style.maxWidth = '300px';
+            img.style.maxHeight = '200px';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '8px';
+            img.style.border = '2px solid #e5e7eb';
+            imageDiv.appendChild(img);
+            tempDiv.appendChild(imageDiv);
+          }
+          
+          // Add title
           const titleDiv = document.createElement('div');
-          titleDiv.style.fontSize = '24px';
+          titleDiv.style.fontSize = '28px';
           titleDiv.style.fontWeight = 'bold';
           titleDiv.style.textAlign = 'center';
-          titleDiv.style.marginBottom = '30px';
-          titleDiv.style.color = 'black';
+          titleDiv.style.marginBottom = '40px';
+          titleDiv.style.color = '#4c1d95'; // Darker purple for title
+          titleDiv.style.lineHeight = '1.4';
           titleDiv.textContent = article.title;
           tempDiv.appendChild(titleDiv);
         }
         
-        // Add page content with formatted HTML
+        // Add page content with proper styling
         const contentDiv = document.createElement('div');
-        contentDiv.innerHTML = finalPages[i];
-        tempDiv.appendChild(contentDiv);
+        contentDiv.style.color = '#6b46c1'; // Purple text
+        contentDiv.style.lineHeight = '1.8';
+        contentDiv.innerHTML = contentPages[i];
         
+        // Style all paragraphs and headings in the content
+        contentDiv.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(el => {
+          const element = el as HTMLElement;
+          element.style.color = '#6b46c1';
+          element.style.marginBottom = '16px';
+          element.style.textAlign = 'right';
+          element.style.direction = 'rtl';
+          
+          if (element.tagName.startsWith('H')) {
+            element.style.fontWeight = 'bold';
+            element.style.color = '#4c1d95';
+          }
+        });
+        
+        // Style lists
+        contentDiv.querySelectorAll('ul, ol').forEach(el => {
+          const element = el as HTMLElement;
+          element.style.textAlign = 'right';
+          element.style.direction = 'rtl';
+          element.style.marginBottom = '16px';
+        });
+        
+        contentDiv.querySelectorAll('li').forEach(el => {
+          const element = el as HTMLElement;
+          element.style.color = '#6b46c1';
+          element.style.marginBottom = '8px';
+          element.style.textAlign = 'right';
+          element.style.direction = 'rtl';
+        });
+        
+        tempDiv.appendChild(contentDiv);
         document.body.appendChild(tempDiv);
         
         try {
-          // Convert HTML to canvas
+          // Wait for images to load
+          const images = tempDiv.querySelectorAll('img');
+          await Promise.all(Array.from(images).map(img => {
+            return new Promise((resolve) => {
+              if (img.complete) {
+                resolve(void 0);
+              } else {
+                img.onload = () => resolve(void 0);
+                img.onerror = () => resolve(void 0);
+              }
+            });
+          }));
+          
           const canvas = await html2canvas.default(tempDiv, {
-            scale: 2,
             useCORS: true,
             allowTaint: true,
-            backgroundColor: '#ffffff'
+            scale: 2,
+            logging: false,
+            width: 794,
+            height: 1123,
+            backgroundColor: '#f8f9fa',
           });
           
-          // Add canvas to PDF
-          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          const imgData = canvas.toDataURL('image/png', 1.0);
+          
+          // Add image to PDF maintaining aspect ratio
           const imgWidth = pageWidth - (margin * 2);
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
           
-          pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
+          // If image is taller than page, scale it down
+          const maxHeight = pageHeight - (margin * 2);
+          if (imgHeight > maxHeight) {
+            const scaledWidth = (canvas.width * maxHeight) / canvas.height;
+            pdf.addImage(imgData, 'PNG', margin, margin, scaledWidth, maxHeight);
+          } else {
+            pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+          }
         } finally {
           document.body.removeChild(tempDiv);
         }
@@ -711,7 +781,7 @@ const ArticleEditor: React.FC = () => {
       
       toast({
         title: "PDF נוצר בהצלחה",
-        description: `המאמר יוצא ל-PDF בהצלחה עם ${finalPages.length} עמודים`,
+        description: `המאמר יוצא ל-PDF בהצלחה עם ${contentPages.length} עמודים`,
       });
     } catch (error) {
       console.error('Error creating PDF:', error);
