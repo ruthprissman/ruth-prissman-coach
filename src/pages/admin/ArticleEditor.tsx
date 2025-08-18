@@ -728,11 +728,7 @@ const ArticleEditor: React.FC = () => {
         
         // // Process italic text *text*
         // processedHTML = processedHTML.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-        // רק את זה - לעיבוד השורות הריקות
-processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 32px; margin: 16px 0;"></div>');
-processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 32px; margin: 16px 0;"></div>');
-        // Create styles for proper formatting with strong declarations
+// Create styles for proper formatting with strong declarations
         const styles = `
           <style>
             * {
