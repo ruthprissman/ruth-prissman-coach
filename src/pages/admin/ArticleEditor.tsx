@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { 
   ArrowRight, 
   Calendar as CalendarIcon, 
@@ -615,11 +617,6 @@ const ArticleEditor: React.FC = () => {
     if (!article) return;
     
     try {
-      const [jsPDF, html2canvas] = await Promise.all([
-        import('jspdf'),
-        import('html2canvas')
-      ]);
-      
       // Split content by page delimiter
       const PAGE_DELIMITER = '---page---';
       let contentPages: string[];
@@ -635,7 +632,7 @@ const ArticleEditor: React.FC = () => {
       }
       
       // Create PDF
-      const pdf = new jsPDF.default('p', 'mm', 'a4');
+      const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
       const margin = 15;
@@ -808,7 +805,7 @@ const ArticleEditor: React.FC = () => {
             });
           }));
           
-          const canvas = await html2canvas.default(tempDiv, {
+          const canvas = await html2canvas(tempDiv, {
             useCORS: true,
             allowTaint: true,
             scale: 3, // Higher quality
