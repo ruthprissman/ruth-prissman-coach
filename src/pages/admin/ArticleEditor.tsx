@@ -698,28 +698,74 @@ const ArticleEditor: React.FC = () => {
         contentDiv.style.lineHeight = '2.2';
         contentDiv.style.textAlign = 'center';
         contentDiv.style.direction = 'rtl';
+        contentDiv.style.textAlign = 'center';
+        contentDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
+        contentDiv.style.color = '#6b46c1';
         
-        // Convert HTML to text and split into lines for poem formatting
-        const tempElement = document.createElement('div');
-        tempElement.innerHTML = contentPages[i];
-        const textContent = tempElement.textContent || tempElement.innerText || '';
+        // Process HTML content to handle ^^^ spacing markers while preserving formatting
+        const processExportHTML = (html: string): string => {
+          // Replace ^^^ that are on their own line with spacer paragraphs
+          let processed = html.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<p class="spacer">&nbsp;</p>');
+          
+          // Replace ^^^ that appear within text with double line breaks
+          processed = processed.replace(/\^\^\^/g, '<br><br>');
+          
+          return processed;
+        };
         
-        // Split text into lines and create poem-like formatting
-        const lines = textContent.split('\n').filter(line => line.trim() !== '');
+        // Process the content and set innerHTML to preserve formatting
+        const processedHTML = processExportHTML(contentPages[i]);
+        contentDiv.innerHTML = processedHTML;
         
-        lines.forEach((line, index) => {
-          if (line.trim()) {
-            const lineElement = document.createElement('div');
-            lineElement.textContent = line.trim();
-            lineElement.style.marginBottom = '12px'; // Space between lines
-            lineElement.style.fontSize = '18px';
-            lineElement.style.color = '#6b46c1';
-            lineElement.style.textAlign = 'center';
-            lineElement.style.fontFamily = 'Heebo, Arial, sans-serif';
-            lineElement.style.lineHeight = '1.4';
-            contentDiv.appendChild(lineElement);
+        // Add CSS styles for the exported content
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+          p {
+            margin: 16px 0;
+            line-height: 1.6;
+            font-size: 18px;
+            color: #6b46c1;
+            text-align: center;
+            font-family: Heebo, Arial, sans-serif;
           }
-        });
+          
+          p.spacer {
+            min-height: 24px;
+            margin: 8px 0;
+          }
+          
+          strong, b {
+            font-weight: bold;
+            color: #6b46c1;
+          }
+          
+          em, i {
+            font-style: italic;
+            color: #6b46c1;
+          }
+          
+          mark, .cdx-marker {
+            background-color: #fef3c7;
+            color: #92400e;
+            padding: 2px 4px;
+            border-radius: 2px;
+          }
+          
+          a {
+            color: #8b5cf6;
+            text-decoration: underline;
+          }
+          
+          div {
+            margin: 12px 0;
+            line-height: 1.6;
+            font-size: 18px;
+            color: #6b46c1;
+            text-align: center;
+            font-family: Heebo, Arial, sans-serif;
+          }
+        `;
+        contentDiv.appendChild(styleElement);
         
         tempDiv.appendChild(contentDiv);
         document.body.appendChild(tempDiv);
