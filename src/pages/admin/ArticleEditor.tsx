@@ -20,6 +20,7 @@ import { Article, Category, PublicationFormData, PublishLocationType } from '@/t
 import RichTextEditor from '@/components/admin/articles/RichTextEditor';
 import PublicationSettings from '@/components/admin/articles/PublicationSettings';
 import PublishModal from '@/components/admin/articles/PublishModal';
+import PDFExportModal from '@/components/admin/articles/PDFExportModal';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -603,71 +604,88 @@ const ArticleEditor: React.FC = () => {
     fetchArticleData();
   }, [fetchArticleData]);
 
-  const handleExportToPDF = async () => {
+  const [showPDFModal, setShowPDFModal] = useState(false);
+
+  const handleExportToPDF = () => {
+    setShowPDFModal(true);
+  };
+
+  const handlePDFExport = async (content: string) => {
     if (!article) return;
     
     try {
       const jsPDF = (await import('jspdf')).default;
-      const html2canvas = (await import('html2canvas')).default;
-      const { EmailGenerator } = await import('@/utils/EmailGenerator');
       
-      // Generate the same email content that would be sent
-      const emailGenerator = new EmailGenerator();
-      const emailContent = await emailGenerator.generateEmailContent({
-        title: article.title,
-        content: article.content_markdown,
-        image_url: article.image_url,
-        staticLinks: article.staticLinks
-      });
-      
-      // Create a temporary div to render the email content
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = emailContent;
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.width = '800px';
-      tempDiv.style.background = 'white';
-      tempDiv.style.padding = '20px';
-      document.body.appendChild(tempDiv);
-      
-      // Convert to canvas
-      const canvas = await html2canvas(tempDiv, {
-        useCORS: true,
-        allowTaint: true,
-        scale: 2,
-        backgroundColor: '#ffffff'
-      });
-      
-      // Remove temp div
-      document.body.removeChild(tempDiv);
+      // Split content by page delimiter
+      const PAGE_DELIMITER = '---page---';
+      const pages = content.includes(PAGE_DELIMITER) 
+        ? content.split(PAGE_DELIMITER).map(page => page.trim()).filter(page => page.length > 0)
+        : [content];
       
       // Create PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/png');
+      const pageWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const margin = 20;
+      const maxWidth = pageWidth - (margin * 2);
       
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
+      // Add Hebrew font support
+      pdf.setFont('helvetica');
+      pdf.setFontSize(12);
       
-      let position = 0;
-      
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
+      pages.forEach((pageContent, index) => {
+        if (index > 0) {
+          pdf.addPage();
+        }
+        
+        // Add title on first page
+        if (index === 0) {
+          pdf.setFontSize(18);
+          const titleLines = pdf.splitTextToSize(article.title, maxWidth);
+          let yPosition = margin + 10;
+          
+          titleLines.forEach((line: string) => {
+            pdf.text(line, pageWidth / 2, yPosition, { align: 'center' });
+            yPosition += 10;
+          });
+          
+          yPosition += 10;
+          pdf.setFontSize(12);
+        }
+        
+        // Add page content
+        const lines = pageContent.split('\n');
+        let yPosition = index === 0 ? margin + 50 : margin + 20;
+        
+        lines.forEach((line: string) => {
+          if (yPosition > pageHeight - margin) {
+            pdf.addPage();
+            yPosition = margin + 20;
+          }
+          
+          if (line.trim()) {
+            const wrappedLines = pdf.splitTextToSize(line, maxWidth);
+            wrappedLines.forEach((wrappedLine: string) => {
+              if (yPosition > pageHeight - margin) {
+                pdf.addPage();
+                yPosition = margin + 20;
+              }
+              pdf.text(wrappedLine, margin, yPosition);
+              yPosition += 7;
+            });
+          } else {
+            yPosition += 7; // Empty line spacing
+          }
+        });
+      });
       
       // Save the PDF
       pdf.save(`${article.title}.pdf`);
+      setShowPDFModal(false);
       
       toast({
         title: "PDF נוצר בהצלחה",
-        description: "המאמר יוצא ל-PDF בהצלחה",
+        description: `המאמר יוצא ל-PDF בהצלחה עם ${pages.length} עמודים`,
       });
     } catch (error) {
       console.error('Error creating PDF:', error);
@@ -1044,6 +1062,13 @@ const ArticleEditor: React.FC = () => {
             isOpen={isPublishModalOpen}
             onClose={() => setIsPublishModalOpen(false)}
             onSuccess={handlePublishSuccess}
+          />
+          
+          <PDFExportModal
+            isOpen={showPDFModal}
+            onClose={() => setShowPDFModal(false)}
+            onExport={handlePDFExport}
+            article={article}
           />
         </div>
       )}
