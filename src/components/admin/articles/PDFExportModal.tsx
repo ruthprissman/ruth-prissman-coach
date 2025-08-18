@@ -152,11 +152,13 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
                   </Button>
                 </div>
                 
-                <div 
-                  className="min-h-[400px] p-4 border-2 rounded-lg text-right font-heebo prose prose-lg max-w-none bg-white" 
-                  dir="rtl"
-                  dangerouslySetInnerHTML={{ __html: content }}
-                />
+                <ScrollArea className="h-[400px] border-2 rounded-lg">
+                  <div 
+                    className="p-4 text-right font-heebo prose prose-lg max-w-none bg-white" 
+                    dir="rtl"
+                    dangerouslySetInnerHTML={{ __html: content }}
+                  />
+                </ScrollArea>
                 
                 <p className="text-sm text-gray-500">
                   הוסף <code className="bg-gray-100 px-1 rounded">{PAGE_DELIMITER}</code> בכל מקום שבו תרצה לפצל את המאמר לעמוד חדש
