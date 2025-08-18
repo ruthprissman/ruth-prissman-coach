@@ -614,7 +614,10 @@ const ArticleEditor: React.FC = () => {
     if (!article) return;
     
     try {
-      const jsPDF = (await import('jspdf')).default;
+      const [jsPDF, html2canvas] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas')
+      ]);
       
       // Split content by page delimiter
       const PAGE_DELIMITER = '---page---';
@@ -623,61 +626,66 @@ const ArticleEditor: React.FC = () => {
         : [content];
       
       // Create PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDF.default('p', 'mm', 'a4');
       const pageWidth = 210; // A4 width in mm
       const pageHeight = 297; // A4 height in mm
       const margin = 20;
-      const maxWidth = pageWidth - (margin * 2);
       
-      // Add Hebrew font support
-      pdf.setFont('helvetica');
-      pdf.setFontSize(12);
-      
-      pages.forEach((pageContent, index) => {
-        if (index > 0) {
+      for (let i = 0; i < pages.length; i++) {
+        if (i > 0) {
           pdf.addPage();
         }
         
+        // Create a temporary div for HTML content
+        const tempDiv = document.createElement('div');
+        tempDiv.style.width = '794px'; // A4 width in pixels (210mm * 3.78)
+        tempDiv.style.padding = '40px';
+        tempDiv.style.fontFamily = 'Arial, sans-serif';
+        tempDiv.style.fontSize = '14px';
+        tempDiv.style.lineHeight = '1.6';
+        tempDiv.style.textAlign = 'right';
+        tempDiv.style.direction = 'rtl';
+        tempDiv.style.backgroundColor = 'white';
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        
         // Add title on first page
-        if (index === 0) {
-          pdf.setFontSize(18);
-          const titleLines = pdf.splitTextToSize(article.title, maxWidth);
-          let yPosition = margin + 10;
-          
-          titleLines.forEach((line: string) => {
-            pdf.text(line, pageWidth / 2, yPosition, { align: 'center' });
-            yPosition += 10;
-          });
-          
-          yPosition += 10;
-          pdf.setFontSize(12);
+        if (i === 0) {
+          const titleDiv = document.createElement('div');
+          titleDiv.style.fontSize = '24px';
+          titleDiv.style.fontWeight = 'bold';
+          titleDiv.style.textAlign = 'center';
+          titleDiv.style.marginBottom = '30px';
+          titleDiv.textContent = article.title;
+          tempDiv.appendChild(titleDiv);
         }
         
         // Add page content
-        const lines = pageContent.split('\n');
-        let yPosition = index === 0 ? margin + 50 : margin + 20;
+        const contentDiv = document.createElement('div');
+        contentDiv.innerHTML = pages[i];
+        tempDiv.appendChild(contentDiv);
         
-        lines.forEach((line: string) => {
-          if (yPosition > pageHeight - margin) {
-            pdf.addPage();
-            yPosition = margin + 20;
-          }
+        document.body.appendChild(tempDiv);
+        
+        try {
+          // Convert HTML to canvas
+          const canvas = await html2canvas.default(tempDiv, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff'
+          });
           
-          if (line.trim()) {
-            const wrappedLines = pdf.splitTextToSize(line, maxWidth);
-            wrappedLines.forEach((wrappedLine: string) => {
-              if (yPosition > pageHeight - margin) {
-                pdf.addPage();
-                yPosition = margin + 20;
-              }
-              pdf.text(wrappedLine, margin, yPosition);
-              yPosition += 7;
-            });
-          } else {
-            yPosition += 7; // Empty line spacing
-          }
-        });
-      });
+          // Add canvas to PDF
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          const imgWidth = pageWidth - (margin * 2);
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          
+          pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
+        } finally {
+          document.body.removeChild(tempDiv);
+        }
+      }
       
       // Save the PDF
       pdf.save(`${article.title}.pdf`);

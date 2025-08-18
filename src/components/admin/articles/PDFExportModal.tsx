@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ChevronRight, SplitSquareVertical, Eye, FileText } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { processMarkdownContent } from '@/utils/contentFormatter';
 
 interface PDFExportModalProps {
   isOpen: boolean;
@@ -25,77 +26,11 @@ interface PDFExportModalProps {
 
 const PAGE_DELIMITER = '---page---';
 
-const convertHtmlToText = (html: string): string => {
+const processContentForDisplay = (html: string): string => {
   if (!html) return '';
   
-  const temp = document.createElement('div');
-  temp.innerHTML = html;
-  
-  const processNode = (node: Node): string => {
-    if (node.nodeType === Node.TEXT_NODE) {
-      return node.textContent || '';
-    }
-    
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      const element = node as HTMLElement;
-      const tagName = element.tagName.toLowerCase();
-      
-      switch (tagName) {
-        case 'p':
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n\n';
-        
-        case 'div':
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n\n';
-        
-        case 'h1':
-        case 'h2':
-        case 'h3':
-        case 'h4':
-        case 'h5':
-        case 'h6':
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n\n';
-        
-        case 'br':
-          return '\n';
-        
-        case 'blockquote':
-          return '> ' + Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n\n';
-        
-        case 'ul':
-        case 'ol':
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('');
-            
-        case 'li':
-          return '• ' + Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n';
-        
-        default:
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('');
-      }
-    }
-    
-    return '';
-  };
-  
-  let text = processNode(temp);
-  text = text.replace(/\n{3,}/g, '\n\n');
-  text = text.replace(/[ \t]+\n/g, '\n');
-  text = text.replace(/\n[ \t]+/g, '\n');
-  
-  return text.trim();
+  // Apply content formatting (handle spacing markers)
+  return processMarkdownContent(html);
 };
 
 const PDFExportModal: React.FC<PDFExportModalProps> = ({
@@ -111,8 +46,8 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
 
   useEffect(() => {
     if (article && isOpen) {
-      const plainText = convertHtmlToText(article.content_markdown || '');
-      setContent(plainText);
+      const processedContent = processContentForDisplay(article.content_markdown || '');
+      setContent(processedContent);
     }
   }, [article, isOpen]);
 
@@ -167,9 +102,11 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
 
   const renderFormattedContent = (content: string) => {
     return (
-      <div className="whitespace-pre-line text-right font-heebo text-sm p-4 bg-white border rounded-lg shadow-sm" dir="rtl">
-        {content}
-      </div>
+      <div 
+        className="text-right font-heebo text-sm p-4 bg-white border rounded-lg shadow-sm prose prose-lg max-w-none" 
+        dir="rtl"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
     );
   };
 
@@ -258,16 +195,18 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
                     <div className="bg-gray-50 text-gray-600 text-xs px-2 py-1 rounded mb-2 inline-block">
                       עמוד {index + 1} מתוך {pages.length}
                     </div>
-                    <div style={getPagePreviewStyle()}>
-                      <div className="whitespace-pre-line text-right font-heebo text-xs" dir="rtl">
-                        {page}
-                      </div>
-                      {page.length > 800 && (
-                        <div className="absolute bottom-2 right-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
-                          עמוד ארוך - עלול להיחתך
-                        </div>
-                      )}
-                    </div>
+                     <div style={getPagePreviewStyle()}>
+                       <div 
+                         className="text-right font-heebo text-xs prose prose-sm max-w-none" 
+                         dir="rtl"
+                         dangerouslySetInnerHTML={{ __html: page }}
+                       />
+                       {page.length > 800 && (
+                         <div className="absolute bottom-2 right-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+                           עמוד ארוך - עלול להיחתך
+                         </div>
+                       )}
+                     </div>
                   </div>
                 ))}
                 
