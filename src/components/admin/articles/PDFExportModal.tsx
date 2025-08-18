@@ -72,12 +72,18 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
       const textAfterCursor = content.substring(cursorPos);
       
       const newContent = `${textBeforeCursor}\n\n${PAGE_DELIMITER}\n\n${textAfterCursor}`;
+      const newCursorPos = cursorPos + PAGE_DELIMITER.length + 4;
+      
       setContent(newContent);
+      
+      // שמירת מיקום הגלילה הנוכחי
+      const scrollTop = textarea.scrollTop;
       
       setTimeout(() => {
         textarea.focus();
-        const newCursorPos = cursorPos + PAGE_DELIMITER.length + 4;
         textarea.setSelectionRange(newCursorPos, newCursorPos);
+        // החזרת מיקום הגלילה
+        textarea.scrollTop = scrollTop;
       }, 0);
       
       toast({
