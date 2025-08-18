@@ -620,16 +620,21 @@ const ArticleEditor: React.FC = () => {
       // Split content by page delimiter
       const PAGE_DELIMITER = '---page---';
       let contentPages: string[];
-      
       if (content.includes(PAGE_DELIMITER)) {
-        // If user added page delimiters, split the edited content
-        const splitContent = content.split(PAGE_DELIMITER).map(page => page.trim()).filter(page => page.length > 0);
-        // Convert each page back to formatted HTML
-        contentPages = splitContent.map(pageText => processMarkdownContent(pageText));
+          const splitContent = content.split(PAGE_DELIMITER).map(page => page.trim()).filter(page => page.length > 0);
+          contentPages = splitContent; // השאר את ה-HTML כמו שהוא!
       } else {
-        // Use the original formatted content as one page
-        contentPages = [processMarkdownContent(content)];
-      }
+          contentPages = [content]; // השאר את ה-HTML כמו שהוא!
+        }
+      // if (content.includes(PAGE_DELIMITER)) {
+      //   // If user added page delimiters, split the edited content
+      //   const splitContent = content.split(PAGE_DELIMITER).map(page => page.trim()).filter(page => page.length > 0);
+      //   // Convert each page back to formatted HTML
+      //   contentPages = splitContent.map(pageText => processMarkdownContent(pageText));
+      // } else {
+      //   // Use the original formatted content as one page
+      //   contentPages = [processMarkdownContent(content)];
+      // }
       
       // Create PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -715,15 +720,18 @@ const ArticleEditor: React.FC = () => {
         processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 32px; margin: 16px 0;"></div>');
         processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 32px; margin: 16px 0;"></div>');
         
-        // Process bold text **text** 
-        processedHTML = processedHTML.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        // // Process bold text **text** 
+        // processedHTML = processedHTML.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         
-        // Process underline text __text__
-        processedHTML = processedHTML.replace(/__(.*?)__/g, '<u>$1</u>');
+        // // Process underline text __text__
+        // processedHTML = processedHTML.replace(/__(.*?)__/g, '<u>$1</u>');
         
-        // Process italic text *text*
-        processedHTML = processedHTML.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        
+        // // Process italic text *text*
+        // processedHTML = processedHTML.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // רק את זה - לעיבוד השורות הריקות
+processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 32px; margin: 16px 0;"></div>');
+processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 32px; margin: 16px 0;"></div>');
         // Create styles for proper formatting with strong declarations
         const styles = `
           <style>
