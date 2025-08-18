@@ -169,7 +169,15 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
       return;
     }
     
-    onExport(content);
+    // Convert the edited plain text back to formatted HTML with page delimiters
+    const PAGE_DELIMITER = '---page---';
+    const formattedContent = content.includes(PAGE_DELIMITER) 
+      ? content.split(PAGE_DELIMITER).map(page => {
+          return processMarkdownContent(page.trim());
+        }).join(PAGE_DELIMITER)
+      : processMarkdownContent(content);
+    
+    onExport(formattedContent);
   };
 
   const renderFormattedContent = (content: string) => {
