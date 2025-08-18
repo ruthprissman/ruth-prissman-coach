@@ -115,7 +115,7 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl mx-auto font-heebo" dir="rtl">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto mx-auto font-heebo" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">יצוא ל-PDF</DialogTitle>
           <DialogDescription>
