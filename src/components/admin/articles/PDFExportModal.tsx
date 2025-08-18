@@ -26,11 +26,77 @@ interface PDFExportModalProps {
 
 const PAGE_DELIMITER = '---page---';
 
-const processContentForDisplay = (html: string): string => {
+const convertHtmlToText = (html: string): string => {
   if (!html) return '';
   
-  // Apply content formatting (handle spacing markers)
-  return processMarkdownContent(html);
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  
+  const processNode = (node: Node): string => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent || '';
+    }
+    
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as HTMLElement;
+      const tagName = element.tagName.toLowerCase();
+      
+      switch (tagName) {
+        case 'p':
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n\n';
+        
+        case 'div':
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n\n';
+        
+        case 'h1':
+        case 'h2':
+        case 'h3':
+        case 'h4':
+        case 'h5':
+        case 'h6':
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n\n';
+        
+        case 'br':
+          return '\n';
+        
+        case 'blockquote':
+          return '> ' + Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n\n';
+        
+        case 'ul':
+        case 'ol':
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
+            
+        case 'li':
+          return '• ' + Array.from(element.childNodes)
+            .map(processNode)
+            .join('') + '\n';
+        
+        default:
+          return Array.from(element.childNodes)
+            .map(processNode)
+            .join('');
+      }
+    }
+    
+    return '';
+  };
+  
+  let text = processNode(temp);
+  text = text.replace(/\n{3,}/g, '\n\n');
+  text = text.replace(/[ \t]+\n/g, '\n');
+  text = text.replace(/\n[ \t]+/g, '\n');
+  
+  return text.trim();
 };
 
 const PDFExportModal: React.FC<PDFExportModalProps> = ({
@@ -46,8 +112,8 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
 
   useEffect(() => {
     if (article && isOpen) {
-      const processedContent = processContentForDisplay(article.content_markdown || '');
-      setContent(processedContent);
+      const plainText = convertHtmlToText(article.content_markdown || '');
+      setContent(plainText);
     }
   }, [article, isOpen]);
 
@@ -203,10 +269,11 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
                     </div>
                      <div style={getPagePreviewStyle()}>
                        <div 
-                         className="text-right font-heebo text-xs prose prose-sm max-w-none" 
+                         className="whitespace-pre-line text-right font-heebo text-xs" 
                          dir="rtl"
-                         dangerouslySetInnerHTML={{ __html: page }}
-                       />
+                       >
+                         {page}
+                       </div>
                        {page.length > 800 && (
                          <div className="absolute bottom-2 right-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
                            עמוד ארוך - עלול להיחתך
