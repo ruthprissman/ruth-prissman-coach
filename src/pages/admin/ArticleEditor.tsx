@@ -702,70 +702,94 @@ const ArticleEditor: React.FC = () => {
         contentDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
         contentDiv.style.color = '#6b46c1';
         
-        // Process HTML content to handle ^^^ spacing markers while preserving formatting
-        const processExportHTML = (html: string): string => {
-          // Replace ^^^ that are on their own line with spacer paragraphs
-          let processed = html.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<p class="spacer">&nbsp;</p>');
-          
-          // Replace ^^^ that appear within text with double line breaks
-          processed = processed.replace(/\^\^\^/g, '<br><br>');
-          
-          return processed;
-        };
+        // Import markdown-it for proper markdown rendering
+        const MarkdownIt = (await import('markdown-it')).default;
+        const mdParser = new MarkdownIt({
+          html: true,
+          linkify: true,
+          typographer: true,
+          breaks: true, // Enable line breaks
+        });
+
+        // Check if content is already HTML or needs markdown conversion
+        let processedHTML = contentPages[i];
         
-        // Process the content and set innerHTML to preserve formatting
-        const processedHTML = processExportHTML(contentPages[i]);
-        contentDiv.innerHTML = processedHTML;
+        // If content doesn't contain HTML tags, treat as markdown
+        if (!/<[^>]+>/.test(contentPages[i])) {
+          // First process ^^^ markers in markdown
+          let markdownContent = contentPages[i];
+          
+          // Replace ^^^ with placeholder for spacing
+          markdownContent = markdownContent.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '[[SPACER]]');
+          markdownContent = markdownContent.replace(/\^\^\^/g, '[[SPACER]]');
+          
+          // Convert markdown to HTML
+          processedHTML = mdParser.render(markdownContent);
+          
+          // Replace placeholders with actual spacing
+          processedHTML = processedHTML.replace(/\[\[SPACER\]\]/g, '<p class="spacer">&nbsp;</p>');
+        } else {
+          // Content is already HTML, just process ^^^ markers
+          processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<p class="spacer">&nbsp;</p>');
+          processedHTML = processedHTML.replace(/\^\^\^/g, '<br><br>');
+        }
         
-        // Add CSS styles for the exported content
-        const styleElement = document.createElement('style');
-        styleElement.textContent = `
-          p {
-            margin: 16px 0;
-            line-height: 1.6;
-            font-size: 18px;
-            color: #6b46c1;
-            text-align: center;
-            font-family: Heebo, Arial, sans-serif;
-          }
-          
-          p.spacer {
-            min-height: 24px;
-            margin: 8px 0;
-          }
-          
-          strong, b {
-            font-weight: bold;
-            color: #6b46c1;
-          }
-          
-          em, i {
-            font-style: italic;
-            color: #6b46c1;
-          }
-          
-          mark, .cdx-marker {
-            background-color: #fef3c7;
-            color: #92400e;
-            padding: 2px 4px;
-            border-radius: 2px;
-          }
-          
-          a {
-            color: #8b5cf6;
-            text-decoration: underline;
-          }
-          
-          div {
-            margin: 12px 0;
-            line-height: 1.6;
-            font-size: 18px;
-            color: #6b46c1;
-            text-align: center;
-            font-family: Heebo, Arial, sans-serif;
-          }
+        // Create styles for proper formatting
+        const styles = `
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              font-family: Heebo, Arial, sans-serif;
+              direction: rtl;
+              text-align: center;
+              color: #6b46c1;
+              line-height: 1.6;
+            }
+            p {
+              margin: 16px 0;
+              font-size: 18px;
+              line-height: 1.8;
+            }
+            p.spacer {
+              height: 32px;
+              margin: 16px 0;
+            }
+            strong, b {
+              font-weight: bold;
+            }
+            em, i {
+              font-style: italic;
+            }
+            mark, .cdx-marker {
+              background-color: #fef3c7;
+              color: #92400e;
+              padding: 2px 4px;
+              border-radius: 2px;
+            }
+            a {
+              color: #8b5cf6;
+              text-decoration: underline;
+            }
+            h1, h2, h3, h4, h5, h6 {
+              margin: 20px 0 16px 0;
+              font-weight: bold;
+            }
+            ul, ol {
+              margin: 16px 0;
+              padding-right: 20px;
+            }
+            li {
+              margin: 8px 0;
+            }
+          </style>
         `;
-        contentDiv.appendChild(styleElement);
+        
+        // Set the processed HTML content
+        contentDiv.innerHTML = styles + processedHTML;
         
         tempDiv.appendChild(contentDiv);
         document.body.appendChild(tempDiv);
