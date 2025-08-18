@@ -649,18 +649,16 @@ const ArticleEditor: React.FC = () => {
         const tempDiv = document.createElement('div');
         tempDiv.style.width = '794px'; // A4 width in pixels (210mm * 3.78)
         tempDiv.style.minHeight = '1123px'; // A4 height in pixels
-        tempDiv.style.padding = '40px';
+        tempDiv.style.padding = '60px';
         tempDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
-        tempDiv.style.fontSize = '16px';
-        tempDiv.style.lineHeight = '1.8';
-        tempDiv.style.textAlign = 'right';
+        tempDiv.style.fontSize = '18px';
+        tempDiv.style.lineHeight = '2.2'; // More spacing for poem-like format
+        tempDiv.style.textAlign = 'center'; // Center align for poem format
         tempDiv.style.direction = 'rtl';
-        tempDiv.style.backgroundColor = '#f8f9fa';
+        tempDiv.style.backgroundColor = 'white'; // Clean white background
         tempDiv.style.position = 'absolute';
         tempDiv.style.left = '-9999px';
         tempDiv.style.color = '#6b46c1'; // Purple text color
-        tempDiv.style.border = '2px solid #e5e7eb';
-        tempDiv.style.borderRadius = '8px';
         
         // Add image and title on first page
         if (i === 0) {
@@ -668,65 +666,59 @@ const ArticleEditor: React.FC = () => {
           if (article.image_url) {
             const imageDiv = document.createElement('div');
             imageDiv.style.textAlign = 'center';
-            imageDiv.style.marginBottom = '30px';
+            imageDiv.style.marginBottom = '40px';
             
             const img = document.createElement('img');
             img.src = article.image_url;
-            img.style.maxWidth = '300px';
-            img.style.maxHeight = '200px';
-            img.style.objectFit = 'cover';
-            img.style.borderRadius = '8px';
-            img.style.border = '2px solid #e5e7eb';
+            img.style.width = '350px'; // Larger, fixed width
+            img.style.height = 'auto';
+            img.style.objectFit = 'contain';
+            img.style.borderRadius = '12px';
+            img.style.display = 'block';
+            img.style.margin = '0 auto'; // Center the image
             imageDiv.appendChild(img);
             tempDiv.appendChild(imageDiv);
           }
           
           // Add title
           const titleDiv = document.createElement('div');
-          titleDiv.style.fontSize = '28px';
+          titleDiv.style.fontSize = '32px'; // Larger title
           titleDiv.style.fontWeight = 'bold';
           titleDiv.style.textAlign = 'center';
-          titleDiv.style.marginBottom = '40px';
+          titleDiv.style.marginBottom = '50px'; // More space after title
           titleDiv.style.color = '#4c1d95'; // Darker purple for title
-          titleDiv.style.lineHeight = '1.4';
+          titleDiv.style.lineHeight = '1.3';
           titleDiv.textContent = article.title;
           tempDiv.appendChild(titleDiv);
         }
         
-        // Add page content with proper styling
+        // Add page content with poem-like formatting
         const contentDiv = document.createElement('div');
         contentDiv.style.color = '#6b46c1'; // Purple text
-        contentDiv.style.lineHeight = '1.8';
-        contentDiv.innerHTML = contentPages[i];
+        contentDiv.style.lineHeight = '2.2';
+        contentDiv.style.textAlign = 'center';
+        contentDiv.style.direction = 'rtl';
         
-        // Style all paragraphs and headings in the content
-        contentDiv.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(el => {
-          const element = el as HTMLElement;
-          element.style.color = '#6b46c1';
-          element.style.marginBottom = '16px';
-          element.style.textAlign = 'right';
-          element.style.direction = 'rtl';
-          
-          if (element.tagName.startsWith('H')) {
-            element.style.fontWeight = 'bold';
-            element.style.color = '#4c1d95';
+        // Convert HTML to text and split into lines for poem formatting
+        const tempElement = document.createElement('div');
+        tempElement.innerHTML = contentPages[i];
+        const textContent = tempElement.textContent || tempElement.innerText || '';
+        
+        // Split text into lines and create poem-like formatting
+        const lines = textContent.split('\n').filter(line => line.trim() !== '');
+        
+        lines.forEach((line, index) => {
+          if (line.trim()) {
+            const lineElement = document.createElement('div');
+            lineElement.textContent = line.trim();
+            lineElement.style.marginBottom = '12px'; // Space between lines
+            lineElement.style.fontSize = '18px';
+            lineElement.style.color = '#6b46c1';
+            lineElement.style.textAlign = 'center';
+            lineElement.style.fontFamily = 'Heebo, Arial, sans-serif';
+            lineElement.style.lineHeight = '1.4';
+            contentDiv.appendChild(lineElement);
           }
-        });
-        
-        // Style lists
-        contentDiv.querySelectorAll('ul, ol').forEach(el => {
-          const element = el as HTMLElement;
-          element.style.textAlign = 'right';
-          element.style.direction = 'rtl';
-          element.style.marginBottom = '16px';
-        });
-        
-        contentDiv.querySelectorAll('li').forEach(el => {
-          const element = el as HTMLElement;
-          element.style.color = '#6b46c1';
-          element.style.marginBottom = '8px';
-          element.style.textAlign = 'right';
-          element.style.direction = 'rtl';
         });
         
         tempDiv.appendChild(contentDiv);
@@ -749,11 +741,11 @@ const ArticleEditor: React.FC = () => {
           const canvas = await html2canvas.default(tempDiv, {
             useCORS: true,
             allowTaint: true,
-            scale: 2,
+            scale: 3, // Higher quality
             logging: false,
             width: 794,
             height: 1123,
-            backgroundColor: '#f8f9fa',
+            backgroundColor: 'white', // Clean white background
           });
           
           const imgData = canvas.toDataURL('image/png', 1.0);
