@@ -65,14 +65,32 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
   };
 
   const handleInsertPageDelimiter = () => {
-    // הוספת המפריד בסוף התוכן הקיים
-    const newContent = content + `\n\n${PAGE_DELIMITER}\n\n`;
-    setContent(newContent);
-    
-    toast({
-      title: "מפריד עמוד נוסף",
-      description: "המפריד נוסף בסוף התוכן. התוכן יחולק לעמודים לפי המיקום הזה.",
-    });
+    const textarea = document.getElementById('pdf-content') as HTMLTextAreaElement;
+    if (textarea) {
+      const cursorPos = textarea.selectionStart;
+      const textBeforeCursor = content.substring(0, cursorPos);
+      const textAfterCursor = content.substring(cursorPos);
+      
+      const newContent = `${textBeforeCursor}\n\n${PAGE_DELIMITER}\n\n${textAfterCursor}`;
+      const newCursorPos = cursorPos + PAGE_DELIMITER.length + 4;
+      
+      setContent(newContent);
+      
+      // שמירת מיקום הגלילה הנוכחי
+      const scrollTop = textarea.scrollTop;
+      
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+        // החזרת מיקום הגלילה
+        textarea.scrollTop = scrollTop;
+      }, 0);
+      
+      toast({
+        title: "מפריד עמוד נוסף",
+        description: "המפריד נוסף בהצלחה. התוכן יחולק לעמודים לפי המיקום הזה.",
+      });
+    }
   };
 
   const handleExport = () => {
@@ -136,34 +154,35 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
           </TabsList>
 
           <TabsContent value="edit" className="space-y-4">
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="pdf-content" className="text-md font-medium">
-                    תוכן המאמר
-                  </Label>
-                  <Button
-                    onClick={handleInsertPageDelimiter}
-                    variant="outline"
-                    size="sm"
-                    className="flex gap-1 items-center"
-                  >
-                    <SplitSquareVertical className="h-4 w-4" />
-                    הוסף מפריד עמוד
-                  </Button>
-                </div>
-                
-                <ScrollArea className="h-[400px] border-2 rounded-lg">
-                  <div 
-                    className="p-4 text-right font-heebo prose prose-lg max-w-none bg-white" 
-                    dir="rtl"
-                    dangerouslySetInnerHTML={{ __html: content }}
-                  />
-                </ScrollArea>
-                
-                <p className="text-sm text-gray-500">
-                  הוסף <code className="bg-gray-100 px-1 rounded">{PAGE_DELIMITER}</code> בכל מקום שבו תרצה לפצל את המאמר לעמוד חדש
-                </p>
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="pdf-content" className="text-md font-medium">
+                  תוכן המאמר
+                </Label>
+                <Button
+                  onClick={handleInsertPageDelimiter}
+                  variant="outline"
+                  size="sm"
+                  className="flex gap-1 items-center"
+                >
+                  <SplitSquareVertical className="h-4 w-4" />
+                  הוסף מפריד עמוד
+                </Button>
               </div>
+              
+              <Textarea
+                id="pdf-content"
+                value={content}
+                onChange={handleContentChange}
+                placeholder="תוכן המאמר..."
+                dir="rtl"
+                className="min-h-[400px] text-right font-heebo border-2 p-4"
+              />
+              
+              <p className="text-sm text-gray-500">
+                הוסף <code className="bg-gray-100 px-1 rounded">{PAGE_DELIMITER}</code> בכל מקום שבו תרצה לפצל את המאמר לעמוד חדש
+              </p>
+            </div>
           </TabsContent>
 
           <TabsContent value="preview" className="space-y-4">
