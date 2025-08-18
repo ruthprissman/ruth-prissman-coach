@@ -698,12 +698,14 @@ const ArticleEditor: React.FC = () => {
         const contentDiv = document.createElement('div');
         contentDiv.style.color = '#6b46c1'; // Purple text
         contentDiv.style.lineHeight = '2.2';
-        contentDiv.style.textAlign = 'center';
+       // contentDiv.style.textAlign = 'center';
         contentDiv.style.direction = 'rtl';
-        contentDiv.style.textAlign = 'center';
+       // contentDiv.style.textAlign = 'center';
         contentDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
         contentDiv.style.color = '#6b46c1';
-        
+        const isPoem = article?.type === 'poem';
+        contentDiv.style.textAlign = isPoem ? 'center' : 'start'; // או 'right' אם את רוצה יישור ימין
+
         // Import markdown-it for proper markdown rendering
         const MarkdownIt = (await import('markdown-it')).default;
         const mdParser = new MarkdownIt({
