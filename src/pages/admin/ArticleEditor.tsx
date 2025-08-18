@@ -708,30 +708,23 @@ const ArticleEditor: React.FC = () => {
           breaks: true, // Enable line breaks
         });
 
-        // Check if content is already HTML or needs markdown conversion
+        // Process content - work directly with HTML (no markdown conversion needed)
         let processedHTML = contentPages[i];
         
-        // If content doesn't contain HTML tags, treat as markdown
-        if (!/<[^>]+>/.test(contentPages[i])) {
-          // First process ^^^ markers in markdown
-          let markdownContent = contentPages[i];
-          
-          // Replace ^^^ with placeholder for spacing
-          markdownContent = markdownContent.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '[[SPACER]]');
-          markdownContent = markdownContent.replace(/\^\^\^/g, '[[SPACER]]');
-          
-          // Convert markdown to HTML
-          processedHTML = mdParser.render(markdownContent);
-          
-          // Replace placeholders with actual spacing
-          processedHTML = processedHTML.replace(/\[\[SPACER\]\]/g, '<p class="spacer">&nbsp;</p>');
-        } else {
-          // Content is already HTML, just process ^^^ markers
-          processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<p class="spacer">&nbsp;</p>');
-          processedHTML = processedHTML.replace(/\^\^\^/g, '<br><br>');
-        }
+        // Process ^^^ markers for empty lines
+        processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 32px; margin: 16px 0;"></div>');
+        processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 32px; margin: 16px 0;"></div>');
         
-        // Create styles for proper formatting
+        // Process bold text **text** 
+        processedHTML = processedHTML.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        // Process underline text __text__
+        processedHTML = processedHTML.replace(/__(.*?)__/g, '<u>$1</u>');
+        
+        // Process italic text *text*
+        processedHTML = processedHTML.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        
+        // Create styles for proper formatting with strong declarations
         const styles = `
           <style>
             * {
@@ -740,47 +733,51 @@ const ArticleEditor: React.FC = () => {
               box-sizing: border-box;
             }
             body {
-              font-family: Heebo, Arial, sans-serif;
-              direction: rtl;
-              text-align: center;
-              color: #6b46c1;
-              line-height: 1.6;
+              font-family: Heebo, Arial, sans-serif !important;
+              direction: rtl !important;
+              text-align: center !important;
+              color: #6b46c1 !important;
+              line-height: 1.6 !important;
             }
             p {
-              margin: 16px 0;
-              font-size: 18px;
-              line-height: 1.8;
+              margin: 16px 0 !important;
+              font-size: 18px !important;
+              line-height: 1.8 !important;
             }
-            p.spacer {
-              height: 32px;
-              margin: 16px 0;
+            div {
+              margin: 16px 0 !important;
             }
             strong, b {
-              font-weight: bold;
+              font-weight: bold !important;
+              color: #4c1d95 !important;
+            }
+            u {
+              text-decoration: underline !important;
+              color: #4c1d95 !important;
             }
             em, i {
-              font-style: italic;
+              font-style: italic !important;
             }
             mark, .cdx-marker {
-              background-color: #fef3c7;
-              color: #92400e;
-              padding: 2px 4px;
-              border-radius: 2px;
+              background-color: #fef3c7 !important;
+              color: #92400e !important;
+              padding: 2px 4px !important;
+              border-radius: 2px !important;
             }
             a {
-              color: #8b5cf6;
-              text-decoration: underline;
+              color: #8b5cf6 !important;
+              text-decoration: underline !important;
             }
             h1, h2, h3, h4, h5, h6 {
-              margin: 20px 0 16px 0;
-              font-weight: bold;
+              margin: 20px 0 16px 0 !important;
+              font-weight: bold !important;
             }
             ul, ol {
-              margin: 16px 0;
-              padding-right: 20px;
+              margin: 16px 0 !important;
+              padding-right: 20px !important;
             }
             li {
-              margin: 8px 0;
+              margin: 8px 0 !important;
             }
           </style>
         `;
@@ -790,6 +787,9 @@ const ArticleEditor: React.FC = () => {
         
         tempDiv.appendChild(contentDiv);
         document.body.appendChild(tempDiv);
+        
+        // Force style recalculation
+        tempDiv.offsetHeight;
         
         try {
           // Wait for images to load
