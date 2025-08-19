@@ -26,77 +26,18 @@ interface PDFExportModalProps {
 
 const PAGE_DELIMITER = '---page---';
 
-const convertHtmlToText = (html: string): string => {
+// Keep HTML content as-is, don't convert to plain text
+const preprocessHtmlContent = (html: string): string => {
   if (!html) return '';
   
-  const temp = document.createElement('div');
-  temp.innerHTML = html;
+  // Just process ^^^ markers for spacing, keep everything else as HTML
+  let processedHtml = html;
   
-  const processNode = (node: Node): string => {
-    if (node.nodeType === Node.TEXT_NODE) {
-      return node.textContent || '';
-    }
-    
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      const element = node as HTMLElement;
-      const tagName = element.tagName.toLowerCase();
-      
-      switch (tagName) {
-        case 'p':
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n\n';
-        
-        case 'div':
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n\n';
-        
-        case 'h1':
-        case 'h2':
-        case 'h3':
-        case 'h4':
-        case 'h5':
-        case 'h6':
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n\n';
-        
-        case 'br':
-          return '\n';
-        
-        case 'blockquote':
-          return '> ' + Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n\n';
-        
-        case 'ul':
-        case 'ol':
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('');
-            
-        case 'li':
-          return '• ' + Array.from(element.childNodes)
-            .map(processNode)
-            .join('') + '\n';
-        
-        default:
-          return Array.from(element.childNodes)
-            .map(processNode)
-            .join('');
-      }
-    }
-    
-    return '';
-  };
+  // Convert ^^^ to empty line div elements
+  processedHtml = processedHtml.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 32px; margin: 16px 0; display: block;"></div>');
+  processedHtml = processedHtml.replace(/\^\^\^/g, '<div style="height: 32px; margin: 16px 0; display: block;"></div>');
   
-  let text = processNode(temp);
-  text = text.replace(/\n{3,}/g, '\n\n');
-  text = text.replace(/[ \t]+\n/g, '\n');
-  text = text.replace(/\n[ \t]+/g, '\n');
-  
-  return text.trim();
+  return processedHtml.trim();
 };
 
 const PDFExportModal: React.FC<PDFExportModalProps> = ({
@@ -112,8 +53,8 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
 
   useEffect(() => {
     if (article && isOpen) {
-      const plainText = convertHtmlToText(article.content_markdown || '');
-      setContent(plainText);
+      const processedHtml = preprocessHtmlContent(article.content_markdown || '');
+      setContent(processedHtml);
     }
   }, [article, isOpen]);
 
@@ -169,15 +110,8 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
       return;
     }
     
-    // Convert the edited plain text back to formatted HTML with page delimiters
-    const PAGE_DELIMITER = '---page---';
-    const formattedContent = content.includes(PAGE_DELIMITER) 
-      ? content.split(PAGE_DELIMITER).map(page => {
-          return processMarkdownContent(page.trim());
-        }).join(PAGE_DELIMITER)
-      : processMarkdownContent(content);
-    
-    onExport(formattedContent);
+    // Send the HTML content directly to PDF export - no conversion needed
+    onExport(content);
   };
 
   const renderFormattedContent = (content: string) => {
@@ -277,11 +211,10 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
                     </div>
                      <div style={getPagePreviewStyle()}>
                        <div 
-                         className="whitespace-pre-line text-right font-heebo text-xs" 
+                         className="text-right font-heebo text-xs prose prose-sm max-w-none" 
                          dir="rtl"
-                       >
-                         {page}
-                       </div>
+                         dangerouslySetInnerHTML={{ __html: page }}
+                       />
                        {page.length > 800 && (
                          <div className="absolute bottom-2 right-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
                            עמוד ארוך - עלול להיחתך

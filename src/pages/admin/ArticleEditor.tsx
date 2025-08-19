@@ -671,6 +671,7 @@ const ArticleEditor: React.FC = () => {
             imageDiv.style.marginBottom = '40px';
             
             const img = document.createElement('img');
+            img.crossOrigin = 'anonymous'; // Enable CORS
             img.src = article.image_url;
             img.style.width = '350px'; // Larger, fixed width
             img.style.height = 'auto';
@@ -704,21 +705,12 @@ const ArticleEditor: React.FC = () => {
         contentDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
         contentDiv.style.color = '#6b46c1';
         
-        // Import markdown-it for proper markdown rendering
-        const MarkdownIt = (await import('markdown-it')).default;
-        const mdParser = new MarkdownIt({
-          html: true,
-          linkify: true,
-          typographer: true,
-          breaks: true, // Enable line breaks
-        });
-
         // Process content - work directly with HTML (no markdown conversion needed)
         let processedHTML = contentPages[i];
         
         // Process ^^^ markers for empty lines
-        processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 32px; margin: 16px 0;"></div>');
-        processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 32px; margin: 16px 0;"></div>');
+        processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 40px; margin: 20px 0; display: block; clear: both;"></div>');
+        processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 40px; margin: 20px 0; display: block; clear: both;"></div>');
         
         // // Process bold text **text** 
         // processedHTML = processedHTML.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -736,31 +728,44 @@ const ArticleEditor: React.FC = () => {
               padding: 0;
               box-sizing: border-box;
             }
-            body {
+            body, div {
               font-family: Heebo, Arial, sans-serif !important;
               direction: rtl !important;
               text-align: center !important;
               color: #6b46c1 !important;
-              line-height: 1.6 !important;
+              line-height: 2.0 !important;
+              white-space: pre-wrap !important;
             }
             p {
               margin: 16px 0 !important;
               font-size: 18px !important;
-              line-height: 1.8 !important;
+              line-height: 2.0 !important;
+              display: block !important;
+              text-align: center !important;
+              direction: rtl !important;
+              font-family: Heebo, Arial, sans-serif !important;
+              color: #6b46c1 !important;
             }
             div {
               margin: 16px 0 !important;
+              display: block !important;
+              text-align: center !important;
+              direction: rtl !important;
             }
             strong, b {
-              font-weight: bold !important;
+              font-weight: 900 !important;
               color: #4c1d95 !important;
+              font-family: Heebo, Arial, sans-serif !important;
             }
             u {
               text-decoration: underline !important;
+              text-decoration-thickness: 2px !important;
               color: #4c1d95 !important;
+              font-family: Heebo, Arial, sans-serif !important;
             }
             em, i {
               font-style: italic !important;
+              font-family: Heebo, Arial, sans-serif !important;
             }
             mark, .cdx-marker {
               background-color: #fef3c7 !important;
@@ -775,12 +780,24 @@ const ArticleEditor: React.FC = () => {
             h1, h2, h3, h4, h5, h6 {
               margin: 20px 0 16px 0 !important;
               font-weight: bold !important;
+              text-align: center !important;
+              direction: rtl !important;
+              font-family: Heebo, Arial, sans-serif !important;
             }
             ul, ol {
               margin: 16px 0 !important;
               padding-right: 20px !important;
+              text-align: center !important;
+              direction: rtl !important;
             }
             li {
+              margin: 8px 0 !important;
+              text-align: center !important;
+              direction: rtl !important;
+            }
+            br {
+              display: block !important;
+              content: "" !important;
               margin: 8px 0 !important;
             }
           </style>
@@ -796,7 +813,7 @@ const ArticleEditor: React.FC = () => {
         tempDiv.offsetHeight;
         
         try {
-          // Wait for images to load
+          // Wait for images to load and fonts to render
           const images = tempDiv.querySelectorAll('img');
           await Promise.all(Array.from(images).map(img => {
             return new Promise((resolve) => {
@@ -805,9 +822,14 @@ const ArticleEditor: React.FC = () => {
               } else {
                 img.onload = () => resolve(void 0);
                 img.onerror = () => resolve(void 0);
+                // Set timeout to avoid hanging
+                setTimeout(() => resolve(void 0), 5000);
               }
             });
           }));
+          
+          // Wait for fonts to load
+          await document.fonts.ready;
           
           const canvas = await html2canvas(tempDiv, {
             useCORS: true,
