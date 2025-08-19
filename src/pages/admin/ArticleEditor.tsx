@@ -654,11 +654,10 @@ const ArticleEditor: React.FC = () => {
         tempDiv.style.padding = '60px';
         tempDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
         tempDiv.style.fontSize = '18px';
-        tempDiv.style.lineHeight = '1.6'; // Reduced line spacing
+        tempDiv.style.lineHeight = '1.6';
         tempDiv.style.textAlign = 'center'; // Center align for poem format
         tempDiv.style.direction = 'rtl';
-        tempDiv.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'; // Add background gradient
-        tempDiv.style.backgroundSize = 'cover';
+        tempDiv.style.backgroundColor = 'white'; // Clean white background
         tempDiv.style.position = 'absolute';
         tempDiv.style.left = '-9999px';
         tempDiv.style.color = '#6b46c1'; // Purple text color
@@ -699,14 +698,10 @@ const ArticleEditor: React.FC = () => {
         // Add page content with poem-like formatting
         const contentDiv = document.createElement('div');
         contentDiv.style.color = '#6b46c1'; // Purple text
-        contentDiv.style.lineHeight = '1.6'; // Reduced line spacing
+        contentDiv.style.lineHeight = '1.6';
         contentDiv.style.textAlign = 'center';
         contentDiv.style.direction = 'rtl';
         contentDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
-        contentDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.95)'; // Semi-transparent white background
-        contentDiv.style.padding = '30px';
-        contentDiv.style.borderRadius = '8px';
-        contentDiv.style.margin = '20px 0';
         
         // Process content - work directly with HTML (no markdown conversion needed)
         let processedHTML = contentPages[i];
@@ -736,13 +731,13 @@ const ArticleEditor: React.FC = () => {
               direction: rtl !important;
               text-align: center !important;
               color: #6b46c1 !important;
-              line-height: 1.6 !important;
+              line-height: 1.5 !important;
               white-space: pre-wrap !important;
             }
             p {
-              margin: 8px 0 !important;
+              margin: 4px 0 !important;
               font-size: 18px !important;
-              line-height: 1.6 !important;
+              line-height: 1.5 !important;
               display: block !important;
               text-align: center !important;
               direction: rtl !important;
@@ -750,7 +745,7 @@ const ArticleEditor: React.FC = () => {
               color: #6b46c1 !important;
             }
             div {
-              margin: 8px 0 !important;
+              margin: 4px 0 !important;
               display: block !important;
               text-align: center !important;
               direction: rtl !important;
@@ -759,12 +754,16 @@ const ArticleEditor: React.FC = () => {
               font-weight: 900 !important;
               color: #4c1d95 !important;
               font-family: Heebo, Arial, sans-serif !important;
+              display: inline !important;
+              background-color: transparent !important;
             }
             u {
               text-decoration: underline !important;
               text-decoration-thickness: 2px !important;
               color: #4c1d95 !important;
               font-family: Heebo, Arial, sans-serif !important;
+              display: inline !important;
+              background-color: transparent !important;
             }
             em, i {
               font-style: italic !important;
