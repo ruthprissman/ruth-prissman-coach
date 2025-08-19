@@ -706,9 +706,9 @@ const ArticleEditor: React.FC = () => {
         // Process content - work directly with HTML (no markdown conversion needed)
         let processedHTML = contentPages[i];
         
-        // Process ^^^ markers for empty lines
-        processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 8px; margin: 4px 0; display: block; clear: both;"></div>');
-        processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 8px; margin: 4px 0; display: block; clear: both;"></div>');
+        // Process ^^^ markers for empty lines - reduced spacing
+        processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 2px; margin: 2px 0; display: block; clear: both;"></div>');
+        processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 2px; margin: 2px 0; display: block; clear: both;"></div>');
         
         // // Process bold text **text** 
         // processedHTML = processedHTML.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -760,14 +760,19 @@ const ArticleEditor: React.FC = () => {
               font-family: Heebo, Arial, sans-serif !important;
               display: inline !important;
               background-color: transparent !important;
+              -webkit-font-smoothing: antialiased !important;
+              font-variation-settings: 'wght' 900 !important;
             }
             u {
               text-decoration: underline !important;
-              text-decoration-thickness: 2px !important;
+              text-decoration-thickness: 3px !important;
+              text-decoration-color: #4c1d95 !important;
               color: #4c1d95 !important;
               font-family: Heebo, Arial, sans-serif !important;
               display: inline !important;
               background-color: transparent !important;
+              -webkit-text-decoration: underline !important;
+              text-underline-offset: 2px !important;
             }
             em, i {
               font-style: italic !important;
@@ -857,6 +862,7 @@ const ArticleEditor: React.FC = () => {
                   element.style.color = '#4c1d95';
                   element.style.fontFamily = 'Heebo, Arial, sans-serif';
                   element.style.display = 'inline';
+                  element.style.fontVariationSettings = '"wght" 900';
                 });
                 
                 // Apply styles to underline elements
@@ -864,10 +870,12 @@ const ArticleEditor: React.FC = () => {
                 underlineElements.forEach(el => {
                   const element = el as HTMLElement;
                   element.style.textDecoration = 'underline';
-                  element.style.textDecorationThickness = '2px';
+                  element.style.textDecorationThickness = '3px';
+                  element.style.textDecorationColor = '#4c1d95';
                   element.style.color = '#4c1d95';
                   element.style.fontFamily = 'Heebo, Arial, sans-serif';
                   element.style.display = 'inline';
+                  element.style.textUnderlineOffset = '2px';
                 });
               }
             }
