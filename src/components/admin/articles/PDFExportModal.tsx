@@ -29,10 +29,23 @@ const PAGE_DELIMITER = '---page---';
 const preprocessContent = (content: string): string => {
   if (!content) return '';
   
-  // Convert HTML to plain text for editing
+  // Convert HTML to plain text for editing with proper line breaks
   let processedContent = content;
   
-  // Remove HTML tags for cleaner editing experience
+  // First convert HTML paragraph tags to line breaks
+  processedContent = processedContent.replace(/<\/p>\s*<p[^>]*>/gi, '\n\n');
+  processedContent = processedContent.replace(/<p[^>]*>/gi, '');
+  processedContent = processedContent.replace(/<\/p>/gi, '\n');
+  
+  // Convert <br> tags to line breaks
+  processedContent = processedContent.replace(/<br\s*\/?>/gi, '\n');
+  
+  // Convert div tags to line breaks
+  processedContent = processedContent.replace(/<\/div>\s*<div[^>]*>/gi, '\n');
+  processedContent = processedContent.replace(/<div[^>]*>/gi, '');
+  processedContent = processedContent.replace(/<\/div>/gi, '\n');
+  
+  // Remove all other HTML tags
   processedContent = processedContent.replace(/<[^>]*>/g, '');
   
   // Decode HTML entities
@@ -41,6 +54,9 @@ const preprocessContent = (content: string): string => {
   processedContent = processedContent.replace(/&lt;/g, '<');
   processedContent = processedContent.replace(/&gt;/g, '>');
   processedContent = processedContent.replace(/&nbsp;/g, ' ');
+  
+  // Clean up multiple line breaks but keep intentional spacing
+  processedContent = processedContent.replace(/\n\s*\n\s*\n/g, '\n\n');
   
   return processedContent.trim();
 };
