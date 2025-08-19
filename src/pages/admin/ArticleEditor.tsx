@@ -707,8 +707,8 @@ const ArticleEditor: React.FC = () => {
         let processedHTML = contentPages[i];
         
         // Process ^^^ markers for empty lines
-        processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 40px; margin: 20px 0; display: block; clear: both;"></div>');
-        processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 40px; margin: 20px 0; display: block; clear: both;"></div>');
+        processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 8px; margin: 4px 0; display: block; clear: both;"></div>');
+        processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 8px; margin: 4px 0; display: block; clear: both;"></div>');
         
         // // Process bold text **text** 
         // processedHTML = processedHTML.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -733,9 +733,12 @@ const ArticleEditor: React.FC = () => {
               color: #6b46c1 !important;
               line-height: 1.5 !important;
               white-space: pre-wrap !important;
+              margin: 0 !important;
+              padding: 0 !important;
             }
             p {
               margin: 4px 0 !important;
+              padding: 0 !important;
               font-size: 18px !important;
               line-height: 1.5 !important;
               display: block !important;
@@ -746,6 +749,7 @@ const ArticleEditor: React.FC = () => {
             }
             div {
               margin: 4px 0 !important;
+              padding: 0 !important;
               display: block !important;
               text-align: center !important;
               direction: rtl !important;
@@ -840,7 +844,33 @@ const ArticleEditor: React.FC = () => {
             logging: false,
             width: 794,
             height: 1123,
-            backgroundColor: 'white', // Clean white background
+            backgroundColor: 'white',
+            onclone: (clonedDoc) => {
+              // Force bold and underline styling in cloned document
+              const clonedContainer = clonedDoc.querySelector('div');
+              if (clonedContainer) {
+                // Apply styles to bold elements
+                const boldElements = clonedDoc.querySelectorAll('strong, b');
+                boldElements.forEach(el => {
+                  const element = el as HTMLElement;
+                  element.style.fontWeight = '900';
+                  element.style.color = '#4c1d95';
+                  element.style.fontFamily = 'Heebo, Arial, sans-serif';
+                  element.style.display = 'inline';
+                });
+                
+                // Apply styles to underline elements
+                const underlineElements = clonedDoc.querySelectorAll('u');
+                underlineElements.forEach(el => {
+                  const element = el as HTMLElement;
+                  element.style.textDecoration = 'underline';
+                  element.style.textDecorationThickness = '2px';
+                  element.style.color = '#4c1d95';
+                  element.style.fontFamily = 'Heebo, Arial, sans-serif';
+                  element.style.display = 'inline';
+                });
+              }
+            }
           });
           
           const imgData = canvas.toDataURL('image/png', 1.0);
