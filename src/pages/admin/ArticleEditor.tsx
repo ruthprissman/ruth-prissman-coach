@@ -451,6 +451,298 @@ const ArticleEditor: React.FC = () => {
       setUploadProgress(null);
     }
   };
+  /*const handlePDFExport = async (content: string) => {
+  if (!article) return;
+  
+  try {
+    // Split content by page delimiter
+    const PAGE_DELIMITER = '---page---';
+    let contentPages: string[];
+    if (content.includes(PAGE_DELIMITER)) {
+        const splitContent = content.split(PAGE_DELIMITER).map(page => page.trim()).filter(page => page.length > 0);
+        contentPages = splitContent;
+    } else {
+        contentPages = [content];
+    }
+    
+    // Create PDF
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+    const margin = 15;
+    
+    for (let i = 0; i < contentPages.length; i++) {
+      if (i > 0) {
+        pdf.addPage();
+      }
+      
+      // Create temporary div for rendering with proper styling
+      const tempDiv = document.createElement('div');
+      tempDiv.style.width = '794px'; // A4 width in pixels (210mm * 3.78)
+      tempDiv.style.minHeight = '1123px'; // A4 height in pixels
+      tempDiv.style.padding = '60px';
+      tempDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
+      tempDiv.style.fontSize = '18px';
+      tempDiv.style.lineHeight = '2.2';
+      tempDiv.style.textAlign = 'center';
+      tempDiv.style.direction = 'rtl';
+      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.color = '#6b46c1';
+      
+      // Add image and title on first page
+      if (i === 0) {
+        // Add image if exists
+        if (article.image_url) {
+          const imageDiv = document.createElement('div');
+          imageDiv.style.textAlign = 'center';
+          imageDiv.style.marginBottom = '40px';
+          
+          const img = document.createElement('img');
+          img.src = article.image_url;
+          img.style.width = '350px';
+          img.style.height = 'auto';
+          img.style.objectFit = 'contain';
+          img.style.borderRadius = '12px';
+          img.style.display = 'block';
+          img.style.margin = '0 auto';
+          imageDiv.appendChild(img);
+          tempDiv.appendChild(imageDiv);
+        }
+        
+        // Add title
+        const titleDiv = document.createElement('div');
+        titleDiv.style.fontSize = '32px';
+        titleDiv.style.fontWeight = 'bold';
+        titleDiv.style.textAlign = 'center';
+        titleDiv.style.marginBottom = '50px';
+        titleDiv.style.color = '#4c1d95';
+        titleDiv.style.lineHeight = '1.3';
+        titleDiv.textContent = article.title;
+        tempDiv.appendChild(titleDiv);
+      }
+      
+      // Add page content with proper HTML processing
+      const contentDiv = document.createElement('div');
+      contentDiv.style.color = '#6b46c1';
+      contentDiv.style.lineHeight = '2.2';
+      contentDiv.style.textAlign = 'center';
+      contentDiv.style.direction = 'rtl';
+      contentDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
+      
+      // Process content - work with HTML and add proper styling
+      let processedHTML = contentPages[i];
+      
+      // Process ^^^ markers for empty lines - convert to proper div elements
+      processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div class="empty-line" style="height: 40px; margin: 20px 0; clear: both;"></div>');
+      processedHTML = processedHTML.replace(/\^\^\^/g, '<div class="empty-line" style="height: 40px; margin: 20px 0; clear: both;"></div>');
+      
+      // Create comprehensive styles for proper formatting
+      const styles = `
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body, div {
+            font-family: 'Heebo', 'Arial', sans-serif !important;
+            direction: rtl !important;
+            text-align: center !important;
+            color: #6b46c1 !important;
+          }
+          
+          p {
+            margin: 16px 0 !important;
+            font-size: 18px !important;
+            line-height: 2.2 !important;
+            color: #6b46c1 !important;
+            text-align: center !important;
+            direction: rtl !important;
+            font-family: 'Heebo', 'Arial', sans-serif !important;
+          }
+          
+          div {
+            margin: 16px 0 !important;
+            color: #6b46c1 !important;
+            text-align: center !important;
+            direction: rtl !important;
+            font-family: 'Heebo', 'Arial', sans-serif !important;
+          }
+          
+          strong, b {
+            font-weight: bold !important;
+            color: #4c1d95 !important;
+            font-family: 'Heebo', 'Arial', sans-serif !important;
+          }
+          
+          u {
+            text-decoration: underline !important;
+            color: #4c1d95 !important;
+            font-family: 'Heebo', 'Arial', sans-serif !important;
+          }
+          
+          em, i {
+            font-style: italic !important;
+            color: #6b46c1 !important;
+            font-family: 'Heebo', 'Arial', sans-serif !important;
+          }
+          
+          mark, .cdx-marker {
+            background-color: #fef3c7 !important;
+            color: #92400e !important;
+            padding: 2px 4px !important;
+            border-radius: 2px !important;
+            font-family: 'Heebo', 'Arial', sans-serif !important;
+          }
+          
+          a {
+            color: #8b5cf6 !important;
+            text-decoration: underline !important;
+            font-family: 'Heebo', 'Arial', sans-serif !important;
+          }
+          
+          h1, h2, h3, h4, h5, h6 {
+            margin: 20px 0 16px 0 !important;
+            font-weight: bold !important;
+            color: #4c1d95 !important;
+            text-align: center !important;
+            direction: rtl !important;
+            font-family: 'Heebo', 'Arial', sans-serif !important;
+          }
+          
+          ul, ol {
+            margin: 16px 0 !important;
+            padding-right: 20px !important;
+            text-align: right !important;
+            direction: rtl !important;
+            color: #6b46c1 !important;
+          }
+          
+          li {
+            margin: 8px 0 !important;
+            color: #6b46c1 !important;
+            text-align: right !important;
+            direction: rtl !important;
+            font-family: 'Heebo', 'Arial', sans-serif !important;
+          }
+          
+          .empty-line {
+            height: 40px !important;
+            margin: 20px 0 !important;
+            clear: both !important;
+            display: block !important;
+            width: 100% !important;
+          }
+          
+          /* Ensure all text elements have proper styling */
+          span {
+            font-family: 'Heebo', 'Arial', sans-serif !important;
+            color: inherit !important;
+            direction: rtl !important;
+          }
+        </style>
+      `;
+      
+      // Set the processed HTML content with styles
+      contentDiv.innerHTML = styles + processedHTML;
+      
+      tempDiv.appendChild(contentDiv);
+      document.body.appendChild(tempDiv);
+      
+      // Force style recalculation and layout
+      tempDiv.offsetHeight;
+      
+      // Force all elements to recalculate their styles
+      const allElements = tempDiv.querySelectorAll('*');
+      allElements.forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.style.fontFamily = 'Heebo, Arial, sans-serif';
+          if (el.tagName.toLowerCase() === 'strong' || el.tagName.toLowerCase() === 'b') {
+            el.style.fontWeight = 'bold';
+            el.style.color = '#4c1d95';
+          }
+          if (el.tagName.toLowerCase() === 'u') {
+            el.style.textDecoration = 'underline';
+            el.style.color = '#4c1d95';
+          }
+          if (el.tagName.toLowerCase() === 'p' || el.tagName.toLowerCase() === 'div') {
+            el.style.textAlign = 'center';
+            el.style.direction = 'rtl';
+            el.style.color = '#6b46c1';
+            el.style.lineHeight = '2.2';
+          }
+        }
+      });
+      
+      try {
+        // Wait for images to load
+        const images = tempDiv.querySelectorAll('img');
+        await Promise.all(Array.from(images).map(img => {
+          return new Promise((resolve) => {
+            if (img.complete) {
+              resolve(void 0);
+            } else {
+              img.onload = () => resolve(void 0);
+              img.onerror = () => resolve(void 0);
+            }
+          });
+        }));
+        
+        // Add a small delay to ensure all styles are applied
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const canvas = await html2canvas(tempDiv, {
+          useCORS: true,
+          allowTaint: true,
+          scale: 3, // Higher quality
+          logging: true, // Enable logging for debugging
+          width: 794,
+          height: 1123,
+          backgroundColor: 'white',
+          foreignObjectRendering: false, // Sometimes helps with text rendering
+          imageTimeout: 15000, // Increase timeout
+          removeContainer: true,
+        });
+        
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        
+        // Add image to PDF maintaining aspect ratio
+        const imgWidth = pageWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // If image is taller than page, scale it down
+        const maxHeight = pageHeight - (margin * 2);
+        if (imgHeight > maxHeight) {
+          const scaledWidth = (canvas.width * maxHeight) / canvas.height;
+          pdf.addImage(imgData, 'PNG', margin, margin, scaledWidth, maxHeight);
+        } else {
+          pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+        }
+      } finally {
+        document.body.removeChild(tempDiv);
+      }
+    }
+    
+    // Save the PDF
+    pdf.save(`${article.title}.pdf`);
+    setShowPDFModal(false);
+    
+    toast({
+      title: "PDF נוצר בהצלחה",
+      description: `המאמר יוצא ל-PDF בהצלחה עם ${contentPages.length} עמודים`,
+    });
+  } catch (error) {
+    console.error('Error creating PDF:', error);
+    toast({
+      title: "שגיאה ביצירת PDF",
+      description: "אנא נסה שוב מאוחר יותר",
+      variant: "destructive",
+    });
+  }
+};*/
 
   const savePublications = async (articleId: number, publicationsData: PublicationFormData[]) => {
     try {
@@ -700,7 +992,7 @@ const ArticleEditor: React.FC = () => {
         contentDiv.style.lineHeight = '2.2';
         contentDiv.style.textAlign = 'center';
         contentDiv.style.direction = 'rtl';
-        //contentDiv.style.textAlign = 'center';
+        contentDiv.style.textAlign = 'center';
         contentDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
         contentDiv.style.color = '#6b46c1';
         
