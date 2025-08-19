@@ -26,18 +26,23 @@ interface PDFExportModalProps {
 
 const PAGE_DELIMITER = '---page---';
 
-// Keep HTML content as-is, don't convert to plain text
-const preprocessHtmlContent = (html: string): string => {
-  if (!html) return '';
+const preprocessContent = (content: string): string => {
+  if (!content) return '';
   
-  // Just process ^^^ markers for spacing, keep everything else as HTML
-  let processedHtml = html;
+  // Convert HTML to plain text for editing
+  let processedContent = content;
   
-  // Convert ^^^ to empty line div elements
-  processedHtml = processedHtml.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 32px; margin: 16px 0; display: block;"></div>');
-  processedHtml = processedHtml.replace(/\^\^\^/g, '<div style="height: 32px; margin: 16px 0; display: block;"></div>');
+  // Remove HTML tags for cleaner editing experience
+  processedContent = processedContent.replace(/<[^>]*>/g, '');
   
-  return processedHtml.trim();
+  // Decode HTML entities
+  processedContent = processedContent.replace(/&quot;/g, '"');
+  processedContent = processedContent.replace(/&amp;/g, '&');
+  processedContent = processedContent.replace(/&lt;/g, '<');
+  processedContent = processedContent.replace(/&gt;/g, '>');
+  processedContent = processedContent.replace(/&nbsp;/g, ' ');
+  
+  return processedContent.trim();
 };
 
 const PDFExportModal: React.FC<PDFExportModalProps> = ({
@@ -53,8 +58,8 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
 
   useEffect(() => {
     if (article && isOpen) {
-      const processedHtml = preprocessHtmlContent(article.content_markdown || '');
-      setContent(processedHtml);
+      const processedContent = preprocessContent(article.content_markdown || '');
+      setContent(processedContent);
     }
   }, [article, isOpen]);
 
@@ -210,11 +215,12 @@ const PDFExportModal: React.FC<PDFExportModalProps> = ({
                       עמוד {index + 1} מתוך {pages.length}
                     </div>
                      <div style={getPagePreviewStyle()}>
-                       <div 
-                         className="text-right font-heebo text-xs prose prose-sm max-w-none" 
-                         dir="rtl"
-                         dangerouslySetInnerHTML={{ __html: page }}
-                       />
+                        <div 
+                          className="text-right font-heebo text-xs whitespace-pre-line" 
+                          dir="rtl"
+                        >
+                          {page}
+                        </div>
                        {page.length > 800 && (
                          <div className="absolute bottom-2 right-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
                            עמוד ארוך - עלול להיחתך
