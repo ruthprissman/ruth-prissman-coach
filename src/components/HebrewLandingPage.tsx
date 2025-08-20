@@ -676,7 +676,7 @@ const HebrewLandingPage = () => {
           <Accordion type="single" collapsible className="bg-white rounded-lg shadow-sm">
             <AccordionItem value="item-1" className="border-b border-gray-200 last:border-b-0">
               <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
-                ✅ התנגדות 1: "אין לי זמן לסדנה של שעתיים, בקושי יש לי זמן להתפלל."
+                "אין לי זמן לסדנה של שעתיים, בקושי יש לי זמן להתפלל."
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-right">
                 <div className="font-heebo text-lg leading-relaxed text-gray-800 space-y-2">
@@ -689,7 +689,7 @@ const HebrewLandingPage = () => {
 
             <AccordionItem value="item-2" className="border-b border-gray-200 last:border-b-0">
               <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
-                ✅ התנגדות 2: "ניסיתי כבר הכל, אני פשוט לא בן אדם 'רוחני' יותר, החיים שחקו אותי."
+                "ניסיתי כבר הכל, אני פשוט לא בן אדם 'רוחני' יותר, החיים שחקו אותי."
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-right">
                 <div className="font-heebo text-lg leading-relaxed text-gray-800">
@@ -700,7 +700,7 @@ const HebrewLandingPage = () => {
 
             <AccordionItem value="item-3" className="border-b border-gray-200 last:border-b-0">
               <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
-                ✅ התנגדות 3: "זה בטח עוד סדנה שנותנת הרגשה טובה לרגע ואז הכל חוזר לקדמותו."
+                "זה בטח עוד סדנה שנותנת הרגשה טובה לרגע ואז הכל חוזר לקדמותו."
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-right">
                 <div className="font-heebo text-lg leading-relaxed text-gray-800">
