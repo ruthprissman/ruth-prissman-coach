@@ -669,53 +669,43 @@ const HebrewLandingPage = () => {
         <div className="max-w-4xl mx-auto">
           {/* Title */}
           <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-12 leading-relaxed" style={{ color: 'var(--purple-deep)' }}>
-            שאלות נפוצות
+            התנגדויות נפוצות
           </h2>
 
           {/* FAQ Accordion */}
           <Accordion type="single" collapsible className="bg-white rounded-lg shadow-sm">
             <AccordionItem value="item-1" className="border-b border-gray-200 last:border-b-0">
               <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
-                אני לא בטוחה שהתפילה קשורה אליי. לא התפללתי שנים.
+                ✅ התנגדות 1: "אין לי זמן לסדנה של שעתיים, בקושי יש לי זמן להתפלל."
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-right">
-                <p className="font-heebo text-lg leading-relaxed text-gray-800">
-                  הסדנה הזאת בדיוק בשבילך. היא נבנתה במיוחד לנשים כמוך – שמרגישות מרחק, קושי או ניתוק. אין צורך ברקע קודם, אלא ברצון פשוט לנסות מחדש.
-                </p>
+                <div className="font-heebo text-lg leading-relaxed text-gray-800 space-y-2">
+                  <p>אני מבינה אותך לגמרי. בדיוק בגלל זה הסדנה הזו כל כך חשובה עבורך. השעתיים האלה הן לא עוד "מטלה", הן השקעה שתחזיר את עצמה עשרות מונים. הכלים שתקבלי ילמדו אותך איך להפוך את מעט הזמן שיש לך לאיכותי ויעיל פי כמה. תגלי איך חמש דקות של תפילה מחוברת יכולות לתת לך יותר כוח משעה של תפילה מכנית.</p>
+                  <p className="font-bold">איכות על פני כמות.</p>
+                  <p>בנוסף, תקבלי גישה להקלטה ותוכלי לצפות בה בזמן שנוח לך.</p>
+                </div>
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-2" className="border-b border-gray-200 last:border-b-0">
               <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
-                אין לי זמן – איך אספיק שעתיים של סדנה?
+                ✅ התנגדות 2: "ניסיתי כבר הכל, אני פשוט לא בן אדם 'רוחני' יותר, החיים שחקו אותי."
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-right">
-                <p className="font-heebo text-lg leading-relaxed text-gray-800">
-                  הסדנה מוקלטת ותהיה זמינה לך לצפייה למשך שבוע. את יכולה לעצור, להמשיך ולחזור מתי שנוח לך.
-                </p>
+                <div className="font-heebo text-lg leading-relaxed text-gray-800">
+                  <p>התחושה הזאת כל כך מוכרת, והיא נובעת מהאמונה השגויה ש"רוחניות" היא משהו ששייך רק לאנשים מסוימים או לתקופות מסוימות בחיים. הסדנה הזאת תוכיח לך שרוחניות לא נעלמת, היא פשוט משנה צורה. תלמדי למצוא את החיבור הרוחני שלך לא בשעה של הקשבה להרצאה מרוממת, או בשירה בשעת ליל, אלא דווקא בתוך שגרת החיים העמוסה. את לא "שחוקה", את פשוט צריכה כלים חדשים שמתאימים למי שאת היום.</p>
+                </div>
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-3" className="border-b border-gray-200 last:border-b-0">
               <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
-                אני דתייה / חילונית / מסורתית – זה רלוונטי גם לי?
+                ✅ התנגדות 3: "זה בטח עוד סדנה שנותנת הרגשה טובה לרגע ואז הכל חוזר לקדמותו."
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4 text-right">
-                <p className="font-heebo text-lg leading-relaxed text-gray-800">
-                  הסדנה פונה לנשים מכל גווני הקשת – דתיות, חילוניות, מסורתיות – כל אחת שמבקשת לחדש את הקשר שלה עם התפילה, בדרכה ובשפתה.
-                </p>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="item-4" className="border-b border-gray-200 last:border-b-0">
-              <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
-                יש צורך להפעיל מצלמה או לדבר בזום?
-              </AccordionTrigger>
-              <AccordionContent className="px-6 pb-4 text-right">
-                <p className="font-heebo text-lg leading-relaxed text-gray-800">
-                  ממש לא. את יכולה לצפות בשקט, בלי לדבר, בלי להפעיל מצלמה.<br/>
-                  אם תבחרי לשאול שאלה בצ'אט – מעולה. אם לא – גם טוב.
-                </p>
+                <div className="font-heebo text-lg leading-relaxed text-gray-800">
+                  <p>זו לא הרצאה שנועדה לתת "זריקת מוטיבציה". זו סדנה מעשית שנותנת מיומנויות. בדיוק כמו שלומדים לבשל או לנהוג, כך נלמד מיומנות חדשה: המיומנות של תפילה מחוברת. תצאי עם כלים פרקטיים ועם תוכנית פעולה פשוטה שתוכלי ליישם מיד. המטרה היא לא שינוי רגעי, אלא יצירת הרגלים חדשים שישנו את חווית התפילה שלך לתמיד.</p>
+                </div>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
