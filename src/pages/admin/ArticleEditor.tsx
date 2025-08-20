@@ -919,12 +919,29 @@ const ArticleEditor: React.FC = () => {
   };
 
   const handleDirectPDFExport = useCallback(async () => {
-      console.error('start handleDirectPDFExport: ' , contentRef.current);
-    if (!article || !contentRef.current) return;
+    if (!article) return;
     
     try {
-      // contentRef.current is already a string containing HTML content
-      await handlePDFExport(contentRef.current);
+      // Get content from form values
+      const currentFormData = form.getValues();
+      let markdownContent = currentFormData.content_markdown;
+      
+      // If no content in form, try to get from editor
+      if (!markdownContent && editorRef.current) {
+        await editorRef.current.saveContent();
+        markdownContent = form.getValues().content_markdown;
+      }
+      
+      if (!markdownContent) {
+        toast({
+          title: "אין תוכן לייצוא",
+          description: "אנא הוסף תוכן למאמר לפני הייצוא",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      await handlePDFExport(markdownContent);
     } catch (error) {
       console.error('Error in direct PDF export:', error);
       toast({
@@ -933,7 +950,7 @@ const ArticleEditor: React.FC = () => {
         variant: "destructive",
       });
     }
-  }, [article, handlePDFExport]);
+  }, [article, handlePDFExport, form]);
 
   useEffect(() => {
     const warningText = 'יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?';
