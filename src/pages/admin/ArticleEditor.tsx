@@ -5,8 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { 
   ArrowRight, 
   Calendar as CalendarIcon, 
@@ -22,7 +20,6 @@ import { Article, Category, PublicationFormData, PublishLocationType } from '@/t
 import RichTextEditor from '@/components/admin/articles/RichTextEditor';
 import PublicationSettings from '@/components/admin/articles/PublicationSettings';
 import PublishModal from '@/components/admin/articles/PublishModal';
-import PDFExportModal from '@/components/admin/articles/PDFExportModal';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -65,7 +62,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import FileUploadField from '@/components/admin/FileUploadField';
-import { processMarkdownContent } from '@/utils/contentFormatter';
 
 const formSchema = z.object({
   title: z.string().min(1, { message: "כותרת חובה" }),
@@ -607,269 +603,71 @@ const ArticleEditor: React.FC = () => {
     fetchArticleData();
   }, [fetchArticleData]);
 
-  const [showPDFModal, setShowPDFModal] = useState(false);
-
-  const handleExportToPDF = () => {
-    setShowPDFModal(true);
-  };
-
-  const handlePDFExport = async (content: string) => {
+  const handleExportToPDF = async () => {
     if (!article) return;
     
     try {
-      // Split content by page delimiter
-      const PAGE_DELIMITER = '---page---';
-      let contentPages: string[];
-      if (content.includes(PAGE_DELIMITER)) {
-          const splitContent = content.split(PAGE_DELIMITER).map(page => page.trim()).filter(page => page.length > 0);
-          contentPages = splitContent;
-      } else {
-          contentPages = [content];
-        }
+      const jsPDF = (await import('jspdf')).default;
+      const html2canvas = (await import('html2canvas')).default;
+      const { EmailGenerator } = await import('@/utils/EmailGenerator');
+      
+      // Generate the same email content that would be sent
+      const emailGenerator = new EmailGenerator();
+      const emailContent = await emailGenerator.generateEmailContent({
+        title: article.title,
+        content: article.content_markdown,
+        image_url: article.image_url,
+        staticLinks: article.staticLinks
+      });
+      
+      // Create a temporary div to render the email content
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = emailContent;
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.width = '800px';
+      tempDiv.style.background = 'white';
+      tempDiv.style.padding = '20px';
+      document.body.appendChild(tempDiv);
+      
+      // Convert to canvas
+      const canvas = await html2canvas(tempDiv, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 2,
+        backgroundColor: '#ffffff'
+      });
+      
+      // Remove temp div
+      document.body.removeChild(tempDiv);
       
       // Create PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const margin = 15;
+      const imgData = canvas.toDataURL('image/png');
       
-      // Process each page
-      for (let i = 0; i < contentPages.length; i++) {
-        if (i > 0) {
-          pdf.addPage();
-        }
-        
-        // Create temporary div for rendering with proper styling
-        const tempDiv = document.createElement('div');
-        tempDiv.style.width = '794px'; // A4 width in pixels (210mm * 3.78)
-        tempDiv.style.minHeight = '1123px'; // A4 height in pixels
-        tempDiv.style.padding = '60px';
-        tempDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
-        tempDiv.style.fontSize = '18px';
-        tempDiv.style.lineHeight = '1.6';
-        tempDiv.style.textAlign = 'center';
-        tempDiv.style.direction = 'rtl';
-        tempDiv.style.position = 'absolute';
-        tempDiv.style.left = '-9999px';
-        tempDiv.style.color = '#6b46c1';
-        
-        // Add beautiful background gradient
-        tempDiv.style.background = `
-          linear-gradient(135deg, 
-            rgba(99, 102, 241, 0.05) 0%, 
-            rgba(139, 92, 246, 0.05) 25%,
-            rgba(219, 234, 254, 0.1) 50%,
-            rgba(147, 51, 234, 0.05) 75%,
-            rgba(99, 102, 241, 0.05) 100%
-          ),
-          radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-          radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-          linear-gradient(180deg, #ffffff 0%, #fafafa 100%)
-        `;
-        
-        // Add decorative border
-        tempDiv.style.border = '3px solid';
-        tempDiv.style.borderImage = 'linear-gradient(135deg, #8b5cf6, #6366f1, #a855f7) 1';
-        tempDiv.style.boxShadow = 'inset 0 0 50px rgba(139, 92, 246, 0.1)';
-        
-        // Add image and title on first page only
-        if (i === 0) {
-          // Add decorative header
-          const headerDiv = document.createElement('div');
-          headerDiv.style.textAlign = 'center';
-          headerDiv.style.marginBottom = '30px';
-          headerDiv.style.padding = '20px';
-          headerDiv.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.1))';
-          headerDiv.style.borderRadius = '15px';
-          headerDiv.style.border = '2px solid rgba(139, 92, 246, 0.2)';
-          
-          // Add image if exists
-          if (article.image_url) {
-            const imageDiv = document.createElement('div');
-            imageDiv.style.textAlign = 'center';
-            imageDiv.style.marginBottom = '20px';
-            
-            const img = document.createElement('img');
-            img.crossOrigin = 'anonymous';
-            img.src = article.image_url;
-            img.style.width = '280px';
-            img.style.height = 'auto';
-            img.style.objectFit = 'contain';
-            img.style.borderRadius = '12px';
-            img.style.display = 'block';
-            img.style.margin = '0 auto';
-            img.style.boxShadow = '0 10px 30px rgba(139, 92, 246, 0.3)';
-            imageDiv.appendChild(img);
-            headerDiv.appendChild(imageDiv);
-          }
-          
-          // Add title
-          const titleDiv = document.createElement('div');
-          titleDiv.style.fontSize = '28px';
-          titleDiv.style.fontWeight = 'bold';
-          titleDiv.style.textAlign = 'center';
-          titleDiv.style.color = '#4c1d95';
-          titleDiv.style.lineHeight = '1.3';
-          titleDiv.style.textShadow = '0 2px 4px rgba(76, 29, 149, 0.3)';
-          titleDiv.textContent = article.title;
-          headerDiv.appendChild(titleDiv);
-          
-          tempDiv.appendChild(headerDiv);
-        }
-        
-        // Add page content with enhanced styling
-        const contentDiv = document.createElement('div');
-        contentDiv.style.color = '#6b46c1';
-        contentDiv.style.lineHeight = '1.6';
-        contentDiv.style.textAlign = 'center';
-        contentDiv.style.direction = 'rtl';
-        contentDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
-        contentDiv.style.padding = '20px';
-        contentDiv.style.background = 'rgba(255, 255, 255, 0.7)';
-        contentDiv.style.borderRadius = '10px';
-        contentDiv.style.backdropFilter = 'blur(10px)';
-        
-        // Process content
-        let processedHTML = contentPages[i];
-        
-        // Process ^^^ markers for empty lines
-        processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 8px; margin: 8px 0; display: block; clear: both;"></div>');
-        processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 8px; margin: 8px 0; display: block; clear: both;"></div>');
-        
-        // Enhanced styles for better formatting
-        const styles = `
-          <style>
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            body, div {
-              font-family: Heebo, Arial, sans-serif !important;
-              direction: rtl !important;
-              text-align: center !important;
-              color: #6b46c1 !important;
-              line-height: 1.6 !important;
-              white-space: pre-wrap !important;
-            }
-            p {
-              margin: 8px 0 !important;
-              font-size: 18px !important;
-              line-height: 1.6 !important;
-              text-align: center !important;
-              direction: rtl !important;
-              color: #6b46c1 !important;
-            }
-            strong, b {
-              font-weight: 900 !important;
-              color: #4c1d95 !important;
-              text-shadow: 0 1px 2px rgba(76, 29, 149, 0.3) !important;
-            }
-            u {
-              text-decoration: underline !important;
-              text-decoration-thickness: 2px !important;
-              text-decoration-color: #8b5cf6 !important;
-              color: #4c1d95 !important;
-              text-underline-offset: 3px !important;
-            }
-            em, i {
-              font-style: italic !important;
-              color: #7c3aed !important;
-            }
-          </style>
-        `;
-        
-        // Set the processed HTML content
-        contentDiv.innerHTML = styles + processedHTML;
-        tempDiv.appendChild(contentDiv);
-        
-        // Add page number at bottom
-        const pageNumberDiv = document.createElement('div');
-        pageNumberDiv.style.position = 'absolute';
-        pageNumberDiv.style.bottom = '30px';
-        pageNumberDiv.style.left = '50%';
-        pageNumberDiv.style.transform = 'translateX(-50%)';
-        pageNumberDiv.style.fontSize = '14px';
-        pageNumberDiv.style.color = '#8b5cf6';
-        pageNumberDiv.style.fontWeight = 'bold';
-        pageNumberDiv.textContent = `${i + 1}`;
-        tempDiv.appendChild(pageNumberDiv);
-        
-        document.body.appendChild(tempDiv);
-        
-        // Force style recalculation
-        tempDiv.offsetHeight;
-        
-        try {
-          // Wait for images to load
-          const images = tempDiv.querySelectorAll('img');
-          await Promise.all(Array.from(images).map(img => {
-            return new Promise((resolve) => {
-              if (img.complete) {
-                resolve(void 0);
-              } else {
-                img.onload = () => resolve(void 0);
-                img.onerror = () => resolve(void 0);
-                setTimeout(() => resolve(void 0), 5000);
-              }
-            });
-          }));
-          
-          // Wait for fonts to load
-          await document.fonts.ready;
-          
-          const canvas = await html2canvas(tempDiv, {
-            useCORS: true,
-            allowTaint: true,
-            scale: 2,
-            logging: false,
-            width: 794,
-            height: 1123,
-            backgroundColor: '#ffffff',
-            onclone: (clonedDoc) => {
-              const boldElements = clonedDoc.querySelectorAll('strong, b');
-              boldElements.forEach(el => {
-                const element = el as HTMLElement;
-                element.style.fontWeight = '900';
-                element.style.color = '#4c1d95';
-              });
-              
-              const underlineElements = clonedDoc.querySelectorAll('u');
-              underlineElements.forEach(el => {
-                const element = el as HTMLElement;
-                element.style.textDecoration = 'underline';
-                element.style.textDecorationThickness = '2px';
-                element.style.color = '#4c1d95';
-              });
-            }
-          });
-          
-          const imgData = canvas.toDataURL('image/png', 1.0);
-          
-          // Add image to PDF maintaining aspect ratio
-          const imgWidth = pageWidth - (margin * 2);
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          
-          // If image is taller than page, scale it down
-          const maxHeight = pageHeight - (margin * 2);
-          if (imgHeight > maxHeight) {
-            const scaledWidth = (canvas.width * maxHeight) / canvas.height;
-            pdf.addImage(imgData, 'PNG', margin, margin, scaledWidth, maxHeight);
-          } else {
-            pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
-          }
-        } finally {
-          document.body.removeChild(tempDiv);
-        }
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
       }
       
       // Save the PDF
       pdf.save(`${article.title}.pdf`);
-      setShowPDFModal(false);
       
       toast({
         title: "PDF נוצר בהצלחה",
-        description: `המאמר יוצא ל-PDF בהצלחה עם ${contentPages.length} עמודים`,
+        description: "המאמר יוצא ל-PDF בהצלחה",
       });
     } catch (error) {
       console.error('Error creating PDF:', error);
@@ -880,40 +678,6 @@ const ArticleEditor: React.FC = () => {
       });
     }
   };
-
-  const handleDirectPDFExport = useCallback(async () => {
-    if (!article) return;
-    
-    try {
-      // Get content from form values
-      const currentFormData = form.getValues();
-      let markdownContent = currentFormData.content_markdown;
-      
-      // If no content in form, try to get from editor
-      if (!markdownContent && editorRef.current) {
-        await editorRef.current.saveContent();
-        markdownContent = form.getValues().content_markdown;
-      }
-      
-      if (!markdownContent) {
-        toast({
-          title: "אין תוכן לייצוא",
-          description: "אנא הוסף תוכן למאמר לפני הייצוא",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      await handlePDFExport(markdownContent);
-    } catch (error) {
-      console.error('Error in direct PDF export:', error);
-      toast({
-        title: "שגיאה ביצירת PDF",
-        description: "אנא נסה שוב מאוחר יותר",
-        variant: "destructive",
-      });
-    }
-  }, [article, handlePDFExport, form]);
 
   useEffect(() => {
     const warningText = 'יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?';
@@ -990,18 +754,6 @@ const ArticleEditor: React.FC = () => {
                 >
                   <FileText className="h-4 w-4" />
                   ייצא ל-PDF
-                </Button>
-              )}
-              
-              {isEditMode && (
-                <Button 
-                  onClick={handleDirectPDFExport} 
-                  variant="outline"
-                  disabled={isSaving || !form.formState.isValid}
-                  className="gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  ייצא ישיר ל-PDF
                 </Button>
               )}
               
@@ -1292,13 +1044,6 @@ const ArticleEditor: React.FC = () => {
             isOpen={isPublishModalOpen}
             onClose={() => setIsPublishModalOpen(false)}
             onSuccess={handlePublishSuccess}
-          />
-          
-          <PDFExportModal
-            isOpen={showPDFModal}
-            onClose={() => setShowPDFModal(false)}
-            onExport={handlePDFExport}
-            article={article}
           />
         </div>
       )}
