@@ -918,6 +918,21 @@ const ArticleEditor: React.FC = () => {
     }
   };
 
+  const handleDirectPDFExport = useCallback(async () => {
+    if (!article || !contentRef.current) return;
+    
+    try {
+      await handlePDFExport(contentRef.current);
+    } catch (error) {
+      console.error('Error in direct PDF export:', error);
+      toast({
+        title: "שגיאה ביצירת PDF",
+        description: "אנא נסה שוב מאוחר יותר",
+        variant: "destructive",
+      });
+    }
+  }, [article, handlePDFExport]);
+
   useEffect(() => {
     const warningText = 'יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לעזוב?';
     
@@ -993,6 +1008,18 @@ const ArticleEditor: React.FC = () => {
                 >
                   <FileText className="h-4 w-4" />
                   ייצא ל-PDF
+                </Button>
+              )}
+              
+              {isEditMode && (
+                <Button 
+                  onClick={handleDirectPDFExport} 
+                  variant="outline"
+                  disabled={isSaving || !form.formState.isValid}
+                  className="gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  ייצא ישיר ל-PDF
                 </Button>
               )}
               
