@@ -1,11 +1,19 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Quote, CheckCircle, Star } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const HebrewLandingPage = () => {
   const scrollToForm = () => {
-    // Add scroll to form logic when form is created
-    console.log('Scrolling to registration form');
+    const formElement = document.getElementById('registration-form');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -591,6 +599,102 @@ const HebrewLandingPage = () => {
                 ומתוך החיפוש הזה, נולדה הסדנה הזאת.
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 14: FAQ */}
+      <div className="w-full py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
+        <div className="max-w-4xl mx-auto">
+          {/* Title */}
+          <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-12 leading-relaxed" style={{ color: 'var(--purple-deep)' }}>
+            שאלות נפוצות
+          </h2>
+
+          {/* FAQ Accordion */}
+          <Accordion type="single" collapsible className="bg-white rounded-lg shadow-sm">
+            <AccordionItem value="item-1" className="border-b border-gray-200 last:border-b-0">
+              <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
+                אני לא בטוחה שהתפילה קשורה אליי. לא התפללתי שנים.
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4 text-right">
+                <p className="font-heebo text-lg leading-relaxed text-gray-800">
+                  הסדנה הזאת בדיוק בשבילך. היא נבנתה במיוחד לנשים כמוך – שמרגישות מרחק, קושי או ניתוק. אין צורך ברקע קודם, אלא ברצון פשוט לנסות מחדש.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-2" className="border-b border-gray-200 last:border-b-0">
+              <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
+                אין לי זמן – איך אספיק שעתיים של סדנה?
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4 text-right">
+                <p className="font-heebo text-lg leading-relaxed text-gray-800">
+                  הסדנה מוקלטת ותהיה זמינה לך לצפייה למשך שבוע. את יכולה לעצור, להמשיך ולחזור מתי שנוח לך.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-3" className="border-b border-gray-200 last:border-b-0">
+              <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
+                אני דתייה / חילונית / מסורתית – זה רלוונטי גם לי?
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4 text-right">
+                <p className="font-heebo text-lg leading-relaxed text-gray-800">
+                  הסדנה פונה לנשים מכל גווני הקשת – דתיות, חילוניות, מסורתיות – כל אחת שמבקשת לחדש את הקשר שלה עם התפילה, בדרכה ובשפתה.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="item-4" className="border-b border-gray-200 last:border-b-0">
+              <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
+                יש צורך להפעיל מצלמה או לדבר בזום?
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4 text-right">
+                <p className="font-heebo text-lg leading-relaxed text-gray-800">
+                  ממש לא. את יכולה לצפות בשקט, בלי לדבר, בלי להפעיל מצלמה.<br/>
+                  אם תבחרי לשאול שאלה בצ'אט – מעולה. אם לא – גם טוב.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </div>
+
+      {/* Section 15: Final Call to Action */}
+      <div className="w-full py-16 px-4" style={{ backgroundColor: 'var(--pink-vibrant)' }}>
+        <div className="max-w-4xl mx-auto text-center space-y-8">
+          {/* Final CTA Text */}
+          <div className="text-white font-heebo text-lg md:text-xl lg:text-2xl leading-relaxed space-y-4">
+            <p>הגיע הזמן להחזיר את התפילה למקום שהיא ראויה לו בחיים שלך.</p>
+            <p>הצטרפי אליי למסע מרגש ומשנה תפיסה,</p>
+            <p>שיחזיר לך את הקול, את הלב, ואת החיבור – דרך מילים שכבר מזמן שכחת שהן שלך.</p>
+          </div>
+
+          {/* Final CTA Button */}
+          <Button
+            onClick={scrollToForm}
+            className="bg-white font-bold text-lg md:text-xl px-8 py-6 md:px-12 md:py-8 rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg max-w-3xl mx-auto h-auto"
+            style={{ color: 'var(--pink-vibrant)' }}
+          >
+            כן! אני נרשמת עכשיו לסדנה החינמית
+          </Button>
+        </div>
+      </div>
+
+      {/* Section 16: Registration Form Anchor */}
+      <div id="registration-form" className="w-full bg-white py-16 px-4">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-8 leading-relaxed purple-text">
+            הרשמה לסדנה החינמית
+          </h2>
+          <div className="bg-gray-50 p-8 rounded-lg">
+            <p className="font-heebo text-lg text-gray-600 mb-4">
+              טופס ההרשמה יתווסף בקרוב...
+            </p>
+            <p className="font-heebo text-sm text-gray-500">
+              כל הכפתורים מובילים לכאן עם גלילה חלקה
+            </p>
           </div>
         </div>
       </div>
