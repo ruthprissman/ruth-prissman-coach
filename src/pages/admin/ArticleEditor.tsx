@@ -919,7 +919,7 @@ const ArticleEditor: React.FC = () => {
   };
 
   const handleDirectPDFExport = useCallback(async () => {
-      console.error('start handleDirectPDFExport' article);
+      console.error('start handleDirectPDFExport: ' , contentRef.current);
     if (!article || !contentRef.current) return;
     
     try {
