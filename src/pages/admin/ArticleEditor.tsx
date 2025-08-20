@@ -922,6 +922,7 @@ const ArticleEditor: React.FC = () => {
     if (!article || !contentRef.current) return;
     
     try {
+      // contentRef.current is already a string containing HTML content
       await handlePDFExport(contentRef.current);
     } catch (error) {
       console.error('Error in direct PDF export:', error);
