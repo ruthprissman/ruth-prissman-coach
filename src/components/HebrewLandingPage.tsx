@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Quote, CheckCircle, Star } from 'lucide-react';
 
 const HebrewLandingPage = () => {
   const scrollToForm = () => {
@@ -258,6 +259,170 @@ const HebrewLandingPage = () => {
             >
               אני רוצה לחיות את התפילה שלי ולהירשם עכשיו בחינם
             </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 8: Testimonials from women */}
+      <div className="w-full py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
+        <div className="max-w-6xl mx-auto">
+          {/* Title */}
+          <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-12 leading-relaxed" style={{ color: 'var(--purple-deep)' }}>
+            הקשיבי למה שנשים כמוך מספרות
+          </h2>
+
+          {/* 3 Testimonial Cards */}
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              "״מדהים מדהים, רות! המשפט הזה נגע בי הכי חזק: תפילה = רצון״",
+              "״וואו, כמה חדות! כמה תובנות. איך לקחת מילים מוכרות והצגת אותן בזווית כל כך אחרת״",
+              "״אליי זה הגיע פשוט בזמן (ולא התפללתי על זה, זה רק רציתי). תודה לך!״"
+            ].map((testimonial, index) => (
+              <div key={index} className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-start gap-3">
+                  <Quote className="text-blue-400 flex-shrink-0 mt-1" size={24} />
+                  <p className="font-heebo text-lg leading-relaxed text-gray-800">
+                    {testimonial}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Section 9: 3-step structured method */}
+      <div className="w-full bg-white py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          {/* Title */}
+          <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-12 leading-relaxed purple-text">
+            איך בדיוק נחבר מחדש את התפילה לחיים שלך?
+          </h2>
+
+          {/* 3 Steps */}
+          <div className="space-y-8">
+            {/* Step 1 */}
+            <div className="flex gap-6 items-start">
+              <div className="flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold" style={{ backgroundColor: 'var(--purple-deep)' }}>
+                1
+              </div>
+              <div className="flex-1">
+                <h3 className="font-alef font-bold text-xl md:text-2xl mb-4" style={{ color: 'var(--purple-deep)' }}>
+                  חידוש תפיסות ישנות
+                </h3>
+                <div className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800 space-y-2">
+                  <p>נבין מדוע אמונות כמו "תפילה צריכה להיות מושלמת" הן אלו שתוקעות אותנו.</p>
+                  <p>נלמד להפסיק להרגיש אשמה על כך שהראש שלנו נודד,</p>
+                  <p>ונגלה איך דווקא המחשבות האלו הן חומר הגלם לתפילה הכי אמיתית שיש.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex gap-6 items-start">
+              <div className="flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold" style={{ backgroundColor: 'var(--purple-deep)' }}>
+                2
+              </div>
+              <div className="flex-1">
+                <h3 className="font-alef font-bold text-xl md:text-2xl mb-4" style={{ color: 'var(--purple-deep)' }}>
+                  רכישת כלים מעשיים
+                </h3>
+                <div className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800 space-y-2">
+                  <p>תקבלי ארגז כלים פשוט ופרקטי להתחברות.</p>
+                  <p>נלמד טכניקות קצרות של דקה או שתיים לעשות "אתחול" לפני התפילה,</p>
+                  <p>נגלה איך למצוא את הבקשות האישיות שלנו בתוך הטקסט הכתוב,</p>
+                  <p>ונקבל טיפים להתמודדות עם הסחות דעת בזמן אמת.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex gap-6 items-start">
+              <div className="flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-bold" style={{ backgroundColor: 'var(--purple-deep)' }}>
+                3
+              </div>
+              <div className="flex-1">
+                <h3 className="font-alef font-bold text-xl md:text-2xl mb-4" style={{ color: 'var(--purple-deep)' }}>
+                  הטמעה בתוך מרוץ החיים
+                </h3>
+                <div className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800 space-y-2">
+                  <p>נלמד איך להפוך את התפילה לחלק טבעי מהיום, ולא למשהו שצריך "לפנות לו זמן".</p>
+                  <p>תגלי איך אפשר להתפלל תפילה עמוקה גם בחמש דקות,</p>
+                  <p>איך למצוא רגעי חיבור קטנים לאורך היום,</p>
+                  <p>ואיך להפוך כל פעולה יומיומית להזדמנות להתקרבות לבורא עולם.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 10: What we'll do vs what you'll get */}
+      <div className="w-full bg-white py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="border-2 border-dashed border-blue-300 p-8 rounded-lg">
+            {/* Title */}
+            <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-12 leading-relaxed" style={{ color: 'var(--purple-deep)' }}>
+              הדרכים החדשות שתגלי בסדנה כדי להפוך כל תפילה לחוויה רוחנית וגשמית
+            </h2>
+
+            {/* 2 Column Layout */}
+            <div className="grid md:grid-cols-2 gap-8 mb-8">
+              {/* Column 1: What we'll do */}
+              <div className="space-y-6">
+                <h3 className="font-alef font-bold text-xl md:text-2xl text-center mb-6" style={{ color: 'var(--purple-deep)' }}>
+                  מה נעשה בסדנה
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    "נלמד תפיסות חדשות ופורצות דרך על מהות התפילה.",
+                    "נקבל טיפים מעשיים וכלים ליישום להתחברות מיידית.",
+                    "נרכוש מיומנויות לעצור רגע לפני התפילה ולכוון את הלב.",
+                    "נבין איך להפסיק להילחם במחשבות הטורדניות ולהשתמש בהן כקרש קפיצה.",
+                    "נגלה איך למצוא את עצמנו בתוך המילים המוכרות של הסידור.",
+                    "נזהה את החסם האישי שלנו להתחברות ונהפוך אותו לכלי הכי חזק שלנו."
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <CheckCircle className="text-green-500 flex-shrink-0 mt-1" size={20} />
+                      <p className="font-heebo text-lg leading-relaxed text-gray-800">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Column 2: What you'll get */}
+              <div className="space-y-6">
+                <h3 className="font-alef font-bold text-xl md:text-2xl text-center mb-6" style={{ color: 'var(--purple-deep)' }}>
+                  התוצאה שלך
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    "חשק אמיתי להתפלל, גם כשאין לך זמן או כוח.",
+                    "יכולת להפוך כל תפילה לשיחה אישית, מרגשת ומלאה.",
+                    "שחרור מרגשות האשמה וההתסכול שליוו אותך עד היום.",
+                    "תחושת קרבה וחיבור לבורא עולם שלא הרגשת אולי שנים.",
+                    "כלים פשוטים שמלווים אותך לאורך כל היום, לא רק בזמן התפילה.",
+                    "תחושת רכות וכוח פנימי שמשפיעה על כל תחומי החיים."
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <Star className="flex-shrink-0 mt-1" size={20} style={{ color: 'var(--pink-vibrant)' }} />
+                      <p className="font-heebo text-lg leading-relaxed text-gray-800">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <div className="text-center">
+              <Button
+                onClick={scrollToForm}
+                className="text-white font-bold text-lg md:text-xl px-8 py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-2xl mx-auto h-auto"
+                style={{ backgroundColor: 'var(--pink-vibrant)' }}
+              >
+                כן, אני רוצה לקבל את כל הכלים ולהירשם לסדנה החינמית
+              </Button>
+            </div>
           </div>
         </div>
       </div>
