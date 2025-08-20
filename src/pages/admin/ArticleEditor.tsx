@@ -622,19 +622,10 @@ const ArticleEditor: React.FC = () => {
       let contentPages: string[];
       if (content.includes(PAGE_DELIMITER)) {
           const splitContent = content.split(PAGE_DELIMITER).map(page => page.trim()).filter(page => page.length > 0);
-          contentPages = splitContent; // השאר את ה-HTML כמו שהוא!
+          contentPages = splitContent;
       } else {
-          contentPages = [content]; // השאר את ה-HTML כמו שהוא!
+          contentPages = [content];
         }
-      // if (content.includes(PAGE_DELIMITER)) {
-      //   // If user added page delimiters, split the edited content
-      //   const splitContent = content.split(PAGE_DELIMITER).map(page => page.trim()).filter(page => page.length > 0);
-      //   // Convert each page back to formatted HTML
-      //   contentPages = splitContent.map(pageText => processMarkdownContent(pageText));
-      // } else {
-      //   // Use the original formatted content as one page
-      //   contentPages = [processMarkdownContent(content)];
-      // }
       
       // Create PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -642,6 +633,7 @@ const ArticleEditor: React.FC = () => {
       const pageHeight = 297; // A4 height in mm
       const margin = 15;
       
+      // Process each page
       for (let i = 0; i < contentPages.length; i++) {
         if (i > 0) {
           pdf.addPage();
@@ -655,70 +647,96 @@ const ArticleEditor: React.FC = () => {
         tempDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
         tempDiv.style.fontSize = '18px';
         tempDiv.style.lineHeight = '1.6';
-        tempDiv.style.textAlign = 'center'; // Center align for poem format
+        tempDiv.style.textAlign = 'center';
         tempDiv.style.direction = 'rtl';
-        tempDiv.style.backgroundColor = 'white'; // Clean white background
         tempDiv.style.position = 'absolute';
         tempDiv.style.left = '-9999px';
-        tempDiv.style.color = '#6b46c1'; // Purple text color
+        tempDiv.style.color = '#6b46c1';
         
-        // Add image and title on first page
+        // Add beautiful background gradient
+        tempDiv.style.background = `
+          linear-gradient(135deg, 
+            rgba(99, 102, 241, 0.05) 0%, 
+            rgba(139, 92, 246, 0.05) 25%,
+            rgba(219, 234, 254, 0.1) 50%,
+            rgba(147, 51, 234, 0.05) 75%,
+            rgba(99, 102, 241, 0.05) 100%
+          ),
+          radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+          radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+          linear-gradient(180deg, #ffffff 0%, #fafafa 100%)
+        `;
+        
+        // Add decorative border
+        tempDiv.style.border = '3px solid';
+        tempDiv.style.borderImage = 'linear-gradient(135deg, #8b5cf6, #6366f1, #a855f7) 1';
+        tempDiv.style.boxShadow = 'inset 0 0 50px rgba(139, 92, 246, 0.1)';
+        
+        // Add image and title on first page only
         if (i === 0) {
+          // Add decorative header
+          const headerDiv = document.createElement('div');
+          headerDiv.style.textAlign = 'center';
+          headerDiv.style.marginBottom = '30px';
+          headerDiv.style.padding = '20px';
+          headerDiv.style.background = 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.1))';
+          headerDiv.style.borderRadius = '15px';
+          headerDiv.style.border = '2px solid rgba(139, 92, 246, 0.2)';
+          
           // Add image if exists
           if (article.image_url) {
             const imageDiv = document.createElement('div');
             imageDiv.style.textAlign = 'center';
-            imageDiv.style.marginBottom = '40px';
+            imageDiv.style.marginBottom = '20px';
             
             const img = document.createElement('img');
-            img.crossOrigin = 'anonymous'; // Enable CORS
+            img.crossOrigin = 'anonymous';
             img.src = article.image_url;
-            img.style.width = '350px'; // Larger, fixed width
+            img.style.width = '280px';
             img.style.height = 'auto';
             img.style.objectFit = 'contain';
             img.style.borderRadius = '12px';
             img.style.display = 'block';
-            img.style.margin = '0 auto'; // Center the image
+            img.style.margin = '0 auto';
+            img.style.boxShadow = '0 10px 30px rgba(139, 92, 246, 0.3)';
             imageDiv.appendChild(img);
-            tempDiv.appendChild(imageDiv);
+            headerDiv.appendChild(imageDiv);
           }
           
           // Add title
           const titleDiv = document.createElement('div');
-          titleDiv.style.fontSize = '32px'; // Larger title
+          titleDiv.style.fontSize = '28px';
           titleDiv.style.fontWeight = 'bold';
           titleDiv.style.textAlign = 'center';
-          titleDiv.style.marginBottom = '50px'; // More space after title
-          titleDiv.style.color = '#4c1d95'; // Darker purple for title
+          titleDiv.style.color = '#4c1d95';
           titleDiv.style.lineHeight = '1.3';
+          titleDiv.style.textShadow = '0 2px 4px rgba(76, 29, 149, 0.3)';
           titleDiv.textContent = article.title;
-          tempDiv.appendChild(titleDiv);
+          headerDiv.appendChild(titleDiv);
+          
+          tempDiv.appendChild(headerDiv);
         }
         
-        // Add page content with poem-like formatting
+        // Add page content with enhanced styling
         const contentDiv = document.createElement('div');
-        contentDiv.style.color = '#6b46c1'; // Purple text
+        contentDiv.style.color = '#6b46c1';
         contentDiv.style.lineHeight = '1.6';
         contentDiv.style.textAlign = 'center';
         contentDiv.style.direction = 'rtl';
         contentDiv.style.fontFamily = 'Heebo, Arial, sans-serif';
+        contentDiv.style.padding = '20px';
+        contentDiv.style.background = 'rgba(255, 255, 255, 0.7)';
+        contentDiv.style.borderRadius = '10px';
+        contentDiv.style.backdropFilter = 'blur(10px)';
         
-        // Process content - work directly with HTML (no markdown conversion needed)
+        // Process content
         let processedHTML = contentPages[i];
         
-        // Process ^^^ markers for empty lines - reduced spacing
-        processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 2px; margin: 2px 0; display: block; clear: both;"></div>');
-        processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 2px; margin: 2px 0; display: block; clear: both;"></div>');
+        // Process ^^^ markers for empty lines
+        processedHTML = processedHTML.replace(/^[ \t]*\^\^\^[ \t]*$/gm, '<div style="height: 8px; margin: 8px 0; display: block; clear: both;"></div>');
+        processedHTML = processedHTML.replace(/\^\^\^/g, '<div style="height: 8px; margin: 8px 0; display: block; clear: both;"></div>');
         
-        // // Process bold text **text** 
-        // processedHTML = processedHTML.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // // Process underline text __text__
-        // processedHTML = processedHTML.replace(/__(.*?)__/g, '<u>$1</u>');
-        
-        // // Process italic text *text*
-        // processedHTML = processedHTML.replace(/\*(.*?)\*/g, '<em>$1</em>');
-// Create styles for proper formatting with strong declarations
+        // Enhanced styles for better formatting
         const styles = `
           <style>
             * {
@@ -731,100 +749,59 @@ const ArticleEditor: React.FC = () => {
               direction: rtl !important;
               text-align: center !important;
               color: #6b46c1 !important;
-              line-height: 1.5 !important;
+              line-height: 1.6 !important;
               white-space: pre-wrap !important;
-              margin: 0 !important;
-              padding: 0 !important;
             }
             p {
-              margin: 4px 0 !important;
-              padding: 0 !important;
+              margin: 8px 0 !important;
               font-size: 18px !important;
-              line-height: 1.5 !important;
-              display: block !important;
+              line-height: 1.6 !important;
               text-align: center !important;
               direction: rtl !important;
-              font-family: Heebo, Arial, sans-serif !important;
               color: #6b46c1 !important;
-            }
-            div {
-              margin: 4px 0 !important;
-              padding: 0 !important;
-              display: block !important;
-              text-align: center !important;
-              direction: rtl !important;
             }
             strong, b {
               font-weight: 900 !important;
               color: #4c1d95 !important;
-              font-family: Heebo, Arial, sans-serif !important;
-              display: inline !important;
-              background-color: transparent !important;
-              -webkit-font-smoothing: antialiased !important;
-              font-variation-settings: 'wght' 900 !important;
+              text-shadow: 0 1px 2px rgba(76, 29, 149, 0.3) !important;
             }
             u {
               text-decoration: underline !important;
-              text-decoration-thickness: 3px !important;
-              text-decoration-color: #4c1d95 !important;
+              text-decoration-thickness: 2px !important;
+              text-decoration-color: #8b5cf6 !important;
               color: #4c1d95 !important;
-              font-family: Heebo, Arial, sans-serif !important;
-              display: inline !important;
-              background-color: transparent !important;
-              -webkit-text-decoration: underline !important;
-              text-underline-offset: 2px !important;
+              text-underline-offset: 3px !important;
             }
             em, i {
               font-style: italic !important;
-              font-family: Heebo, Arial, sans-serif !important;
-            }
-            mark, .cdx-marker {
-              background-color: #fef3c7 !important;
-              color: #92400e !important;
-              padding: 2px 4px !important;
-              border-radius: 2px !important;
-            }
-            a {
-              color: #8b5cf6 !important;
-              text-decoration: underline !important;
-            }
-            h1, h2, h3, h4, h5, h6 {
-              margin: 20px 0 16px 0 !important;
-              font-weight: bold !important;
-              text-align: center !important;
-              direction: rtl !important;
-              font-family: Heebo, Arial, sans-serif !important;
-            }
-            ul, ol {
-              margin: 16px 0 !important;
-              padding-right: 20px !important;
-              text-align: center !important;
-              direction: rtl !important;
-            }
-            li {
-              margin: 8px 0 !important;
-              text-align: center !important;
-              direction: rtl !important;
-            }
-            br {
-              display: block !important;
-              content: "" !important;
-              margin: 4px 0 !important;
+              color: #7c3aed !important;
             }
           </style>
         `;
         
         // Set the processed HTML content
         contentDiv.innerHTML = styles + processedHTML;
-        
         tempDiv.appendChild(contentDiv);
+        
+        // Add page number at bottom
+        const pageNumberDiv = document.createElement('div');
+        pageNumberDiv.style.position = 'absolute';
+        pageNumberDiv.style.bottom = '30px';
+        pageNumberDiv.style.left = '50%';
+        pageNumberDiv.style.transform = 'translateX(-50%)';
+        pageNumberDiv.style.fontSize = '14px';
+        pageNumberDiv.style.color = '#8b5cf6';
+        pageNumberDiv.style.fontWeight = 'bold';
+        pageNumberDiv.textContent = `${i + 1}`;
+        tempDiv.appendChild(pageNumberDiv);
+        
         document.body.appendChild(tempDiv);
         
         // Force style recalculation
         tempDiv.offsetHeight;
         
         try {
-          // Wait for images to load and fonts to render
+          // Wait for images to load
           const images = tempDiv.querySelectorAll('img');
           await Promise.all(Array.from(images).map(img => {
             return new Promise((resolve) => {
@@ -833,7 +810,6 @@ const ArticleEditor: React.FC = () => {
               } else {
                 img.onload = () => resolve(void 0);
                 img.onerror = () => resolve(void 0);
-                // Set timeout to avoid hanging
                 setTimeout(() => resolve(void 0), 5000);
               }
             });
@@ -845,39 +821,26 @@ const ArticleEditor: React.FC = () => {
           const canvas = await html2canvas(tempDiv, {
             useCORS: true,
             allowTaint: true,
-            scale: 3, // Higher quality
+            scale: 2,
             logging: false,
             width: 794,
             height: 1123,
-            backgroundColor: 'white',
+            backgroundColor: '#ffffff',
             onclone: (clonedDoc) => {
-              // Force bold and underline styling in cloned document
-              const clonedContainer = clonedDoc.querySelector('div');
-              if (clonedContainer) {
-                // Apply styles to bold elements
-                const boldElements = clonedDoc.querySelectorAll('strong, b');
-                boldElements.forEach(el => {
-                  const element = el as HTMLElement;
-                  element.style.fontWeight = '900';
-                  element.style.color = '#4c1d95';
-                  element.style.fontFamily = 'Heebo, Arial, sans-serif';
-                  element.style.display = 'inline';
-                  element.style.fontVariationSettings = '"wght" 900';
-                });
-                
-                // Apply styles to underline elements
-                const underlineElements = clonedDoc.querySelectorAll('u');
-                underlineElements.forEach(el => {
-                  const element = el as HTMLElement;
-                  element.style.textDecoration = 'underline';
-                  element.style.textDecorationThickness = '3px';
-                  element.style.textDecorationColor = '#4c1d95';
-                  element.style.color = '#4c1d95';
-                  element.style.fontFamily = 'Heebo, Arial, sans-serif';
-                  element.style.display = 'inline';
-                  element.style.textUnderlineOffset = '2px';
-                });
-              }
+              const boldElements = clonedDoc.querySelectorAll('strong, b');
+              boldElements.forEach(el => {
+                const element = el as HTMLElement;
+                element.style.fontWeight = '900';
+                element.style.color = '#4c1d95';
+              });
+              
+              const underlineElements = clonedDoc.querySelectorAll('u');
+              underlineElements.forEach(el => {
+                const element = el as HTMLElement;
+                element.style.textDecoration = 'underline';
+                element.style.textDecorationThickness = '2px';
+                element.style.color = '#4c1d95';
+              });
             }
           });
           
