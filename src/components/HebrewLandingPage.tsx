@@ -7,12 +7,73 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const HebrewLandingPage = () => {
+  const { toast } = useToast();
+  const [formData, setFormData] = React.useState({
+    fullName: '',
+    email: '',
+    phone: ''
+  });
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSubmitted, setIsSubmitted] = React.useState(false);
+
   const scrollToForm = () => {
     const formElement = document.getElementById('registration-form');
     if (formElement) {
       formElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.fullName || !formData.email) {
+      toast({
+        title: "שגיאה",
+        description: "אנא מלאי את השדות החובה",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('registrations')
+        .insert({
+          full_name: formData.fullName,
+          email: formData.email,
+          phone: formData.phone || null,
+          workshop_id: 'ac258723-b2b7-45da-9956-2ca140457a44'
+        });
+
+      if (error) throw error;
+
+      setIsSubmitted(true);
+      toast({
+        title: "נרשמת בהצלחה!",
+        description: "כל הפרטים בדרך למייל שלך 💌"
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast({
+        title: "שגיאה בהרשמה",
+        description: "נסי שוב או שלחי מייל ל Ruth@RuthPrissman.co.il",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -682,20 +743,103 @@ const HebrewLandingPage = () => {
         </div>
       </div>
 
-      {/* Section 16: Registration Form Anchor */}
-      <div id="registration-form" className="w-full bg-white py-16 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-8 leading-relaxed purple-text">
-            הרשמה לסדנה החינמית
-          </h2>
-          <div className="bg-gray-50 p-8 rounded-lg">
-            <p className="font-heebo text-lg text-gray-600 mb-4">
-              טופס ההרשמה יתווסף בקרוב...
-            </p>
-            <p className="font-heebo text-sm text-gray-500">
-              כל הכפתורים מובילים לכאן עם גלילה חלקה
-            </p>
+      {/* Section 16: Registration Form */}
+      <div id="registration-form" className="w-full py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white p-8 rounded-lg shadow-sm">
+            <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-8 leading-relaxed purple-text">
+              הרשמי כאן וקבלי גישה מיידית לסדנה החינמית
+            </h2>
+            
+            {isSubmitted ? (
+              <div className="text-center space-y-4">
+                <div className="text-green-600 text-xl font-bold">
+                  נרשמת בהצלחה! כל הפרטים בדרך למייל שלך 💌
+                </div>
+                <p className="text-gray-600 font-heebo">
+                  נתראה בסדנה!
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-right font-heebo text-lg" style={{ color: 'var(--purple-deep)' }}>
+                    שם פרטי *
+                  </Label>
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    required
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    className="text-right font-heebo"
+                    placeholder="השם הפרטי שלך"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-right font-heebo text-lg" style={{ color: 'var(--purple-deep)' }}>
+                    אימייל *
+                  </Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="text-right font-heebo"
+                    placeholder="האימייל שלך"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-right font-heebo text-lg" style={{ color: 'var(--purple-deep)' }}>
+                    טלפון (לא חובה)
+                  </Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="text-right font-heebo"
+                    placeholder="מספר הטלפון שלך"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full text-white font-bold text-lg md:text-xl py-6 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg"
+                  style={{ backgroundColor: 'var(--pink-vibrant)' }}
+                >
+                  {isSubmitting ? 'נרשמת...' : 'אני נרשמת עכשיו לסדנה'}
+                </Button>
+
+                <p className="text-center text-gray-500 text-sm font-heebo">
+                  לא נשלח לך ספאם. הפרטים שלך שמורים איתנו.
+                </p>
+              </form>
+            )}
+
+            {/* Support Note */}
+            <div className="mt-8 text-center">
+              <p className="text-gray-600 font-heebo text-lg font-bold">
+                ❗ חסומה? שלחי לי מייל ואצרף אותך ידנית – Ruth@RuthPrissman.co.il
+              </p>
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Section 18: Footer */}
+      <div className="w-full bg-white py-8 px-4 border-t border-gray-200">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-gray-500 font-heebo text-sm">
+            © כל הזכויות שמורות | רות פריסמן | Ruth@RuthPrissman.co.il
+          </p>
         </div>
       </div>
     </div>
