@@ -40,6 +40,7 @@ import { Toaster } from './components/ui/toaster';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
 import WorkshopLanding from './pages/WorkshopLanding';
+import HebrewLandingPage from './components/HebrewLandingPage';
 import { ScrollToTop } from './components/ScrollToTop';
 import { runSessionDiagnostics } from './utils/SessionDiagnostics';
 
@@ -88,6 +89,7 @@ function App() {
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/workshop" element={<WorkshopLanding />} />
+                <Route path="/prayer-landing" element={<HebrewLandingPage />} />
 
                 {/* Admin auth routes */}
                 <Route path="/admin/login" element={<Login />} />
