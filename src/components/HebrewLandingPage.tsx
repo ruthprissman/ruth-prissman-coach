@@ -91,7 +91,7 @@ const HebrewLandingPage = () => {
 
       {/* Section 2: Hero with Background */}
       <div 
-        className="relative w-full min-h-screen flex items-center justify-center px-4 py-16 md:py-24"
+        className="relative w-full min-h-screen flex items-center justify-center px-4 py-12 sm:py-16 md:py-24"
         style={{
           backgroundImage: `url('/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png')`,
           backgroundSize: 'cover',
@@ -108,43 +108,45 @@ const HebrewLandingPage = () => {
         />
         
         {/* Content */}
-        <div className="relative z-10 max-w-4xl mx-auto text-center space-y-8">
+        <div className="relative z-10 max-w-5xl mx-auto text-center space-y-6 sm:space-y-8">
           {/* Main Title */}
-          <h1 className="text-white font-heebo text-2xl md:text-4xl lg:text-5xl leading-relaxed font-light">
-            <span className="block">הסוד להפוך תפילה מעוד חובה</span>
-            <span className="block">(שלא תמיד אנחנו מצליחים למלא),</span>
-            <span className="block">למילים, לשיחה אמיתית שממלאת אותך בכוח.</span>
-            <span className="block">גם כשהקטנים מושכים לך בחצאית והראש עמוס במטלות?</span>
+          <h1 className="text-white font-heebo text-xl sm:text-2xl md:text-4xl lg:text-5xl leading-relaxed font-light px-2">
+            <span className="block mb-2">הסוד להפוך תפילה מעוד חובה</span>
+            <span className="block mb-2 text-lg sm:text-xl md:text-3xl lg:text-4xl">(שלא תמיד אנחנו מצליחים למלא),</span>
+            <span className="block mb-2">למילים, לשיחה אמיתית שממלאת אותך בכוח.</span>
+            <span className="block text-lg sm:text-xl md:text-3xl lg:text-4xl">גם כשהקטנים מושכים לך בחצאית והראש עמוס במטלות?</span>
           </h1>
 
           {/* Subtitle */}
-          <div className="text-white font-heebo text-lg md:text-xl lg:text-2xl leading-relaxed font-light space-y-4 max-w-3xl mx-auto">
+          <div className="text-white font-heebo text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light space-y-3 sm:space-y-4 max-w-4xl mx-auto px-2">
             <p>מה אם היית יכולה לפתוח את הסידור בקלות, להרגיש את הלב נפתח?</p>
             <p>לסיים כל תפילה בתחושת רוממות וחיבור, במקום בתחושת אשמה ותסכול.</p>
             <p>לגלות איך להכניס את כל החיים שלך, את כל הבלגן והעייפות, אל תוך המילים המוכרות, ולמצוא בהן אור חדש?</p>
           </div>
 
           {/* CTA Button */}
-          <Button
-            onClick={scrollToForm}
-            className="text-white font-bold text-lg md:text-xl px-8 py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-2xl mx-auto h-auto"
-            style={{ backgroundColor: 'var(--pink-vibrant)' }}
-          >
-            כן, אני רוצה לגלות איך להרגיש קרובה שוב ולהירשם לסדנה החינמית
-          </Button>
+          <div className="px-4">
+            <Button
+              onClick={scrollToForm}
+              className="w-full sm:w-auto text-white font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-full sm:max-w-2xl mx-auto h-auto"
+              style={{ backgroundColor: 'var(--pink-vibrant)' }}
+            >
+              כן, אני רוצה לגלות איך להרגיש קרובה שוב ולהירשם לסדנה החינמית
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Section 3: Empathy Bullets */}
-      <div className="w-full bg-gray-50 py-16 px-4">
+      <div className="w-full bg-gray-50 py-12 sm:py-16 px-4">
         <div className="max-w-4xl mx-auto">
           {/* Title */}
-          <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-12 leading-relaxed purple-text">
+          <h2 className="text-center font-alef font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-8 sm:mb-12 leading-relaxed purple-text px-2">
             גם לך קורים הדברים האלה סביב התפילה, שמשאירים אותך מרוקנת במקום מלאה?
           </h2>
 
           {/* Bullet Points */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {[
               "את אומרת את המילים, אבל הראש שלך כבר עסוק ברשימת הקניות, בכביסות ובמה לבשל לצהריים.",
               "התפילה הפכה לעוד מטלה ברשימה האינסופית של היום, משהו שצריך רק לסיים ולסמן וי כדי להמשיך הלאה.",
@@ -154,9 +156,9 @@ const HebrewLandingPage = () => {
               "את מרגישה כמעט זרה – כלפי חוץ את נראית כמו אישה מתפללת, אבל בפנים, הראש שלך נמצא במקום אחר לגמרי.",
               "אולי בכלל את לא מצליחה להתפלל....?"
             ].map((text, index) => (
-              <div key={index} className="flex items-start gap-4 p-4 rounded-lg bg-white shadow-sm">
-                <span className="text-2xl text-red-500 flex-shrink-0 mt-1">❌</span>
-                <p className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800">
+              <div key={index} className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-white shadow-sm">
+                <span className="text-xl sm:text-2xl text-red-500 flex-shrink-0 mt-1">❌</span>
+                <p className="font-heebo text-base sm:text-lg md:text-xl leading-relaxed text-gray-800">
                   {text}
                 </p>
               </div>
@@ -183,16 +185,16 @@ const HebrewLandingPage = () => {
           </div>
 
           {/* 3 Benefit Cards */}
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
             {[
               "להיות אמא מסורה ואישה עסוקה – וגם להרגיש קרובה למקור עליון.",
               "לנהל בית ועבודה תובעניים – וגם למצוא רגעים של שקט וחיבור רוחני.",
               "לעמוד בכל המטלות של היום – ולהתחיל אותו עם כוח ותחושת משמעות."
             ].map((text, index) => (
-              <div key={index} className="bg-white p-6 rounded-lg shadow-sm">
-                <div className="flex items-start gap-4">
-                  <span className="text-2xl flex-shrink-0 mt-1">🌀</span>
-                  <p className="font-heebo text-lg leading-relaxed text-gray-800">
+              <div key={index} className="bg-white p-4 sm:p-6 rounded-lg shadow-sm">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <span className="text-xl sm:text-2xl flex-shrink-0 mt-1">🌀</span>
+                  <p className="font-heebo text-base sm:text-lg leading-relaxed text-gray-800">
                     {text}
                   </p>
                 </div>
@@ -201,13 +203,15 @@ const HebrewLandingPage = () => {
           </div>
 
           {/* CTA Button */}
-          <Button
-            onClick={scrollToForm}
-            className="text-white font-bold text-lg md:text-xl px-8 py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-2xl mx-auto h-auto"
-            style={{ backgroundColor: 'var(--pink-vibrant)' }}
-          >
-            כן, אני רוצה לגלות איך להרגיש קרובה שוב ולהירשם לסדנה החינמית
-          </Button>
+          <div className="px-4">
+            <Button
+              onClick={scrollToForm}
+              className="w-full sm:w-auto text-white font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-full sm:max-w-2xl mx-auto h-auto"
+              style={{ backgroundColor: 'var(--pink-vibrant)' }}
+            >
+              כן, אני רוצה לגלות איך להרגיש קרובה שוב ולהירשם לסדנה החינמית
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -675,11 +679,11 @@ const HebrewLandingPage = () => {
           {/* FAQ Accordion */}
           <Accordion type="single" collapsible className="bg-white rounded-lg shadow-sm">
             <AccordionItem value="item-1" className="border-b border-gray-200 last:border-b-0">
-              <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
+              <AccordionTrigger className="text-right px-4 sm:px-6 py-4 text-base sm:text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
                 "אין לי זמן לסדנה של שעתיים, בקושי יש לי זמן להתפלל."
               </AccordionTrigger>
-              <AccordionContent className="px-6 pb-4 text-right">
-                <div className="font-heebo text-lg leading-relaxed text-gray-800 space-y-2">
+              <AccordionContent className="px-4 sm:px-6 pb-4 text-right">
+                <div className="font-heebo text-sm sm:text-base md:text-lg leading-relaxed text-gray-800 space-y-2">
                   <p>אני מבינה אותך לגמרי. בדיוק בגלל זה הסדנה הזו כל כך חשובה עבורך. השעתיים האלה הן לא עוד "מטלה", הן השקעה שתחזיר את עצמה עשרות מונים. הכלים שתקבלי ילמדו אותך איך להפוך את מעט הזמן שיש לך לאיכותי ויעיל פי כמה. תגלי איך חמש דקות של תפילה מחוברת יכולות לתת לך יותר כוח משעה של תפילה מכנית.</p>
                   <p className="font-bold">איכות על פני כמות.</p>
                   <p>בנוסף, תקבלי גישה להקלטה ותוכלי לצפות בה בזמן שנוח לך.</p>
@@ -688,22 +692,22 @@ const HebrewLandingPage = () => {
             </AccordionItem>
 
             <AccordionItem value="item-2" className="border-b border-gray-200 last:border-b-0">
-              <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
+              <AccordionTrigger className="text-right px-4 sm:px-6 py-4 text-base sm:text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
                 "ניסיתי כבר הכל, אני פשוט לא בן אדם 'רוחני' יותר, החיים שחקו אותי."
               </AccordionTrigger>
-              <AccordionContent className="px-6 pb-4 text-right">
-                <div className="font-heebo text-lg leading-relaxed text-gray-800">
+              <AccordionContent className="px-4 sm:px-6 pb-4 text-right">
+                <div className="font-heebo text-sm sm:text-base md:text-lg leading-relaxed text-gray-800">
                   <p>התחושה הזאת כל כך מוכרת, והיא נובעת מהאמונה השגויה ש"רוחניות" היא משהו ששייך רק לאנשים מסוימים או לתקופות מסוימות בחיים. הסדנה הזאת תוכיח לך שרוחניות לא נעלמת, היא פשוט משנה צורה. תלמדי למצוא את החיבור הרוחני שלך לא בשעה של הקשבה להרצאה מרוממת, או בשירה בשעת ליל, אלא דווקא בתוך שגרת החיים העמוסה. את לא "שחוקה", את פשוט צריכה כלים חדשים שמתאימים למי שאת היום.</p>
                 </div>
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-3" className="border-b border-gray-200 last:border-b-0">
-              <AccordionTrigger className="text-right px-6 py-4 text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
+              <AccordionTrigger className="text-right px-4 sm:px-6 py-4 text-base sm:text-lg md:text-xl font-heebo hover:no-underline" style={{ color: 'var(--purple-deep)' }}>
                 "זה בטח עוד סדנה שנותנת הרגשה טובה לרגע ואז הכל חוזר לקדמותו."
               </AccordionTrigger>
-              <AccordionContent className="px-6 pb-4 text-right">
-                <div className="font-heebo text-lg leading-relaxed text-gray-800">
+              <AccordionContent className="px-4 sm:px-6 pb-4 text-right">
+                <div className="font-heebo text-sm sm:text-base md:text-lg leading-relaxed text-gray-800">
                   <p>זו לא הרצאה שנועדה לתת "זריקת מוטיבציה". זו סדנה מעשית שנותנת מיומנויות. בדיוק כמו שלומדים לבשל או לנהוג, כך נלמד מיומנות חדשה: המיומנות של תפילה מחוברת. תצאי עם כלים פרקטיים ועם תוכנית פעולה פשוטה שתוכלי ליישם מיד. המטרה היא לא שינוי רגעי, אלא יצירת הרגלים חדשים שישנו את חווית התפילה שלך לתמיד.</p>
                 </div>
               </AccordionContent>
@@ -734,10 +738,10 @@ const HebrewLandingPage = () => {
       </div>
 
       {/* Section 16: Registration Form */}
-      <div id="registration-form" className="w-full py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
+      <div id="registration-form" className="w-full py-12 sm:py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
         <div className="max-w-2xl mx-auto">
-          <div className="bg-white p-8 rounded-lg shadow-sm">
-            <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-8 leading-relaxed purple-text">
+          <div className="bg-white p-6 sm:p-8 rounded-lg shadow-sm">
+            <h2 className="text-center font-alef font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-6 sm:mb-8 leading-relaxed purple-text px-2">
               הרשמי כאן וקבלי גישה מיידית לסדנה החינמית
             </h2>
             
@@ -751,9 +755,9 @@ const HebrewLandingPage = () => {
                 </p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-right font-heebo text-lg" style={{ color: 'var(--purple-deep)' }}>
+                  <Label htmlFor="fullName" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     שם פרטי *
                   </Label>
                   <Input
@@ -763,13 +767,13 @@ const HebrewLandingPage = () => {
                     required
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className="text-right font-heebo"
+                    className="text-right font-heebo text-base sm:text-lg py-3"
                     placeholder="השם הפרטי שלך"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-right font-heebo text-lg" style={{ color: 'var(--purple-deep)' }}>
+                  <Label htmlFor="email" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     אימייל *
                   </Label>
                   <Input
@@ -779,13 +783,13 @@ const HebrewLandingPage = () => {
                     required
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="text-right font-heebo"
+                    className="text-right font-heebo text-base sm:text-lg py-3"
                     placeholder="האימייל שלך"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-right font-heebo text-lg" style={{ color: 'var(--purple-deep)' }}>
+                  <Label htmlFor="phone" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     טלפון (לא חובה)
                   </Label>
                   <Input
@@ -794,7 +798,7 @@ const HebrewLandingPage = () => {
                     type="tel"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="text-right font-heebo"
+                    className="text-right font-heebo text-base sm:text-lg py-3"
                     placeholder="מספר הטלפון שלך"
                   />
                 </div>
@@ -802,13 +806,13 @@ const HebrewLandingPage = () => {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full text-white font-bold text-lg md:text-xl py-6 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg"
+                  className="w-full text-white font-bold text-base sm:text-lg md:text-xl py-4 sm:py-6 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg min-h-[48px] touch-manipulation"
                   style={{ backgroundColor: 'var(--pink-vibrant)' }}
                 >
                   {isSubmitting ? 'נרשמת...' : 'אני נרשמת עכשיו לסדנה'}
                 </Button>
 
-                <p className="text-center text-gray-500 text-sm font-heebo">
+                <p className="text-center text-gray-500 text-xs sm:text-sm font-heebo">
                   לא נשלח לך ספאם. הפרטים שלך שמורים איתנו.
                 </p>
               </form>
