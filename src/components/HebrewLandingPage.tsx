@@ -341,10 +341,16 @@ const HebrewLandingPage = () => {
           <div className="text-center pt-8">
             <Button
               onClick={scrollToForm}
-              className="text-white font-bold text-lg md:text-xl px-8 py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-2xl mx-auto h-auto"
+              className="text-white font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-full sm:max-w-2xl mx-auto h-auto text-center leading-snug w-full sm:w-auto"
               style={{ backgroundColor: 'var(--pink-vibrant)' }}
             >
-              אני רוצה לחיות את התפילה שלי ולהירשם עכשיו בחינם
+              <div className="sm:hidden">
+                <div>אני רוצה לחיות את התפילה שלי</div>
+                <div>ולהירשם עכשיו בחינם</div>
+              </div>
+              <span className="hidden sm:inline">
+                אני רוצה לחיות את התפילה שלי ולהירשם עכשיו בחינם
+              </span>
             </Button>
           </div>
         </div>
