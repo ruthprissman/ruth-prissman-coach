@@ -691,7 +691,7 @@ const HebrewLandingPage = () => {
         <div className="max-w-4xl mx-auto">
           {/* Title */}
           <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-12 leading-relaxed" style={{ color: 'var(--purple-deep)' }}>
-            התנגדויות נפוצות
+            שאלות נפוצות
           </h2>
 
           {/* FAQ Accordion */}
