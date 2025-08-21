@@ -128,11 +128,16 @@ const HebrewLandingPage = () => {
           <div className="px-4">
             <Button
               onClick={scrollToForm}
-              className="w-full sm:w-auto text-white font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-full sm:max-w-2xl mx-auto h-auto whitespace-normal leading-tight"
+              className="w-full sm:w-auto text-white font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-full sm:max-w-2xl mx-auto h-auto text-center leading-snug"
               style={{ backgroundColor: 'var(--pink-vibrant)' }}
             >
-              <span className="block sm:inline">כן, אני רוצה לגלות איך להרגיש קרובה שוב</span>
-              <span className="block sm:inline"> ולהירשם לסדנה החינמית</span>
+              <div className="sm:hidden">
+                <div>כן, אני רוצה לגלות איך להרגיש קרובה שוב</div>
+                <div>ולהירשם לסדנה החינמית</div>
+              </div>
+              <span className="hidden sm:inline">
+                כן, אני רוצה לגלות איך להרגיש קרובה שוב ולהירשם לסדנה החינמית
+              </span>
             </Button>
           </div>
         </div>
@@ -207,11 +212,16 @@ const HebrewLandingPage = () => {
           <div className="px-4">
             <Button
               onClick={scrollToForm}
-              className="w-full sm:w-auto text-white font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-full sm:max-w-2xl mx-auto h-auto whitespace-normal leading-tight"
+              className="w-full sm:w-auto text-white font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-full sm:max-w-2xl mx-auto h-auto text-center leading-snug"
               style={{ backgroundColor: 'var(--pink-vibrant)' }}
             >
-              <span className="block sm:inline">כן, אני רוצה לגלות איך להרגיש קרובה שוב</span>
-              <span className="block sm:inline"> ולהירשם לסדנה החינמית</span>
+              <div className="sm:hidden">
+                <div>כן, אני רוצה לגלות איך להרגיש קרובה שוב</div>
+                <div>ולהירשם לסדנה החינמית</div>
+              </div>
+              <span className="hidden sm:inline">
+                כן, אני רוצה לגלות איך להרגיש קרובה שוב ולהירשם לסדנה החינמית
+              </span>
             </Button>
           </div>
         </div>
@@ -731,11 +741,16 @@ const HebrewLandingPage = () => {
           {/* Final CTA Button */}
           <Button
             onClick={scrollToForm}
-            className="bg-white font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-6 md:px-12 md:py-8 rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg max-w-full sm:max-w-3xl mx-auto h-auto whitespace-normal leading-tight w-full sm:w-auto"
+            className="bg-white font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-6 md:px-12 md:py-8 rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg max-w-full sm:max-w-3xl mx-auto h-auto text-center leading-snug w-full sm:w-auto"
             style={{ color: 'var(--pink-vibrant)' }}
           >
-            <span className="block sm:inline">כן! אני נרשמת עכשיו</span>
-            <span className="block sm:inline"> לסדנה החינמית</span>
+            <div className="sm:hidden">
+              <div>כן! אני נרשמת עכשיו</div>
+              <div>לסדנה החינמית</div>
+            </div>
+            <span className="hidden sm:inline">
+              כן! אני נרשמת עכשיו לסדנה החינמית
+            </span>
           </Button>
         </div>
       </div>
