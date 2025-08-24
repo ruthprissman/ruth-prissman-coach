@@ -105,14 +105,14 @@ const HebrewLandingPage = () => {
           className="absolute inset-0"
           style={{
             backgroundColor: '#374151',
-            background: 'linear-gradient(135deg, rgba(16, 37, 58, 0.65), rgba(30, 20, 60, 0.7))'
+            backgroundImage: 'linear-gradient(135deg, rgba(16, 37, 58, 0.65), rgba(30, 20, 60, 0.7))'
           }}
         />
         
         {/* Content */}
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-6 sm:space-y-8">
           {/* Main Title */}
-          <h1 className="text-white font-heebo text-xl sm:text-2xl md:text-4xl lg:text-5xl leading-relaxed font-light px-2">
+          <h1 className="text-black sm:text-white font-heebo text-xl sm:text-2xl md:text-4xl lg:text-5xl leading-relaxed font-light px-2">
             <span className="block mb-2">הסוד להפוך תפילה מעוד חובה</span>
             <span className="block mb-2 text-lg sm:text-xl md:text-3xl lg:text-4xl">(שלא תמיד אנחנו מצליחים למלא),</span>
             <span className="block mb-2">למילים, לשיחה אמיתית שממלאת אותך בכוח.</span>
@@ -120,7 +120,7 @@ const HebrewLandingPage = () => {
           </h1>
 
           {/* Subtitle */}
-          <div className="text-white font-heebo text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light space-y-3 sm:space-y-4 max-w-4xl mx-auto px-2">
+          <div className="text-black sm:text-white font-heebo text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed font-light space-y-3 sm:space-y-4 max-w-4xl mx-auto px-2">
             <p>מה אם היית יכולה לפתוח את הסידור בקלות, להרגיש את הלב נפתח?</p>
             <p>לסיים כל תפילה בתחושת רוממות וחיבור, במקום בתחושת אשמה ותסכול.</p>
             <p>לגלות איך להכניס את כל החיים שלך, את כל הבלגן והעייפות, אל תוך המילים המוכרות, ולמצוא בהן אור חדש?</p>
