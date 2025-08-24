@@ -7,21 +7,37 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Send, Mail, TestTube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { verifyExactMatch } from '@/utils/emailTemplates/landing/prayer';
 
 interface LandingPageEmailModalProps {
   isOpen: boolean;
   onClose: () => void;
+  generateHtml?: () => string;
+  defaultSubject?: string;
+  pageId?: string;
+  pageName?: string;
 }
 
-const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, onClose }) => {
+const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  generateHtml, 
+  defaultSubject = 'סדנת תפילה אישית - הזמנה מיוחדת',
+  pageId = 'default',
+  pageName = 'דף נחיתה'
+}) => {
   const [isSending, setIsSending] = useState(false);
   const [isTestMode, setIsTestMode] = useState(false);
   const [isSpecificRecipientsMode, setIsSpecificRecipientsMode] = useState(false);
   const [allSubscribers, setAllSubscribers] = useState<Array<{email: string, firstName?: string}>>([]);
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
-  const [emailSubject, setEmailSubject] = useState('סדנת תפילה אישית - הזמנה מיוחדת');
+  const [emailSubject, setEmailSubject] = useState(defaultSubject);
   const { toast } = useToast();
+  
+  React.useEffect(() => {
+    setEmailSubject(defaultSubject);
+  }, [defaultSubject]);
 
   const generateLandingPageHTML = () => {
     return `<!DOCTYPE html>
@@ -388,78 +404,97 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
 </html>`;
   };
 
+  // Use provided HTML generator or fallback to the original function
+  const getEmailHTML = () => {
+    if (generateHtml) {
+      return generateHtml();
+    }
+    return generateLandingPageHTML();
+  };
+
   const handleSendLandingPageEmail = async () => {
+    if (isTestMode && !emailSubject.trim()) {
+      toast({
+        title: "שגיאה",
+        description: "אנא הזיני נושא למייל",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSending(true);
 
     try {
-      const supabase = supabaseClient();
+      const emailHTML = getEmailHTML();
       
-      // Get article subscribers if not test mode
-      let recipientEmails: string[] = [];
+      // בדיקת התאמה מילה במילה אם זה דף התפילה
+      if (pageId === 'prayer-workshop' && verifyExactMatch) {
+        const verification = verifyExactMatch(emailHTML);
+        if (!verification.isValid) {
+          toast({
+            title: "שגיאת אימות תוכן",
+            description: `חסר תוכן במייל: ${verification.missingContent.slice(0, 2).join(', ')}${verification.missingContent.length > 2 ? '...' : ''}`,
+            variant: "destructive"
+          });
+          setIsSending(false);
+          return;
+        }
+      }
+
+      let recipients: string[] = [];
       
       if (isTestMode) {
-        recipientEmails = ['ruth@ruthprissman.co.il'];
+        recipients = ['ruth@ruthprissman.co.il'];
       } else if (isSpecificRecipientsMode) {
-        recipientEmails = selectedRecipients;
+        if (selectedRecipients.length === 0) {
+          toast({
+            title: "שגיאה",
+            description: "אנא בחרי לפחות נמען אחד",
+            variant: "destructive"
+          });
+          setIsSending(false);
+          return;
+        }
+        recipients = selectedRecipients;
       } else {
-        // Get active article subscribers
-        const { data: subscribers, error: subscribersError } = await supabase
+        // Load all subscribers
+        const { data: subscribers, error } = await supabaseClient()
           .from('subscribers')
           .select('email')
-          .eq('is_subscribed', true);
+          .eq('is_active', true);
 
-        if (subscribersError) {
-          throw subscribersError;
-        }
-
-        recipientEmails = subscribers?.map(sub => sub.email) || [];
+        if (error) throw error;
+        
+        recipients = subscribers?.map(s => s.email) || [];
       }
 
-      if (recipientEmails.length === 0) {
-        toast({
-          title: "אין נמענים",
-          description: isTestMode ? "לא נמצא כתובת מייל לבדיקה" : "לא נמצאו מנויים פעילים למאמרים",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Generate email content
-      const emailContent = generateLandingPageHTML();
-
-      // Call the send-email edge function
-      const { data, error } = await supabase.functions.invoke('send-email', {
-        body: {
-          emailList: recipientEmails,
-          subject: emailSubject,
-          sender: {
-            email: "ruth@ruthprissman.co.il",
-            name: "רות פריסמן"
-          },
-          htmlContent: emailContent
+      const emailData = {
+        recipients,
+        subject: emailSubject,
+        htmlContent: emailHTML,
+        sender: {
+          name: 'רות פריסמן',
+          email: 'ruth@ruthprissman.co.il'
         }
+      };
+
+      const { error } = await supabaseClient().functions.invoke('send-email', {
+        body: emailData
       });
 
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
-      }
-
-      console.log('Email sent successfully:', data);
+      if (error) throw error;
 
       toast({
-        title: isTestMode ? "מייל בדיקה נשלח" : "ההזמנה לסדנה נשלחה בהצלחה",
-        description: isTestMode 
-          ? "מייל הבדיקה נשלח לכתובת ruth@ruthprissman.co.il"
-          : `ההזמנה נשלחה ל-${recipientEmails.length} נמענים`
+        title: "המייל נשלח בהצלחה! 🎉",
+        description: `נשלח ל-${recipients.length} נמענים`
       });
 
       onClose();
-    } catch (error: any) {
-      console.error('Error sending landing page email:', error);
+    } catch (error) {
+      console.error('Error sending email:', error);
       toast({
         title: "שגיאה בשליחת המייל",
-        description: error.message || "אירעה שגיאה בשליחת המייל. נסה שוב מאוחר יותר.",
+        description: "נסי שוב או פני לתמיכה",
         variant: "destructive"
       });
     } finally {
@@ -528,7 +563,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-right">שליחת הזמנה לסדנה במייל</DialogTitle>
+          <DialogTitle className="text-right">שליחת {pageName} במייל לרשימת התפוצה</DialogTitle>
           <DialogDescription className="text-right">
             שליחת דף הנחיתה של הסדנה כמייל מעוצב לרשימת התפוצה
           </DialogDescription>
