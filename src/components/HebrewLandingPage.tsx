@@ -93,6 +93,7 @@ const HebrewLandingPage = () => {
       <div 
         className="relative w-full min-h-screen flex items-center justify-center px-4 py-12 sm:py-16 md:py-24"
         style={{
+          backgroundColor: '#374151',
           backgroundImage: `url('/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
