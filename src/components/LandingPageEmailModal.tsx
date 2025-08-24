@@ -68,7 +68,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
           
           <!-- Hero Section with Background -->
           <tr>
-            <td style="background-color:#2d3748; background-image:url('https://coach.ruthprissman.co.il/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png'); background-size:cover; background-position:center; padding:48px 16px; text-align:center; position:relative;">
+            <td style="background-color:#374151; background-image:linear-gradient(135deg, rgba(16, 37, 58, 0.95), rgba(30, 20, 60, 0.95)), url('https://coach.ruthprissman.co.il/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png'); background-size:cover; background-position:center; padding:48px 16px; text-align:center; position:relative;">
               
               <!-- Hero content -->
               <h1 style="margin:0 0 24px 0; color:#ffffff; font-size:24px; line-height:1.4; font-weight:300;">
