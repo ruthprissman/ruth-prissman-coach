@@ -127,6 +127,14 @@ const HebrewLandingPage = () => {
              {/* Section 16: Registration Form */}
       <div id="registration-form" className="w-full py-12 sm:py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
         <div className="max-w-2xl mx-auto">
+          {/* Workshop Details */}
+          <div className="text-center mb-8">
+            <div className="bg-white p-4 rounded-lg shadow-sm border-2" style={{ borderColor: 'var(--purple-deep)' }}>
+              <p className="font-alef font-bold text-lg md:text-xl" style={{ color: 'var(--purple-deep)' }}>
+                סדנת זום, יום ראשון יד' אלול 07.09.25 בשעה 21:30
+              </p>
+            </div>
+          </div>
           <div className="bg-white p-6 sm:p-8 rounded-lg shadow-sm">
             <h2 className="text-center font-alef font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-6 sm:mb-8 leading-relaxed purple-text px-2">
               הרשמי כאן וקבלי גישה מיידית לסדנה החינמית
