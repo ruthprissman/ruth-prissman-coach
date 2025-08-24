@@ -113,10 +113,10 @@ const HebrewLandingPage = () => {
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-6 sm:space-y-8">
           {/* Main Title */}
           <h1 className="text-black sm:text-white font-heebo text-xl sm:text-2xl md:text-4xl lg:text-5xl leading-relaxed font-light px-2">
-            <span className="block mb-2">הסוד להפוך תפילה מעוד חובה</span>
-            <span className="block mb-2 text-lg sm:text-xl md:text-3xl lg:text-4xl">(שלא תמיד אנחנו מצליחים למלא),</span>
-            <span className="block mb-2">למילים, לשיחה אמיתית שממלאת אותך בכוח.</span>
-            <span className="block text-lg sm:text-xl md:text-3xl lg:text-4xl">גם כשהקטנים מושכים לך בחצאית והראש עמוס במטלות?</span>
+            <span className="block mb-2 text-black sm:text-white">הסוד להפוך תפילה מעוד חובה</span>
+            <span className="block mb-2 text-lg sm:text-xl md:text-3xl lg:text-4xl text-black sm:text-white">(שלא תמיד אנחנו מצליחים למלא),</span>
+            <span className="block mb-2 text-black sm:text-white">למילים, לשיחה אמיתית שממלאת אותך בכוח.</span>
+            <span className="block text-lg sm:text-xl md:text-3xl lg:text-4xl text-black sm:text-white">גם כשהקטנים מושכים לך בחצאית והראש עמוס במטלות?</span>
           </h1>
 
           {/* Subtitle */}
