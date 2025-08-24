@@ -469,7 +469,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
       }
 
       const emailData = {
-        recipients,
+        emailList: recipients,
         subject: emailSubject,
         htmlContent: emailHTML,
         sender: {
