@@ -94,21 +94,12 @@ const HebrewLandingPage = () => {
         className="relative w-full min-h-screen flex items-center justify-center px-4 py-12 sm:py-16 md:py-24"
         style={{
           backgroundColor: '#374151',
-          backgroundImage: `url('/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png')`,
+          backgroundImage: `linear-gradient(135deg, rgba(16, 37, 58, 0.95), rgba(30, 20, 60, 0.95)), url('/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         }}
       >
-        {/* Dark overlay with fallback background */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            backgroundColor: '#374151',
-            backgroundImage: 'linear-gradient(135deg, rgba(16, 37, 58, 0.65), rgba(30, 20, 60, 0.7))'
-          }}
-        />
-        
         {/* Content */}
         <div className="relative z-10 max-w-5xl mx-auto text-center space-y-6 sm:space-y-8">
           {/* Main Title */}
