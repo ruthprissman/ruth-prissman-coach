@@ -82,7 +82,7 @@ const HebrewLandingPage = () => {
       {/* Section 1: Top Bar */}
       <div 
         className="w-full flex items-center justify-center py-3 px-4"
-        style={{ backgroundColor: 'var(--purple-deep)', minHeight: '50px' }}
+        style={{ backgroundColor: '#4B2E83', minHeight: '50px' }}
       >
         <p className="text-white text-center font-alef font-bold text-sm md:text-base leading-tight">
           מרגישה שהתפילה שלך הפכה לעוד מטלה שצריך לסמן עליה וי?
