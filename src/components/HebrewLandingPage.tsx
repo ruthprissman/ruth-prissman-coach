@@ -874,12 +874,12 @@ const HebrewLandingPage = () => {
       <div id="registration-form" className="w-full py-12 sm:py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
         <div className="max-w-2xl mx-auto">
           <div className="bg-white p-6 sm:p-8 rounded-lg shadow-sm">
-            <h2 className="text-center font-alef font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-6 sm:mb-8 leading-relaxed purple-text px-2">
+            <h2 className="text-right font-alef font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-6 sm:mb-8 leading-relaxed purple-text px-2">
               הרשמי כאן וקבלי גישה מיידית לסדנה החינמית
             </h2>
             
             {isSubmitted ? (
-              <div className="text-center space-y-4">
+              <div className="text-right space-y-4">
                 <div className="text-green-600 text-xl font-bold">
                   נרשמת בהצלחה! כל הפרטים בדרך למייל שלך 💌
                 </div>
@@ -945,7 +945,7 @@ const HebrewLandingPage = () => {
                   {isSubmitting ? 'נרשמת...' : 'אני נרשמת עכשיו לסדנה'}
                 </Button>
 
-                <p className="text-center text-gray-500 text-xs sm:text-sm font-heebo">
+                <p className="text-right text-gray-500 text-xs sm:text-sm font-heebo">
                   לא נשלח לך ספאם. הפרטים שלך שמורים איתנו.
                 </p>
               </form>
