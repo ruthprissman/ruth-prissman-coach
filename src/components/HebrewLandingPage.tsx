@@ -124,25 +124,165 @@ const HebrewLandingPage = () => {
             <p>לגלות איך להכניס את כל החיים שלך, את כל הבלגן והעייפות, אל תוך המילים המוכרות, ולמצוא בהן אור חדש?</p>
           </div>
 
-          {/* CTA Button */}
-          <div className="px-4">
-            <Button
-              onClick={scrollToForm}
-              className="w-full sm:w-auto text-white font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-full sm:max-w-2xl mx-auto h-auto text-center leading-snug"
-              style={{ backgroundColor: 'var(--pink-vibrant)' }}
-            >
-              <div className="sm:hidden">
-                <div>כן, אני רוצה לגלות איך להרגיש קרובה שוב</div>
-                <div>ולהירשם לסדנה החינמית</div>
+             {/* Section 16: Registration Form */}
+      <div id="registration-form" className="w-full py-12 sm:py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white p-6 sm:p-8 rounded-lg shadow-sm">
+            <h2 className="text-center font-alef font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-6 sm:mb-8 leading-relaxed purple-text px-2">
+              הרשמי כאן וקבלי גישה מיידית לסדנה החינמית
+            </h2>
+            
+            {isSubmitted ? (
+              <div className="text-center space-y-4">
+                <div className="text-green-600 text-xl font-bold">
+                  נרשמת בהצלחה! כל הפרטים בדרך למייל שלך 💌
+                </div>
+                <p className="text-gray-600 font-heebo">
+                  נתראה בסדנה!
+                </p>
               </div>
-              <span className="hidden sm:inline">
-                כן, אני רוצה לגלות איך להרגיש קרובה שוב ולהירשם לסדנה החינמית
-              </span>
-            </Button>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
+                    שם פרטי *
+                  </Label>
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    required
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    className="text-right font-heebo text-base sm:text-lg py-3"
+                    placeholder="השם הפרטי שלך"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
+                    אימייל *
+                  </Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="text-right font-heebo text-base sm:text-lg py-3"
+                    placeholder="האימייל שלך"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
+                    טלפון (לא חובה)
+                  </Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="text-right font-heebo text-base sm:text-lg py-3"
+                    placeholder="מספר הטלפון שלך"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full text-white font-bold text-base sm:text-lg md:text-xl py-4 sm:py-6 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg min-h-[48px] touch-manipulation"
+                  style={{ backgroundColor: 'var(--pink-vibrant)' }}
+                >
+                  {isSubmitting ? 'נרשמת...' : 'אני נרשמת עכשיו לסדנה'}
+                </Button>
+
+                <p className="text-center text-gray-500 text-xs sm:text-sm font-heebo">
+                  לא נשלח לך ספאם. הפרטים שלך שמורים איתנו.
+                </p>
+              </form>
+            )}
+
+            {/* Support Note */}
+            <div className="mt-8 text-center">
+              <p className="text-gray-600 font-heebo text-lg font-bold">
+                ❗ חסומה? שלחי לי מייל ואצרף אותך ידנית – Ruth@RuthPrissman.co.il
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+          {/* CTA Button */}
+          
+        </div>
+      </div>
+ {/* Section 12: What you'll get upon registration */}
+      <div className="w-full py-16 px-4" style={{ backgroundColor: 'var(--purple-deep)' }}>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white p-8 rounded-lg shadow-lg">
+            {/* Title */}
+            <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-8 leading-relaxed purple-text">
+              הנה כל מה שתקבלי מיד עם ההרשמה לסדנה
+            </h2>
+
+            {/* List Items */}
+            <div className="space-y-6 mb-8">
+              <div className="flex items-start gap-4">
+                <Star className="flex-shrink-0 mt-1" size={24} style={{ color: 'var(--pink-vibrant)' }} />
+                <div>
+                  <p className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800">
+                    השתתפות מלאה בסדנה חיה "חיבורים חדשים למילים מוכרות"
+                  </p>
+                  <p className="text-gray-600">(שווי: 120 ₪)</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <Star className="flex-shrink-0 mt-1" size={24} style={{ color: 'var(--pink-vibrant)' }} />
+                <div>
+                  <p className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800">
+                    דפי עבודה וסיכום הסדנה להדפסה
+                  </p>
+                  <p className="text-gray-600">(שווי: 49 ₪)</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <Star className="flex-shrink-0 mt-1" size={24} style={{ color: 'var(--pink-vibrant)' }} />
+                <div>
+                  <p className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800">
+                    גישה להקלטת הסדנה למשך 7 ימים
+                  </p>
+                  <p className="text-gray-600">(שווי: 65 ₪)</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Value */}
+            <div className="border-t border-gray-200 pt-6 text-center">
+              <p className="font-heebo text-xl md:text-2xl text-gray-800 mb-2">שווי כולל: 234 ₪</p>
+              <p className="font-alef font-bold text-2xl md:text-3xl mb-6" style={{ color: 'var(--pink-vibrant)' }}>
+                המחיר שלך היום: 0 ₪ (לגמרי בחינם)
+              </p>
+            </div>
+
+            {/* CTA Button */}
+            <div className="text-center">
+              <Button
+                onClick={scrollToForm}
+                className="text-white font-bold text-lg md:text-xl px-8 py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg w-full md:max-w-2xl mx-auto h-auto"
+                style={{ backgroundColor: 'var(--pink-vibrant)' }}
+              >
+                שרייני את מקומך בחינם!
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
+   
       {/* Section 3: Empathy Bullets */}
       <div className="w-full bg-gray-50 py-12 sm:py-16 px-4">
         <div className="max-w-4xl mx-auto">
@@ -520,172 +660,8 @@ const HebrewLandingPage = () => {
         </div>
       </div>
 
-      {/* Section 11: Are you one of these 6 types of women? */}
-      <div className="w-full bg-white py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Title */}
-          <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-12 leading-relaxed" style={{ color: 'var(--purple-deep)' }}>
-            שש קבוצות של נשים – האם את אחת מהן?
-          </h2>
-
-          {/* Two Columns */}
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
-            {/* Right Column: For You */}
-            <div className="space-y-6">
-              <h3 className="font-alef font-bold text-xl md:text-2xl text-center mb-6" style={{ color: 'var(--purple-deep)' }}>
-                הסדנה הזו בשבילך אם:
-              </h3>
-              <div className="space-y-4">
-                {[
-                  "את אמא עסוקה שמרגישה שהתפילה שלך נדחקת לתחתית סדר העדיפויות, ואת רוצה לשנות את זה.",
-                  "את אישה עובדת שרצה מפגישה לפגישה ומתקשה למצוא רגע של שקט נפשי ורוחני.",
-                  "את מתגעגעת לתחושת החיבור שהייתה לך פעם בתפילה ורוצה להרגיש אותה שוב.",
-                  "את מרגישה אשמה ותסכול על כך שהתפילה שלך הפכה למכנית וריקה.",
-                  "את מחפשת כלים מעשיים ופשוטים, לא הרצאות תיאורטיות.",
-                  "את מרגישה שאי אפשר למצוא את החיבור לבורא גם בתוך המציאויות המורכבות של החיים המודרניים."
-                ].map((item, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <CheckCircle className="text-green-500 flex-shrink-0 mt-1" size={20} />
-                    <p className="font-heebo text-lg leading-relaxed text-gray-800">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Left Column: Not For You */}
-            <div className="space-y-6">
-              <h3 className="font-alef font-bold text-xl md:text-2xl text-center mb-6" style={{ color: 'var(--purple-deep)' }}>
-                הסדנה הזו כנראה לא בשבילך אם:
-              </h3>
-              <div className="space-y-4">
-                {[
-                  "את מחפשת פתרונות קסם שלא דורשים תרגול.",
-                  "את מרגישה שהתפילה שלך מושלמת ואין לך צורך בשינוי.",
-                  "את לא פתוחה ללמוד מחדש על התפילה.",
-                  "את מעדיפה שיעורים עיוניים על פני סדנה מעשית ופרקטית."
-                ].map((item, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <span className="text-red-500 flex-shrink-0 mt-1 text-xl">❌</span>
-                    <p className="font-heebo text-lg leading-relaxed text-gray-800">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Blue Framed Box */}
-          <div className="border-2 border-blue-300 p-6 rounded-lg shadow-sm bg-blue-50">
-            <h3 className="font-alef font-bold text-xl md:text-2xl mb-4 text-center" style={{ color: 'var(--purple-deep)' }}>
-              איך זה עובד?
-            </h3>
-            <div className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800">
-              <p>
-                הסדנה "חיבורים חדשים למילים מוכרות" היא הדרכה און ליין, בת כשעתיים, שתתקיים בזום.<br/>
-                כל מה שאת צריכה זה חיבור לזום (אפשרי גם דרך טלפון) ורצון אמיתי לפתוח את הלב.<br/>
-                במהלך הסדנה תוכלי לשאול שאלות ולקבל מענה. ההרשמה פשוטה וללא עלות.<br/>
-                פשוט מלאי את פרטייך בטופס ותקבלי למייל את כל הפרטים וקישור כניסה לזום.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Section 12: What you'll get upon registration */}
-      <div className="w-full py-16 px-4" style={{ backgroundColor: 'var(--purple-deep)' }}>
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white p-8 rounded-lg shadow-lg">
-            {/* Title */}
-            <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-8 leading-relaxed purple-text">
-              הנה כל מה שתקבלי מיד עם ההרשמה לסדנה
-            </h2>
-
-            {/* List Items */}
-            <div className="space-y-6 mb-8">
-              <div className="flex items-start gap-4">
-                <Star className="flex-shrink-0 mt-1" size={24} style={{ color: 'var(--pink-vibrant)' }} />
-                <div>
-                  <p className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800">
-                    השתתפות מלאה בסדנה חיה "חיבורים חדשים למילים מוכרות"
-                  </p>
-                  <p className="text-gray-600">(שווי: 180 ₪)</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <Star className="flex-shrink-0 mt-1" size={24} style={{ color: 'var(--pink-vibrant)' }} />
-                <div>
-                  <p className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800">
-                    דפי עבודה וסיכום הסדנה להדפסה
-                  </p>
-                  <p className="text-gray-600">(שווי: 49 ₪)</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <Star className="flex-shrink-0 mt-1" size={24} style={{ color: 'var(--pink-vibrant)' }} />
-                <div>
-                  <p className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800">
-                    גישה להקלטת הסדנה למשך 7 ימים
-                  </p>
-                  <p className="text-gray-600">(שווי: 97 ₪)</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Total Value */}
-            <div className="border-t border-gray-200 pt-6 text-center">
-              <p className="font-heebo text-xl md:text-2xl text-gray-800 mb-2">שווי כולל: 326 ₪</p>
-              <p className="font-alef font-bold text-2xl md:text-3xl mb-6" style={{ color: 'var(--pink-vibrant)' }}>
-                המחיר שלך היום: 0 ₪ (לגמרי בחינם)
-              </p>
-            </div>
-
-            {/* CTA Button */}
-            <div className="text-center">
-              <Button
-                onClick={scrollToForm}
-                className="text-white font-bold text-lg md:text-xl px-8 py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg w-full md:max-w-2xl mx-auto h-auto"
-                style={{ backgroundColor: 'var(--pink-vibrant)' }}
-              >
-                שרייני את מקומך בחינם!
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Section 13: Personal story from the creator */}
-      <div className="w-full bg-white py-16 px-4">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Title */}
-          <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-12 leading-relaxed purple-text">
-            אני יודעת בדיוק מה את מרגישה, כי הייתי שם בעצמי.
-          </h2>
-
-          {/* First Paragraph */}
-          <div className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800">
-            <p>
-              במשך שנים הרגשתי את אותו התסכול. הייתי אמא צעירה (וגם לא כל כך צעירה), מוקפת בילדים, עם קשב מופרע..., מנסה לתמרן בין כל המטלות, והתפילה... היא פשוט נעלמה. גם אם היו שם המילים (ולא תמיד היו), אבל הלב היה במקום אחר. הרגשתי אשמה עצומה. איך יכול להיות שאני, אישה שרוצה להרגיש מחוברת, להיות אדם טוב, מרגישה כזה ריחוק?
-            </p>
-          </div>
-
-          {/* Dashed Blue Frame */}
-          <div className="border-2 border-dashed border-blue-300 p-6 rounded-lg bg-blue-50">
-            <div className="font-heebo text-lg md:text-xl leading-snug text-gray-800">
-              <p>
-                התחלתי לחפש תשובות. קראתי ספרים, שמעתי שיעורים, ובעיקר, הקשבתי לנשים אחרות שאימנתי וליוויתי. גיליתי שאני לא לבד. זו בעיה של נשים רבות.<br/>
-                הבעיה בשוק היא שרוב הפתרונות מדברים על "להתנתק" מהעולם כדי להתפלל.<br/>
-                הם דורשים מאיתנו להיות משהו שאנחנו לא.<br/>
-                הם לא נותנים כלים אמיתיים לאישה שעומדת באמצע מטבח מבולגן ומנסה לגנוב חמש דקות של שיחה עם בורא עולם.<br/>
-                הבנתי שחייבת להיות דרך אחרת – דרך שמחברת את התפילה לחיים,<br/>
-                במקום לנסות לנתק את החיים מהתפילה.<br/>
-                ומתוך החיפוש הזה, נולדה הסדנה הזאת.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    
+       
       {/* Section 14: FAQ */}
       <div className="w-full py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
         <div className="max-w-4xl mx-auto">
