@@ -100,10 +100,11 @@ const HebrewLandingPage = () => {
           backgroundRepeat: 'no-repeat'
         }}
       >
-        {/* Dark overlay */}
+        {/* Dark overlay with fallback background */}
         <div 
           className="absolute inset-0"
           style={{
+            backgroundColor: '#374151',
             background: 'linear-gradient(135deg, rgba(16, 37, 58, 0.65), rgba(30, 20, 60, 0.7))'
           }}
         />
