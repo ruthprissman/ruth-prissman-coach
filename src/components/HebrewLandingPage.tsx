@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Quote, CheckCircle, Star, Download } from 'lucide-react';
+import { Quote, CheckCircle, Star, Download, Mail } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import LandingPageEmailModal from './LandingPageEmailModal';
 
 const HebrewLandingPage = () => {
   const { toast } = useToast();
@@ -21,6 +22,7 @@ const HebrewLandingPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSubmitted, setIsSubmitted] = React.useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = React.useState(false);
 
   const scrollToForm = () => {
     const formElement = document.getElementById('registration-form');
@@ -802,8 +804,8 @@ const HebrewLandingPage = () => {
 
   return (
     <div className="w-full">
-      {/* HTML Export Button - Top Left */}
-      <div className="fixed top-4 left-4 z-50">
+      {/* Action Buttons - Top Left */}
+      <div className="fixed top-4 left-4 z-50 flex flex-col gap-2">
         <Button
           onClick={exportToHTML}
           className="bg-white text-purple-600 hover:bg-gray-50 shadow-lg border"
@@ -811,6 +813,15 @@ const HebrewLandingPage = () => {
         >
           <Download className="w-4 h-4 ml-2" />
           ייצא HTML
+        </Button>
+        
+        <Button
+          onClick={() => setIsEmailModalOpen(true)}
+          className="bg-purple-600 text-white hover:bg-purple-700 shadow-lg"
+          size="sm"
+        >
+          <Mail className="w-4 h-4 ml-2" />
+          שלח במייל
         </Button>
       </div>
 
@@ -1411,6 +1422,12 @@ const HebrewLandingPage = () => {
           </p>
         </div>
       </div>
+
+      {/* Email Modal */}
+      <LandingPageEmailModal 
+        isOpen={isEmailModalOpen} 
+        onClose={() => setIsEmailModalOpen(false)} 
+      />
     </div>
   );
 };
