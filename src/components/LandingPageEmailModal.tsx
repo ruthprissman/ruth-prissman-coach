@@ -258,7 +258,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
             <td style="background-color:#ffffff; padding:48px 16px;">
               
               <h2 style="margin:0 0 32px 0; text-align:center; color:#3b4a5c; font-size:22px; line-height:1.4; font-weight:700;">
-                מה את תקבלי בסדנה הזאת?
+הנה כל מה שתקבלי מיד עם ההרשמה לסדנה
               </h2>
               
               <!-- Benefit points -->
@@ -271,7 +271,8 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
                           <span style="font-size:20px; color:#10b981;">✅</span>
                         </td>
                         <td style="font-size:16px; line-height:1.6; color:#1f2937;">
-                          <strong>3 מפתחות פשוטים</strong> להפוך את התפילה שלך מאוטומטית וריקה לחיה ומשמעותית
+                          <strong>השתתפות מלאה בסדנה חיה "חיבורים חדשים למילים מוכרות</strong> "(שווי: 120 ₪)
+
                         </td>
                       </tr>
                     </table>
@@ -288,7 +289,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
                           <span style="font-size:20px; color:#10b981;">✅</span>
                         </td>
                         <td style="font-size:16px; line-height:1.6; color:#1f2937;">
-                          <strong>איך להכניס את כל החיים שלך</strong> – הכאוס, העייפות והדאגות – אל תוך התפילה ולמצוא בהם כוח
+                          <strong>דפי עבודה וסיכום הסדנה להדפסה</strong> (שווי: 49 ₪)
                         </td>
                       </tr>
                     </table>
@@ -322,7 +323,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
                           <span style="font-size:20px; color:#10b981;">✅</span>
                         </td>
                         <td style="font-size:16px; line-height:1.6; color:#1f2937;">
-                          <strong>תרגילים פשוטים</strong> שתוכלי ליישם כבר מהתפילה הבאה
+                          <strong>גישה להקלטת הסדנה למשך 7 ימים</strong>(שווי: 65 ₪)
                         </td>
                       </tr>
                     </table>
@@ -344,28 +345,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
             </td>
           </tr>
           
-          <!-- Bio Section -->
-          <tr>
-            <td style="background-color:#f9fafb; padding:48px 16px;">
-              
-              <h2 style="margin:0 0 32px 0; text-align:center; color:#3b4a5c; font-size:22px; line-height:1.4; font-weight:700;">
-                מי אני ולמה אני יכולה לעזור לך?
-              </h2>
-              
-              <div style="text-align:center; margin-bottom:24px;">
-                <img src="https://coach.ruthprissman.co.il/lovable-uploads/74b61a26-f5ad-41fd-8cf7-6100846b6e6e.png" alt="רות פריסמן" style="width:150px; height:150px; border-radius:50%; border:4px solid #e91e63; display:block; margin:0 auto;" width="150" height="150">
-              </div>
-              
-              <div style="font-size:16px; line-height:1.6; color:#374151; text-align:right;">
-                <p style="margin:0 0 16px 0;">שלום, אני רות פריסמן – מאמנת אישית, אמא לשלושה, ואישה שעברה את המסע הזה בעצמי.</p>
-                <p style="margin:0 0 16px 0;">במשך שנים הרגשתי בדיוק כמוך – התפילה הייתה עבורי עוד משימה ברשימה, משהו שצריך לסיים במהירות.</p>
-                <p style="margin:0 0 16px 0;">עד שגיליתי שאפשר אחרת. שאפשר להתפלל מתוך החיים האמיתיים, מתוך הכאוס והיופי של האמהות.</p>
-                <p style="margin:0;">היום אני מלווה נשים למצוא את הדרך שלהן לתפילה אמיתית וחיה – וזה בדיוק מה שאני רוצה לחלוק איתך בסדנה.</p>
-              </div>
-              
-            </td>
-          </tr>
-          
+         
           <!-- Final CTA Section -->
           <tr>
             <td style="background-color:#e8f4fd; padding:48px 16px; text-align:center;">
@@ -401,11 +381,11 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
               </p>
               
               <p style="margin:0 0 16px 0; color:#9ca3af; font-size:14px; line-height:1.6;">
-                או התקשרי: <a href="tel:+972504445963" style="color:#60a5fa; text-decoration:none;">050-4445963</a>
+                או התקשרי: <a href="tel:+972556620273" style="color:#60a5fa; text-decoration:none;">055-6620273</a>
               </p>
               
               <div style="font-size:12px; color:#6b7280; line-height:1.5;">
-                <p style="margin:0 0 8px 0;">© 2024 רות פריסמן - מאמנת אישית</p>
+                <p style="margin:0 0 8px 0;">© 2025 רות פריסמן - מאמנת אישית</p>
                 <p style="margin:0;">לביטול המנוי <a href="https://coach.ruthprissman.co.il/unsubscribe" style="color:#60a5fa; text-decoration:none;">לחצי כאן</a></p>
               </div>
               
