@@ -104,10 +104,19 @@ export function generatePrayerLandingEmailHTML(): string {
     }
     .wrapper {
       width: 100%;
-      max-width: 600px;
       margin: 0 auto;
       background-color: #ffffff;
       direction: rtl;
+    }
+    @media screen and (min-width: 600px) {
+      .wrapper {
+        max-width: 800px;
+      }
+    }
+    @media screen and (min-width: 768px) {
+      .wrapper {
+        max-width: 1000px;
+      }
     }
     .purple-deep { background-color: #3d4a5c; }
     .purple-text { color: #3d4a5c; }
