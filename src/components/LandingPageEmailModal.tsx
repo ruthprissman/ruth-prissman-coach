@@ -68,7 +68,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
           
           <!-- Hero Section with Background -->
           <tr>
-            <td bgcolor="#374151" background="https://coach.ruthprissman.co.il/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png" style="background-color:#374151; background-image: linear-gradient(135deg, rgba(16, 37, 58, 0.95), rgba(30, 20, 60, 0.95)), url('https://coach.ruthprissman.co.il/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+             <td bgcolor="#374151" background="https://coach.ruthprissman.co.il/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png" style="background-color:#374151; background-image: linear-gradient(135deg, rgba(16, 37, 58, 0.95), rgba(30, 20, 60, 0.95)), url('https://coach.ruthprissman.co.il/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png'); background-size: cover; background-position: center; background-repeat: no-repeat;">
               <!-- Middle layer: nested table for Gmail compatibility -->
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" align="center" bgcolor="#374151" style="background-color:#374151;">
                 <tr>
