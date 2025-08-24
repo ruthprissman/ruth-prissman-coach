@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Quote, CheckCircle, Star, Download } from 'lucide-react';
+import { Quote, CheckCircle, Star, Download, AlertCircle } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -656,7 +656,7 @@ const HebrewLandingPage = () => {
               "אולי בכלל את לא מצליחה להתפלל....?"
             ].map((text, index) => (
               <div key={index} className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-white shadow-sm">
-                <span className="text-xl sm:text-2xl text-red-500 flex-shrink-0 mt-1">❌</span>
+                <AlertCircle className="flex-shrink-0 mt-1" size={24} style={{ color: '#ef4444' }} />
                 <p className="font-heebo text-base sm:text-lg md:text-xl leading-relaxed text-gray-800">
                   {text}
                 </p>
