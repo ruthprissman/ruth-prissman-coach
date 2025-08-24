@@ -151,10 +151,10 @@ const HebrewLandingPage = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
-                    שם פרטי *
-                  </Label>
+                 <div className="space-y-2">
+                   <Label htmlFor="fullName" className="block text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
+                     שם פרטי *
+                   </Label>
                   <Input
                     id="fullName"
                     name="fullName"
@@ -167,10 +167,10 @@ const HebrewLandingPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
-                    אימייל *
-                  </Label>
+                 <div className="space-y-2">
+                   <Label htmlFor="email" className="block text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
+                     אימייל *
+                   </Label>
                   <Input
                     id="email"
                     name="email"
@@ -183,10 +183,10 @@ const HebrewLandingPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
-                    טלפון (לא חובה)
-                  </Label>
+                 <div className="space-y-2">
+                   <Label htmlFor="phone" className="block text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
+                     טלפון (לא חובה)
+                   </Label>
                   <Input
                     id="phone"
                     name="phone"
