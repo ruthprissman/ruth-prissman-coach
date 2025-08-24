@@ -143,34 +143,44 @@ export function generatePrayerLandingEmailHTML(): string {
 
     <!-- Hero Section -->
     <tr>
-      <td style="background-image: linear-gradient(135deg, rgba(16, 37, 58, 0.65), rgba(30, 20, 60, 0.7)), url('${content.hero.heroImageUrl}'); background-size: cover; background-position: center; padding: 48px 16px; text-align: center;">
-        <table style="margin: 0 auto; max-width: 500px;">
+      <td bgcolor="#2d3748" background="${content.hero.heroImageUrl}" style="background-color:#2d3748; background-image: linear-gradient(135deg, rgba(16, 37, 58, 0.95), rgba(30, 20, 60, 0.95)), url('${content.hero.heroImageUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+        <!-- Middle layer: nested table for Gmail compatibility -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" align="center" bgcolor="#2d3748" style="background-color:#2d3748;">
           <tr>
-            <td style="text-align: center;">
-              <h1 style="margin: 0 0 24px 0; color: #ffffff; font-size: 20px; line-height: 1.4; font-weight: 300;">
-                <span style="display: block; margin-bottom: 8px;">${content.hero.titleLine1}</span>
-                <span style="display: block; margin-bottom: 8px; font-size: 16px;">${content.hero.titleLine2}</span>
-                <span style="display: block; margin-bottom: 8px;">${content.hero.titleLine3}</span>
-                <span style="display: block; font-size: 16px;">${content.hero.titleLine4}</span>
-              </h1>
-              
-              ${content.hero.description.map(desc => 
-                `<p style="margin: 0 0 12px 0; color: #ffffff; font-size: 16px; line-height: 1.6; font-weight: 300;">${desc}</p>`
-              ).join('')}
-              
-              <table style="margin: 32px auto 0 auto;">
-                <tr>
-                  <td style="text-align: center;">
-                    <a href="${publicLandingUrl}" style="display: inline-block; background-color: #e91e63; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 18px;">
-                      ${content.hero.cta}
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
+            <td style="padding: 48px 16px; text-align: center;">
+              <!-- Inner layer: content wrapper div with dark background fallback -->
+              <div style="background-color:#2d3748; margin:0; padding:0;">
+                <table style="margin: 0 auto; max-width: 500px;">
+                  <tr>
+                    <td style="text-align: center;">
+                       <h1 style="margin: 0 0 24px 0; color: #ffffff; font-size: 20px; line-height: 1.4; font-weight: 300;">
+                         <span style="display: block; margin-bottom: 8px;">${content.hero.titleLine1}</span>
+                         <span style="display: block; margin-bottom: 8px; font-size: 16px;">${content.hero.titleLine2}</span>
+                         <span style="display: block; margin-bottom: 8px;">${content.hero.titleLine3}</span>
+                         <span style="display: block; font-size: 16px;">${content.hero.titleLine4}</span>
+                       </h1>
+                       
+                       ${content.hero.description.map(desc => 
+                         `<p style="margin: 0 0 12px 0; color: #ffffff; font-size: 16px; line-height: 1.6; font-weight: 300;">${desc}</p>`
+                       ).join('')}
+                       
+                       <table style="margin: 32px auto 0 auto;">
+                         <tr>
+                           <td style="text-align: center;">
+                             <a href="${publicLandingUrl}" style="display: inline-block; background-color: #e91e63; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 18px;">
+                               ${content.hero.cta}
+                             </a>
+                           </td>
+                         </tr>
+                       </table>
+                     </td>
+                   </tr>
+                 </table>
+               </div>
+             </td>
+           </tr>
+         </table>
+       </td>
     </tr>
 
     <!-- Empathy Section -->
