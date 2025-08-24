@@ -108,6 +108,16 @@ const HebrewLandingPage = () => {
       line-height: 1.6;
       color: #333;
       direction: rtl;
+      text-align: right;
+    }
+    
+    [dir="rtl"] p, [dir="rtl"] li {
+      text-align: right;
+      unicode-bidi: plaintext;
+    }
+    
+    .text-center, .text-center p {
+      text-align: center;
     }
 
     .font-heebo { font-family: 'Heebo', Arial, sans-serif; }

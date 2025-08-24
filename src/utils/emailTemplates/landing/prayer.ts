@@ -72,6 +72,7 @@ export function generatePrayerLandingEmailHTML(): string {
       padding: 0;
       font-family: 'Tahoma', Arial, Helvetica, sans-serif;
       direction: rtl;
+      text-align: right;
       background-color: #ffffff;
       line-height: 1.6;
       color: #333333;
@@ -84,6 +85,16 @@ export function generatePrayerLandingEmailHTML(): string {
     td {
       padding: 0;
       vertical-align: top;
+      text-align: right;
+      direction: rtl;
+    }
+    p {
+      text-align: right;
+      direction: rtl;
+      unicode-bidi: plaintext;
+    }
+    .text-center, .text-center p {
+      text-align: center;
     }
     img {
       border: 0;
@@ -96,6 +107,7 @@ export function generatePrayerLandingEmailHTML(): string {
       max-width: 600px;
       margin: 0 auto;
       background-color: #ffffff;
+      direction: rtl;
     }
     .purple-deep { background-color: #3d4a5c; }
     .purple-text { color: #3d4a5c; }
@@ -110,7 +122,7 @@ export function generatePrayerLandingEmailHTML(): string {
   </style>
 </head>
 <body>
-  <table class="wrapper">
+  <table class="wrapper" dir="rtl" align="right">
     <!-- Top Bar -->
     <tr>
       <td class="purple-deep" style="padding: 12px 16px; text-align: center;">

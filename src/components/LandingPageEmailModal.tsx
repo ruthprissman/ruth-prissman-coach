@@ -41,7 +41,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
 
   const generateLandingPageHTML = () => {
     return `<!DOCTYPE html>
-<html dir="rtl">
+<html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,12 +50,12 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
 <body style="margin:0; padding:0; font-family:'Tahoma', Arial, Helvetica, sans-serif; direction:rtl;">
   
   <!-- Root wrapper table -->
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8fafc;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8fafc;" dir="rtl">
     <tr>
-      <td align="center">
+      <td align="right">
         
         <!-- Main container - max 600px -->
-        <table width="100%" style="max-width:600px;" cellpadding="0" cellspacing="0" border="0">
+        <table width="100%" style="max-width:600px;" cellpadding="0" cellspacing="0" border="0" dir="rtl" align="right">
           
           <!-- Top Bar -->
           <tr>
@@ -115,7 +115,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
                         <td style="width:32px; vertical-align:top; padding-top:4px;">
                           <span style="font-size:20px; color:#ef4444;">❌</span>
                         </td>
-                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
+                         <td style="font-size:16px; line-height:1.6; color:#1f2937; text-align:right; direction:rtl; unicode-bidi:plaintext;">
                           את אומרת את המילים, אבל הראש שלך כבר עסוק ברשימת הקניות, בכביסות ובמה לבשל לצהריים.
                         </td>
                       </tr>
