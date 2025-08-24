@@ -143,7 +143,7 @@ const HebrewLandingPage = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                <div className="space-y-2" className="text-right">
+                <div className="space-y-2 text-right">
                   <Label htmlFor="fullName" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     שם פרטי *
                   </Label>
@@ -159,7 +159,7 @@ const HebrewLandingPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2" className="text-right">
+                <div className="space-y-2 text-right">
                   <Label htmlFor="email" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     אימייל *
                   </Label>
@@ -175,7 +175,7 @@ const HebrewLandingPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2" className="text-right">
+                <div className="space-y-2 text-right">
                   <Label htmlFor="phone" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     טלפון (לא חובה)
                   </Label>
