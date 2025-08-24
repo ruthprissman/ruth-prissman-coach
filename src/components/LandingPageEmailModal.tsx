@@ -218,15 +218,16 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
                   <td style="padding:32px 24px; text-align:center;">
                     
                     <div style="width:64px; height:64px; background-color:#3b4a5c; border-radius:50%; color:#ffffff; margin:0 auto 24px auto; display:table;">
-                      <span style="display:table-cell; vertical-align:middle; font-size:24px; font-weight:700; text-align:center;">1</span>
+                      <span style="display:table-cell; vertical-align:middle; font-size:24px; font-weight:700; text-align:center;">פרטים</span>
                     </div>
                     
                     <h3 style="margin:0 0 16px 0; color:#3b4a5c; font-size:18px; font-weight:700;">
-                      📅 יום רביעי, 1 בינואר 2025
+                      📅 יום ראשון יד' אלול תשפ"ה
+                      07.09.2025
                     </h3>
                     
                     <h4 style="margin:0 0 16px 0; color:#3b4a5c; font-size:16px;">
-                      🕐 שעה: 20:00-21:30 (שעה וחצי)
+                      🕐 שעה: 21:30-23:30 (שעתיים)
                     </h4>
                     
                     <div style="margin-bottom:24px; font-size:14px; line-height:1.6; color:#3b4a5c;">
