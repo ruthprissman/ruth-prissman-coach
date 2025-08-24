@@ -24,590 +24,398 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
   const { toast } = useToast();
 
   const generateLandingPageHTML = () => {
-    // נשתמש ב-HTML המלא של דף הנחיתה עם כל העיצוב
     return `<!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>הסוד להפוך תפילה מעוד חובה למילים של חיבור אמיתי - רות פריסמן</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@100;300;400;500;700;900&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Alef:wght@400;700&display=swap');
-    
-    :root {
-      --purple-deep: hsl(215, 25%, 27%);
-      --blue-soft: hsl(210, 40%, 92%);
-      --blue-very-light: hsl(210, 40%, 96%);
-      --pink-vibrant: hsl(340, 82%, 52%);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Heebo', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      direction: rtl;
-    }
-
-    .font-heebo { font-family: 'Heebo', Arial, sans-serif; }
-    .font-alef { font-family: 'Alef', Arial, sans-serif; }
-    .purple-text { color: var(--purple-deep); }
-    
-    .w-full { width: 100%; }
-    .max-w-4xl { max-width: 56rem; margin: 0 auto; }
-    .max-w-5xl { max-width: 64rem; margin: 0 auto; }
-    .max-w-6xl { max-width: 72rem; margin: 0 auto; }
-    .max-w-2xl { max-width: 42rem; margin: 0 auto; }
-    .max-w-3xl { max-width: 48rem; margin: 0 auto; }
-    
-    .text-center { text-align: center; }
-    .text-right { text-align: right; }
-    .text-white { color: white; }
-    .text-gray-800 { color: #1f2937; }
-    .text-gray-600 { color: #4b5563; }
-    .text-gray-500 { color: #6b7280; }
-    .text-red-500 { color: #ef4444; }
-    .text-green-600 { color: #059669; }
-    .text-blue-400 { color: #60a5fa; }
-    
-    .bg-white { background-color: white; }
-    .bg-gray-50 { background-color: #f9fafb; }
-    
-    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-    .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
-    .py-12 { padding-top: 3rem; padding-bottom: 3rem; }
-    .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
-    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
-    .px-4 { padding-left: 1rem; padding-right: 1rem; }
-    .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-    .px-8 { padding-left: 2rem; padding-right: 2rem; }
-    .p-3 { padding: 0.75rem; }
-    .p-4 { padding: 1rem; }
-    .p-6 { padding: 1.5rem; }
-    .p-8 { padding: 2rem; }
-    
-    .mb-2 { margin-bottom: 0.5rem; }
-    .mb-4 { margin-bottom: 1rem; }
-    .mb-6 { margin-bottom: 1.5rem; }
-    .mb-8 { margin-bottom: 2rem; }
-    .mb-12 { margin-bottom: 3rem; }
-    .mt-4 { margin-top: 1rem; }
-    .mt-8 { margin-top: 2rem; }
-    
-    .space-y-2 > * + * { margin-top: 0.5rem; }
-    .space-y-3 > * + * { margin-top: 0.75rem; }
-    .space-y-4 > * + * { margin-top: 1rem; }
-    .space-y-6 > * + * { margin-top: 1.5rem; }
-    .space-y-8 > * + * { margin-top: 2rem; }
-    
-    .gap-3 { gap: 0.75rem; }
-    .gap-4 { gap: 1rem; }
-    .gap-6 { gap: 1.5rem; }
-    
-    .flex { display: flex; }
-    .flex-1 { flex: 1; }
-    .flex-shrink-0 { flex-shrink: 0; }
-    .items-start { align-items: flex-start; }
-    .items-center { align-items: center; }
-    .justify-center { justify-content: center; }
-    
-    .grid { display: grid; }
-    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-    
-    .rounded-lg { border-radius: 0.5rem; }
-    .rounded-xl { border-radius: 0.75rem; }
-    .rounded-full { border-radius: 9999px; }
-    
-    .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
-    .shadow-lg { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05); }
-    
-    .font-light { font-weight: 300; }
-    .font-bold { font-weight: 700; }
-    
-    .text-xs { font-size: 0.75rem; line-height: 1rem; }
-    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-    .text-base { font-size: 1rem; line-height: 1.5rem; }
-    .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
-    .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-    .text-2xl { font-size: 1.5rem; line-height: 2rem; }
-    .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
-    .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
-    .text-5xl { font-size: 3rem; line-height: 1; }
-    
-    .leading-tight { line-height: 1.25; }
-    .leading-relaxed { line-height: 1.625; }
-    .leading-snug { line-height: 1.375; }
-    
-    .border-t { border-top-width: 1px; }
-    .border-gray-200 { border-color: #e5e7eb; }
-    .border-2 { border-width: 2px; }
-    
-    .min-h-screen { min-height: 100vh; }
-    .h-16 { height: 4rem; }
-    .w-16 { width: 4rem; }
-    
-    .relative { position: relative; }
-    .absolute { position: absolute; }
-    .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
-    .z-10 { z-index: 10; }
-    
-    .block { display: block; }
-    
-    .cta-button {
-      background-color: var(--pink-vibrant);
-      color: white;
-      padding: 1rem 2rem;
-      border-radius: 0.75rem;
-      text-decoration: none;
-      display: inline-block;
-      font-weight: bold;
-      font-size: 1.125rem;
-      transition: all 0.3s ease;
-      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-      text-align: center;
-      margin: 0 auto;
-      max-width: 32rem;
-      width: 100%;
-    }
-    
-    .cta-button:hover {
-      opacity: 0.9;
-      transform: translateY(-1px);
-    }
-    
-    .hero-section {
-      background-image: url('https://coach.ruthprissman.co.il/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-    
-    .hero-overlay {
-      position: absolute;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      background: linear-gradient(135deg, rgba(16, 37, 58, 0.65), rgba(30, 20, 60, 0.7));
-    }
-    
-    .hero-content {
-      position: relative;
-      z-index: 10;
-      text-align: center;
-      color: white;
-      max-width: 64rem;
-      margin: 0 auto;
-    }
-    
-    .step-number {
-      width: 4rem;
-      height: 4rem;
-      border-radius: 50%;
-      background-color: var(--purple-deep);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
-    
-    .testimonial-quote::before {
-      content: '"';
-      font-size: 1.5rem;
-      color: #60a5fa;
-      vertical-align: top;
-    }
-    
-    .icon {
-      width: 24px;
-      height: 24px;
-      display: inline-block;
-      vertical-align: middle;
-      margin-left: 0.5rem;
-    }
-    
-    .icon-star { color: var(--pink-vibrant); }
-    .icon-check { color: #10b981; }
-    .icon-x { color: #ef4444; }
-    
-    @media (min-width: 640px) {
-      .sm\\:text-lg { font-size: 1.125rem; line-height: 1.75rem; }
-      .sm\\:text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-      .sm\\:text-2xl { font-size: 1.5rem; line-height: 2rem; }
-      .sm\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .sm\\:py-16 { padding-top: 4rem; padding-bottom: 4rem; }
-      .sm\\:space-y-4 > * + * { margin-top: 1rem; }
-      .sm\\:space-y-6 > * + * { margin-top: 1.5rem; }
-      .sm\\:space-y-8 > * + * { margin-top: 2rem; }
-      .sm\\:gap-6 { gap: 1.5rem; }
-      .sm\\:p-4 { padding: 1rem; }
-      .sm\\:p-6 { padding: 1.5rem; }
-      .sm\\:p-8 { padding: 2rem; }
-      .sm\\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-      .sm\\:py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
-      .sm\\:mb-8 { margin-bottom: 2rem; }
-      .sm\\:mb-12 { margin-bottom: 3rem; }
-    }
-    
-    @media (min-width: 768px) {
-      .md\\:text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-      .md\\:text-2xl { font-size: 1.5rem; line-height: 2rem; }
-      .md\\:text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
-      .md\\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
-      .md\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .md\\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .md\\:py-8 { padding-top: 2rem; padding-bottom: 2rem; }
-      .md\\:py-24 { padding-top: 6rem; padding-bottom: 6rem; }
-      .md\\:px-12 { padding-left: 3rem; padding-right: 3rem; }
-      .md\\:max-w-2xl { max-width: 42rem; }
-    }
-    
-    @media (min-width: 1024px) {
-      .lg\\:text-2xl { font-size: 1.5rem; line-height: 2rem; }
-      .lg\\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
-      .lg\\:text-5xl { font-size: 3rem; line-height: 1; }
-    }
-  </style>
 </head>
-<body>
-  <!-- Top Bar -->
-  <div style="background-color: var(--purple-deep); min-height: 50px; display: flex; align-items: center; justify-content: center; padding: 0.75rem 1rem;">
-    <p style="color: white; text-align: center; font-family: 'Alef', Arial, sans-serif; font-weight: bold; font-size: 0.875rem; line-height: 1.25;">
-      מרגישה שהתפילה שלך הפכה לעוד מטלה שצריך לסמן עליה וי?
-    </p>
-  </div>
-
-  <!-- Hero Section -->
-  <div class="hero-section">
-    <div class="hero-overlay"></div>
-    <div class="hero-content py-12 px-4">
-      <h1 class="text-white font-heebo text-xl leading-relaxed font-light mb-6 sm:text-2xl md:text-4xl lg:text-5xl">
-        <span class="block mb-2">הסוד להפוך תפילה מעוד חובה</span>
-        <span class="block mb-2 text-lg sm:text-xl md:text-3xl lg:text-4xl">(שלא תמיד אנחנו מצליחים למלא),</span>
-        <span class="block mb-2">למילים, לשיחה אמיתית שממלאת אותך בכוח.</span>
-        <span class="block text-lg sm:text-xl md:text-3xl lg:text-4xl">גם כשהקטנים מושכים לך בחצאית והראש עמוס במטלות?</span>
-      </h1>
-
-      <div class="text-white font-heebo text-base leading-relaxed font-light space-y-3 max-w-4xl mx-auto px-2 sm:text-lg md:text-xl lg:text-2xl sm:space-y-4">
-        <p>מה אם היית יכולה לפתוח את הסידור בקלות, להרגיש את הלב נפתח?</p>
-        <p>לסיים כל תפילה בתחושת רוממות וחיבור, במקום בתחושת אשמה ותסכול.</p>
-        <p>לגלות איך להכניס את כל החיים שלך, את כל הבלגן והעייפות, אל תוך המילים המוכרות, ולמצוא בהן אור חדש?</p>
-      </div>
-
-      <div class="mt-8">
-        <a href="https://coach.ruthprissman.co.il/prayer-landing" class="cta-button">
-          אני נרשמת לסדנה החינמית עכשיו
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Empathy Bullets Section -->
-  <div style="background-color: #f9fafb; padding: 3rem 1rem;" class="sm:py-16">
-    <div class="max-w-4xl">
-      <h2 class="text-center font-alef font-bold text-xl purple-text mb-8 leading-relaxed px-2 sm:text-2xl md:text-3xl lg:text-4xl sm:mb-12">
-        גם לך קורים הדברים האלה סביב התפילה, שמשאירים אותך מרוקנת במקום מלאה?
-      </h2>
-
-      <div class="space-y-4 sm:space-y-6">
-        <div class="flex items-start gap-3 p-3 rounded-lg bg-white shadow-sm sm:gap-4 sm:p-4">
-          <span class="text-xl text-red-500 flex-shrink-0 mt-1 sm:text-2xl">❌</span>
-          <p class="font-heebo text-base text-gray-800 leading-relaxed sm:text-lg md:text-xl">
-            את אומרת את המילים, אבל הראש שלך כבר עסוק ברשימת הקניות, בכביסות ובמה לבשל לצהריים.
-          </p>
-        </div>
+<body style="margin:0; padding:0; font-family:'Tahoma', Arial, Helvetica, sans-serif; direction:rtl;">
+  
+  <!-- Root wrapper table -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8fafc;">
+    <tr>
+      <td align="center">
         
-        <div class="flex items-start gap-3 p-3 rounded-lg bg-white shadow-sm sm:gap-4 sm:p-4">
-          <span class="text-xl text-red-500 flex-shrink-0 mt-1 sm:text-2xl">❌</span>
-          <p class="font-heebo text-base text-gray-800 leading-relaxed sm:text-lg md:text-xl">
-            התפילה הפכה לעוד מטלה ברשימה האינסופית של היום, משהו שצריך רק לסיים ולסמן וי כדי להמשיך הלאה.
-          </p>
-        </div>
-        
-        <div class="flex items-start gap-3 p-3 rounded-lg bg-white shadow-sm sm:gap-4 sm:p-4">
-          <span class="text-xl text-red-500 flex-shrink-0 mt-1 sm:text-2xl">❌</span>
-          <p class="font-heebo text-base text-gray-800 leading-relaxed sm:text-lg md:text-xl">
-            את פותחת את הסידור ומרגישה ריקנות, לא מצליחה להתחבר למי שמקשיבי בצד השני.
-          </p>
-        </div>
-        
-        <div class="flex items-start gap-3 p-3 rounded-lg bg-white shadow-sm sm:gap-4 sm:p-4">
-          <span class="text-xl text-red-500 flex-shrink-0 mt-1 sm:text-2xl">❌</span>
-          <p class="font-heebo text-base text-gray-800 leading-relaxed sm:text-lg md:text-xl">
-            את מרגישה אשמה שאת לא מתרגשת, שהתפילה שלך הפכה למכנית, כמו רובוט שמדקלם טקסט.
-          </p>
-        </div>
-        
-        <div class="flex items-start gap-3 p-3 rounded-lg bg-white shadow-sm sm:gap-4 sm:p-4">
-          <span class="text-xl text-red-500 flex-shrink-0 mt-1 sm:text-2xl">❌</span>
-          <p class="font-heebo text-base text-gray-800 leading-relaxed sm:text-lg md:text-xl">
-            את מתגעגעת לתפילות של פעם, לימים שהתרגשת של מילה בלב, ותוהה לאן נעלמה כל ההתלהבות הזאת.
-          </p>
-        </div>
-        
-        <div class="flex items-start gap-3 p-3 rounded-lg bg-white shadow-sm sm:gap-4 sm:p-4">
-          <span class="text-xl text-red-500 flex-shrink-0 mt-1 sm:text-2xl">❌</span>
-          <p class="font-heebo text-base text-gray-800 leading-relaxed sm:text-lg md:text-xl">
-            את מרגישה כמעט זרה – כלפי חוץ את נראית כמו אישה מתפללת, אבל בפנים, הראש שלך נמצא במקום אחר לגמרי.
-          </p>
-        </div>
-        
-        <div class="flex items-start gap-3 p-3 rounded-lg bg-white shadow-sm sm:gap-4 sm:p-4">
-          <span class="text-xl text-red-500 flex-shrink-0 mt-1 sm:text-2xl">❌</span>
-          <p class="font-heebo text-base text-gray-800 leading-relaxed sm:text-lg md:text-xl">
-            אולי בכלל את לא מצליחה להתפלל....?
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Hope and Promise Section -->
-  <div style="background-color: var(--blue-soft); padding: 4rem 1rem;">
-    <div class="max-w-4xl text-center space-y-8">
-      <h2 class="font-alef font-bold text-2xl leading-relaxed purple-text md:text-3xl lg:text-4xl">
-        הגיע הזמן לגלות איך להחיות את התפילה שלך, ולהפוך אותה למקור הכוח הגדול ביותר ביום שלך.
-      </h2>
-
-      <div class="font-heebo text-lg leading-relaxed max-w-3xl mx-auto space-y-4 purple-text md:text-xl">
-        <p>מתוך עבודה עם נשים כמוך, ומתוך המסע האישי שלי כאישה, כאמא וכמאמנת – גיליתי שיש דרך אחרת.</p>
-        <p>דרך שלא דורשת ממך להיות מושלמת או מנותקת מהמציאות.</p>
-        <p>למדתי, ואני עדיין לומדת, איך להפוך את התפילה לחיה, נושמת ואמיתית.</p>
-        <p><strong>איך להתפלל מתוך החיים שלך, ולא בהשעייה מהם.</strong></p>
-      </div>
-
-      <div class="bg-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
-        <div class="flex justify-center items-center mb-6">
-          <div class="step-number">1</div>
-        </div>
-        
-        <h3 class="font-alef font-bold text-xl purple-text mb-4 md:text-2xl">
-          📅 יום רביעי, 1 בינואר 2025
-        </h3>
-        
-        <h4 class="font-heebo text-lg purple-text mb-4 md:text-xl">
-          🕐 שעה: 20:00-21:30 (שעה וחצי)
-        </h4>
-        
-        <div class="space-y-3 text-right">
-          <p class="font-heebo text-base leading-relaxed purple-text md:text-lg">
-            💰 <strong>עלות:</strong> ללא תשלום
-          </p>
-          <p class="font-heebo text-base leading-relaxed purple-text md:text-lg">
-            📍 <strong>פלטפורמה:</strong> זום
-          </p>
-        </div>
-
-        <div class="mt-6">
-          <a href="https://coach.ruthprissman.co.il/prayer-landing" class="cta-button w-full">
-            אני נרשמת עכשיו
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Benefits Section -->
-  <div class="w-full py-16 px-4 bg-white">
-    <div class="max-w-5xl mx-auto">
-      <h2 class="text-center font-alef font-bold text-2xl purple-text mb-12 leading-relaxed md:text-3xl lg:text-4xl">
-        איך זה יעזור לך?
-      </h2>
-
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-        <div class="bg-red-50 p-6 rounded-xl border-r-4 border-red-400 shadow-sm">
-          <div class="flex items-start gap-3 mb-4">
-            <span class="text-2xl">😔</span>
-            <h3 class="font-alef font-bold text-lg purple-text">מרגישה לא מספיק טובה?</h3>
-          </div>
-          <p class="font-heebo text-base leading-relaxed text-gray-800">
-            נלמד איך להשתמש בתפילה כדי להגביר את הביטחון העצמי ולהרגיש יותר חזקה ובטוחה.
-          </p>
-        </div>
-
-        <div class="bg-blue-50 p-6 rounded-xl border-r-4 border-blue-400 shadow-sm">
-          <div class="flex items-start gap-3 mb-4">
-            <span class="text-2xl">😰</span>
-            <h3 class="font-alef font-bold text-lg purple-text">מתקשה להתמודד עם רגשות קשים?</h3>
-          </div>
-          <p class="font-heebo text-base leading-relaxed text-gray-800">
-            נגלה איך תפילה יכולה להביא רגיעה ושלווה פנימית גם בזמנים הכי מאתגרים.
-          </p>
-        </div>
-
-        <div class="bg-green-50 p-6 rounded-xl border-r-4 border-green-400 shadow-sm">
-          <div class="flex items-start gap-3 mb-4">
-            <span class="text-2xl">😕</span>
-            <h3 class="font-alef font-bold text-lg purple-text">חשה תקועה או חסרת כיוון?</h3>
-          </div>
-          <p class="font-heebo text-base leading-relaxed text-gray-800">
-            נלמד להשתמש בתפילה כדי לקבל בהירות והכוונה לצעדים הבאים בחיים.
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- What You'll Get Section -->
-  <div class="w-full py-16 px-4" style="background-color: var(--blue-very-light);">
-    <div class="max-w-4xl mx-auto">
-      <h2 class="text-center font-alef font-bold text-2xl purple-text mb-12 leading-relaxed md:text-3xl lg:text-4xl">
-        מה תקבלי בסדנה הזאת:
-      </h2>
-
-      <div class="space-y-6">
-        <div class="flex items-start gap-4 p-6 bg-white rounded-xl shadow-sm">
-          <span class="text-2xl flex-shrink-0">✨</span>
-          <div>
-            <h3 class="font-alef font-bold text-lg purple-text mb-2">הבנה עמוקה</h3>
-            <p class="font-heebo text-base leading-relaxed text-gray-800">
-              איך תפילה יכולה לשמש ככלי טיפולי עוצמתי לחיזוק האמונה העצמית ויצירת שינוי פנימי.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-4 p-6 bg-white rounded-xl shadow-sm">
-          <span class="text-2xl flex-shrink-0">🎯</span>
-          <div>
-            <h3 class="font-alef font-bold text-lg purple-text mb-2">טכניקות מעשיות</h3>
-            <p class="font-heebo text-base leading-relaxed text-gray-800">
-              שיטות פשוטות ויעילות לשילוב תפילה בחיי היום-יום, גם כשהזמן מוגבל והמחשבות מתרוצצות.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-4 p-6 bg-white rounded-xl shadow-sm">
-          <span class="text-2xl flex-shrink-0">💝</span>
-          <div>
-            <h3 class="font-alef font-bold text-lg purple-text mb-2">חוויה אישית</h3>
-            <p class="font-heebo text-base leading-relaxed text-gray-800">
-              איך להתאים את התפילה לצרכים שלך הספציפיים ולמצב הנפשי והחיים שלך כרגע.
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-start gap-4 p-6 bg-white rounded-xl shadow-sm">
-          <span class="text-2xl flex-shrink-0">🌟</span>
-          <div>
-            <h3 class="font-alef font-bold text-lg purple-text mb-2">חיבור רגשי</h3>
-            <p class="font-heebo text-base leading-relaxed text-gray-800">
-              איך להגיע לעומק בתפילה, לחוות חיבור אמיתי ולצאת מכל תפילה מחוזקת ומלאה כוח.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CTA Section -->
-  <div class="w-full py-16 px-4 bg-white">
-    <div class="max-w-3xl mx-auto text-center space-y-8">
-      <h2 class="font-alef font-bold text-2xl leading-relaxed purple-text md:text-3xl lg:text-4xl">
-        מוכנה להתחיל?
-      </h2>
-
-      <p class="font-heebo text-lg leading-relaxed max-w-2xl mx-auto purple-text md:text-xl">
-        הצטרפי אלינו לסדנה מיוחדת הזאת ותגלי את הכוח הטיפולי שבתפילה שלך.
-        <br><strong>זו הזדמנות לחבר מחדש עם עצמך ועם התפילה.</strong>
-      </p>
-
-      <div class="bg-purple-50 p-8 rounded-xl shadow-lg">
-        <h3 class="font-alef font-bold text-xl purple-text mb-4">פרטי הסדנה:</h3>
-        <div class="space-y-2 text-right max-w-md mx-auto">
-          <p class="font-heebo text-base purple-text">📅 <strong>תאריך:</strong> יום רביעי, 1 בינואר 2025</p>
-          <p class="font-heebo text-base purple-text">🕐 <strong>שעה:</strong> 20:00-21:30</p>
-          <p class="font-heebo text-base purple-text">🎥 <strong>פלטפורמה:</strong> זום</p>
-          <p class="font-heebo text-base purple-text">💰 <strong>עלות:</strong> ללא תשלום</p>
-        </div>
-      </div>
-
-      <div class="mt-8">
-        <a href="https://coach.ruthprissman.co.il/prayer-landing" class="cta-button">
-          🌟 אני נרשמת לסדנה עכשיו
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <!-- About Ruth Section -->
-  <div class="w-full py-16 px-4" style="background-color: var(--blue-soft);">
-    <div class="max-w-4xl mx-auto">
-      <h2 class="text-center font-alef font-bold text-2xl purple-text mb-12 leading-relaxed md:text-3xl lg:text-4xl">
-        מי אני ומדוע זה חשוב לי?
-      </h2>
-
-      <div class="bg-white p-8 rounded-xl shadow-lg">
-        <div class="flex flex-col md:flex-row md:gap-8 items-start">
-          <div class="flex-1 text-right">
-            <h3 class="font-alef font-bold text-xl purple-text mb-4">רות פריסמן</h3>
-            <p class="font-heebo text-base leading-relaxed text-gray-800 mb-4">
-              <strong>מאמנת בגישה טיפולית | קוד הנפש | SEFT</strong>
-            </p>
-            
-            <div class="space-y-4 font-heebo text-base leading-relaxed text-gray-800">
-              <p>
-                כאישה דתייה, אמא לשלושה ילדים ומאמנת – אני מכירה מקרוב את המאבק להתחבר לתפילה בעומק החיים היומיומיים.
+        <!-- Main container - max 600px -->
+        <table width="100%" style="max-width:600px;" cellpadding="0" cellspacing="0" border="0">
+          
+          <!-- Top Bar -->
+          <tr>
+            <td style="background-color:#3b4a5c; padding:12px 16px; text-align:center;">
+              <p style="margin:0; color:#ffffff; font-size:14px; font-weight:bold; line-height:20px;">
+                מרגישה שהתפילה שלך הפכה לעוד מטלה שצריך לסמן עליה וי?
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Hero Section with Background -->
+          <tr>
+            <td style="background-color:#2d3748; background-image:url('https://coach.ruthprissman.co.il/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png'); background-size:cover; background-position:center; padding:48px 16px; text-align:center; position:relative;">
+              
+              <!-- Hero content -->
+              <h1 style="margin:0 0 24px 0; color:#ffffff; font-size:24px; line-height:1.4; font-weight:300;">
+                <span style="display:block; margin-bottom:8px;">הסוד להפוך תפילה מעוד חובה</span>
+                <span style="display:block; margin-bottom:8px; font-size:20px;">(שלא תמיד אנחנו מצליחים למלא),</span>
+                <span style="display:block; margin-bottom:8px;">למילים, לשיחה אמיתית שממלאת אותך בכוח.</span>
+                <span style="display:block; font-size:20px;">גם כשהקטנים מושכים לך בחצאית והראש עמוס במטלות?</span>
+              </h1>
+              
+              <div style="margin-bottom:32px; font-size:16px; line-height:1.6; color:#ffffff;">
+                <p style="margin:0 0 16px 0;">מה אם היית יכולה לפתוח את הסידור בקלות, להרגיש את הלב נפתח?</p>
+                <p style="margin:0 0 16px 0;">לסיים כל תפילה בתחושת רוממות וחיבור, במקום בתחושת אשמה ותסכול.</p>
+                <p style="margin:0;">לגלות איך להכניס את כל החיים שלך, את כל הבלגן והעייפות, אל תוך המילים המוכרות, ולמצוא בהן אור חדש?</p>
+              </div>
+              
+              <!-- CTA Button -->
+              <table align="center" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background-color:#e91e63; border-radius:12px; padding:14px 24px;">
+                    <a href="https://coach.ruthprissman.co.il/prayer-landing" style="display:inline-block; color:#ffffff; font-size:18px; line-height:24px; font-weight:700; text-decoration:none;">
+                      אני נרשמת לסדנה החינמית עכשיו
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <!-- Empathy Section -->
+          <tr>
+            <td style="background-color:#f9fafb; padding:48px 16px;">
+              
+              <h2 style="margin:0 0 32px 0; text-align:center; color:#3b4a5c; font-size:22px; line-height:1.4; font-weight:700;">
+                גם לך קורים הדברים האלה סביב התפילה, שמשאירים אותך מרוקנת במקום מלאה?
+              </h2>
+              
+              <!-- Problem points -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+                <tr>
+                  <td style="background-color:#ffffff; padding:12px; border-radius:8px; border:1px solid #e5e7eb;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:32px; vertical-align:top; padding-top:4px;">
+                          <span style="font-size:20px; color:#ef4444;">❌</span>
+                        </td>
+                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
+                          את אומרת את המילים, אבל הראש שלך כבר עסוק ברשימת הקניות, בכביסות ובמה לבשל לצהריים.
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+                <tr>
+                  <td style="background-color:#ffffff; padding:12px; border-radius:8px; border:1px solid #e5e7eb;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:32px; vertical-align:top; padding-top:4px;">
+                          <span style="font-size:20px; color:#ef4444;">❌</span>
+                        </td>
+                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
+                          התפילה הפכה לעוד מטלה ברשימה האינסופית של היום, משהו שצריך רק לסיים ולסמן וי כדי להמשיך הלאה.
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+                <tr>
+                  <td style="background-color:#ffffff; padding:12px; border-radius:8px; border:1px solid #e5e7eb;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:32px; vertical-align:top; padding-top:4px;">
+                          <span style="font-size:20px; color:#ef4444;">❌</span>
+                        </td>
+                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
+                          את פותחת את הסידור ומרגישה ריקנות, לא מצליחה להתחבר למי שמקשיבה בצד השני.
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+                <tr>
+                  <td style="background-color:#ffffff; padding:12px; border-radius:8px; border:1px solid #e5e7eb;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:32px; vertical-align:top; padding-top:4px;">
+                          <span style="font-size:20px; color:#ef4444;">❌</span>
+                        </td>
+                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
+                          את מרגישה אשמה שאת לא מתרגשת, שהתפילה שלך הפכה למכנית, כמו רובוט שמדקלם טקסט.
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+                <tr>
+                  <td style="background-color:#ffffff; padding:12px; border-radius:8px; border:1px solid #e5e7eb;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:32px; vertical-align:top; padding-top:4px;">
+                          <span style="font-size:20px; color:#ef4444;">❌</span>
+                        </td>
+                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
+                          את מתגעגעת לתפילות של פעם, לימים שהתרגשת מכל מילה בלב, ותוהה לאן נעלמה כל ההתלהבות הזאת.
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background-color:#ffffff; padding:12px; border-radius:8px; border:1px solid #e5e7eb;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:32px; vertical-align:top; padding-top:4px;">
+                          <span style="font-size:20px; color:#ef4444;">❌</span>
+                        </td>
+                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
+                          אולי בכלל את לא מצליחה להתפלל....?
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <!-- Hope Section -->
+          <tr>
+            <td style="background-color:#e8f4fd; padding:48px 16px; text-align:center;">
+              
+              <h2 style="margin:0 0 32px 0; color:#3b4a5c; font-size:22px; line-height:1.4; font-weight:700;">
+                הגיע הזמן לגלות איך להחיות את התפילה שלך, ולהפוך אותה למקור הכוח הגדול ביותר ביום שלך.
+              </h2>
+              
+              <div style="margin-bottom:32px; font-size:16px; line-height:1.6; color:#3b4a5c;">
+                <p style="margin:0 0 16px 0;">מתוך עבודה עם נשים כמוך, ומתוך המסע האישי שלי כאישה, כאמא וכמאמנת – גיליתי שיש דרך אחרת.</p>
+                <p style="margin:0 0 16px 0;">דרך שלא דורשת ממך להיות מושלמת או מנותקת מהמציאות.</p>
+                <p style="margin:0 0 16px 0;">למדתי, ואני עדיין לומדת, איך להפוך את התפילה לחיה, נושמת ואמיתית.</p>
+                <p style="margin:0; font-weight:700;">איך להתפלל מתוך החיים שלך, ולא בהשעייה מהם.</p>
+              </div>
+              
+              <!-- Workshop details card -->
+              <table align="center" width="100%" style="max-width:400px; background-color:#ffffff; border-radius:12px; border:1px solid #e5e7eb;" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding:32px 24px; text-align:center;">
+                    
+                    <div style="width:64px; height:64px; background-color:#3b4a5c; border-radius:50%; color:#ffffff; margin:0 auto 24px auto; display:table;">
+                      <span style="display:table-cell; vertical-align:middle; font-size:24px; font-weight:700; text-align:center;">1</span>
+                    </div>
+                    
+                    <h3 style="margin:0 0 16px 0; color:#3b4a5c; font-size:18px; font-weight:700;">
+                      📅 יום רביעי, 1 בינואר 2025
+                    </h3>
+                    
+                    <h4 style="margin:0 0 16px 0; color:#3b4a5c; font-size:16px;">
+                      🕐 שעה: 20:00-21:30 (שעה וחצי)
+                    </h4>
+                    
+                    <div style="margin-bottom:24px; font-size:14px; line-height:1.6; color:#3b4a5c;">
+                      <p style="margin:0 0 8px 0;">💰 <strong>עלות:</strong> ללא תשלום</p>
+                      <p style="margin:0;">📍 <strong>פלטפורמה:</strong> זום</p>
+                    </div>
+                    
+                    <!-- CTA Button -->
+                    <table align="center" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color:#e91e63; border-radius:12px; padding:14px 24px;">
+                          <a href="https://coach.ruthprissman.co.il/prayer-landing" style="display:inline-block; color:#ffffff; font-size:16px; line-height:20px; font-weight:700; text-decoration:none;">
+                            אני נרשמת לסדנה
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <!-- What You'll Learn Section -->
+          <tr>
+            <td style="background-color:#ffffff; padding:48px 16px;">
+              
+              <h2 style="margin:0 0 32px 0; text-align:center; color:#3b4a5c; font-size:22px; line-height:1.4; font-weight:700;">
+                מה את תקבלי בסדנה הזאת?
+              </h2>
+              
+              <!-- Benefit points -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+                <tr>
+                  <td style="background-color:#f0fdf4; padding:16px; border-radius:8px; border:1px solid #bbf7d0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:32px; vertical-align:top; padding-top:4px;">
+                          <span style="font-size:20px; color:#10b981;">✅</span>
+                        </td>
+                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
+                          <strong>3 מפתחות פשוטים</strong> להפוך את התפילה שלך מאוטומטית וריקה לחיה ומשמעותית
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+                <tr>
+                  <td style="background-color:#f0fdf4; padding:16px; border-radius:8px; border:1px solid #bbf7d0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:32px; vertical-align:top; padding-top:4px;">
+                          <span style="font-size:20px; color:#10b981;">✅</span>
+                        </td>
+                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
+                          <strong>איך להכניס את כל החיים שלך</strong> – הכאוס, העייפות והדאגות – אל תוך התפילה ולמצוא בהם כוח
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+                <tr>
+                  <td style="background-color:#f0fdf4; padding:16px; border-radius:8px; border:1px solid #bbf7d0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:32px; vertical-align:top; padding-top:4px;">
+                          <span style="font-size:20px; color:#10b981;">✅</span>
+                        </td>
+                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
+                          <strong>טכניקות מעשיות</strong> שיעזרו לך להישאר נוכחת ומחוברת גם כשהילדים צורחים ברקע
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
+                <tr>
+                  <td style="background-color:#f0fdf4; padding:16px; border-radius:8px; border:1px solid #bbf7d0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:32px; vertical-align:top; padding-top:4px;">
+                          <span style="font-size:20px; color:#10b981;">✅</span>
+                        </td>
+                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
+                          <strong>תרגילים פשוטים</strong> שתוכלי ליישם כבר מהתפילה הבאה
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- CTA Button -->
+              <table align="center" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background-color:#e91e63; border-radius:12px; padding:14px 24px;">
+                    <a href="https://coach.ruthprissman.co.il/prayer-landing" style="display:inline-block; color:#ffffff; font-size:18px; line-height:24px; font-weight:700; text-decoration:none;">
+                      אני נרשמת לסדנה
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <!-- Bio Section -->
+          <tr>
+            <td style="background-color:#f9fafb; padding:48px 16px;">
+              
+              <h2 style="margin:0 0 32px 0; text-align:center; color:#3b4a5c; font-size:22px; line-height:1.4; font-weight:700;">
+                מי אני ולמה אני יכולה לעזור לך?
+              </h2>
+              
+              <div style="text-align:center; margin-bottom:24px;">
+                <img src="https://coach.ruthprissman.co.il/lovable-uploads/74b61a26-f5ad-41fd-8cf7-6100846b6e6e.png" alt="רות פריסמן" style="width:150px; height:150px; border-radius:50%; border:4px solid #e91e63; display:block; margin:0 auto;" width="150" height="150">
+              </div>
+              
+              <div style="font-size:16px; line-height:1.6; color:#374151; text-align:right;">
+                <p style="margin:0 0 16px 0;">שלום, אני רות פריסמן – מאמנת אישית, אמא לשלושה, ואישה שעברה את המסע הזה בעצמי.</p>
+                <p style="margin:0 0 16px 0;">במשך שנים הרגשתי בדיוק כמוך – התפילה הייתה עבורי עוד משימה ברשימה, משהו שצריך לסיים במהירות.</p>
+                <p style="margin:0 0 16px 0;">עד שגיליתי שאפשר אחרת. שאפשר להתפלל מתוך החיים האמיתיים, מתוך הכאוס והיופי של האמהות.</p>
+                <p style="margin:0;">היום אני מלווה נשים למצוא את הדרך שלהן לתפילה אמיתית וחיה – וזה בדיוק מה שאני רוצה לחלוק איתך בסדנה.</p>
+              </div>
+              
+            </td>
+          </tr>
+          
+          <!-- Final CTA Section -->
+          <tr>
+            <td style="background-color:#e8f4fd; padding:48px 16px; text-align:center;">
+              
+              <h2 style="margin:0 0 24px 0; color:#3b4a5c; font-size:22px; line-height:1.4; font-weight:700;">
+                מוכנה להתחיל את המסע לתפילה חיה ומשמעותית?
+              </h2>
+              
+              <p style="margin:0 0 32px 0; color:#3b4a5c; font-size:16px; line-height:1.6;">
+                הצטרפי אליי לסדנה חינמית ובואי נגלה יחד איך להחיות את התפילה שלך
               </p>
               
-              <p>
-                במשך שנים חוויתי בעצמי את התחושה שהתפילה הפכה למכנית, לעוד פעולה שצריך לעשות במרוץ היום.
+              <!-- Big CTA Button -->
+              <table align="center" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background-color:#e91e63; border-radius:12px; padding:20px 32px;">
+                    <a href="https://coach.ruthprissman.co.il/prayer-landing" style="display:inline-block; color:#ffffff; font-size:20px; line-height:28px; font-weight:700; text-decoration:none;">
+                      אני נרשמת לסדנה עכשיו!
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#374151; padding:32px 16px; text-align:center;">
+              
+              <p style="margin:0 0 16px 0; color:#9ca3af; font-size:14px; line-height:1.6;">
+                שאלות? כתבי לי: <a href="mailto:ruth@ruthprissman.co.il" style="color:#60a5fa; text-decoration:none;">ruth@ruthprissman.co.il</a>
               </p>
               
-              <p>
-                דרך הכלים שלמדתי ופיתחתי, גיליתי איך להפוך את התפילה למקום של חיבור אמיתי ושינוי פנימי.
+              <p style="margin:0 0 16px 0; color:#9ca3af; font-size:14px; line-height:1.6;">
+                או התקשרי: <a href="tel:+972504445963" style="color:#60a5fa; text-decoration:none;">050-4445963</a>
               </p>
               
-              <p>
-                <strong>היום אני מלווה נשים לגלות את הכוח הטיפולי שבתפילה שלהן.</strong>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+              <div style="font-size:12px; color:#6b7280; line-height:1.5;">
+                <p style="margin:0 0 8px 0;">© 2024 רות פריסמן - מאמנת אישית</p>
+                <p style="margin:0;">לביטול המנוי <a href="https://coach.ruthprissman.co.il/unsubscribe" style="color:#60a5fa; text-decoration:none;">לחצי כאן</a></p>
+              </div>
+              
+            </td>
+          </tr>
+          
+        </table>
+        
+      </td>
+    </tr>
+  </table>
 
-  <!-- Contact Section -->
-  <div class="w-full py-12 px-4 bg-white border-t border-gray-200">
-    <div class="max-w-4xl mx-auto text-center">
-      <h3 class="font-alef font-bold text-lg purple-text mb-6">יש שאלות? אשמח לעזור!</h3>
-      
-      <div class="space-y-2 font-heebo text-base text-gray-600">
-        <p>📧 Ruth@RuthPrissman.co.il</p>
-        <p>📱 0556620273</p>
-        <p>🌐 https://coach.ruthprissman.co.il</p>
-      </div>
-      
-      <div class="mt-8">
-        <a href="https://coach.ruthprissman.co.il/prayer-landing" class="cta-button">
-          אני נרשמת לסדנה עכשיו 🌟
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <div class="w-full py-8 px-4 bg-gray-50 border-t border-gray-200">
-    <div class="max-w-4xl mx-auto text-center">
-      <p class="text-gray-500 font-heebo text-sm">
-        © כל הזכויות שמורות | רות פריסמן | Ruth@RuthPrissman.co.il
-      </p>
-    </div>
-  </div>
 </body>
 </html>`;
   };
