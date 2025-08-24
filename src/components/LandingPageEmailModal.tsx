@@ -297,22 +297,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
                 </tr>
               </table>
               
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
-                <tr>
-                  <td style="background-color:#f0fdf4; padding:16px; border-radius:8px; border:1px solid #bbf7d0;">
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td style="width:32px; vertical-align:top; padding-top:4px;">
-                          <span style="font-size:20px; color:#10b981;">✅</span>
-                        </td>
-                        <td style="font-size:16px; line-height:1.6; color:#1f2937;">
-                          <strong>טכניקות מעשיות</strong> שיעזרו לך להישאר נוכחת ומחוברת גם כשהילדים צורחים ברקע
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
+              
               
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:32px;">
                 <tr>
@@ -355,7 +340,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
               </h2>
               
               <p style="margin:0 0 32px 0; color:#3b4a5c; font-size:16px; line-height:1.6;">
-                הצטרפי אליי לסדנה חינמית ובואי נגלה יחד איך להחיות את התפילה שלך
+                הצטרפי אליי לסדנה חינמית ובואי נגלה יחד איך להחיות את התפילות שלנו
               </p>
               
               <!-- Big CTA Button -->
@@ -377,12 +362,13 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
             <td style="background-color:#374151; padding:32px 16px; text-align:center;">
               
               <p style="margin:0 0 16px 0; color:#9ca3af; font-size:14px; line-height:1.6;">
-                שאלות? כתבי לי: <a href="mailto:ruth@ruthprissman.co.il" style="color:#60a5fa; text-decoration:none;">ruth@ruthprissman.co.il</a>
+                שאלות? חסומה? כתבי לי: <a href="mailto:ruth@ruthprissman.co.il" style="color:#60a5fa; text-decoration:none;">ruth@ruthprissman.co.il</a>
               </p>
               
               <p style="margin:0 0 16px 0; color:#9ca3af; font-size:14px; line-height:1.6;">
                 או התקשרי: <a href="tel:+972556620273" style="color:#60a5fa; text-decoration:none;">055-6620273</a>
               </p>
+       
               
               <div style="font-size:12px; color:#6b7280; line-height:1.5;">
                 <p style="margin:0 0 8px 0;">© 2025 רות פריסמן - מאמנת אישית</p>
