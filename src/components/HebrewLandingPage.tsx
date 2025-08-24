@@ -108,16 +108,6 @@ const HebrewLandingPage = () => {
       line-height: 1.6;
       color: #333;
       direction: rtl;
-      text-align: right;
-    }
-    
-    [dir="rtl"] p, [dir="rtl"] li {
-      text-align: right;
-      unicode-bidi: plaintext;
-    }
-    
-    .text-center, .text-center p {
-      text-align: center;
     }
 
     .font-heebo { font-family: 'Heebo', Arial, sans-serif; }
@@ -814,7 +804,26 @@ const HebrewLandingPage = () => {
 
   return (
     <div className="w-full">
-  
+      {/* Action Buttons - Top Left */}
+      <div className="fixed top-4 left-4 z-50 flex flex-col gap-2">
+        <Button
+          onClick={exportToHTML}
+          className="bg-white text-purple-600 hover:bg-gray-50 shadow-lg border"
+          size="sm"
+        >
+          <Download className="w-4 h-4 ml-2" />
+          ייצא HTML
+        </Button>
+        
+        <Button
+          onClick={() => setIsEmailModalOpen(true)}
+          className="bg-purple-600 text-white hover:bg-purple-700 shadow-lg"
+          size="sm"
+        >
+          <Mail className="w-4 h-4 ml-2" />
+          שלח במייל
+        </Button>
+      </div>
 
       {/* Section 1: Top Bar */}
       <div 
@@ -880,7 +889,7 @@ const HebrewLandingPage = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                <div className="space-y-2">
+                <div className="space-y-2 text-right">
                   <Label htmlFor="fullName" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     שם פרטי *
                   </Label>
@@ -896,7 +905,7 @@ const HebrewLandingPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 text-right">
                   <Label htmlFor="email" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     אימייל *
                   </Label>
@@ -912,7 +921,7 @@ const HebrewLandingPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 text-right">
                   <Label htmlFor="phone" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     טלפון (לא חובה)
                   </Label>
