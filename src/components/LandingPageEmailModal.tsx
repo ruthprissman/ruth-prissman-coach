@@ -68,37 +68,46 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
           
           <!-- Hero Section with Background -->
           <tr>
-          
-           <td 
-  style="background-color:#374151; background-image: linear-gradient(135deg, rgba(16, 37, 58, 0.95), rgba(30, 20, 60, 0.95)), url('https://coach.ruthprissman.co.il/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png'); background-size: cover; background-position: center; padding: 48px 16px; text-align: center; position: relative;"
-  bgcolor="#374151"
->
-   
-              <!-- Hero content -->
-              <h1 style="margin:0 0 24px 0; color:#ffffff; font-size:24px; line-height:1.4; font-weight:300;">
-                <span style="display:block; margin-bottom:8px;">הסוד להפוך תפילה מעוד חובה</span>
-                <span style="display:block; margin-bottom:8px; font-size:20px;">(שלא תמיד אנחנו מצליחים למלא),</span>
-                <span style="display:block; margin-bottom:8px;">למילים, לשיחה אמיתית שממלאת אותך בכוח.</span>
-                <span style="display:block; font-size:20px;">גם כשהקטנים מושכים לך בחצאית והראש עמוס במטלות?</span>
-              </h1>
-              
-              <div style="margin-bottom:32px; font-size:16px; line-height:1.6; color:#ffffff;">
-                <p style="margin:0 0 16px 0;">מה אם היית יכולה לפתוח את הסידור בקלות, להרגיש את הלב נפתח?</p>
-                <p style="margin:0 0 16px 0;">לסיים כל תפילה בתחושת רוממות וחיבור, במקום בתחושת אשמה ותסכול.</p>
-                <p style="margin:0;">לגלות איך להכניס את כל החיים שלך, את כל הבלגן והעייפות, אל תוך המילים המוכרות, ולמצוא בהן אור חדש?</p>
-              </div>
-              
-              <!-- CTA Button -->
-              <table align="center" cellpadding="0" cellspacing="0" border="0">
+            <td bgcolor="#374151" background="https://coach.ruthprissman.co.il/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png">
+              <!-- Wrapper table for better Gmail compatibility -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#374151" style="background-color:#374151;">
                 <tr>
-                  <td style="background-color:#e91e63; border-radius:12px; padding:14px 24px;">
-                    <a href="https://coach.ruthprissman.co.il/prayer-landing" style="display:inline-block; color:#ffffff; font-size:18px; line-height:24px; font-weight:700; text-decoration:none;">
-                      אני נרשמת לסדנה החינמית עכשיו
-                    </a>
+                  <td 
+                    style="background-color:#374151; background-image: linear-gradient(135deg, rgba(16, 37, 58, 0.95), rgba(30, 20, 60, 0.95)), url('https://coach.ruthprissman.co.il/lovable-uploads/04710e22-f223-434b-a8fe-d553816388a5.png'); background-size: cover; background-position: center; padding: 48px 16px; text-align: center; position: relative;"
+                    bgcolor="#374151"
+                  >
+                    <!-- Content wrapper div with additional dark background fallback -->
+                    <div style="background-color:#374151; padding: 0; border-radius: 0;">
+                      
+                      <!-- Hero content -->
+                      <h1 style="margin:0 0 24px 0; color:#ffffff; font-size:24px; line-height:1.4; font-weight:300;">
+                        <span style="display:block; margin-bottom:8px;">הסוד להפוך תפילה מעוד חובה</span>
+                        <span style="display:block; margin-bottom:8px; font-size:20px;">(שלא תמיד אנחנו מצליחים למלא),</span>
+                        <span style="display:block; margin-bottom:8px;">למילים, לשיחה אמיתית שממלאת אותך בכוח.</span>
+                        <span style="display:block; font-size:20px;">גם כשהקטנים מושכים לך בחצאית והראש עמוס במטלות?</span>
+                      </h1>
+                      
+                      <div style="margin-bottom:32px; font-size:16px; line-height:1.6; color:#ffffff;">
+                        <p style="margin:0 0 16px 0;">מה אם היית יכולה לפתוח את הסידור בקלות, להרגיש את הלב נפתח?</p>
+                        <p style="margin:0 0 16px 0;">לסיים כל תפילה בתחושת רוממות וחיבור, במקום בתחושת אשמה ותסכול.</p>
+                        <p style="margin:0;">לגלות איך להכניס את כל החיים שלך, את כל הבלגן והעייפות, אל תוך המילים המוכרות, ולמצוא בהן אור חדש?</p>
+                      </div>
+                      
+                      <!-- CTA Button -->
+                      <table align="center" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td style="background-color:#e91e63; border-radius:12px; padding:14px 24px;">
+                            <a href="https://coach.ruthprissman.co.il/prayer-landing" style="display:inline-block; color:#ffffff; font-size:18px; line-height:24px; font-weight:700; text-decoration:none;">
+                              אני נרשמת לסדנה החינמית עכשיו
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                    </div>
                   </td>
                 </tr>
               </table>
-              
             </td>
           </tr>
           
