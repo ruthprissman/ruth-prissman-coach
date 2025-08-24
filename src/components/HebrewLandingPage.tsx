@@ -143,7 +143,7 @@ const HebrewLandingPage = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                <div className="space-y-2 text-right">
+                <div className="space-y-2">
                   <Label htmlFor="fullName" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     שם פרטי *
                   </Label>
@@ -159,7 +159,7 @@ const HebrewLandingPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2 text-right">
+                <div className="space-y-2">
                   <Label htmlFor="email" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     אימייל *
                   </Label>
@@ -175,7 +175,7 @@ const HebrewLandingPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2 text-right">
+                <div className="space-y-2">
                   <Label htmlFor="phone" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
                     טלפון (לא חובה)
                   </Label>
@@ -367,77 +367,7 @@ const HebrewLandingPage = () => {
         </div>
       </div>
 
-      {/* Section 5: Deep Emotional Memory */}
-      <div className="w-full py-16 px-4" style={{ backgroundColor: 'var(--cream-light)' }}>
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Title */}
-          <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-12 leading-relaxed purple-text">
-            האם זו התפילה שחלמת עליה כשדמיינת את חייך הבוגרים?
-          </h2>
-
-          {/* Emotional Paragraph */}
-          <div className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800">
-            <p>
-              את בטח זוכרת איזו שהיא פעם, אולי בימים נוראים, אולי ליד הכותל, אולי בסתם יום, כשהתפילה הייתה חיה לרגע.<br/>
-              הלב היה פתוח, אולי זלגו כמה דמעות. הרגשת כל מילה חודרת עמוק פנימה.<br/>
-              הרגשת שיש לך קשר ישיר, קו פתוח לבורא עולם. קיווית שכך ייראו חייך תמיד – מלאים ברוחניות, בקרבה, בתפילה חיה.<br/>
-              אבל המציאות, איך נאמר בעדינות, קצת שונה.<br/>
-              בדרך כלל, התפילה מרגישה כמו עוד פריט ברשימת המטלות האינסופית.<br/>
-              היא נדחקת בין הכנת סנדוויצ'ים, מענה למיילים דחופים והרגעת הילדים.<br/>
-              את מוצאת את עצמך ממלמלת את המילים במהירות, רק כדי לסיים, והראש כבר מזמן נודד לסידורים הבאים.<br/>
-              במקום תחושת רוממות, את נשארת עם תחושת אשמה וריקנות.<br/>
-              ולפעמים, מגלה שכבר עבר זמנה של שחרית, ואולי גם של מנחה, ואת עוד לא אמרת "מודה אני"...
-            </p>
-          </div>
-
-          {/* Quote Block */}
-          <div className="border-r-4 border-blue-400 bg-blue-50 p-6 rounded-lg shadow-sm">
-            <div className="font-heebo text-lg md:text-xl leading-snug text-gray-800">
-              <p>"התופעה הזו מוכרת וכואבת, להרבה מאוד נשים.</p>
-              <p>היא נובעת ממקום גבוה וטהור. תמיד למדנו שתפילה היא מרוממת, ושהמילים קדושות כל כך.</p>
-              <p>וקיבלנו איזו תחושה, שאם לא כיוונו את הכוונה הפנימית של כל מילה, אם לא התנתקנו מההווה הגשמי והעמוס שלנו, אז...</p>
-              <p>מה 'שווה' התפילה שלנו?</p>
-              <p className="font-bold">אבל האמת? הפוכה לגמרי!</p>
-              <p>הקב"ה רוצה אותנו מתפללות מאיפה שאנחנו.</p>
-              <p>הוא מחכה שנכניס את החיים האמיתיים שלנו, הגשמיים, הפשוטים, לתוך התפילה!</p>
-              <p>את העייפות, את הדאגות, את האורז שנשרף והכתם שלא יורד. את הילד שיצא לטיול.</p>
-              <p>את ההודיה על ציון טוב, את השמחות הקטנות של היום יום.</p>
-              <p>להכניס את כולם לתוך המילים.</p>
-              <p className="font-bold">למצוא אותם במילים."</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Section 6: The New Discovery */}
-      <div className="w-full py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          {/* Title */}
-          <h2 className="font-alef font-bold text-2xl md:text-3xl lg:text-4xl leading-relaxed purple-text">
-            הגילוי החדש שהופך תפילה מרוקנת לשיחה שממלאת את הלב
-          </h2>
-
-          {/* Text Block */}
-          <div className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800 space-y-4 max-w-3xl mx-auto">
-            <p>הסדנה "חיבורים חדשים למילים מוכרות" היא לא עוד שיעור או הרצאה.</p>
-            <p>זוהי מסגרת מעשית שנועדה לתת לך כלים פשוטים ושינויי תפיסה עמוקים</p>
-            <p>שיאפשרו לך להתחבר לתפילה שלך כאן ועכשיו, בתוך החיים העמוסים שלך.</p>
-            <p>אנחנו לא ננסה לחזור לתפילות של פעם, אלא ניצור סוג חדש של תפילה –</p>
-            <p>תפילה בוגרת, אמיתית, כזו שמכילה את כל מי שאת היום.</p>
-            <p>נלמד איך להפסיק להילחם במחשבות הנודדות,</p>
-            <p>ובמקום זאת, לרתום אותן לתוך התפילה עצמה.</p>
-          </div>
-
-          {/* CTA Button */}
-          <Button
-            onClick={scrollToForm}
-            className="text-white font-bold text-base sm:text-lg md:text-xl px-6 sm:px-8 py-4 sm:py-6 md:px-12 md:py-8 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg max-w-full sm:max-w-2xl mx-auto h-auto whitespace-normal leading-tight w-full sm:w-auto"
-            style={{ backgroundColor: 'var(--pink-vibrant)' }}
-          >
-            אני רוצה להירשם לסדנה החינמית
-          </Button>
-        </div>
-      </div>
+      
 
       {/* Section 7: Visual Imagination */}
       <div className="w-full bg-white py-16 px-4">
