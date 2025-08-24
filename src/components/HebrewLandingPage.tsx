@@ -367,7 +367,48 @@ const HebrewLandingPage = () => {
         </div>
       </div>
 
-    
+      {/* Section 5: Deep Emotional Memory */}
+      <div className="w-full py-16 px-4" style={{ backgroundColor: 'var(--cream-light)' }}>
+        <div className="max-w-4xl mx-auto space-y-8">
+          {/* Title */}
+          <h2 className="text-center font-alef font-bold text-2xl md:text-3xl lg:text-4xl mb-12 leading-relaxed purple-text">
+            האם זו התפילה שחלמת עליה כשדמיינת את חייך הבוגרים?
+          </h2>
+
+          {/* Emotional Paragraph */}
+          <div className="font-heebo text-lg md:text-xl leading-relaxed text-gray-800">
+            <p>
+              את בטח זוכרת איזו שהיא פעם, אולי בימים נוראים, אולי ליד הכותל, אולי בסתם יום, כשהתפילה הייתה חיה לרגע.<br/>
+              הלב היה פתוח, אולי זלגו כמה דמעות. הרגשת כל מילה חודרת עמוק פנימה.<br/>
+              הרגשת שיש לך קשר ישיר, קו פתוח לבורא עולם. קיווית שכך ייראו חייך תמיד – מלאים ברוחניות, בקרבה, בתפילה חיה.<br/>
+              אבל המציאות, איך נאמר בעדינות, קצת שונה.<br/>
+              בדרך כלל, התפילה מרגישה כמו עוד פריט ברשימת המטלות האינסופית.<br/>
+              היא נדחקת בין הכנת סנדוויצ'ים, מענה למיילים דחופים והרגעת הילדים.<br/>
+              את מוצאת את עצמך ממלמלת את המילים במהירות, רק כדי לסיים, והראש כבר מזמן נודד לסידורים הבאים.<br/>
+              במקום תחושת רוממות, את נשארת עם תחושת אשמה וריקנות.<br/>
+              ולפעמים, מגלה שכבר עבר זמנה של שחרית, ואולי גם של מנחה, ואת עוד לא אמרת "מודה אני"...
+            </p>
+          </div>
+
+          {/* Quote Block */}
+          <div className="border-r-4 border-blue-400 bg-blue-50 p-6 rounded-lg shadow-sm">
+            <div className="font-heebo text-lg md:text-xl leading-snug text-gray-800">
+              <p>"התופעה הזו מוכרת וכואבת, להרבה מאוד נשים.</p>
+              <p>היא נובעת ממקום גבוה וטהור. תמיד למדנו שתפילה היא מרוממת, ושהמילים קדושות כל כך.</p>
+              <p>וקיבלנו איזו תחושה, שאם לא כיוונו את הכוונה הפנימית של כל מילה, אם לא התנתקנו מההווה הגשמי והעמוס שלנו, אז...</p>
+              <p>מה 'שווה' התפילה שלנו?</p>
+              <p className="font-bold">אבל האמת? הפוכה לגמרי!</p>
+              <p>הקב"ה רוצה אותנו מתפללות מאיפה שאנחנו.</p>
+              <p>הוא מחכה שנכניס את החיים האמיתיים שלנו, הגשמיים, הפשוטים, לתוך התפילה!</p>
+              <p>את העייפות, את הדאגות, את האורז שנשרף והכתם שלא יורד. את הילד שיצא לטיול.</p>
+              <p>את ההודיה על ציון טוב, את השמחות הקטנות של היום יום.</p>
+              <p>להכניס את כולם לתוך המילים.</p>
+              <p className="font-bold">למצוא אותם במילים."</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Section 6: The New Discovery */}
       <div className="w-full py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
         <div className="max-w-4xl mx-auto text-center space-y-8">
@@ -696,96 +737,7 @@ const HebrewLandingPage = () => {
         </div>
       </div>
 
-      {/* Section 16: Registration Form */}
-      <div id="registration-form" className="w-full py-12 sm:py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white p-6 sm:p-8 rounded-lg shadow-sm">
-            <h2 className="text-center font-alef font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-6 sm:mb-8 leading-relaxed purple-text px-2">
-              הרשמי כאן וקבלי גישה מיידית לסדנה החינמית
-            </h2>
-            
-            {isSubmitted ? (
-              <div className="text-center space-y-4">
-                <div className="text-green-600 text-xl font-bold">
-                  נרשמת בהצלחה! כל הפרטים בדרך למייל שלך 💌
-                </div>
-                <p className="text-gray-600 font-heebo">
-                  נתראה בסדנה!
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
-                    שם פרטי *
-                  </Label>
-                  <Input
-                    id="fullName"
-                    name="fullName"
-                    type="text"
-                    required
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    className="text-right font-heebo text-base sm:text-lg py-3"
-                    placeholder="השם הפרטי שלך"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
-                    אימייל *
-                  </Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="text-right font-heebo text-base sm:text-lg py-3"
-                    placeholder="האימייל שלך"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-right font-heebo text-base sm:text-lg" style={{ color: 'var(--purple-deep)' }}>
-                    טלפון (לא חובה)
-                  </Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="text-right font-heebo text-base sm:text-lg py-3"
-                    placeholder="מספר הטלפון שלך"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full text-white font-bold text-base sm:text-lg md:text-xl py-4 sm:py-6 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg min-h-[48px] touch-manipulation"
-                  style={{ backgroundColor: 'var(--pink-vibrant)' }}
-                >
-                  {isSubmitting ? 'נרשמת...' : 'אני נרשמת עכשיו לסדנה'}
-                </Button>
-
-                <p className="text-center text-gray-500 text-xs sm:text-sm font-heebo">
-                  לא נשלח לך ספאם. הפרטים שלך שמורים איתנו.
-                </p>
-              </form>
-            )}
-
-            {/* Support Note */}
-            <div className="mt-8 text-center">
-              <p className="text-gray-600 font-heebo text-lg font-bold">
-                ❗ חסומה? שלחי לי מייל ואצרף אותך ידנית – Ruth@RuthPrissman.co.il
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
       {/* Section 18: Footer */}
       <div className="w-full bg-white py-8 px-4 border-t border-gray-200">
