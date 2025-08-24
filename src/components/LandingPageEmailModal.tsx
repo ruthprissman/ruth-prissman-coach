@@ -205,10 +205,11 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({ isOpen, o
               </h2>
               
               <div style="margin-bottom:32px; font-size:16px; line-height:1.6; color:#3b4a5c;">
-                <p style="margin:0 0 16px 0;">מתוך עבודה עם נשים כמוך, ומתוך המסע האישי שלי כאישה, כאמא וכמאמנת – גיליתי שיש דרך אחרת.</p>
+                <p style="margin:0 0 16px 0;">מתוך עבודה עם נשים כמוך, ומתוך המסע האישי שלי כאישה, כאמא וכמאמנת – גיליתי שיש דרך אחרת. גיליתי שיש דרך אחרת.</p>
                 <p style="margin:0 0 16px 0;">דרך שלא דורשת ממך להיות מושלמת או מנותקת מהמציאות.</p>
                 <p style="margin:0 0 16px 0;">למדתי, ואני עדיין לומדת, איך להפוך את התפילה לחיה, נושמת ואמיתית.</p>
-                <p style="margin:0; font-weight:700;">איך להתפלל מתוך החיים שלך, ולא בהשעייה מהם.</p>
+                <p style="margin:0; font-weight:700;">עזרתי כבר להרבה נשים לגלות מחדש את העוצמה והחיבור שבתפילה,</p>
+                <p style="margin:0; font-weight:700;">ואני רוצה להראות גם לך איך לעשות את זה.</p>
               </div>
               
               <!-- Workshop details card -->
