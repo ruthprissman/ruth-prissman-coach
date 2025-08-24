@@ -91,7 +91,7 @@ const LandingPagesManagement = () => {
 
             {selectedPage && (
               <div className="space-y-4">
-                <div className="flex justify-center">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Button
                     onClick={() => window.open(selectedPage.publicPath, '_blank')}
                     variant="outline"
@@ -99,6 +99,23 @@ const LandingPagesManagement = () => {
                   >
                     <Eye className="h-4 w-4" />
                     צפיה בדף הציבורי
+                  </Button>
+                  
+                  <Button
+                    onClick={handleSendEmail}
+                    className="flex items-center gap-2"
+                  >
+                    <Mail className="h-4 w-4" />
+                    שלח במייל
+                  </Button>
+                  
+                  <Button
+                    onClick={handleExportHtml}
+                    variant="secondary"
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    ייצוא HTML
                   </Button>
                 </div>
 
