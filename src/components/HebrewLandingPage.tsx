@@ -133,6 +133,24 @@ const HebrewLandingPage = () => {
                 <p className="text-gray-600 font-heebo">
                   נתראה בסדנה!
                 </p>
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-gray-700 font-heebo mb-2">
+                    יש לך עוד חברה שתהנה להקשיב?
+                  </p>
+                  <p className="text-gray-700 font-heebo mb-3">
+                    שלחי לה את הקישור הבא:
+                  </p>
+                  <div className="bg-white p-3 rounded border border-gray-300">
+                    <a 
+                      href="https://coach.ruthprissman.co.il/prayer-landing" 
+                      className="text-blue-600 font-heebo text-sm break-all hover:underline"
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      https://coach.ruthprissman.co.il/prayer-landing
+                    </a>
+                  </div>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
