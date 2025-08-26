@@ -133,6 +133,36 @@ const HebrewLandingPage = () => {
                 <p className="text-gray-600 font-heebo">
                   נתראה בסדנה!
                 </p>
+                
+                {/* Additional links after registration */}
+                <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <p className="text-gray-700 font-heebo mb-3 font-bold">
+                    בעוד אתה כאן:
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <a 
+                      href="/subscribe" 
+                      className="text-blue-600 hover:text-blue-800 underline font-heebo font-medium"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.open('/subscribe', '_blank');
+                      }}
+                    >
+                      👉 הירשמי לרשימת התפוצה שלי לקבלת תוכן מעשיר
+                    </a>
+                    <a 
+                      href="/" 
+                      className="text-purple-600 hover:text-purple-800 underline font-heebo font-medium"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.open('/', '_blank');
+                      }}
+                    >
+                      🌟 גלי את כל התוכן באתר שלי
+                    </a>
+                  </div>
+                </div>
+
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-gray-700 font-heebo mb-2">
                     יש לך עוד חברה שתהנה להקשיב?
