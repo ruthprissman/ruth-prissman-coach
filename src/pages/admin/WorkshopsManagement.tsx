@@ -65,6 +65,8 @@ const WorkshopsManagement: React.FC = () => {
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
   const [isRegistrantsModalOpen, setIsRegistrantsModalOpen] = useState(false);
   const [zoomLink, setZoomLink] = useState('');
+  const [invitationSubject, setInvitationSubject] = useState('');
+  const [invitationBody, setInvitationBody] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -267,7 +269,19 @@ const WorkshopsManagement: React.FC = () => {
 
   // Send workshop invitations mutation
   const sendInvitationsMutation = useMutation({
-    mutationFn: async ({ workshopId, zoomLink }: { workshopId: string; zoomLink: string }) => {
+    mutationFn: async ({ workshopId, zoomLink, subject, body }: { workshopId: string; zoomLink: string; subject: string; body: string }) => {
+      // First update the workshop with the current subject and body
+      const { error: updateError } = await supabase
+        .from('workshops')
+        .update({
+          invitation_subject: subject,
+          invitation_body: body,
+        })
+        .eq('id', workshopId);
+
+      if (updateError) throw updateError;
+
+      // Then send the invitations
       const { data, error } = await supabase.functions.invoke('send-workshop-invitations', {
         body: {
           workshopId,
@@ -279,12 +293,15 @@ const WorkshopsManagement: React.FC = () => {
       return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workshops'] });
       toast({
         title: 'הצלחה',
         description: 'הזימונים נשלחו בהצלחה לכל הנרשמות',
       });
       setIsRegistrantsModalOpen(false);
       setZoomLink('');
+      setInvitationSubject('');
+      setInvitationBody('');
     },
     onError: (error) => {
       console.error('Error sending invitations:', error);
@@ -363,14 +380,25 @@ const WorkshopsManagement: React.FC = () => {
 
   const handleViewRegistrants = (workshop: Workshop) => {
     setSelectedWorkshop(workshop);
+    setInvitationSubject(workshop.invitation_subject || 'הזמנה לסדנה: {workshop_title}');
+    setInvitationBody(workshop.invitation_body || `שלום {participant_name},
+
+אני שמחה להזמין אותך לסדנה "{workshop_title}".
+
+📅 תאריך: {workshop_date}
+⏰ שעה: {workshop_time}
+💻 קישור זום: {zoom_link}
+
+נתראה בסדנה!
+רות פריסמן`);
     setIsRegistrantsModalOpen(true);
   };
 
   const handleSendInvitations = () => {
-    if (!selectedWorkshop || !zoomLink.trim()) {
+    if (!selectedWorkshop || !zoomLink.trim() || !invitationSubject.trim() || !invitationBody.trim()) {
       toast({
         title: 'שגיאה',
-        description: 'נדרש לקלוט לינק זום',
+        description: 'נדרש למלא את כל השדות: לינק זום, כותרת ותוכן המייל',
         variant: 'destructive',
       });
       return;
@@ -379,6 +407,8 @@ const WorkshopsManagement: React.FC = () => {
     sendInvitationsMutation.mutate({
       workshopId: selectedWorkshop.id,
       zoomLink: zoomLink.trim(),
+      subject: invitationSubject.trim(),
+      body: invitationBody.trim(),
     });
   };
 
@@ -804,44 +834,72 @@ const WorkshopsManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  {selectedWorkshop && isWorkshopInFuture(selectedWorkshop.date) && (
-                    <div className="space-y-3 border-t pt-4">
-                      <h3 className="font-semibold flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        שליחת זימון לסדנה
-                      </h3>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            לינק זום לסדנה:
-                          </label>
-                          <Input
-                            placeholder="הכנס את לינק הזום לסדנה..."
-                            value={zoomLink}
-                            onChange={(e) => setZoomLink(e.target.value)}
-                            className="w-full"
-                          />
-                        </div>
-                        <Button
-                          onClick={handleSendInvitations}
-                          disabled={sendInvitationsMutation.isPending || !zoomLink.trim()}
-                          className="w-full flex items-center gap-2"
-                        >
-                          {sendInvitationsMutation.isPending ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              שולח זימונים...
-                            </>
-                          ) : (
-                            <>
-                              <Mail className="h-4 w-4" />
-                              שלח מייל זימון לנרשמות ({registrants.length})
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                   {selectedWorkshop && isWorkshopInFuture(selectedWorkshop.date) && (
+                     <div className="space-y-4 border-t pt-4">
+                       <h3 className="font-semibold flex items-center gap-2">
+                         <Mail className="h-4 w-4" />
+                         שליחת זימון לסדנה
+                       </h3>
+                       <div className="space-y-4">
+                         <div>
+                           <label className="block text-sm font-medium mb-2">
+                             כותרת המייל:
+                           </label>
+                           <Input
+                             placeholder="הכנס את כותרת המייל..."
+                             value={invitationSubject}
+                             onChange={(e) => setInvitationSubject(e.target.value)}
+                             className="w-full"
+                           />
+                         </div>
+                         
+                         <div>
+                           <label className="block text-sm font-medium mb-2">
+                             תוכן המייל:
+                           </label>
+                           <Textarea
+                             placeholder="הכנס את תוכן המייל..."
+                             value={invitationBody}
+                             onChange={(e) => setInvitationBody(e.target.value)}
+                             className="w-full min-h-[120px]"
+                           />
+                           <div className="text-xs text-muted-foreground mt-1">
+                             תוכל להשתמש במשתנים הבאים: {'{workshop_title}'}, {'{participant_name}'}, {'{workshop_date}'}, {'{workshop_time}'}, {'{zoom_link}'}
+                           </div>
+                         </div>
+                         
+                         <div>
+                           <label className="block text-sm font-medium mb-2">
+                             לינק זום לסדנה:
+                           </label>
+                           <Input
+                             placeholder="הכנס את לינק הזום לסדנה..."
+                             value={zoomLink}
+                             onChange={(e) => setZoomLink(e.target.value)}
+                             className="w-full"
+                           />
+                         </div>
+                         
+                         <Button
+                           onClick={handleSendInvitations}
+                           disabled={sendInvitationsMutation.isPending || !zoomLink.trim() || !invitationSubject.trim() || !invitationBody.trim()}
+                           className="w-full flex items-center gap-2"
+                         >
+                           {sendInvitationsMutation.isPending ? (
+                             <>
+                               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                               שולח זימונים...
+                             </>
+                           ) : (
+                             <>
+                               <Mail className="h-4 w-4" />
+                               שלח מייל זימון לנרשמות ({registrants.length})
+                             </>
+                           )}
+                         </Button>
+                       </div>
+                     </div>
+                   )}
                 </>
               )}
             </div>
