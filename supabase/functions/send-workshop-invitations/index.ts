@@ -9,6 +9,7 @@ const corsHeaders = {
 interface WorkshopInvitationRequest {
   workshopId: string;
   zoomLink: string;
+  attachWorksheet?: boolean;
 }
 
 interface Workshop {
@@ -18,6 +19,9 @@ interface Workshop {
   date: string;
   invitation_subject: string;
   invitation_body: string;
+  worksheet_file_path?: string;
+  worksheet_file_name?: string;
+  worksheet_file_size?: number;
 }
 
 interface Registrant {
@@ -41,7 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { workshopId, zoomLink }: WorkshopInvitationRequest = await req.json();
+    const { workshopId, zoomLink, attachWorksheet = false }: WorkshopInvitationRequest = await req.json();
 
     if (!workshopId || !zoomLink) {
       return new Response(
@@ -117,6 +121,25 @@ const handler = async (req: Request): Promise<Response> => {
       minute: '2-digit',
     });
 
+    // Get workshop PDF if it should be attached
+    let worksheetData: ArrayBuffer | null = null;
+    if (attachWorksheet && workshop.worksheet_file_path) {
+      try {
+        const { data: fileData, error: fileError } = await supabase.storage
+          .from('workshop_files')
+          .download(workshop.worksheet_file_path);
+        
+        if (fileError) {
+          console.log(`Could not download worksheet: ${fileError.message}`);
+        } else {
+          worksheetData = await fileData.arrayBuffer();
+          console.log(`Downloaded worksheet: ${workshop.worksheet_file_name}, size: ${worksheetData.byteLength} bytes`);
+        }
+      } catch (error) {
+        console.log(`Error downloading worksheet: ${error}`);
+      }
+    }
+
     // Prepare emails to send
     const emailPromises = registrants.map(async (registrant: Registrant) => {
       // Replace template variables in subject and body
@@ -174,7 +197,13 @@ const handler = async (req: Request): Promise<Response> => {
           name: registrant.full_name
         }],
         subject: subject,
-        htmlContent: htmlContent
+        htmlContent: htmlContent,
+        ...(worksheetData && workshop.worksheet_file_name && {
+          attachment: [{
+            content: btoa(String.fromCharCode(...new Uint8Array(worksheetData))),
+            name: workshop.worksheet_file_name
+          }]
+        })
       };
 
       // Send email via Brevo

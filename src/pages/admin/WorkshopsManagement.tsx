@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
-import { Plus, Edit2, CalendarDays, Trash2, Users, Mail } from 'lucide-react';
+import { Plus, Edit2, CalendarDays, Trash2, Users, Mail, FileText } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import FileUploadField from '@/components/admin/FileUploadField';
 
 interface Workshop {
   id: string;
@@ -35,6 +37,10 @@ interface Workshop {
   updated_at: string;
   invitation_subject: string;
   invitation_body: string;
+  worksheet_file_path?: string;
+  worksheet_file_name?: string;
+  worksheet_file_size?: number;
+  attach_worksheet_to_invitation?: boolean;
 }
 
 interface Registrant {
@@ -67,6 +73,8 @@ const WorkshopsManagement: React.FC = () => {
   const [zoomLink, setZoomLink] = useState('');
   const [invitationSubject, setInvitationSubject] = useState('');
   const [invitationBody, setInvitationBody] = useState('');
+  const [attachWorksheet, setAttachWorksheet] = useState(false);
+  const [worksheetFile, setWorksheetFile] = useState<File | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -269,7 +277,7 @@ const WorkshopsManagement: React.FC = () => {
 
   // Send workshop invitations mutation
   const sendInvitationsMutation = useMutation({
-    mutationFn: async ({ workshopId, zoomLink, subject, body }: { workshopId: string; zoomLink: string; subject: string; body: string }) => {
+    mutationFn: async ({ workshopId, zoomLink, subject, body, attachWorksheet }: { workshopId: string; zoomLink: string; subject: string; body: string; attachWorksheet?: boolean }) => {
       // First update the workshop with the current subject and body
       const { error: updateError } = await supabase
         .from('workshops')
@@ -286,6 +294,7 @@ const WorkshopsManagement: React.FC = () => {
         body: {
           workshopId,
           zoomLink,
+          attachWorksheet: attachWorksheet || false,
         },
       });
       
@@ -302,6 +311,7 @@ const WorkshopsManagement: React.FC = () => {
       setZoomLink('');
       setInvitationSubject('');
       setInvitationBody('');
+      setAttachWorksheet(false);
     },
     onError: (error) => {
       console.error('Error sending invitations:', error);
@@ -391,6 +401,7 @@ const WorkshopsManagement: React.FC = () => {
 
 נתראה בסדנה!
 רות פריסמן`);
+    setAttachWorksheet(workshop.attach_worksheet_to_invitation || false);
     setIsRegistrantsModalOpen(true);
   };
 
@@ -409,6 +420,7 @@ const WorkshopsManagement: React.FC = () => {
       zoomLink: zoomLink.trim(),
       subject: invitationSubject.trim(),
       body: invitationBody.trim(),
+      attachWorksheet,
     });
   };
 
@@ -723,7 +735,26 @@ const WorkshopsManagement: React.FC = () => {
                    )}
                  />
 
-                 <div className="space-y-4 border-t pt-4">
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      דף עבודה לסדנה (PDF)
+                    </h3>
+                    
+                    <div>
+                      <FormLabel>העלאת דף עבודה</FormLabel>
+                      <FileUploadField
+                        onFileSelected={(file) => setWorksheetFile(file || null)}
+                        acceptedTypes=".pdf"
+                        compressPDF={true}
+                      />
+                      <div className="text-xs text-muted-foreground mt-1">
+                        הקובץ יידחס אוטומטית לשליחה במייל. מומלץ עד 10MB.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 border-t pt-4">
                    <h3 className="font-semibold">הגדרות מייל הזמנה</h3>
                    
                    <FormField
@@ -872,15 +903,31 @@ const WorkshopsManagement: React.FC = () => {
                            <label className="block text-sm font-medium mb-2">
                              לינק זום לסדנה:
                            </label>
-                           <Input
-                             placeholder="הכנס את לינק הזום לסדנה..."
-                             value={zoomLink}
-                             onChange={(e) => setZoomLink(e.target.value)}
-                             className="w-full"
-                           />
-                         </div>
-                         
-                         <Button
+                            <Input
+                              placeholder="הכנס את לינק הזום לסדנה..."
+                              value={zoomLink}
+                              onChange={(e) => setZoomLink(e.target.value)}
+                              className="w-full"
+                            />
+                          </div>
+                           
+                           {selectedWorkshop?.worksheet_file_name && (
+                             <div className="flex items-center space-x-2 space-x-reverse">
+                               <Checkbox
+                                 id="attach-worksheet"
+                                 checked={attachWorksheet}
+                                 onCheckedChange={(checked) => setAttachWorksheet(checked as boolean)}
+                               />
+                               <label 
+                                 htmlFor="attach-worksheet" 
+                                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                               >
+                                 צרף דף עבודה למייל: {selectedWorkshop.worksheet_file_name}
+                               </label>
+                             </div>
+                           )}
+                           
+                           <Button
                            onClick={handleSendInvitations}
                            disabled={sendInvitationsMutation.isPending || !zoomLink.trim() || !invitationSubject.trim() || !invitationBody.trim()}
                            className="w-full flex items-center gap-2"
