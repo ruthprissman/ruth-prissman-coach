@@ -137,25 +137,25 @@ const HebrewLandingPage = () => {
                 {/* Additional links after registration */}
                 <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
                   <p className="text-gray-700 font-heebo mb-3 font-bold">
-                    בעוד אתה כאן:
+                    עוד קצת חדש:
                   </p>
                   <div className="flex flex-col gap-3">
                     <a 
-                      href="/subscribe" 
+                      href="https://coach.ruthprissman.co.il/subscribe" 
                       className="text-blue-600 hover:text-blue-800 underline font-heebo font-medium"
                       onClick={(e) => {
                         e.preventDefault();
-                        window.open('/subscribe', '_blank');
+                        window.open('https://coach.ruthprissman.co.il/subscribe', '_blank');
                       }}
                     >
                       👉 הירשמי לרשימת התפוצה שלי לקבלת תוכן מעשיר
                     </a>
                     <a 
-                      href="/" 
+                      href="https://coach.ruthprissman.co.il/" 
                       className="text-purple-600 hover:text-purple-800 underline font-heebo font-medium"
                       onClick={(e) => {
                         e.preventDefault();
-                        window.open('/', '_blank');
+                        window.open('https://coach.ruthprissman.co.il/', '_blank');
                       }}
                     >
                       🌟 גלי את כל התוכן באתר שלי
