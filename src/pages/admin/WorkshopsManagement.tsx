@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -635,39 +635,39 @@ const WorkshopsManagement: React.FC = () => {
               </DialogTitle>
             </DialogHeader>
             
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>כותרת</FormLabel>
-                      <FormControl>
-                        <Input placeholder="הכנס כותרת לסדנה" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+             <Form {...form}>
+               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                 <FormField
+                   control={form.control}
+                   name="title"
+                   render={({ field }) => (
+                     <FormItem>
+                       <FormLabel>כותרת הסדנה</FormLabel>
+                       <FormControl>
+                         <Input placeholder="הכנס כותרת לסדנה" {...field} />
+                       </FormControl>
+                       <FormMessage />
+                     </FormItem>
+                   )}
+                 />
 
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>תיאור</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="הכנס תיאור לסדנה"
-                          className="min-h-[80px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                 <FormField
+                   control={form.control}
+                   name="description"
+                   render={({ field }) => (
+                     <FormItem>
+                       <FormLabel>תיאור הסדנה</FormLabel>
+                       <FormControl>
+                         <Textarea
+                           placeholder="הכנס תיאור קצר לסדנה"
+                           className="resize-none"
+                           {...field}
+                         />
+                       </FormControl>
+                       <FormMessage />
+                     </FormItem>
+                   )}
+                 />
 
                  <div className="grid grid-cols-2 gap-4">
                    <FormField
@@ -675,14 +675,14 @@ const WorkshopsManagement: React.FC = () => {
                      name="date"
                      render={({ field }) => (
                        <FormItem className="flex flex-col">
-                         <FormLabel>תאריך</FormLabel>
+                         <FormLabel>תאריך הסדנה</FormLabel>
                          <Popover>
                            <PopoverTrigger asChild>
                              <FormControl>
                                <Button
-                                 variant="outline"
+                                 variant={"outline"}
                                  className={cn(
-                                   "pl-3 text-left font-normal",
+                                   "w-full pl-3 text-left font-normal",
                                    !field.value && "text-muted-foreground"
                                  )}
                                >
@@ -700,9 +700,11 @@ const WorkshopsManagement: React.FC = () => {
                                mode="single"
                                selected={field.value}
                                onSelect={field.onChange}
-                               disabled={(date) => date < new Date()}
+                               disabled={(date) =>
+                                 date < new Date("1900-01-01")
+                               }
                                initialFocus
-                               className={cn("p-3 pointer-events-auto")}
+                               className="pointer-events-auto"
                              />
                            </PopoverContent>
                          </Popover>
@@ -716,7 +718,7 @@ const WorkshopsManagement: React.FC = () => {
                      name="time"
                      render={({ field }) => (
                        <FormItem>
-                         <FormLabel>שעה</FormLabel>
+                         <FormLabel>שעת הסדנה</FormLabel>
                          <FormControl>
                            <Input
                              type="time"
@@ -733,7 +735,7 @@ const WorkshopsManagement: React.FC = () => {
                    control={form.control}
                    name="is_free"
                    render={({ field }) => (
-                     <FormItem className="flex flex-row-reverse items-center justify-between rounded-lg border p-3">
+                     <FormItem className="flex flex-row-reverse items-center justify-between rounded-lg border p-4">
                        <FormControl>
                          <Switch
                            checked={field.value}
@@ -742,51 +744,54 @@ const WorkshopsManagement: React.FC = () => {
                        </FormControl>
                        <div className="space-y-0.5">
                          <FormLabel>סדנה חינמית</FormLabel>
+                         <FormDescription>
+                           הפעל אם הסדנה חינמית
+                         </FormDescription>
                        </div>
                      </FormItem>
                    )}
                  />
 
-                {!isFree && (
+                 {!isFree && (
+                   <FormField
+                     control={form.control}
+                     name="price"
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel>מחיר (₪)</FormLabel>
+                         <FormControl>
+                           <Input
+                             type="number"
+                             min="0"
+                             step="0.01"
+                             placeholder="0"
+                             {...field}
+                             onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                           />
+                         </FormControl>
+                         <FormMessage />
+                       </FormItem>
+                     )}
+                   />
+                 )}
+
                   <FormField
                     control={form.control}
-                    name="price"
+                    name="is_active"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>מחיר (₪)</FormLabel>
+                      <FormItem className="flex flex-row-reverse items-center justify-between rounded-lg border p-3">
                         <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
                           />
                         </FormControl>
-                        <FormMessage />
+                        <div className="space-y-0.5">
+                          <FormLabel>סדנה פעילה</FormLabel>
+                        </div>
                       </FormItem>
                     )}
                   />
-                )}
-
-                 <FormField
-                   control={form.control}
-                   name="is_active"
-                   render={({ field }) => (
-                     <FormItem className="flex flex-row-reverse items-center justify-between rounded-lg border p-3">
-                       <FormControl>
-                         <Switch
-                           checked={field.value}
-                           onCheckedChange={field.onChange}
-                         />
-                       </FormControl>
-                       <div className="space-y-0.5">
-                         <FormLabel>סדנה פעילה</FormLabel>
-                       </div>
-                     </FormItem>
-                   )}
-                 />
 
                    <div className="space-y-4 border-t pt-4">
                      <h3 className="font-semibold flex items-center gap-2">
@@ -817,7 +822,10 @@ const WorkshopsManagement: React.FC = () => {
                          {editingWorkshop?.worksheet_file_name ? 'החלף דף עבודה' : 'העלאת דף עבודה'}
                        </FormLabel>
                        <FileUploadField
-                         onFileSelected={(file) => setWorksheetFile(file || null)}
+                         onFileSelected={(file) => {
+                           console.log('File selected:', file?.name);
+                           setWorksheetFile(file || null);
+                         }}
                          acceptedTypes=".pdf"
                          compressPDF={true}
                        />
@@ -827,67 +835,72 @@ const WorkshopsManagement: React.FC = () => {
                      </div>
                    </div>
 
-                  <div className="space-y-4 border-t pt-4">
-                   <h3 className="font-semibold">הגדרות מייל הזמנה</h3>
-                   
-                   <FormField
-                     control={form.control}
-                     name="invitation_subject"
-                     render={({ field }) => (
-                       <FormItem>
-                         <FormLabel>כותרת המייל</FormLabel>
-                         <FormControl>
-                           <Input
-                             placeholder="הכנס כותרת למייל ההזמנה"
-                             {...field}
-                           />
-                         </FormControl>
-                         <FormMessage />
-                       </FormItem>
-                     )}
-                   />
+                   <div className="space-y-4 border-t pt-4">
+                    <h3 className="font-semibold">הגדרות מייל הזמנה</h3>
+                    
+                    <FormField
+                      control={form.control}
+                      name="invitation_subject"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>כותרת המייל</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="הכנס כותרת למייל ההזמנה"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                   <FormField
-                     control={form.control}
-                     name="invitation_body"
-                     render={({ field }) => (
-                       <FormItem>
-                         <FormLabel>תוכן המייל</FormLabel>
-                         <FormControl>
-                           <Textarea
-                             placeholder="הכנס את תוכן מייל ההזמנה"
-                             className="min-h-[120px]"
-                             {...field}
-                           />
-                         </FormControl>
-                         <div className="text-xs text-muted-foreground mt-1">
-                           תוכל להשתמש במשתנים הבאים: {'{workshop_title}'}, {'{participant_name}'}, {'{workshop_date}'}, {'{workshop_time}'}, {'{zoom_link}'}
-                         </div>
-                         <FormMessage />
-                       </FormItem>
-                     )}
-                   />
+                    <FormField
+                      control={form.control}
+                      name="invitation_body"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>תוכן המייל</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="הכנס את תוכן מייל ההזמנה"
+                              className="min-h-[120px]"
+                              {...field}
+                            />
+                          </FormControl>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            תוכל להשתמש במשתנים הבאים: {'{workshop_title}'}, {'{participant_name}'}, {'{workshop_date}'}, {'{workshop_time}'}, {'{zoom_link}'}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                 <div className="flex gap-2 pt-4">
+                   <Button
+                     type="submit"
+                     disabled={createWorkshopMutation.isPending || updateWorkshopMutation.isPending}
+                     className="flex-1"
+                   >
+                     {createWorkshopMutation.isPending || updateWorkshopMutation.isPending 
+                       ? 'שומר...' 
+                       : editingWorkshop 
+                         ? 'עדכן סדנה' 
+                         : 'צור סדנה'
+                     }
+                   </Button>
+                   <Button
+                     type="button"
+                     variant="outline"
+                     onClick={() => setIsDialogOpen(false)}
+                     className="flex-1"
+                   >
+                     ביטול
+                   </Button>
                  </div>
-
-                <div className="flex gap-2 pt-4">
-                  <Button
-                    type="submit"
-                    disabled={createWorkshopMutation.isPending || updateWorkshopMutation.isPending}
-                    className="flex-1"
-                  >
-                    {editingWorkshop ? 'עדכן סדנה' : 'צור סדנה'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                    className="flex-1"
-                  >
-                    ביטול
-                  </Button>
-                </div>
-              </form>
-            </Form>
+               </form>
+             </Form>
           </DialogContent>
         </Dialog>
 
