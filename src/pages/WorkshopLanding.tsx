@@ -92,8 +92,35 @@ export default function WorkshopLanding() {
 
       toast({
         title: "נרשמת בהצלחה! 🎉",
-        description: "לינק הזום יישלח אלייך במייל 24 שעות לפני הסדנה",
-        variant: "default"
+        description: (
+          <div className="space-y-3">
+            <p>לינק הזום יישלח אלייך במייל 24 שעות לפני הסדנה</p>
+            <div className="flex flex-col gap-2 pt-2">
+              <a 
+                href="/subscribe" 
+                className="text-blue-600 hover:text-blue-800 underline text-sm font-medium"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.open('/subscribe', '_blank');
+                }}
+              >
+                👉 הירשמי לרשימת התפוצה שלי לקבלת תוכן מעשיר
+              </a>
+              <a 
+                href="/subscribe" 
+                className="text-purple-600 hover:text-purple-800 underline text-sm font-medium"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.open('/', '_blank');
+                }}
+              >
+                🌟 גלי את כל התוכן באתר שלי
+              </a>
+            </div>
+          </div>
+        ),
+        variant: "default",
+        duration: 10000
       });
 
       // Reset form
