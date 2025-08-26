@@ -485,9 +485,9 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
       } else {
         // Load all subscribers
         const { data: subscribers, error } = await supabaseClient()
-          .from('subscribers')
+          .from('content_subscribers')
           .select('email')
-          .eq('is_active', true);
+          .eq('is_subscribed', true);
 
         if (error) throw error;
         
@@ -535,7 +535,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
       
       // Get all active article subscribers
       const { data: subscribers, error: subscribersError } = await supabase
-        .from('subscribers')
+        .from('content_subscribers')
         .select('email, first_name')
         .eq('is_subscribed', true);
 
@@ -551,9 +551,15 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
       
     } catch (error: any) {
       console.error('Error loading subscribers:', error);
+      
+      let errorMessage = "לא ניתן לטעון את רשימת הנמענים";
+      if (error.message?.includes('permission') || error.message?.includes('RLS') || error.message?.includes('policy')) {
+        errorMessage = "אין הרשאה לגשת לרשימת הנמענים. נא להתחבר כמנהל.";
+      }
+      
       toast({
         title: "שגיאה בטעינת נמענים",
-        description: error.message || "לא ניתן לטעון את רשימת הנמענים",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
