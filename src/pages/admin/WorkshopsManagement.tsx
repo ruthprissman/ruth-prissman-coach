@@ -140,6 +140,26 @@ const WorkshopsManagement: React.FC = () => {
       const dateWithTime = new Date(data.date);
       dateWithTime.setHours(hours, minutes, 0, 0);
       
+      let worksheetPath = null;
+      let worksheetFileName = null;
+      let worksheetFileSize = null;
+
+      // Upload worksheet file if provided
+      if (worksheetFile) {
+        const fileExtension = worksheetFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExtension}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('workshop_files')
+          .upload(fileName, worksheetFile);
+
+        if (uploadError) throw uploadError;
+
+        worksheetPath = fileName;
+        worksheetFileName = worksheetFile.name;
+        worksheetFileSize = worksheetFile.size;
+      }
+      
       const { error } = await supabase
         .from('workshops')
         .insert([{
@@ -151,6 +171,9 @@ const WorkshopsManagement: React.FC = () => {
           is_active: data.is_active,
           invitation_subject: data.invitation_subject,
           invitation_body: data.invitation_body,
+          worksheet_file_path: worksheetPath,
+          worksheet_file_name: worksheetFileName,
+          worksheet_file_size: worksheetFileSize,
         }]);
       
       if (error) throw error;
@@ -158,6 +181,7 @@ const WorkshopsManagement: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workshops'] });
       setIsDialogOpen(false);
+      setWorksheetFile(null);
       form.reset();
       toast({
         title: 'הצלחה',
@@ -181,19 +205,45 @@ const WorkshopsManagement: React.FC = () => {
       const dateWithTime = new Date(data.date);
       dateWithTime.setHours(hours, minutes, 0, 0);
       
+      let updateData: any = {
+        title: data.title,
+        description: data.description,
+        date: dateWithTime.toISOString(),
+        is_free: data.is_free,
+        price: data.is_free ? 0 : data.price,
+        is_active: data.is_active,
+        invitation_subject: data.invitation_subject,
+        invitation_body: data.invitation_body,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Handle worksheet file upload if a new file is provided
+      if (worksheetFile) {
+        const fileExtension = worksheetFile.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExtension}`;
+        
+        // Delete old file if exists
+        if (editingWorkshop?.worksheet_file_path) {
+          await supabase.storage
+            .from('workshop_files')
+            .remove([editingWorkshop.worksheet_file_path]);
+        }
+
+        // Upload new file
+        const { error: uploadError } = await supabase.storage
+          .from('workshop_files')
+          .upload(fileName, worksheetFile);
+
+        if (uploadError) throw uploadError;
+
+        updateData.worksheet_file_path = fileName;
+        updateData.worksheet_file_name = worksheetFile.name;
+        updateData.worksheet_file_size = worksheetFile.size;
+      }
+      
       const { error } = await supabase
         .from('workshops')
-        .update({
-          title: data.title,
-          description: data.description,
-          date: dateWithTime.toISOString(),
-          is_free: data.is_free,
-          price: data.is_free ? 0 : data.price,
-          is_active: data.is_active,
-          invitation_subject: data.invitation_subject,
-          invitation_body: data.invitation_body,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', id);
       
       if (error) throw error;
@@ -202,6 +252,7 @@ const WorkshopsManagement: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['workshops'] });
       setIsDialogOpen(false);
       setEditingWorkshop(null);
+      setWorksheetFile(null);
       form.reset();
       toast({
         title: 'הצלחה',
@@ -346,6 +397,8 @@ const WorkshopsManagement: React.FC = () => {
 נתראה בסדנה!
 רות פריסמן`,
     });
+    // Reset worksheet file state - user can upload new file or keep existing
+    setWorksheetFile(null);
     setIsDialogOpen(true);
   };
 
@@ -735,24 +788,44 @@ const WorkshopsManagement: React.FC = () => {
                    )}
                  />
 
-                  <div className="space-y-4 border-t pt-4">
-                    <h3 className="font-semibold flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      דף עבודה לסדנה (PDF)
-                    </h3>
-                    
-                    <div>
-                      <FormLabel>העלאת דף עבודה</FormLabel>
-                      <FileUploadField
-                        onFileSelected={(file) => setWorksheetFile(file || null)}
-                        acceptedTypes=".pdf"
-                        compressPDF={true}
-                      />
-                      <div className="text-xs text-muted-foreground mt-1">
-                        הקובץ יידחס אוטומטית לשליחה במייל. מומלץ עד 10MB.
-                      </div>
-                    </div>
-                  </div>
+                   <div className="space-y-4 border-t pt-4">
+                     <h3 className="font-semibold flex items-center gap-2">
+                       <FileText className="h-4 w-4" />
+                       דף עבודה לסדנה (PDF)
+                     </h3>
+                     
+                     {editingWorkshop?.worksheet_file_name && (
+                       <div className="bg-muted/50 p-3 rounded-lg space-y-2">
+                         <div className="flex items-center justify-between">
+                           <span className="text-sm font-medium">קובץ קיים:</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                           <FileText className="h-4 w-4 text-primary" />
+                           <span className="text-sm">{editingWorkshop.worksheet_file_name}</span>
+                           <span className="text-xs text-muted-foreground">
+                             ({editingWorkshop.worksheet_file_size ? `${(editingWorkshop.worksheet_file_size / 1024).toFixed(1)}KB` : 'גודל לא ידוע'})
+                           </span>
+                         </div>
+                         <div className="text-xs text-muted-foreground">
+                           להחלפת הקובץ, בחר קובץ חדש למטה. הקובץ הקיים יוחלף.
+                         </div>
+                       </div>
+                     )}
+                     
+                     <div>
+                       <FormLabel>
+                         {editingWorkshop?.worksheet_file_name ? 'החלף דף עבודה' : 'העלאת דף עבודה'}
+                       </FormLabel>
+                       <FileUploadField
+                         onFileSelected={(file) => setWorksheetFile(file || null)}
+                         acceptedTypes=".pdf"
+                         compressPDF={true}
+                       />
+                       <div className="text-xs text-muted-foreground mt-1">
+                         הקובץ יידחס אוטומטית לשליחה במייל. מומלץ עד 10MB.
+                       </div>
+                     </div>
+                   </div>
 
                   <div className="space-y-4 border-t pt-4">
                    <h3 className="font-semibold">הגדרות מייל הזמנה</h3>
