@@ -892,6 +892,8 @@ export type Database = {
           date: string
           description: string
           id: string
+          invitation_body: string | null
+          invitation_subject: string | null
           is_active: boolean
           is_free: boolean
           price: number
@@ -903,6 +905,8 @@ export type Database = {
           date: string
           description: string
           id?: string
+          invitation_body?: string | null
+          invitation_subject?: string | null
           is_active?: boolean
           is_free?: boolean
           price?: number
@@ -914,6 +918,8 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          invitation_body?: string | null
+          invitation_subject?: string | null
           is_active?: boolean
           is_free?: boolean
           price?: number

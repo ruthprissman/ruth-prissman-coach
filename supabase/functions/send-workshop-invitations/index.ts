@@ -16,6 +16,8 @@ interface Workshop {
   title: string;
   description: string;
   date: string;
+  invitation_subject: string;
+  invitation_body: string;
 }
 
 interface Registrant {
@@ -117,6 +119,51 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Prepare emails to send
     const emailPromises = registrants.map(async (registrant: Registrant) => {
+      // Replace template variables in subject and body
+      const subject = workshop.invitation_subject
+        .replace(/\{workshop_title\}/g, workshop.title)
+        .replace(/\{participant_name\}/g, registrant.full_name)
+        .replace(/\{workshop_date\}/g, formattedDate)
+        .replace(/\{workshop_time\}/g, formattedTime)
+        .replace(/\{zoom_link\}/g, zoomLink);
+
+      const bodyText = workshop.invitation_body
+        .replace(/\{workshop_title\}/g, workshop.title)
+        .replace(/\{participant_name\}/g, registrant.full_name)
+        .replace(/\{workshop_date\}/g, formattedDate)
+        .replace(/\{workshop_time\}/g, formattedTime)
+        .replace(/\{zoom_link\}/g, zoomLink);
+
+      // Convert line breaks to HTML and wrap in proper HTML structure
+      const htmlContent = `
+        <div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
+          ${bodyText.replace(/\n/g, '<br>')}
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #2c5aa0;">
+            <p style="margin: 0; font-weight: bold; color: #2c5aa0; font-size: 18px;">רות פריסמן</p>
+            <p style="margin: 5px 0; color: #666; font-size: 14px;">מאמנת בגישה טיפולית | קוד הנפש | SEFT</p>
+            <p style="margin: 5px 0; color: #666; font-size: 14px;">מבט חדש על חיים מוכרים</p>
+            <p style="margin: 5px 0; color: #666; font-size: 14px;">צמיחה אישית | זוגית | ילדים | טראומות</p>
+            
+            <div style="margin-top: 15px;">
+              <p style="margin: 2px 0; color: #2c5aa0; font-size: 14px;">
+                📧 <a href="mailto:ruth@ruthprissman.co.il" style="color: #2c5aa0; text-decoration: none;">Ruth@RuthPrissman.co.il</a>
+              </p>
+              <p style="margin: 2px 0; color: #2c5aa0; font-size: 14px;">📱 0556620273</p>
+              <p style="margin: 2px 0; color: #2c5aa0; font-size: 14px;">
+                🌐 <a href="https://coach.ruthprissman.co.il" style="color: #2c5aa0; text-decoration: none;">https://coach.ruthprissman.co.il</a>
+              </p>
+            </div>
+          </div>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+          <p style="font-size: 12px; color: #666;">
+            הודעה זו נשלחה אליך כי נרשמת לסדנה. אם אינך מעוניין/ת לקבל הודעות נוספות, 
+            אנא פנה/י אלינו במייל.
+          </p>
+        </div>
+      `;
+
       const emailData = {
         sender: {
           name: "רות פריסמן",
@@ -126,51 +173,8 @@ const handler = async (req: Request): Promise<Response> => {
           email: registrant.email,
           name: registrant.full_name
         }],
-        subject: `זימון לסדנה: ${workshop.title}`,
-        htmlContent: `
-          <div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <h2 style="color: #2c5aa0;">שלום ${registrant.full_name},</h2>
-            
-            <p>אני שמחה להזמין אותך לסדנה:</p>
-            
-            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="color: #2c5aa0; margin-top: 0;">${workshop.title}</h3>
-              <p><strong>תאריך:</strong> ${formattedDate}</p>
-              <p><strong>שעה:</strong> ${formattedTime}</p>
-              <p><strong>תיאור:</strong> ${workshop.description}</p>
-            </div>
-            
-            <div style="background-color: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <h4 style="color: #2c5aa0; margin-top: 0;">פרטי התחברות לזום:</h4>
-              <p><a href="${zoomLink}" style="color: #2c5aa0; text-decoration: none; font-weight: bold;">${zoomLink}</a></p>
-            </div>
-            
-            <p>אני מצפה לראות אותך בסדנה!</p>
-            
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #2c5aa0;">
-              <p style="margin: 0; font-weight: bold; color: #2c5aa0; font-size: 18px;">רות פריסמן</p>
-              <p style="margin: 5px 0; color: #666; font-size: 14px;">מאמנת בגישה טיפולית | קוד הנפש | SEFT</p>
-              <p style="margin: 5px 0; color: #666; font-size: 14px;">מבט חדש על חיים מוכרים</p>
-              <p style="margin: 5px 0; color: #666; font-size: 14px;">צמיחה אישית | זוגית | ילדים | טראומות</p>
-              
-              <div style="margin-top: 15px;">
-                <p style="margin: 2px 0; color: #2c5aa0; font-size: 14px;">
-                  📧 <a href="mailto:ruth@ruthprissman.co.il" style="color: #2c5aa0; text-decoration: none;">Ruth@RuthPrissman.co.il</a>
-                </p>
-                <p style="margin: 2px 0; color: #2c5aa0; font-size: 14px;">📱 0556620273</p>
-                <p style="margin: 2px 0; color: #2c5aa0; font-size: 14px;">
-                  🌐 <a href="https://coach.ruthprissman.co.il" style="color: #2c5aa0; text-decoration: none;">https://coach.ruthprissman.co.il</a>
-                </p>
-              </div>
-            </div>
-            
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-            <p style="font-size: 12px; color: #666;">
-              הודעה זו נשלחה אליך כי נרשמת לסדנה. אם אינך מעוניין/ת לקבל הודעות נוספות, 
-              אנא פנה/י אלינו במייל.
-            </p>
-          </div>
-        `
+        subject: subject,
+        htmlContent: htmlContent
       };
 
       // Send email via Brevo

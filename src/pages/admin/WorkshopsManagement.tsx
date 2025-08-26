@@ -33,6 +33,8 @@ interface Workshop {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  invitation_subject: string;
+  invitation_body: string;
 }
 
 interface Registrant {
@@ -51,6 +53,8 @@ const workshopSchema = z.object({
   is_free: z.boolean().default(false),
   price: z.number().min(0, 'מחיר חייב להיות חיובי').default(0),
   is_active: z.boolean().default(true),
+  invitation_subject: z.string().min(1, 'כותרת המייל נדרשת'),
+  invitation_body: z.string().min(1, 'תוכן המייל נדרש'),
 });
 
 type WorkshopFormData = z.infer<typeof workshopSchema>;
@@ -73,6 +77,17 @@ const WorkshopsManagement: React.FC = () => {
       is_free: false,
       price: 0,
       is_active: true,
+      invitation_subject: 'הזמנה לסדנה: {workshop_title}',
+      invitation_body: `שלום {participant_name},
+
+אני שמחה להזמין אותך לסדנה "{workshop_title}".
+
+📅 תאריך: {workshop_date}
+⏰ שעה: {workshop_time}
+💻 קישור זום: {zoom_link}
+
+נתראה בסדנה!
+רות פריסמן`,
     },
   });
 
@@ -124,6 +139,8 @@ const WorkshopsManagement: React.FC = () => {
           is_free: data.is_free,
           price: data.is_free ? 0 : data.price,
           is_active: data.is_active,
+          invitation_subject: data.invitation_subject,
+          invitation_body: data.invitation_body,
         }]);
       
       if (error) throw error;
@@ -163,6 +180,8 @@ const WorkshopsManagement: React.FC = () => {
           is_free: data.is_free,
           price: data.is_free ? 0 : data.price,
           is_active: data.is_active,
+          invitation_subject: data.invitation_subject,
+          invitation_body: data.invitation_body,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id);
@@ -288,6 +307,17 @@ const WorkshopsManagement: React.FC = () => {
       is_free: workshop.is_free,
       price: workshop.price,
       is_active: workshop.is_active,
+      invitation_subject: workshop.invitation_subject || 'הזמנה לסדנה: {workshop_title}',
+      invitation_body: workshop.invitation_body || `שלום {participant_name},
+
+אני שמחה להזמין אותך לסדנה "{workshop_title}".
+
+📅 תאריך: {workshop_date}
+⏰ שעה: {workshop_time}
+💻 קישור זום: {zoom_link}
+
+נתראה בסדנה!
+רות פריסמן`,
     });
     setIsDialogOpen(true);
   };
@@ -309,6 +339,17 @@ const WorkshopsManagement: React.FC = () => {
       is_free: false,
       price: 0,
       is_active: true,
+      invitation_subject: 'הזמנה לסדנה: {workshop_title}',
+      invitation_body: `שלום {participant_name},
+
+אני שמחה להזמין אותך לסדנה "{workshop_title}".
+
+📅 תאריך: {workshop_date}
+⏰ שעה: {workshop_time}
+💻 קישור זום: {zoom_link}
+
+נתראה בסדנה!
+רות פריסמן`,
     });
     setIsDialogOpen(true);
   };
@@ -492,7 +533,7 @@ const WorkshopsManagement: React.FC = () => {
 
         {/* Workshop Form Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingWorkshop ? 'עריכת סדנה' : 'הוספת סדנה חדשה'}
@@ -651,6 +692,48 @@ const WorkshopsManagement: React.FC = () => {
                      </FormItem>
                    )}
                  />
+
+                 <div className="space-y-4 border-t pt-4">
+                   <h3 className="font-semibold">הגדרות מייל הזמנה</h3>
+                   
+                   <FormField
+                     control={form.control}
+                     name="invitation_subject"
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel>כותרת המייל</FormLabel>
+                         <FormControl>
+                           <Input
+                             placeholder="הכנס כותרת למייל ההזמנה"
+                             {...field}
+                           />
+                         </FormControl>
+                         <FormMessage />
+                       </FormItem>
+                     )}
+                   />
+
+                   <FormField
+                     control={form.control}
+                     name="invitation_body"
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel>תוכן המייל</FormLabel>
+                         <FormControl>
+                           <Textarea
+                             placeholder="הכנס את תוכן מייל ההזמנה"
+                             className="min-h-[120px]"
+                             {...field}
+                           />
+                         </FormControl>
+                         <div className="text-xs text-muted-foreground mt-1">
+                           תוכל להשתמש במשתנים הבאים: {'{workshop_title}'}, {'{participant_name}'}, {'{workshop_date}'}, {'{workshop_time}'}, {'{zoom_link}'}
+                         </div>
+                         <FormMessage />
+                       </FormItem>
+                     )}
+                   />
+                 </div>
 
                 <div className="flex gap-2 pt-4">
                   <Button
