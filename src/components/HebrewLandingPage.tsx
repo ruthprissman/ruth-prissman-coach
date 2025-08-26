@@ -148,7 +148,7 @@ const HebrewLandingPage = () => {
                         window.open('https://coach.ruthprissman.co.il/subscribe', '_blank');
                       }}
                     >
-                      👉 הירשמי לרשימת התפוצה שלי לקבלת תוכן מעשיר
+                      👉 הרשמי לרשימת התפוצה שלי לקבלת תוכן מעשיר
                     </a>
                     <a 
                       href="https://coach.ruthprissman.co.il/" 
