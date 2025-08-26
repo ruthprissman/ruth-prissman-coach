@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { Send, Mail, TestTube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
@@ -29,8 +30,10 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
   const [isSending, setIsSending] = useState(false);
   const [isTestMode, setIsTestMode] = useState(false);
   const [isSpecificRecipientsMode, setIsSpecificRecipientsMode] = useState(false);
+  const [isManualEmailsMode, setIsManualEmailsMode] = useState(false);
   const [allSubscribers, setAllSubscribers] = useState<Array<{email: string, firstName?: string}>>([]);
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
+  const [manualEmails, setManualEmails] = useState('');
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
   const [emailSubject, setEmailSubject] = useState(defaultSubject);
   const { toast } = useToast();
@@ -450,6 +453,24 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
       
       if (isTestMode) {
         recipients = ['ruth@ruthprissman.co.il'];
+      } else if (isManualEmailsMode) {
+        // Parse manual emails
+        const manualEmailsList = manualEmails
+          .split(/[,\n;]/)
+          .map(email => email.trim())
+          .filter(email => email && email.includes('@'));
+        
+        if (manualEmailsList.length === 0) {
+          toast({
+            title: "שגיאה",
+            description: "אנא הכניסי לפחות כתובת מייל אחת תקינה",
+            variant: "destructive"
+          });
+          setIsSending(false);
+          return;
+        }
+        
+        recipients = manualEmailsList;
       } else if (isSpecificRecipientsMode) {
         if (selectedRecipients.length === 0) {
           toast({
@@ -561,6 +582,15 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
     setIsTestMode(checked === true);
     if (checked) {
       setIsSpecificRecipientsMode(false);
+      setIsManualEmailsMode(false);
+    }
+  };
+
+  const handleManualEmailsChange = (checked: boolean | "indeterminate") => {
+    setIsManualEmailsMode(checked === true);
+    if (checked) {
+      setIsTestMode(false);
+      setIsSpecificRecipientsMode(false);
     }
   };
 
@@ -613,12 +643,24 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
                 id="specificRecipients"
                 checked={isSpecificRecipientsMode}
                 onCheckedChange={handleSpecificRecipientsChange}
-                disabled={isTestMode}
+                disabled={isTestMode || isManualEmailsMode}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2 justify-end">
+              <label htmlFor="manualEmails" className="text-sm font-medium text-right">
+                הוספת כתובות מייל ידנית
+              </label>
+              <Checkbox
+                id="manualEmails"
+                checked={isManualEmailsMode}
+                onCheckedChange={handleManualEmailsChange}
+                disabled={isTestMode || isSpecificRecipientsMode}
               />
             </div>
           </div>
 
-          {isSpecificRecipientsMode && !isTestMode && (
+          {isSpecificRecipientsMode && !isTestMode && !isManualEmailsMode && (
             <div className="border rounded-md p-4 max-h-60 overflow-y-auto">
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-medium text-right">בחירת נמענים:</h4>
@@ -652,13 +694,31 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
             </div>
           )}
 
+          {isManualEmailsMode && !isTestMode && (
+            <div className="space-y-2">
+              <Label htmlFor="manualEmailsInput" className="text-right">כתובות מייל (הפרידי בפסיק או בשורה חדשה)</Label>
+              <Textarea
+                id="manualEmailsInput"
+                value={manualEmails}
+                onChange={(e) => setManualEmails(e.target.value)}
+                placeholder="example1@gmail.com, example2@gmail.com
+או שורה לכל כתובת מייל..."
+                className="text-right h-32"
+                dir="rtl"
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                הכניסי כתובות מייל מופרדות בפסיק, נקודה-פסיק או בשורות נפרדות
+              </p>
+            </div>
+          )}
+
           <div className="flex justify-between pt-4">
             <Button variant="outline" onClick={onClose}>
               ביטול
             </Button>
             <Button
               onClick={handleSendLandingPageEmail}
-              disabled={isSending || !emailSubject.trim()}
+              disabled={isSending || !emailSubject.trim() || (isManualEmailsMode && !manualEmails.trim())}
               className="bg-[#4A235A] hover:bg-[#5d2a6e] text-white"
             >
               {isSending ? (
@@ -666,7 +726,7 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
               ) : (
                 <>
                   {isTestMode ? <TestTube className="ml-2 h-4 w-4" /> : <Send className="ml-2 h-4 w-4" />}
-                  {isTestMode ? "שלח מייל בדיקה" : "שלח לרשימת התפוצה"}
+                  {isTestMode ? "שלח מייל בדיקה" : isManualEmailsMode ? "שלח לכתובות הידניות" : "שלח לרשימת התפוצה"}
                 </>
               )}
             </Button>
