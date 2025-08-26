@@ -888,6 +888,7 @@ export type Database = {
       }
       workshops: {
         Row: {
+          attach_worksheet_to_invitation: boolean | null
           created_at: string
           date: string
           description: string
@@ -899,8 +900,12 @@ export type Database = {
           price: number
           title: string
           updated_at: string
+          worksheet_file_name: string | null
+          worksheet_file_path: string | null
+          worksheet_file_size: number | null
         }
         Insert: {
+          attach_worksheet_to_invitation?: boolean | null
           created_at?: string
           date: string
           description: string
@@ -912,8 +917,12 @@ export type Database = {
           price?: number
           title: string
           updated_at?: string
+          worksheet_file_name?: string | null
+          worksheet_file_path?: string | null
+          worksheet_file_size?: number | null
         }
         Update: {
+          attach_worksheet_to_invitation?: boolean | null
           created_at?: string
           date?: string
           description?: string
@@ -925,6 +934,9 @@ export type Database = {
           price?: number
           title?: string
           updated_at?: string
+          worksheet_file_name?: string | null
+          worksheet_file_path?: string | null
+          worksheet_file_size?: number | null
         }
         Relationships: []
       }
