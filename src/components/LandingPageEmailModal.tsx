@@ -84,13 +84,18 @@ const LandingPageEmailModal: React.FC<LandingPageEmailModalProps> = ({
                        <span style="display:block; font-size:20px;">גם כשהקטנים מושכים לך בחצאית והראש עמוס במטלות?</span>
                      </h1>
                      
-                     <div style="margin-bottom:32px; font-size:16px; line-height:1.6; color:#ffffff;">
-                       <p style="margin:0 0 16px 0;">מה אם היית יכולה לפתוח את הסידור בקלות, להרגיש את הלב נפתח?</p>
-                       <p style="margin:0 0 16px 0;">לסיים כל תפילה בתחושת רוממות וחיבור, במקום בתחושת אשמה ותסכול.</p>
-                       <p style="margin:0;">לגלות איך להכניס את כל החיים שלך, את כל הבלגן והעייפות, אל תוך המילים המוכרות, ולמצוא בהן אור חדש?</p>
-                     </div>
-                     
-                     <!-- CTA Button -->
+                      <div style="margin-bottom:24px; font-size:16px; line-height:1.6; color:#ffffff;">
+                        <p style="margin:0 0 16px 0;">מה אם היית יכולה לפתוח את הסידור בקלות, להרגיש את הלב נפתח?</p>
+                        <p style="margin:0 0 16px 0;">לסיים כל תפילה בתחושת רוממות וחיבור, במקום בתחושת אשמה ותסכול.</p>
+                        <p style="margin:0;">לגלות איך להכניס את כל החיים שלך, את כל הבלגן והעייפות, אל תוך המילים המוכרות, ולמצוא בהן אור חדש?</p>
+                      </div>
+                      
+                      <!-- Date and Time -->
+                      <div style="margin-bottom:32px; text-align:center; font-size:18px; line-height:1.6; color:#ffffff; font-weight:600;">
+                        <p style="margin:0;">יום ראשון, כא' אלול 14.9.25 בשעה 21:30</p>
+                      </div>
+                      
+                      <!-- CTA Button -->
                      <table align="center" cellpadding="0" cellspacing="0" border="0">
                        <tr>
                          <td style="background-color:#e91e63; border-radius:12px; padding:14px 24px;">
