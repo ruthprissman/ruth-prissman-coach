@@ -162,6 +162,15 @@ export function generatePrayerLandingEmailHTML(): string {
                         `<p style="margin: 0 0 12px 0; color: #ffffff; font-size: 16px; line-height: 1.6; font-weight: 300;">${desc}</p>`
                       ).join('')}
                       
+                      <!-- Date and Time -->
+                      <table style="margin: 24px auto 0 auto;">
+                        <tr>
+                          <td style="text-align: center;">
+                            <p style="margin: 0; color: #ffffff; font-size: 18px; line-height: 1.6; font-weight: 600;">יום ראשון, כא' אלול 14.9.25 בשעה 21:30</p>
+                          </td>
+                        </tr>
+                      </table>
+                      
                       <table style="margin: 32px auto 0 auto;">
                         <tr>
                           <td style="text-align: center;">
