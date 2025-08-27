@@ -121,9 +121,12 @@ const HebrewLandingPage = () => {
       <div id="registration-form" className="w-full py-12 sm:py-16 px-4" style={{ backgroundColor: 'var(--blue-very-light)' }}>
         <div className="max-w-2xl mx-auto">
           <div className="bg-white p-6 sm:p-8 rounded-lg shadow-sm">
-            <h2 className="text-center font-alef font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-6 sm:mb-8 leading-relaxed purple-text px-2">
+            <h2 className="text-center font-alef font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-4 leading-relaxed purple-text px-2">
               הרשמי כאן וקבלי גישה מיידית לסדנה החינמית
             </h2>
+            <p className="text-center font-heebo text-lg sm:text-xl md:text-2xl mb-6 sm:mb-8 leading-relaxed purple-text px-2">
+              יום ראשון, כא' אלול 14.9.25 בשעה 21:30
+            </p>
             
             {isSubmitted ? (
               <div className="text-right space-y-4">
