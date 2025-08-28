@@ -154,7 +154,7 @@ export const generateWorkshopConfirmationHTML = (fullName: string): string => {
               רות פריסמן - מאמנת רוחנית ומנטורית
             </p>
             <p style="margin: 0 0 16px 0; color: #888; font-size: 14px;">
-              📧 ruthprissman@gmail.com • 📱 055-6620273
+              📧 ruth@ruthprissman.co.il • 📱 055-6620273
             </p>
             <p style="margin: 0; color: #888; font-size: 12px; line-height: 1.5;">
               מייל זה נשלח אליך כי נרשמת לסדנה החינמית שלי.<br>

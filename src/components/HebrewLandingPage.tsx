@@ -83,7 +83,7 @@ const HebrewLandingPage = () => {
             emailList: [formData.email.trim()],
             subject: subject,
             sender: {
-              email: "ruthprissman@gmail.com",
+              email: "ruth@ruthprissman.co.il",
               name: "רות פריסמן"
             },
             htmlContent: htmlContent
