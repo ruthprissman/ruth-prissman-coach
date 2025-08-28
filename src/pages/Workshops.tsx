@@ -19,8 +19,6 @@ interface Workshop {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  landing_page_url?: string;
-  is_public_visible?: boolean;
 }
 
 const Workshops = () => {
@@ -38,7 +36,6 @@ const Workshops = () => {
           .from('workshops')
           .select('*')
           .eq('is_active', true)
-          .eq('is_public_visible', true)
           .order('date', { ascending: true });
 
         if (error) throw error;
@@ -165,55 +162,48 @@ const Workshops = () => {
                     </CardHeader>
                     
                     <CardContent className="pt-0 space-y-4 text-right">
-                      <div className="text-[#4A235A]/80 leading-relaxed whitespace-pre-line" style={{ textAlign: 'right' }} dir="rtl">
+                      <p className="text-[#4A235A]/80 text-right leading-relaxed">
                         {workshop.description}
-                      </div>
+                      </p>
                       
-                      <div className="space-y-3 border-t border-gray-100 pt-4" style={{ textAlign: 'right' }} dir="rtl">
-                        <div className="flex items-center justify-end text-[#4A235A]/90" style={{ textAlign: 'right' }}>
-                          <span className="font-medium">{formatDate(workshop.date)}</span>
-                          <CalendarDays className="h-4 w-4 ml-2" />
+                      <div className="space-y-3 border-t border-gray-100 pt-4">
+                        <div className="flex items-center  text-[#4A235A]/70">
+                            <CalendarDays className="h-4 w-4 ml-2" />
+                          <span className="mr-2 text-right">{formatDate(workshop.date)}</span>
+                        
                         </div>
                         
-                        <div className="flex items-center justify-end text-[#4A235A]/90" style={{ textAlign: 'right' }}>
-                          <span className="font-medium">{formatTime(workshop.date)}</span>
+                        <div className="flex items-center text-[#4A235A]/70">
                           <Clock className="h-4 w-4 ml-2" />
+                          <span className="mr-2 text-right">{formatTime(workshop.date)}</span>
+                          
                         </div>
                         
-                        <div className="flex items-center justify-end text-[#4A235A]/70" style={{ textAlign: 'right' }}>
-                          <span>זום</span>
-                          <Video className="h-4 w-4 ml-2" />
+                        <div className="flex items-center text-[#4A235A]/70">
+                            <Video className="h-4 w-4 ml-2" />
+                          <span className="mr-2 text-right">זום</span>
+                        
                         </div>
                         
                         {!workshop.is_free && workshop.price > 0 && (
-                          <div className="flex items-center justify-end text-[#4A235A]/70" style={{ textAlign: 'right' }}>
-                            <span>₪{workshop.price}</span>
-                            <DollarSign className="h-4 w-4 ml-2" />
+                          <div className="flex items-center justify-end text-[#4A235A]/70">
+                             <DollarSign className="h-4 w-4 ml-2" />
+                            <span className="mr-2 text-right">₪{workshop.price}</span>
+                           
                           </div>
                         )}
                       </div>
                       
                       {!isPast && (
                         <div className="pt-4">
-                          {workshop.landing_page_url ? (
-                            <a href={workshop.landing_page_url} target="_blank" rel="noopener noreferrer" className="block w-full">
-                              <Button 
-                                className="w-full bg-[#D4C5B9] hover:bg-[#C5B3A3] text-[#4A235A] font-semibold py-3 transition-colors duration-300"
-                                size="lg"
-                              >
-                                הרשמה לסדנה
-                              </Button>
-                            </a>
-                          ) : (
-                            <a href="https://coach.ruthprissman.co.il/prayer-landing" target="_blank" rel="noopener noreferrer" className="block w-full">
-                              <Button 
-                                className="w-full bg-[#D4C5B9] hover:bg-[#C5B3A3] text-[#4A235A] font-semibold py-3 transition-colors duration-300"
-                                size="lg"
-                              >
-                                הרשמה לסדנה
-                              </Button>
-                            </a>
-                          )}
+                          <a href="https://coach.ruthprissman.co.il/prayer-landing" target="_blank" rel="noopener noreferrer" className="block w-full">
+                            <Button 
+                              className="w-full bg-[#D4C5B9] hover:bg-[#C5B3A3] text-[#4A235A] font-semibold py-3 transition-colors duration-300"
+                              size="lg"
+                            >
+                              הרשמה לסדנה
+                            </Button>
+                          </a>
                         </div>
                       )}
                     </CardContent>
