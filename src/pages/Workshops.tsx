@@ -170,25 +170,25 @@ const Workshops = () => {
                       </p>
                       
                       <div className="space-y-3 border-t border-gray-100 pt-4">
-                        <div className="flex items-center justify-end text-[#4A235A]/90">
-                          <span className="mr-2 text-right font-medium">{formatDate(workshop.date)}</span>
-                          <CalendarDays className="h-4 w-4 ml-2" />
+                        <div className="flex flex-row-reverse items-center justify-start text-[#4A235A]/90 text-right">
+                          <CalendarDays className="h-4 w-4 mr-2" />
+                          <span className="font-medium">{formatDate(workshop.date)}</span>
                         </div>
                         
-                        <div className="flex items-center justify-end text-[#4A235A]/90">
-                          <span className="mr-2 text-right font-medium">{formatTime(workshop.date)}</span>
-                          <Clock className="h-4 w-4 ml-2" />
+                        <div className="flex flex-row-reverse items-center justify-start text-[#4A235A]/90 text-right">
+                          <Clock className="h-4 w-4 mr-2" />
+                          <span className="font-medium">{formatTime(workshop.date)}</span>
                         </div>
                         
-                        <div className="flex items-center justify-end text-[#4A235A]/70">
-                          <span className="mr-2 text-right">זום</span>
-                          <Video className="h-4 w-4 ml-2" />
+                        <div className="flex flex-row-reverse items-center justify-start text-[#4A235A]/70 text-right">
+                          <Video className="h-4 w-4 mr-2" />
+                          <span>זום</span>
                         </div>
                         
                         {!workshop.is_free && workshop.price > 0 && (
-                          <div className="flex items-center justify-end text-[#4A235A]/70">
-                            <span className="mr-2 text-right">₪{workshop.price}</span>
-                            <DollarSign className="h-4 w-4 ml-2" />
+                          <div className="flex flex-row-reverse items-center justify-start text-[#4A235A]/70 text-right">
+                            <DollarSign className="h-4 w-4 mr-2" />
+                            <span>₪{workshop.price}</span>
                           </div>
                         )}
                       </div>
