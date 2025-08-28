@@ -897,6 +897,8 @@ export type Database = {
           invitation_subject: string | null
           is_active: boolean
           is_free: boolean
+          is_public_visible: boolean
+          landing_page_url: string | null
           price: number
           title: string
           updated_at: string
@@ -914,6 +916,8 @@ export type Database = {
           invitation_subject?: string | null
           is_active?: boolean
           is_free?: boolean
+          is_public_visible?: boolean
+          landing_page_url?: string | null
           price?: number
           title: string
           updated_at?: string
@@ -931,6 +935,8 @@ export type Database = {
           invitation_subject?: string | null
           is_active?: boolean
           is_free?: boolean
+          is_public_visible?: boolean
+          landing_page_url?: string | null
           price?: number
           title?: string
           updated_at?: string

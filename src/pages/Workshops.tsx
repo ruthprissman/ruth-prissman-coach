@@ -19,6 +19,8 @@ interface Workshop {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  landing_page_url?: string;
+  is_public_visible?: boolean;
 }
 
 const Workshops = () => {
@@ -36,6 +38,7 @@ const Workshops = () => {
           .from('workshops')
           .select('*')
           .eq('is_active', true)
+          .eq('is_public_visible', true)
           .order('date', { ascending: true });
 
         if (error) throw error;
@@ -192,14 +195,25 @@ const Workshops = () => {
                       
                       {!isPast && (
                         <div className="pt-4">
-                          <a href="https://coach.ruthprissman.co.il/prayer-landing" target="_blank" rel="noopener noreferrer" className="block w-full">
-                            <Button 
-                              className="w-full bg-[#D4C5B9] hover:bg-[#C5B3A3] text-[#4A235A] font-semibold py-3 transition-colors duration-300"
-                              size="lg"
-                            >
-                              הרשמה לסדנה
-                            </Button>
-                          </a>
+                          {workshop.landing_page_url ? (
+                            <a href={workshop.landing_page_url} target="_blank" rel="noopener noreferrer" className="block w-full">
+                              <Button 
+                                className="w-full bg-[#D4C5B9] hover:bg-[#C5B3A3] text-[#4A235A] font-semibold py-3 transition-colors duration-300"
+                                size="lg"
+                              >
+                                הרשמה לסדנה
+                              </Button>
+                            </a>
+                          ) : (
+                            <a href="https://coach.ruthprissman.co.il/prayer-landing" target="_blank" rel="noopener noreferrer" className="block w-full">
+                              <Button 
+                                className="w-full bg-[#D4C5B9] hover:bg-[#C5B3A3] text-[#4A235A] font-semibold py-3 transition-colors duration-300"
+                                size="lg"
+                              >
+                                הרשמה לסדנה
+                              </Button>
+                            </a>
+                          )}
                         </div>
                       )}
                     </CardContent>

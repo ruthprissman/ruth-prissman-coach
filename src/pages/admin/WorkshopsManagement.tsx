@@ -41,6 +41,8 @@ interface Workshop {
   worksheet_file_name?: string;
   worksheet_file_size?: number;
   attach_worksheet_to_invitation?: boolean;
+  landing_page_url?: string;
+  is_public_visible?: boolean;
 }
 
 interface Registrant {
@@ -61,6 +63,8 @@ const workshopSchema = z.object({
   is_active: z.boolean().default(true),
   invitation_subject: z.string().min(1, 'כותרת המייל נדרשת'),
   invitation_body: z.string().min(1, 'תוכן המייל נדרש'),
+  landing_page_url: z.string().url('כתובת URL לא תקינה').optional().or(z.literal('')),
+  is_public_visible: z.boolean().default(true),
 });
 
 type WorkshopFormData = z.infer<typeof workshopSchema>;
@@ -98,6 +102,8 @@ const WorkshopsManagement: React.FC = () => {
 
 נתראה בסדנה!
 רות פריסמן`,
+      landing_page_url: '',
+      is_public_visible: true,
     },
   });
 
@@ -174,6 +180,8 @@ const WorkshopsManagement: React.FC = () => {
           worksheet_file_path: worksheetPath,
           worksheet_file_name: worksheetFileName,
           worksheet_file_size: worksheetFileSize,
+          landing_page_url: data.landing_page_url || null,
+          is_public_visible: data.is_public_visible,
         }]);
       
       if (error) throw error;
@@ -214,6 +222,8 @@ const WorkshopsManagement: React.FC = () => {
         is_active: data.is_active,
         invitation_subject: data.invitation_subject,
         invitation_body: data.invitation_body,
+        landing_page_url: data.landing_page_url || null,
+        is_public_visible: data.is_public_visible,
         updated_at: new Date().toISOString(),
       };
 
@@ -396,6 +406,8 @@ const WorkshopsManagement: React.FC = () => {
 
 נתראה בסדנה!
 רות פריסמן`,
+      landing_page_url: workshop.landing_page_url || '',
+      is_public_visible: workshop.is_public_visible ?? true,
     });
     // Reset worksheet file state - user can upload new file or keep existing
     setWorksheetFile(null);
@@ -430,6 +442,8 @@ const WorkshopsManagement: React.FC = () => {
 
 נתראה בסדנה!
 רות פריסמן`,
+      landing_page_url: '',
+      is_public_visible: true,
     });
     setIsDialogOpen(true);
   };
@@ -775,9 +789,47 @@ const WorkshopsManagement: React.FC = () => {
                    />
                  )}
 
+                   <FormField
+                     control={form.control}
+                     name="is_active"
+                     render={({ field }) => (
+                       <FormItem className="flex flex-row-reverse items-center justify-between rounded-lg border p-3">
+                         <FormControl>
+                           <Switch
+                             checked={field.value}
+                             onCheckedChange={field.onChange}
+                           />
+                         </FormControl>
+                         <div className="space-y-0.5">
+                           <FormLabel>סדנה פעילה</FormLabel>
+                         </div>
+                       </FormItem>
+                     )}
+                   />
+
                   <FormField
                     control={form.control}
-                    name="is_active"
+                    name="landing_page_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>לינק לדף נחיתה</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://example.com/landing-page"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          לינק לדף נחיתה מותאם אישית לסדנה זו (אופציונלי)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="is_public_visible"
                     render={({ field }) => (
                       <FormItem className="flex flex-row-reverse items-center justify-between rounded-lg border p-3">
                         <FormControl>
@@ -787,7 +839,10 @@ const WorkshopsManagement: React.FC = () => {
                           />
                         </FormControl>
                         <div className="space-y-0.5">
-                          <FormLabel>סדנה פעילה</FormLabel>
+                          <FormLabel>מוצגת בדף הסדנאות הציבורי</FormLabel>
+                          <FormDescription>
+                            הסדנה תוצג בדף הסדנאות הציבורי רק אם האפשרות מופעלת
+                          </FormDescription>
                         </div>
                       </FormItem>
                     )}
