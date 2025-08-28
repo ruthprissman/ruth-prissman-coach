@@ -169,26 +169,26 @@ const Workshops = () => {
                       <div className="space-y-3 border-t border-gray-100 pt-4">
                         <div className="flex items-center  text-[#4A235A]/70">
                             <CalendarDays className="h-4 w-4 ml-2" />
-                          <span className="mr-2 text-right">{formatDate(workshop.date)}</span>
+                          <span className="mr-2 text-right font-semibold">{formatDate(workshop.date)}</span>
                         
                         </div>
                         
                         <div className="flex items-center text-[#4A235A]/70">
                           <Clock className="h-4 w-4 ml-2" />
-                          <span className="mr-2 text-right">{formatTime(workshop.date)}</span>
+                          <span className="mr-2 text-right font-semibold">{formatTime(workshop.date)}</span>
                           
                         </div>
                         
                         <div className="flex items-center text-[#4A235A]/70">
                             <Video className="h-4 w-4 ml-2" />
-                          <span className="mr-2 text-right">זום</span>
+                          <span className="mr-2 text-right font-semibold">זום</span>
                         
                         </div>
                         
                         {!workshop.is_free && workshop.price > 0 && (
                           <div className="flex items-center justify-end text-[#4A235A]/70">
                              <DollarSign className="h-4 w-4 ml-2" />
-                            <span className="mr-2 text-right">₪{workshop.price}</span>
+                            <span className="mr-2 text-right font-semibold">₪{workshop.price}</span>
                            
                           </div>
                         )}
