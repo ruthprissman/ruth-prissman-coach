@@ -169,7 +169,7 @@ const Workshops = () => {
                         {workshop.description}
                       </div>
                       
-                      <div className="space-y-3 border-t border-gray-100 pt-4">
+                      <div className="space-y-3 border-t border-gray-100 pt-4 text-right" dir="rtl">
                         <div className="flex flex-row-reverse items-center justify-start text-[#4A235A]/90 text-right">
                           <CalendarDays className="h-4 w-4 mr-2" />
                           <span className="font-medium">{formatDate(workshop.date)}</span>
