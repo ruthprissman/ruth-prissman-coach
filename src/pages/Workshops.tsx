@@ -165,9 +165,9 @@ const Workshops = () => {
                     </CardHeader>
                     
                     <CardContent className="pt-0 space-y-4 text-right">
-                      <p className="text-[#4A235A]/80 text-right leading-relaxed">
+                      <div className="text-[#4A235A]/80 text-right leading-relaxed whitespace-pre-line">
                         {workshop.description}
-                      </p>
+                      </div>
                       
                       <div className="space-y-3 border-t border-gray-100 pt-4">
                         <div className="flex flex-row-reverse items-center justify-start text-[#4A235A]/90 text-right">
