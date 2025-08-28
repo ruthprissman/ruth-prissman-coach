@@ -165,30 +165,30 @@ const Workshops = () => {
                     </CardHeader>
                     
                     <CardContent className="pt-0 space-y-4 text-right">
-                      <div className="text-[#4A235A]/80 text-right leading-relaxed whitespace-pre-line">
+                      <div className="text-[#4A235A]/80 leading-relaxed whitespace-pre-line" style={{ textAlign: 'right' }} dir="rtl">
                         {workshop.description}
                       </div>
                       
-                      <div className="space-y-3 border-t border-gray-100 pt-4 text-right" dir="rtl">
-                        <div className="flex flex-row-reverse items-center justify-start text-[#4A235A]/90 text-right">
-                          <CalendarDays className="h-4 w-4 mr-2" />
+                      <div className="space-y-3 border-t border-gray-100 pt-4" style={{ textAlign: 'right' }} dir="rtl">
+                        <div className="flex items-center justify-end text-[#4A235A]/90" style={{ textAlign: 'right' }}>
                           <span className="font-medium">{formatDate(workshop.date)}</span>
+                          <CalendarDays className="h-4 w-4 ml-2" />
                         </div>
                         
-                        <div className="flex flex-row-reverse items-center justify-start text-[#4A235A]/90 text-right">
-                          <Clock className="h-4 w-4 mr-2" />
+                        <div className="flex items-center justify-end text-[#4A235A]/90" style={{ textAlign: 'right' }}>
                           <span className="font-medium">{formatTime(workshop.date)}</span>
+                          <Clock className="h-4 w-4 ml-2" />
                         </div>
                         
-                        <div className="flex flex-row-reverse items-center justify-start text-[#4A235A]/70 text-right">
-                          <Video className="h-4 w-4 mr-2" />
+                        <div className="flex items-center justify-end text-[#4A235A]/70" style={{ textAlign: 'right' }}>
                           <span>זום</span>
+                          <Video className="h-4 w-4 ml-2" />
                         </div>
                         
                         {!workshop.is_free && workshop.price > 0 && (
-                          <div className="flex flex-row-reverse items-center justify-start text-[#4A235A]/70 text-right">
-                            <DollarSign className="h-4 w-4 mr-2" />
+                          <div className="flex items-center justify-end text-[#4A235A]/70" style={{ textAlign: 'right' }}>
                             <span>₪{workshop.price}</span>
+                            <DollarSign className="h-4 w-4 ml-2" />
                           </div>
                         )}
                       </div>
