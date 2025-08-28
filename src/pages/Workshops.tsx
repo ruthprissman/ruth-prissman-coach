@@ -170,13 +170,13 @@ const Workshops = () => {
                       </p>
                       
                       <div className="space-y-3 border-t border-gray-100 pt-4">
-                        <div className="flex items-center justify-end text-[#4A235A]/70">
-                          <span className="mr-2 text-right">{formatDate(workshop.date)}</span>
+                        <div className="flex items-center justify-end text-[#4A235A]/90">
+                          <span className="mr-2 text-right font-medium">{formatDate(workshop.date)}</span>
                           <CalendarDays className="h-4 w-4 ml-2" />
                         </div>
                         
-                        <div className="flex items-center justify-end text-[#4A235A]/70">
-                          <span className="mr-2 text-right">{formatTime(workshop.date)}</span>
+                        <div className="flex items-center justify-end text-[#4A235A]/90">
+                          <span className="mr-2 text-right font-medium">{formatTime(workshop.date)}</span>
                           <Clock className="h-4 w-4 ml-2" />
                         </div>
                         
