@@ -161,45 +161,45 @@ const Workshops = () => {
                       </CardTitle>
                     </CardHeader>
                     
-                    <CardContent className="pt-0 space-y-4">
+                    <CardContent className="pt-0 space-y-4 text-right">
                       <p className="text-[#4A235A]/80 text-right leading-relaxed">
                         {workshop.description}
                       </p>
                       
                       <div className="space-y-3 border-t border-gray-100 pt-4">
                         <div className="flex items-center justify-end text-[#4A235A]/70">
-                          <span className="mr-2">{formatDate(workshop.date)}</span>
-                          <CalendarDays className="h-4 w-4" />
+                          <span className="mr-2 text-right">{formatDate(workshop.date)}</span>
+                          <CalendarDays className="h-4 w-4 ml-2" />
                         </div>
                         
                         <div className="flex items-center justify-end text-[#4A235A]/70">
-                          <span className="mr-2">{formatTime(workshop.date)}</span>
-                          <Clock className="h-4 w-4" />
+                          <span className="mr-2 text-right">{formatTime(workshop.date)}</span>
+                          <Clock className="h-4 w-4 ml-2" />
                         </div>
                         
                         <div className="flex items-center justify-end text-[#4A235A]/70">
-                          <span className="mr-2">זום</span>
-                          <Video className="h-4 w-4" />
+                          <span className="mr-2 text-right">זום</span>
+                          <Video className="h-4 w-4 ml-2" />
                         </div>
                         
                         {!workshop.is_free && workshop.price > 0 && (
                           <div className="flex items-center justify-end text-[#4A235A]/70">
-                            <span className="mr-2">₪{workshop.price}</span>
-                            <DollarSign className="h-4 w-4" />
+                            <span className="mr-2 text-right">₪{workshop.price}</span>
+                            <DollarSign className="h-4 w-4 ml-2" />
                           </div>
                         )}
                       </div>
                       
                       {!isPast && (
                         <div className="pt-4">
-                          <Link to="/prayer-landing" className="block w-full">
+                          <a href="https://coach.ruthprissman.co.il/prayer-landing" target="_blank" rel="noopener noreferrer" className="block w-full">
                             <Button 
                               className="w-full bg-[#D4C5B9] hover:bg-[#C5B3A3] text-[#4A235A] font-semibold py-3 transition-colors duration-300"
                               size="lg"
                             >
                               הרשמה לסדנה
                             </Button>
-                          </Link>
+                          </a>
                         </div>
                       )}
                     </CardContent>
