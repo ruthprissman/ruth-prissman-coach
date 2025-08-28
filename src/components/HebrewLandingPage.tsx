@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { generateWorkshopConfirmationHTML } from '@/utils/emailTemplates/workshopConfirmation';
 
 const HebrewLandingPage = () => {
   const { toast } = useToast();
@@ -59,6 +60,48 @@ const HebrewLandingPage = () => {
         });
 
       if (error) throw error;
+
+      console.log('✅ Registration successful, now sending confirmation email...');
+
+      // Send confirmation email using existing email infrastructure
+      try {
+        console.log('🚀 Starting email sending process...');
+        console.log('📧 Email will be sent to:', formData.email.trim());
+        
+        const firstName = formData.fullName.trim().split(' ')[0];
+        const subject = `${firstName ? `${firstName},` : ''} רישום לסדנה אושר - חיבורים חדשים למילים מוכרות 🎉`;
+        
+        console.log('📝 Email subject:', subject);
+        console.log('👤 Sender name:', formData.fullName.trim());
+        
+        const htmlContent = generateWorkshopConfirmationHTML(formData.fullName.trim());
+        console.log('📄 HTML content length:', htmlContent.length);
+        
+        console.log('🔄 Invoking send-email function...');
+        const emailResponse = await supabase.functions.invoke('send-email', {
+          body: {
+            emailList: [formData.email.trim()],
+            subject: subject,
+            sender: {
+              email: "ruthprissman@gmail.com",
+              name: "רות פריסמן"
+            },
+            htmlContent: htmlContent
+          }
+        });
+
+        console.log('📨 Email response:', emailResponse);
+
+        if (emailResponse.error) {
+          console.error('❌ Error sending confirmation email:', emailResponse.error);
+          // Don't fail the registration if email fails
+        } else {
+          console.log('✅ Confirmation email sent successfully');
+        }
+      } catch (emailError) {
+        console.error('💥 Failed to send confirmation email:', emailError);
+        // Don't fail the registration if email fails
+      }
 
       setIsSubmitted(true);
       toast({
