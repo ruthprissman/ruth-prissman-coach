@@ -90,11 +90,34 @@ export default function WorkshopLanding() {
         throw error;
       }
 
+      // Send confirmation email
+      try {
+        console.log('Sending workshop confirmation email...');
+        const emailResponse = await supabase.functions.invoke('send-workshop-confirmation', {
+          body: {
+            fullName: formData.fullName.trim(),
+            email: formData.email.trim(),
+            phone: formData.phone.trim() || null
+          }
+        });
+
+        if (emailResponse.error) {
+          console.error('Error sending confirmation email:', emailResponse.error);
+          // Don't fail the registration if email fails
+        } else {
+          console.log('Confirmation email sent successfully');
+        }
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError);
+        // Don't fail the registration if email fails
+      }
+
       toast({
         title: "נרשמת בהצלחה! 🎉",
         description: (
           <div className="space-y-3">
-            <p>לינק הזום יישלח אלייך במייל 24 שעות לפני הסדנה</p>
+            <p>נשלח אלייך מייל אישור עם כל הפרטים</p>
+            <p>לינק הזום יישלח אלייך במייל נפרד 24 שעות לפני הסדנה</p>
             <div className="flex flex-col gap-2 pt-2">
               <a 
                 href="/subscribe" 
