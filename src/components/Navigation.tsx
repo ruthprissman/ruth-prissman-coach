@@ -22,6 +22,7 @@ const navItems = [
   { name: 'מילים גדולות', path: '/large-words' },
   { name: 'שירים', path: '/poems' },
   { name: 'לצחוק ברצינות', path: '/humor' },
+  { name: 'סדנאות', path: '/workshops' },
   { name: 'שאלות ותשובות', path: '/faq' },
   { name: 'צור קשר', path: '/contact' },
 ];

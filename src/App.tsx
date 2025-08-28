@@ -10,6 +10,7 @@ import Articles from './pages/Articles';
 import LargeWords from './pages/LargeWords';
 import Poems from './pages/Poems';
 import Humor from './pages/Humor';
+import Workshops from './pages/Workshops';
 import ArticleView from './pages/ArticleView';
 import PoemView from './pages/PoemView';
 import HumorView from './pages/HumorView';
@@ -80,6 +81,7 @@ function App() {
                 <Route path="/large-words" element={<LargeWords />} />
                 <Route path="/poems" element={<Poems />} />
                 <Route path="/humor" element={<Humor />} />
+                <Route path="/workshops" element={<Workshops />} />
                 <Route path="/articles/:id" element={<ArticleView />} />
                 <Route path="/large-words/:id" element={<ArticleView />} />
                 <Route path="/poems/:id" element={<PoemView />} />
