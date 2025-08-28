@@ -263,12 +263,19 @@ export default function WorkshopLanding() {
 
       // Send confirmation email using existing email infrastructure
       try {
-        console.log('Sending workshop confirmation email...');
+        console.log('🚀 Starting email sending process...');
+        console.log('📧 Email will be sent to:', formData.email.trim());
+        
         const firstName = formData.fullName.trim().split(' ')[0];
         const subject = `${firstName ? `${firstName},` : ''} רישום לסדנה אושר - חיבורים חדשים למילים מוכרות 🎉`;
         
-        const htmlContent = generateWorkshopConfirmationHTML(formData.fullName.trim());
+        console.log('📝 Email subject:', subject);
+        console.log('👤 Sender name:', formData.fullName.trim());
         
+        const htmlContent = generateWorkshopConfirmationHTML(formData.fullName.trim());
+        console.log('📄 HTML content length:', htmlContent.length);
+        
+        console.log('🔄 Invoking send-email function...');
         const emailResponse = await supabase.functions.invoke('send-email', {
           body: {
             emailList: [formData.email.trim()],
@@ -281,14 +288,16 @@ export default function WorkshopLanding() {
           }
         });
 
+        console.log('📨 Email response:', emailResponse);
+
         if (emailResponse.error) {
-          console.error('Error sending confirmation email:', emailResponse.error);
+          console.error('❌ Error sending confirmation email:', emailResponse.error);
           // Don't fail the registration if email fails
         } else {
-          console.log('Confirmation email sent successfully');
+          console.log('✅ Confirmation email sent successfully');
         }
       } catch (emailError) {
-        console.error('Failed to send confirmation email:', emailError);
+        console.error('💥 Failed to send confirmation email:', emailError);
         // Don't fail the registration if email fails
       }
 
