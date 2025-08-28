@@ -132,7 +132,7 @@ const Workshops = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
               {workshops.map((workshop) => {
                 const status = getWorkshopStatus(workshop);
                 const isPast = isWorkshopPast(workshop.date);
@@ -162,7 +162,7 @@ const Workshops = () => {
                     </CardHeader>
                     
                     <CardContent className="pt-0 space-y-4 text-right">
-                      <p className="text-[#4A235A]/80 text-right leading-relaxed">
+                      <p className="text-[#4A235A]/80 text-right leading-relaxed whitespace-pre-line">
                         {workshop.description}
                       </p>
                       
