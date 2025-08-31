@@ -52,7 +52,7 @@ export const generateWorkshopConfirmationHTML = (fullName: string): string => {
                   <span style="background: #7c3aed; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">📅</span>
                   <div>
                     <strong style="color: #333; font-size: 16px;">תאריך:</strong>
-                    <span style="color: #666; margin-right: 8px;">יום ראשון יד׳ אלול • 7.9.25</span>
+                    <span style="color: #666; margin-right: 8px;">יום שבת כא׳ אלול • 14.9.25</span>
                   </div>
                 </div>
                 
