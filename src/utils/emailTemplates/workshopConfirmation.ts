@@ -75,7 +75,7 @@ export const generateWorkshopConfirmationHTML = (fullName: string): string => {
                 <div style="display: flex; align-items: center; gap: 12px; direction: rtl;">
                   <div style="text-align: right;">
                     <strong style="color: #333; font-size: 16px;">משך:</strong>
-                    <span style="color: #666; margin-right: 8px;">שעה וחצי</span>
+                    <span style="color: #666; margin-right: 8px;">שעתיים</span>
                   </div>
                   <span style="background: #dc2626; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">⏱️</span>
                 </div>
