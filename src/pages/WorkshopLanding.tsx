@@ -32,7 +32,7 @@ const WORKSHOP_ID = 'ac258723-b2b7-45da-9956-2ca140457a44';
 const WORKSHOP_DETAILS = {
   title: "חיבורים חדשים למילים מוכרות",
   description: "סדנה חינמית עם רות פריסמן - מבט חדש על מילות התפילה, רגע של חיבור בתוך שגרת היום",
-  date: "2025-09-07", // September 7, 2025
+  date: "2025-09-14", // September 14, 2025
   startTime: "21:30", // 9:30 PM Israel time
   durationHours: 2,
   location: "Zoom",
@@ -242,7 +242,7 @@ export default function WorkshopLanding() {
         <title>חיבורים חדשים למילים מוכרות - סדנה חינמית | רות פריסמן</title>
         <meta 
           name="description" 
-          content="סדנה חינמית עם רות פריסמן - מבט חדש על מילות התפילה, רגע של חיבור בתוך שגרת היום. 7.9.25 בשעה 21:30"
+          content="סדנה חינמית עם רות פריסמן - מבט חדש על מילות התפילה, רגע של חיבור בתוך שגרת היום. 14.9.25 בשעה 21:30"
         />
         <meta property="og:title" content="חיבורים חדשים למילים מוכרות - סדנה חינמית" />
         <meta property="og:description" content="סדנה חינמית עם רות פריסמן - מבט חדש על מילות התפילה" />
@@ -277,11 +277,11 @@ export default function WorkshopLanding() {
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-center text-purple-dark font-alef text-lg">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-gold" />
-                  <span>יום ראשון יד׳ אלול</span>
+                  <span>יום ראשון כא׳ אלול</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-purple-light">•</span>
-                  <span>7.9.25</span>
+                  <span>14.9.25</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-purple-light">•</span>
@@ -403,7 +403,7 @@ export default function WorkshopLanding() {
                     </div>
                     <div>
                       <h4 className="font-alef text-purple-dark text-lg">תאריך ושעה</h4>
-                      <p className="text-purple-light">יום ראשון יד׳ אלול • 7.9.25 • 21:30</p>
+                      <p className="text-purple-light">יום ראשון כא׳ אלול • 14.9.25 • 21:30</p>
                     </div>
                   </div>
 

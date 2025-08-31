@@ -17,7 +17,7 @@ import { generateWorkshopConfirmationHTML } from '@/utils/emailTemplates/worksho
 const WORKSHOP_DETAILS = {
   title: "חיבורים חדשים למילים מוכרות",
   description: "סדנה חינמית עם רות פריסמן - מבט חדש על מילות התפילה, רגע של חיבור בתוך שגרת היום",
-  date: "2025-09-07", // September 7, 2025
+  date: "2025-09-14", // September 14, 2025
   startTime: "21:30", // 9:30 PM Israel time
   durationHours: 2,
   location: "Zoom",
