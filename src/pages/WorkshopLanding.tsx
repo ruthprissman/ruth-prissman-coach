@@ -104,41 +104,7 @@ export default function WorkshopLanding() {
     setIsSubmitting(true);
 
     try {
-      // Check if email already registered for this workshop
-      // Check if email is already registered for this workshop
-      console.log('🔍 Checking for existing registration...', {
-        email: formData.email.trim(),
-        workshop_id: WORKSHOP_ID
-      });
-      
-      const { data: existingRegistration, error: checkError } = await supabase
-        .from('registrations')
-        .select('id, email, workshop_id')
-        .eq('email', formData.email.trim())
-        .eq('workshop_id', WORKSHOP_ID)
-        .maybeSingle();
-
-      console.log('🔍 Existing registration check result:', { existingRegistration, checkError });
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('❌ Error checking existing registration:', checkError);
-        throw checkError;
-      }
-
-      if (existingRegistration) {
-        console.log('⚠️ Email already registered, blocking duplicate registration');
-        toast({
-          title: "כבר נרשמת!",
-          description: "את כבר רשומה לסדנה זו. נתראה שם! 💜",
-          variant: "default"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      console.log('✅ No existing registration found, proceeding with new registration');
-
-      // Create new registration
+      // Create new registration - database will handle duplicate prevention via unique constraint
       const { error } = await supabase
         .from('registrations')
         .insert([
@@ -151,6 +117,18 @@ export default function WorkshopLanding() {
         ]);
 
       if (error) {
+        console.error('Registration error:', error);
+        
+        // Check if it's a duplicate email error (unique constraint violation)
+        if (error.code === '23505' && error.message?.includes('registrations_unique_email_workshop')) {
+          toast({
+            title: "כבר נרשמת!",
+            description: "את כבר רשומה לסדנה זו. נתראה שם! 💜",
+            variant: "default"
+          });
+          setIsSubmitting(false);
+          return;
+        }
         throw error;
       }
 
