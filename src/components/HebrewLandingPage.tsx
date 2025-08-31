@@ -13,6 +13,53 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { generateWorkshopConfirmationHTML } from '@/utils/emailTemplates/workshopConfirmation';
 
+// Workshop details constants
+const WORKSHOP_DETAILS = {
+  title: "חיבורים חדשים למילים מוכרות",
+  description: "סדנה חינמית עם רות פריסמן - מבט חדש על מילות התפילה, רגע של חיבור בתוך שגרת היום",
+  date: "2025-09-07", // September 7, 2025
+  startTime: "21:30", // 9:30 PM Israel time
+  durationHours: 2,
+  location: "Zoom",
+  organizerName: "רות פריסמן",
+  organizerEmail: "ruth@ruthprissman.co.il"
+};
+
+// Generate Google Calendar URL
+const generateGoogleCalendarUrl = () => {
+  const startDateTime = new Date(`${WORKSHOP_DETAILS.date}T${WORKSHOP_DETAILS.startTime}:00+03:00`);
+  const endDateTime = new Date(startDateTime.getTime() + (WORKSHOP_DETAILS.durationHours * 60 * 60 * 1000));
+  
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: WORKSHOP_DETAILS.title,
+    dates: `${startDateTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endDateTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+    details: WORKSHOP_DETAILS.description,
+    location: WORKSHOP_DETAILS.location,
+    trp: 'false'
+  });
+  
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+};
+
+// Generate calendar event object for ICS
+const generateCalendarEvent = () => {
+  const startDateTime = new Date(`${WORKSHOP_DETAILS.date}T${WORKSHOP_DETAILS.startTime}:00+03:00`);
+  const endDateTime = new Date(startDateTime.getTime() + (WORKSHOP_DETAILS.durationHours * 60 * 60 * 1000));
+  
+  return {
+    title: WORKSHOP_DETAILS.title,
+    description: WORKSHOP_DETAILS.description,
+    startDate: startDateTime.toISOString(),
+    endDate: endDateTime.toISOString(),
+    location: WORKSHOP_DETAILS.location,
+    organizer: {
+      name: WORKSHOP_DETAILS.organizerName,
+      email: WORKSHOP_DETAILS.organizerEmail
+    }
+  };
+};
+
 const HebrewLandingPage = () => {
   const { toast } = useToast();
   const [formData, setFormData] = React.useState({
@@ -74,8 +121,12 @@ const HebrewLandingPage = () => {
         console.log('📝 Email subject:', subject);
         console.log('👤 Sender name:', formData.fullName.trim());
         
-        const htmlContent = generateWorkshopConfirmationHTML(formData.fullName.trim());
+        const googleCalendarUrl = generateGoogleCalendarUrl();
+        const calendarEvent = generateCalendarEvent();
+        
+        const htmlContent = generateWorkshopConfirmationHTML(formData.fullName.trim(), googleCalendarUrl);
         console.log('📄 HTML content length:', htmlContent.length);
+        console.log('📅 Calendar event:', calendarEvent);
         
         console.log('🔄 Invoking send-email function...');
         const emailResponse = await supabase.functions.invoke('send-email', {
@@ -86,7 +137,8 @@ const HebrewLandingPage = () => {
               email: "ruth@ruthprissman.co.il",
               name: "רות פריסמן"
             },
-            htmlContent: htmlContent
+            htmlContent: htmlContent,
+            calendarEvent: calendarEvent
           }
         });
 

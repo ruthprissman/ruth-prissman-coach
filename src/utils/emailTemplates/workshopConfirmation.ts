@@ -1,4 +1,4 @@
-export const generateWorkshopConfirmationHTML = (fullName: string): string => {
+export const generateWorkshopConfirmationHTML = (fullName: string, googleCalendarUrl?: string): string => {
   const firstName = fullName.split(' ')[0];
   
   return `
@@ -92,6 +92,22 @@ export const generateWorkshopConfirmationHTML = (fullName: string): string => {
                 <strong>24 שעות לפני הסדנה</strong>
               </p>
             </div>
+
+            <!-- Add to Calendar -->
+            ${googleCalendarUrl ? `
+            <div style="background: linear-gradient(135deg, #fef7cd 0%, #fde68a 100%); border-radius: 12px; padding: 24px; margin-bottom: 30px; text-align: center; border: 2px solid #f59e0b; direction: rtl;">
+              <h4 style="margin: 0 0 16px 0; color: #92400e; font-size: 18px; font-weight: bold; direction: rtl;">
+                הוסיפי את הסדנה ליומן שלך 📅
+              </h4>
+              <p style="margin: 0 0 20px 0; color: #92400e; font-size: 14px; direction: rtl;">
+                קובץ היומן מצורף למייל זה, או לחצי על הכפתור להוספה ישירה לגוגל קלנדר
+              </p>
+              <a href="${googleCalendarUrl}" 
+                 style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                📅 הוסיפי לגוגל קלנדר
+              </a>
+            </div>
+            ` : ''}
 
             <!-- Call to Action -->
             <div style="text-align: center; margin-bottom: 30px; direction: rtl;">

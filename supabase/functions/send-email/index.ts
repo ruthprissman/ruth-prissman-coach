@@ -21,6 +21,17 @@ interface EmailRequest {
     filename: string;
     url: string;
   }>;
+  calendarEvent?: {
+    title: string;
+    description: string;
+    startDate: string; // ISO string
+    endDate: string;   // ISO string
+    location?: string;
+    organizer: {
+      name: string;
+      email: string;
+    };
+  };
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -128,12 +139,55 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Will send emails to:', emailData.emailList.length, 'recipients individually');
 
+    // Generate ICS file for calendar event if provided
+    const generateICS = (event: any): string => {
+      const formatDate = (dateString: string) => {
+        return new Date(dateString).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      };
+      
+      const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Ruth Prissman Coach//Workshop Calendar//HE',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'BEGIN:VEVENT',
+        `UID:${new Date().getTime()}@ruthprissman.co.il`,
+        `DTSTART:${formatDate(event.startDate)}`,
+        `DTEND:${formatDate(event.endDate)}`,
+        `SUMMARY:${event.title}`,
+        `DESCRIPTION:${event.description.replace(/\n/g, '\\n')}`,
+        event.location ? `LOCATION:${event.location}` : '',
+        `ORGANIZER;CN=${event.organizer.name}:MAILTO:${event.organizer.email}`,
+        'STATUS:CONFIRMED',
+        'SEQUENCE:0',
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].filter(line => line).join('\r\n');
+      
+      return icsContent;
+    };
+
     // Process attachments if provided
     let brevoAttachments = undefined;
+    
+    // Add ICS file if calendar event is provided
+    if (emailData.calendarEvent) {
+      const icsContent = generateICS(emailData.calendarEvent);
+      const icsBase64 = btoa(unescape(encodeURIComponent(icsContent)));
+      
+      brevoAttachments = [{
+        name: 'workshop-event.ics',
+        content: icsBase64
+      }];
+    }
+    
     if (emailData.attachments && emailData.attachments.length > 0) {
       console.log('Processing attachments:', emailData.attachments.length);
       
-      brevoAttachments = [];
+      if (!brevoAttachments) {
+        brevoAttachments = [];
+      }
       for (const attachment of emailData.attachments) {
         try {
           console.log('Fetching attachment from URL:', attachment.url);
