@@ -31,92 +31,92 @@ export const generateWorkshopConfirmationHTML = (fullName: string): string => {
           <td style="padding: 40px 30px;">
             
             <!-- Welcome Message -->
-            <div style="text-align: center; margin-bottom: 40px;">
-              <h2 style="margin: 0 0 16px 0; color: #7c3aed; font-size: 24px; font-weight: bold;">
+            <div style="text-align: center; margin-bottom: 40px; direction: rtl;">
+              <h2 style="margin: 0 0 16px 0; color: #7c3aed; font-size: 24px; font-weight: bold; direction: rtl; text-align: center;">
                 חיבורים חדשים למילים מוכרות
               </h2>
-              <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.8;">
+              <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.8; direction: rtl; text-align: center;">
                 תודה שהרשמת לסדנה החינמית שלי! אני כל כך נרגשת לפגוש אותך ולחלוק איתך כלים עמוקים ומעשיים
                 להפוך את התפילה לחוויה משמעותית ומחברת.
               </p>
             </div>
 
             <!-- Workshop Details -->
-            <div style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-radius: 12px; padding: 30px; margin-bottom: 40px; border-right: 4px solid #7c3aed;">
-              <h3 style="margin: 0 0 20px 0; color: #7c3aed; font-size: 20px; font-weight: bold; text-align: center;">
-                📅 פרטי הסדנה
+            <div style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-radius: 12px; padding: 30px; margin-bottom: 40px; border-left: 4px solid #7c3aed; direction: rtl;">
+              <h3 style="margin: 0 0 20px 0; color: #7c3aed; font-size: 20px; font-weight: bold; text-align: center; direction: rtl;">
+                פרטי הסדנה 📅
               </h3>
               
-              <div style="display: flex; flex-direction: column; gap: 16px;">
-                <div style="display: flex; align-items: center; gap: 12px; direction: rtl;">
-                  <div style="text-align: right;">
-                    <strong style="color: #333; font-size: 16px;">תאריך:</strong>
-                    <span style="color: #666; margin-right: 8px;">יום ראשון כא׳ אלול • 14.9.25</span>
-                  </div>
+              <div style="display: flex; flex-direction: column; gap: 16px; direction: rtl;">
+                <div style="display: flex; align-items: center; gap: 12px; direction: rtl; justify-content: flex-start;">
                   <span style="background: #7c3aed; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">📅</span>
+                  <div style="text-align: right; flex: 1;">
+                    <strong style="color: #333; font-size: 16px;">תאריך:</strong>
+                    <span style="color: #666; margin-left: 8px;">יום ראשון כא׳ אלול • 14.9.25</span>
+                  </div>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 12px; direction: rtl;">
-                  <div style="text-align: right;">
-                    <strong style="color: #333; font-size: 16px;">שעה:</strong>
-                    <span style="color: #666; margin-right: 8px;">21:30</span>
-                  </div>
+                <div style="display: flex; align-items: center; gap: 12px; direction: rtl; justify-content: flex-start;">
                   <span style="background: #d97706; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">⏰</span>
+                  <div style="text-align: right; flex: 1;">
+                    <strong style="color: #333; font-size: 16px;">שעה:</strong>
+                    <span style="color: #666; margin-left: 8px;">21:30</span>
+                  </div>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 12px; direction: rtl;">
-                  <div style="text-align: right;">
-                    <strong style="color: #333; font-size: 16px;">פלטפורמה:</strong>
-                    <span style="color: #666; margin-right: 8px;">זום</span>
-                  </div>
+                <div style="display: flex; align-items: center; gap: 12px; direction: rtl; justify-content: flex-start;">
                   <span style="background: #059669; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">💻</span>
+                  <div style="text-align: right; flex: 1;">
+                    <strong style="color: #333; font-size: 16px;">פלטפורמה:</strong>
+                    <span style="color: #666; margin-left: 8px;">זום</span>
+                  </div>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 12px; direction: rtl;">
-                  <div style="text-align: right;">
-                    <strong style="color: #333; font-size: 16px;">משך:</strong>
-                    <span style="color: #666; margin-right: 8px;">שעתיים</span>
-                  </div>
+                <div style="display: flex; align-items: center; gap: 12px; direction: rtl; justify-content: flex-start;">
                   <span style="background: #dc2626; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">⏱️</span>
+                  <div style="text-align: right; flex: 1;">
+                    <strong style="color: #333; font-size: 16px;">משך:</strong>
+                    <span style="color: #666; margin-left: 8px;">שעתיים</span>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- Important Note -->
-            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%); border-radius: 12px; padding: 24px; margin-bottom: 40px; text-align: center; border: 2px solid #f59e0b;">
-              <h4 style="margin: 0 0 12px 0; color: #92400e; font-size: 18px; font-weight: bold;">
-                📧 חשוב לדעת
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%); border-radius: 12px; padding: 24px; margin-bottom: 40px; text-align: center; border: 2px solid #f59e0b; direction: rtl;">
+              <h4 style="margin: 0 0 12px 0; color: #92400e; font-size: 18px; font-weight: bold; direction: rtl;">
+                חשוב לדעת 📧
               </h4>
-              <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.6;">
+              <p style="margin: 0; color: #92400e; font-size: 16px; line-height: 1.6; direction: rtl;">
                 לינק הזום לסדנה יישלח אלייך במייל נפרד 
                 <strong>24 שעות לפני הסדנה</strong>
               </p>
             </div>
 
             <!-- What to Expect -->
-            <div style="margin-bottom: 40px;">
-              <h3 style="margin: 0 0 20px 0; color: #7c3aed; font-size: 20px; font-weight: bold; text-align: center;">
-                💜 מה מחכה לך בסדנה
+            <div style="margin-bottom: 40px; direction: rtl;">
+              <h3 style="margin: 0 0 20px 0; color: #7c3aed; font-size: 20px; font-weight: bold; text-align: center; direction: rtl;">
+                מה מחכה לך בסדנה 💜
               </h3>
               
-              <div style="display: flex; flex-direction: column; gap: 16px;">
-                <div style="display: flex; align-items: start; gap: 12px;">
+              <div style="display: flex; flex-direction: column; gap: 16px; direction: rtl;">
+                <div style="display: flex; align-items: start; gap: 12px; direction: rtl;">
                   <span style="color: #7c3aed; font-size: 20px; margin-top: 2px;">✨</span>
-                  <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.6;">
+                  <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.6; text-align: right;">
                     <strong>פרשנויות מרענות</strong> למילות התפילה שיחזירו להן את הקסם והמשמעות
                   </p>
                 </div>
                 
-                <div style="display: flex; align-items: start; gap: 12px;">
+                <div style="display: flex; align-items: start; gap: 12px; direction: rtl;">
                   <span style="color: #d97706; font-size: 20px; margin-top: 2px;">🎯</span>
-                  <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.6;">
+                  <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.6; text-align: right;">
                     <strong>כלים יישומיים</strong> שתוכלי להשתמש בהם מיד בתפילות שלך
                   </p>
                 </div>
                 
-                <div style="display: flex; align-items: start; gap: 12px;">
+                <div style="display: flex; align-items: start; gap: 12px; direction: rtl;">
                   <span style="color: #059669; font-size: 20px; margin-top: 2px;">📖</span>
-                  <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.6;">
+                  <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.6; text-align: right;">
                     <strong>תובנות וגילויים</strong> חדשים שיעשירו את החוויה הרוחנית שלך
                   </p>
                 </div>
@@ -124,8 +124,8 @@ export const generateWorkshopConfirmationHTML = (fullName: string): string => {
             </div>
 
             <!-- Call to Action -->
-            <div style="text-align: center; margin-bottom: 30px;">
-              <p style="margin: 0 0 20px 0; color: #666; font-size: 16px;">
+            <div style="text-align: center; margin-bottom: 30px; direction: rtl;">
+              <p style="margin: 0 0 20px 0; color: #666; font-size: 16px; direction: rtl;">
                 בינתיים, אשמח שתכירי את התוכן הנוסף שלי:
               </p>
               
