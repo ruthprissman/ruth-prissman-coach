@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, Clock, MapPin, DollarSign, Users, Video } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { convertToHebrewDateSync } from '@/utils/dateUtils';
 
 interface Workshop {
   id: string;
@@ -54,12 +55,15 @@ const Workshops = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('he-IL', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    const hebrewDate = convertToHebrewDateSync(date);
+    const dayName = date.toLocaleDateString('he-IL', { weekday: 'long' });
+    const secularDate = date.toLocaleDateString('he-IL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit'
     });
+    
+    return `${dayName} ${hebrewDate} ${secularDate}`;
   };
 
   const formatTime = (dateString: string) => {
