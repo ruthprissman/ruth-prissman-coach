@@ -98,7 +98,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({ isOpen, onClose, on
                 <FormItem>
                   <FormLabel>אימייל</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="example@example.com" type="email" />
+                    <Input {...field} placeholder="example@example.com" type="text" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

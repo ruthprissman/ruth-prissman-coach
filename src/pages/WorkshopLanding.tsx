@@ -422,7 +422,7 @@ export default function WorkshopLanding() {
                   </Label>
                   <Input
                     id="email"
-                    type="email"
+                    type="text"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required

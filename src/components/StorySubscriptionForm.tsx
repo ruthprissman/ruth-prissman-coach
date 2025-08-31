@@ -82,7 +82,7 @@ export function StorySubscriptionForm() {
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          type="email"
+          type="text"
           placeholder="האימייל שלך"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
