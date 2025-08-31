@@ -48,36 +48,36 @@ export const generateWorkshopConfirmationHTML = (fullName: string): string => {
               </h3>
               
               <div style="display: flex; flex-direction: column; gap: 16px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <span style="background: #7c3aed; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">📅</span>
-                  <div>
+                <div style="display: flex; align-items: center; gap: 12px; direction: rtl;">
+                  <div style="text-align: right;">
                     <strong style="color: #333; font-size: 16px;">תאריך:</strong>
-                    <span style="color: #666; margin-right: 8px;">יום שבת כא׳ אלול • 14.9.25</span>
+                    <span style="color: #666; margin-right: 8px;">יום ראשון כא׳ אלול • 14.9.25</span>
                   </div>
+                  <span style="background: #7c3aed; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">📅</span>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <span style="background: #d97706; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">⏰</span>
-                  <div>
+                <div style="display: flex; align-items: center; gap: 12px; direction: rtl;">
+                  <div style="text-align: right;">
                     <strong style="color: #333; font-size: 16px;">שעה:</strong>
                     <span style="color: #666; margin-right: 8px;">21:30</span>
                   </div>
+                  <span style="background: #d97706; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">⏰</span>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <span style="background: #059669; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">💻</span>
-                  <div>
+                <div style="display: flex; align-items: center; gap: 12px; direction: rtl;">
+                  <div style="text-align: right;">
                     <strong style="color: #333; font-size: 16px;">פלטפורמה:</strong>
                     <span style="color: #666; margin-right: 8px;">זום</span>
                   </div>
+                  <span style="background: #059669; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">💻</span>
                 </div>
                 
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <span style="background: #dc2626; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">⏱️</span>
-                  <div>
+                <div style="display: flex; align-items: center; gap: 12px; direction: rtl;">
+                  <div style="text-align: right;">
                     <strong style="color: #333; font-size: 16px;">משך:</strong>
                     <span style="color: #666; margin-right: 8px;">שעה וחצי</span>
                   </div>
+                  <span style="background: #dc2626; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;">⏱️</span>
                 </div>
               </div>
             </div>
