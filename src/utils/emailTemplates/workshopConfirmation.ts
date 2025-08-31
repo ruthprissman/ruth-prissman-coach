@@ -12,13 +12,13 @@ export const generateWorkshopConfirmationHTML = (fullName: string): string => {
     <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f5ff; color: #333; line-height: 1.6;">
       
       <!-- Header -->
-      <table style="width: 100%; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); padding: 40px 20px; text-align: center;">
+      <table style="width: 100%; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); padding: 40px 20px; text-align: center; direction: rtl;">
         <tr>
-          <td>
-            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              🎉 נרשמת בהצלחה!
+          <td style="direction: rtl;">
+            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.1); direction: rtl;">
+              נרשמת בהצלחה! 🎉
             </h1>
-            <p style="margin: 12px 0 0 0; color: #e9d8fd; font-size: 18px; font-weight: 300;">
+            <p style="margin: 12px 0 0 0; color: #e9d8fd; font-size: 18px; font-weight: 300; direction: rtl;">
               ${firstName ? `${firstName} יקרה,` : 'יקרה,'} אני מחכה לך בסדנה
             </p>
           </td>
