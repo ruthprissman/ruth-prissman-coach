@@ -98,14 +98,27 @@ const HebrewLandingPage = () => {
 
     try {
       // Check if email is already registered for this workshop
-      const { data: existingRegistration } = await supabase
+      console.log('🔍 Checking for existing registration...', {
+        email: formData.email.trim(),
+        workshop_id: 'ac258723-b2b7-45da-9956-2ca140457a44'
+      });
+      
+      const { data: existingRegistration, error: checkError } = await supabase
         .from('registrations')
-        .select('id')
+        .select('id, email, workshop_id')
         .eq('email', formData.email.trim())
         .eq('workshop_id', 'ac258723-b2b7-45da-9956-2ca140457a44')
         .maybeSingle();
 
+      console.log('🔍 Existing registration check result:', { existingRegistration, checkError });
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ Error checking existing registration:', checkError);
+        throw checkError;
+      }
+
       if (existingRegistration) {
+        console.log('⚠️ Email already registered, blocking duplicate registration');
         toast({
           title: "כבר רשומה!",
           description: "המייל הזה כבר רשום לסדנה. נתראה שם! 🙂",
@@ -114,6 +127,8 @@ const HebrewLandingPage = () => {
         setIsSubmitting(false);
         return;
       }
+
+      console.log('✅ No existing registration found, proceeding with new registration');
 
       const { error } = await supabase
         .from('registrations')

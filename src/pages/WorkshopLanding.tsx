@@ -106,14 +106,27 @@ export default function WorkshopLanding() {
     try {
       // Check if email already registered for this workshop
       // Check if email is already registered for this workshop
-      const { data: existingRegistration } = await supabase
+      console.log('🔍 Checking for existing registration...', {
+        email: formData.email.trim(),
+        workshop_id: WORKSHOP_ID
+      });
+      
+      const { data: existingRegistration, error: checkError } = await supabase
         .from('registrations')
-        .select('id')
+        .select('id, email, workshop_id')
         .eq('email', formData.email.trim())
         .eq('workshop_id', WORKSHOP_ID)
         .maybeSingle();
 
+      console.log('🔍 Existing registration check result:', { existingRegistration, checkError });
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ Error checking existing registration:', checkError);
+        throw checkError;
+      }
+
       if (existingRegistration) {
+        console.log('⚠️ Email already registered, blocking duplicate registration');
         toast({
           title: "כבר נרשמת!",
           description: "את כבר רשומה לסדנה זו. נתראה שם! 💜",
@@ -122,6 +135,8 @@ export default function WorkshopLanding() {
         setIsSubmitting(false);
         return;
       }
+
+      console.log('✅ No existing registration found, proceeding with new registration');
 
       // Create new registration
       const { error } = await supabase
