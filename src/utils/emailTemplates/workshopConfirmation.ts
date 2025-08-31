@@ -93,36 +93,6 @@ export const generateWorkshopConfirmationHTML = (fullName: string): string => {
               </p>
             </div>
 
-            <!-- What to Expect -->
-            <div style="margin-bottom: 40px; direction: rtl;">
-              <h3 style="margin: 0 0 20px 0; color: #7c3aed; font-size: 20px; font-weight: bold; text-align: center; direction: rtl;">
-                מה מחכה לך בסדנה 💜
-              </h3>
-              
-              <div style="display: flex; flex-direction: column; gap: 16px; direction: rtl;">
-                <div style="display: flex; align-items: start; gap: 12px; direction: rtl;">
-                  <span style="color: #7c3aed; font-size: 20px; margin-top: 2px;">✨</span>
-                  <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.6; text-align: right;">
-                    <strong>פרשנויות מרענות</strong> למילות התפילה שיחזירו להן את הקסם והמשמעות
-                  </p>
-                </div>
-                
-                <div style="display: flex; align-items: start; gap: 12px; direction: rtl;">
-                  <span style="color: #d97706; font-size: 20px; margin-top: 2px;">🎯</span>
-                  <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.6; text-align: right;">
-                    <strong>כלים יישומיים</strong> שתוכלי להשתמש בהם מיד בתפילות שלך
-                  </p>
-                </div>
-                
-                <div style="display: flex; align-items: start; gap: 12px; direction: rtl;">
-                  <span style="color: #059669; font-size: 20px; margin-top: 2px;">📖</span>
-                  <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.6; text-align: right;">
-                    <strong>תובנות וגילויים</strong> חדשים שיעשירו את החוויה הרוחנית שלך
-                  </p>
-                </div>
-              </div>
-            </div>
-
             <!-- Call to Action -->
             <div style="text-align: center; margin-bottom: 30px; direction: rtl;">
               <p style="margin: 0 0 20px 0; color: #666; font-size: 16px; direction: rtl;">
@@ -151,7 +121,7 @@ export const generateWorkshopConfirmationHTML = (fullName: string): string => {
         <tr>
           <td>
             <p style="margin: 0 0 12px 0; color: #666; font-size: 16px; font-weight: bold;">
-              רות פריסמן - מאמנת רוחנית ומנטורית
+              רות פריסמן - מאמנת טיפולית
             </p>
             <p style="margin: 0 0 16px 0; color: #888; font-size: 14px;">
               📧 ruth@ruthprissman.co.il • 📱 055-6620273
