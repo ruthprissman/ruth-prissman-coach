@@ -97,6 +97,24 @@ const HebrewLandingPage = () => {
     setIsSubmitting(true);
 
     try {
+      // Check if email is already registered for this workshop
+      const { data: existingRegistration } = await supabase
+        .from('registrations')
+        .select('id')
+        .eq('email', formData.email.trim())
+        .eq('workshop_id', 'ac258723-b2b7-45da-9956-2ca140457a44')
+        .maybeSingle();
+
+      if (existingRegistration) {
+        toast({
+          title: "כבר רשומה!",
+          description: "המייל הזה כבר רשום לסדנה. נתראה שם! 🙂",
+          variant: "default"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('registrations')
         .insert({

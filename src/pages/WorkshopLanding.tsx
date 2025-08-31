@@ -105,12 +105,13 @@ export default function WorkshopLanding() {
 
     try {
       // Check if email already registered for this workshop
+      // Check if email is already registered for this workshop
       const { data: existingRegistration } = await supabase
         .from('registrations')
         .select('id')
         .eq('email', formData.email.trim())
         .eq('workshop_id', WORKSHOP_ID)
-        .single();
+        .maybeSingle();
 
       if (existingRegistration) {
         toast({
