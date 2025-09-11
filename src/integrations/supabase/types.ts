@@ -430,6 +430,69 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          content_type: string | null
+          created_at: string | null
+          date: string | null
+          email: string | null
+          first_call_summary: string | null
+          first_meeting: string | null
+          id: string
+          name: string | null
+          notes: string | null
+          phone: string | null
+          quoted_price: string | null
+          referrer_name: string | null
+          second_call_summary: string | null
+          second_meeting: string | null
+          source: string | null
+          status: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string | null
+          date?: string | null
+          email?: string | null
+          first_call_summary?: string | null
+          first_meeting?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          quoted_price?: string | null
+          referrer_name?: string | null
+          second_call_summary?: string | null
+          second_meeting?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string | null
+          date?: string | null
+          email?: string | null
+          first_call_summary?: string | null
+          first_meeting?: string | null
+          id?: string
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          quoted_price?: string | null
+          referrer_name?: string | null
+          second_call_summary?: string | null
+          second_meeting?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           email: string | null
