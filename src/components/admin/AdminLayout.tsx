@@ -34,6 +34,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
   const navItems = [
     { label: 'דף הבית', icon: <Home className="ml-2 h-5 w-5" />, path: '/' }, // Added Home link
     { label: 'לוח ניהול', icon: <Home className="ml-2 h-5 w-5" />, path: '/admin/dashboard' },
+    { label: 'ניהול לידים', icon: <Users className="ml-2 h-5 w-5" />, path: '/admin/leads' },
     { label: 'לקוחות', icon: <Users className="ml-2 h-5 w-5" />, path: '/admin/patients' },
     { label: 'כל הפגישות', icon: <Calendar className="ml-2 h-5 w-5" />, path: '/admin/sessions' },
     { label: 'ניהול זמינות', icon: <Clock className="ml-2 h-5 w-5" />, path: '/admin/calendar' },

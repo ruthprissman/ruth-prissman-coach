@@ -34,6 +34,7 @@ import FinancialAnalytics from './pages/admin/FinancialAnalytics';
 import FinancialSettings from './pages/admin/FinancialSettings';
 import WorkshopsManagement from './pages/admin/WorkshopsManagement';
 import LandingPagesManagement from './pages/admin/LandingPagesManagement';
+import LeadsManagement from './pages/admin/LeadsManagement';
 import { ThemeProvider } from './components/ui/theme-provider';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -101,6 +102,7 @@ function App() {
                 {/* Protected admin routes */}
                 <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/admin/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/admin/leads" element={<ProtectedRoute><LeadsManagement /></ProtectedRoute>} />
                 <Route path="/admin/patients" element={<ProtectedRoute><PatientsList /></ProtectedRoute>} />
                 <Route path="/admin/patients/:id" element={<ProtectedRoute><ClientDetails /></ProtectedRoute>} />
                 <Route path="/admin/sessions" element={<ProtectedRoute><AllSessions /></ProtectedRoute>} />
