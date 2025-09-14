@@ -509,8 +509,13 @@ const WorkshopsManagement: React.FC = () => {
     }
   };
 
-  const isWorkshopInFuture = (dateString: string) => {
-    return new Date(dateString) >= new Date();
+  const canSendWorkshopEmail = (dateString: string) => {
+    const workshopDate = new Date(dateString);
+    const now = new Date();
+    const hoursAfterWorkshop = (now.getTime() - workshopDate.getTime()) / (1000 * 60 * 60);
+    
+    // Allow emails for future workshops or workshops that ended less than 48 hours ago
+    return workshopDate >= now || hoursAfterWorkshop <= 48;
   };
 
   // Watch is_free to reset price when workshop becomes free
@@ -1006,7 +1011,7 @@ const WorkshopsManagement: React.FC = () => {
                     </div>
                   </div>
 
-                   {selectedWorkshop && isWorkshopInFuture(selectedWorkshop.date) && (
+                   {selectedWorkshop && canSendWorkshopEmail(selectedWorkshop.date) && (
                      <div className="space-y-4 border-t pt-4">
                        <h3 className="font-semibold flex items-center gap-2">
                          <Mail className="h-4 w-4" />
