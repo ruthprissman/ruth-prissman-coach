@@ -82,11 +82,11 @@ export default function NewHome() {
         />
         
         <div className="relative z-10 text-center px-4 max-w-6xl mx-auto">
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-alef font-bold mb-6 opacity-0 animate-fade-in" style={{ color: '#52327D' }}>
+          <h1 className="text-6xl md:text-8xl lg:text-9xl font-alef font-bold mb-6 animate-fade-in" style={{ color: '#52327D' }}>
             רות פריסמן - מאמנת רגשית
           </h1>
           
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-alef font-bold mb-12 opacity-0 animate-fade-in" style={{ color: '#8C4FB9', animationDelay: '0.5s' }}>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-alef font-bold mb-12 animate-fade-in" style={{ color: '#8C4FB9', animationDelay: '0.5s' }}>
             מבט חדש על חיים מוכרים
           </h2>
           
