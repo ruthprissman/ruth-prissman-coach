@@ -81,15 +81,19 @@ export default function NewHome() {
           }}
         />
         
-        <div className="relative z-10 text-center text-black px-4 max-w-6xl mx-auto">
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-alef font-bold mb-12 opacity-0 animate-fade-in">
-            רות פריסמן – מבט חדש על חיים מוכרים
+        <div className="relative z-10 text-center px-4 max-w-6xl mx-auto">
+          <h1 className="text-6xl md:text-8xl lg:text-9xl font-alef font-bold mb-6 opacity-0 animate-fade-in" style={{ color: '#52327D' }}>
+            רות פריסמן - מאמנת רגשית
           </h1>
+          
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-alef font-bold mb-12 opacity-0 animate-fade-in" style={{ color: '#8C4FB9', animationDelay: '0.5s' }}>
+            מבט חדש על חיים מוכרים
+          </h2>
           
           <div className="h-40 md:h-32 flex items-center justify-center mb-16">
             <p 
               key={currentTextIndex}
-              className="text-3xl md:text-4xl lg:text-5xl font-heebo leading-relaxed animate-fade-in max-w-5xl"
+              className="text-3xl md:text-4xl lg:text-5xl font-heebo leading-relaxed animate-fade-in max-w-5xl text-black"
             >
               {heroTexts[currentTextIndex]}
             </p>
