@@ -77,19 +77,19 @@ export default function NewHome() {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-fixed"
           style={{
-            backgroundImage: 'linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.3)), url("https://images.unsplash.com/photo-1518837695005-2083093ee35b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80")',
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.7)), url("/assets/glass-stones-beach.jpg")',
           }}
         />
         
-        <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-alef font-bold mb-8 opacity-0 animate-fade-in">
+        <div className="relative z-10 text-center text-black px-4 max-w-6xl mx-auto">
+          <h1 className="text-6xl md:text-8xl lg:text-9xl font-alef font-bold mb-12 opacity-0 animate-fade-in">
             רות פריסמן – מבט חדש על חיים מוכרים
           </h1>
           
-          <div className="h-32 md:h-24 flex items-center justify-center mb-12">
+          <div className="h-40 md:h-32 flex items-center justify-center mb-16">
             <p 
               key={currentTextIndex}
-              className="text-xl md:text-2xl font-heebo leading-relaxed animate-fade-in"
+              className="text-3xl md:text-4xl lg:text-5xl font-heebo leading-relaxed animate-fade-in max-w-5xl"
             >
               {heroTexts[currentTextIndex]}
             </p>
@@ -97,7 +97,7 @@ export default function NewHome() {
           
           <Link 
             to="/contact"
-            className="inline-block bg-primary hover:bg-primary/90 text-white px-12 py-4 rounded-[40px] text-lg font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+            className="inline-block bg-primary hover:bg-primary/90 text-white px-16 py-6 rounded-[40px] text-2xl font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
           >
             לתיאום פגישה אישית
           </Link>
