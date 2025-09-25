@@ -143,7 +143,7 @@ export default function NewHome() {
           
           <Link 
             to="/contact"
-            className="inline-block bg-primary hover:bg-primary/90 text-white px-16 py-6 rounded-[40px] text-2xl font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl animate-fade-in"
+            className="inline-block cta-primary px-16 py-6 text-2xl font-heebo animate-fade-in"
           >
             לתיאום פגישה אישית
           </Link>
@@ -296,7 +296,7 @@ export default function NewHome() {
           
           <Link 
             to="/contact"
-            className="inline-block bg-primary hover:bg-primary/90 text-white px-16 py-6 rounded-2xl text-xl font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl reveal-on-scroll"
+            className="inline-block cta-primary px-16 py-6 text-xl font-heebo reveal-on-scroll"
           >
             אני רוצה להתחיל תהליך
           </Link>
@@ -313,7 +313,7 @@ export default function NewHome() {
           <div className="reveal-on-scroll">
             <Link 
               to="/subscribe"
-              className="inline-block bg-primary hover:bg-primary/90 text-white px-12 py-4 rounded-xl text-lg font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+              className="inline-block cta-primary px-12 py-4 text-lg font-heebo"
             >
               הצטרפי לרשימת התפוצה ♥
             </Link>
