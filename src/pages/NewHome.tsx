@@ -117,11 +117,11 @@ export default function NewHome() {
             מבט חדש על חיים מוכרים
           </h2>
           
-          <div className="h-40 md:h-32 flex items-center justify-center mb-16">
+          <div className="h-32 md:h-28 flex items-center justify-center mb-20">
             <div 
               id="hero-subtext"
               key={currentSceneIndex}
-              className={`text-3xl md:text-4xl lg:text-5xl font-heebo leading-relaxed max-w-5xl text-black scrollytelling-scene ${scrollytellingScenes[currentSceneIndex].animation}`}
+              className={`text-xl md:text-2xl lg:text-3xl font-heebo leading-relaxed max-w-5xl text-black scrollytelling-scene scene-transition ${scrollytellingScenes[currentSceneIndex].animation}`}
             >
               {scrollytellingScenes[currentSceneIndex].text.split('\n').map((line, index) => (
                 <div key={index} className={scrollytellingScenes[currentSceneIndex].animation === 'scene-2' && index === 0 ? 'word-pop-container' : ''}>
