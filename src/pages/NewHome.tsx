@@ -9,7 +9,6 @@ import { Footer } from '@/components/Footer';
 export default function NewHome() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
-  const [showCTA, setShowCTA] = useState(false);
 
   const scrollytellingScenes = [
     {
@@ -56,9 +55,8 @@ export default function NewHome() {
         if (prev < scrollytellingScenes.length - 1) {
           return prev + 1;
         } else {
-          // Show CTA after last scene
-          setShowCTA(true);
-          return prev;
+          // Loop back to the beginning
+          return 0;
         }
       });
     }, 4000);
@@ -113,15 +111,15 @@ export default function NewHome() {
             רות פריסמן - מאמנת רגשית
           </h1>
           
-          <h2 className="text-xl md:text-3xl lg:text-4xl font-alef font-bold mb-12" style={{ color: '#8C4FB9' }}>
+          <h2 className="text-xl md:text-3xl lg:text-4xl font-alef font-bold mb-20" style={{ color: '#8C4FB9' }}>
             מבט חדש על חיים מוכרים
           </h2>
           
-          <div className="h-32 md:h-28 flex items-center justify-center mb-20">
+          <div className="h-36 md:h-32 flex items-center justify-center mb-24">
             <div 
               id="hero-subtext"
               key={currentSceneIndex}
-              className={`text-xl md:text-2xl lg:text-3xl font-heebo leading-relaxed max-w-5xl text-black scrollytelling-scene scene-transition ${scrollytellingScenes[currentSceneIndex].animation}`}
+              className={`text-2xl md:text-3xl lg:text-4xl font-heebo leading-relaxed max-w-5xl text-black scrollytelling-scene scene-transition ${scrollytellingScenes[currentSceneIndex].animation}`}
             >
               {scrollytellingScenes[currentSceneIndex].text.split('\n').map((line, index) => (
                 <div key={index} className={scrollytellingScenes[currentSceneIndex].animation === 'scene-2' && index === 0 ? 'word-pop-container' : ''}>
@@ -145,7 +143,7 @@ export default function NewHome() {
           
           <Link 
             to="/contact"
-            className={`inline-block bg-primary hover:bg-primary/90 text-white px-16 py-6 rounded-[40px] text-2xl font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl ${showCTA ? 'cta-scale-in' : 'opacity-0'}`}
+            className="inline-block bg-primary hover:bg-primary/90 text-white px-16 py-6 rounded-[40px] text-2xl font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl animate-fade-in"
           >
             לתיאום פגישה אישית
           </Link>
