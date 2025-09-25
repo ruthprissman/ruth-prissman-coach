@@ -132,7 +132,142 @@
   }
 }
 
+@keyframes scene-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes word-pop-in {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-up-blur {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes fog-clear {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes scene-scale-highlight {
+  to {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes highlight-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cta-spring-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(82, 50, 125, 0.4);
+  }
+}
+
 @layer components {
+  /* Scrollytelling Hero Animations */
+  .scrollytelling-scene {
+    white-space: pre-line;
+  }
+  
+  .scene-1 {
+    animation: scene-fade-in 0.8s ease-out forwards;
+  }
+  
+  .scene-2 .word-pop-container {
+    display: inline;
+  }
+  
+  .scene-2 .word-pop {
+    display: inline-block;
+    opacity: 0;
+    transform: scale(0.8);
+    animation: word-pop-in 0.4s ease-out forwards;
+  }
+  
+  .scene-2 div:nth-child(2) {
+    animation: scene-fade-in 0.6s ease-out 0.8s forwards;
+    opacity: 0;
+  }
+  
+  .scene-3 {
+    animation: slide-up-blur 0.8s ease-out forwards;
+  }
+  
+  .scene-4 {
+    position: relative;
+    animation: scene-fade-in 0.8s ease-out forwards;
+  }
+  
+  .scene-4::before {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    background: rgba(255, 255, 255, 0.7);
+    animation: fog-clear 1.5s ease-out forwards;
+    z-index: 1;
+    pointer-events: none;
+  }
+  
+  .scene-5 {
+    animation: scene-scale-highlight 0.8s ease-out forwards;
+    position: relative;
+  }
+  
+  .scene-5::after {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    background: linear-gradient(135deg, rgba(82, 50, 125, 0.15), rgba(183, 227, 229, 0.15));
+    border-radius: 20px;
+    animation: highlight-appear 0.8s ease-out forwards;
+    z-index: -1;
+  }
+  
+  .cta-scale-in {
+    animation: cta-spring-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+
   .gold-text-shadow {
     text-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
   }

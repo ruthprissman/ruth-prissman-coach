@@ -8,12 +8,30 @@ import { Footer } from '@/components/Footer';
 
 export default function NewHome() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
+  const [showCTA, setShowCTA] = useState(false);
 
-  const heroTexts = [
-    "כאב. בגידה. דחייה. אשמה. בדידות.",
-    "רגשות עמוקים שמכאיבים – אבל הם לא חייבים לנהל אותנו.",
-    "אני מאמינה שכל אחת יכולה לאהוב את החיים, להנות מהם ולהודות עליהם באמת – עם כל הניסיונות שבהם."
+  const scrollytellingScenes = [
+    {
+      text: "מכירה את זה ש…\nהרגשות שנלווים לניסיון כבדים יותר מהניסיון עצמו?",
+      animation: "scene-1"
+    },
+    {
+      text: "דחייה. אשמה. בגידה. בדידות.\nולפעמים… פשוט אין להן שם…",
+      animation: "scene-2"
+    },
+    {
+      text: "מכירה את זה ש…\nנוצר בלגן פנימי, שלא מאפשר לנו לזהות מה אנחנו רוצות באמת?",
+      animation: "scene-3"
+    },
+    {
+      text: "מכירה את זה ש…\nהחרדה מחוויות העבר והפחד מתוצאות העתיד חונקים את ההווה?",
+      animation: "scene-4"
+    },
+    {
+      text: "אני מאמינה\nשכל אישה יכולה להביא לעצמה גאולה פנימית – משיח פרטי משלה.\nשחרור מתלות; חיבור לעצמה, לסביבה ולבורא.",
+      animation: "scene-5"
+    }
   ];
 
   const journeySteps = [
@@ -34,8 +52,17 @@ export default function NewHome() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTextIndex((prev) => (prev + 1) % heroTexts.length);
-    }, 3000);
+      setCurrentSceneIndex((prev) => {
+        if (prev < scrollytellingScenes.length - 1) {
+          return prev + 1;
+        } else {
+          // Show CTA after last scene
+          setShowCTA(true);
+          return prev;
+        }
+      });
+    }, 4000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -91,17 +118,34 @@ export default function NewHome() {
           </h2>
           
           <div className="h-40 md:h-32 flex items-center justify-center mb-16">
-            <p 
-              key={currentTextIndex}
-              className="text-3xl md:text-4xl lg:text-5xl font-heebo leading-relaxed animate-fade-in max-w-5xl text-black"
+            <div 
+              id="hero-subtext"
+              key={currentSceneIndex}
+              className={`text-3xl md:text-4xl lg:text-5xl font-heebo leading-relaxed max-w-5xl text-black scrollytelling-scene ${scrollytellingScenes[currentSceneIndex].animation}`}
             >
-              {heroTexts[currentTextIndex]}
-            </p>
+              {scrollytellingScenes[currentSceneIndex].text.split('\n').map((line, index) => (
+                <div key={index} className={scrollytellingScenes[currentSceneIndex].animation === 'scene-2' && index === 0 ? 'word-pop-container' : ''}>
+                  {scrollytellingScenes[currentSceneIndex].animation === 'scene-2' && index === 0 ? (
+                    line.split(' ').map((word, wordIndex) => (
+                      <span 
+                        key={wordIndex} 
+                        className="word-pop" 
+                        style={{animationDelay: `${wordIndex * 0.2}s`}}
+                      >
+                        {word}{' '}
+                      </span>
+                    ))
+                  ) : (
+                    line
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
           
           <Link 
             to="/contact"
-            className="inline-block bg-primary hover:bg-primary/90 text-white px-16 py-6 rounded-[40px] text-2xl font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+            className={`inline-block bg-primary hover:bg-primary/90 text-white px-16 py-6 rounded-[40px] text-2xl font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl ${showCTA ? 'cta-scale-in' : 'opacity-0'}`}
           >
             לתיאום פגישה אישית
           </Link>
