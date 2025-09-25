@@ -283,6 +283,34 @@
     animation: cta-spring-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
   }
 
+  /* Button Styles */
+  .cta-primary {
+    background: #8C4FB9;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 40px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform .15s ease;
+  }
+  
+  .cta-primary:hover {
+    transform: translateY(-2px);
+  }
+  
+  .cta-outline {
+    background: transparent;
+    color: #3AB9C9;
+    border: 2px solid #3AB9C9;
+    border-radius: 40px;
+    box-shadow: none;
+    transition: background .15s ease, color .15s ease;
+  }
+  
+  .cta-outline:hover {
+    background: #3AB9C920;
+    color: #3AB9C9;
+  }
+
   .gold-text-shadow {
     text-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
   }
