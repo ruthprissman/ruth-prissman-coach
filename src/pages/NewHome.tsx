@@ -5,16 +5,10 @@ import { fetchTestimonials } from '@/services/TestimonialService';
 import { Testimonial } from '@/types/testimonial';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import ScrollytellingHero from '@/components/ScrollytellingHero';
 
 export default function NewHome() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [currentTextIndex, setCurrentTextIndex] = useState(0);
-
-  const heroTexts = [
-    "כאב. בגידה. דחייה. אשמה. בדידות.",
-    "רגשות עמוקים שמכאיבים – אבל הם לא חייבים לנהל אותנו.",
-    "אני מאמינה שכל אחת יכולה לאהוב את החיים, להנות מהם ולהודות עליהם באמת – עם כל הניסיונות שבהם."
-  ];
 
   const journeySteps = [
     "לזהות את הרצונות שלי",
@@ -30,13 +24,6 @@ export default function NewHome() {
       setTestimonials(data);
     };
     loadTestimonials();
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTextIndex((prev) => (prev + 1) % heroTexts.length);
-    }, 3000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -71,7 +58,7 @@ export default function NewHome() {
 
       <Navigation />
 
-      {/* Hero Section */}
+      {/* Hero Section - Scrollytelling Banner */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Parallax Background */}
         <div 
@@ -81,31 +68,7 @@ export default function NewHome() {
           }}
         />
         
-        <div className="relative z-10 text-center px-4 max-w-6xl mx-auto">
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-alef font-bold mb-6" style={{ color: '#52327D' }}>
-            רות פריסמן - מאמנת רגשית
-          </h1>
-          
-          <h2 className="text-xl md:text-3xl lg:text-4xl font-alef font-bold mb-12" style={{ color: '#8C4FB9' }}>
-            מבט חדש על חיים מוכרים
-          </h2>
-          
-          <div className="h-40 md:h-32 flex items-center justify-center mb-16">
-            <p 
-              key={currentTextIndex}
-              className="text-3xl md:text-4xl lg:text-5xl font-heebo leading-relaxed animate-fade-in max-w-5xl text-black"
-            >
-              {heroTexts[currentTextIndex]}
-            </p>
-          </div>
-          
-          <Link 
-            to="/contact"
-            className="inline-block bg-primary hover:bg-primary/90 text-white px-16 py-6 rounded-[40px] text-2xl font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
-          >
-            לתיאום פגישה אישית
-          </Link>
-        </div>
+        <ScrollytellingHero />
       </section>
 
       {/* About Section */}
