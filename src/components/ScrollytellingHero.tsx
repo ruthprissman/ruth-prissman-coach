@@ -54,25 +54,26 @@ const scenes: Scene[] = [
 export default function ScrollytellingHero() {
   const [currentScene, setCurrentScene] = useState(0);
   const [showCTA, setShowCTA] = useState(false);
-  const [animationPhase, setAnimationPhase] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
-    if (currentScene >= scenes.length) {
-      setShowCTA(true);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      if (currentScene < scenes.length - 1) {
-        setCurrentScene(prev => prev + 1);
-        setAnimationPhase(0);
-      } else {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const progress = Math.min(scrollTop / (windowHeight * 0.8), 1);
+      setScrollProgress(progress);
+      
+      const sceneIndex = Math.floor(progress * scenes.length);
+      setCurrentScene(Math.min(sceneIndex, scenes.length - 1));
+      
+      if (progress >= 0.9) {
         setShowCTA(true);
       }
-    }, 4000);
+    };
 
-    return () => clearTimeout(timer);
-  }, [currentScene]);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const renderScene = (scene: Scene, index: number) => {
     const isActive = index === currentScene;
@@ -167,9 +168,19 @@ export default function ScrollytellingHero() {
 
   return (
     <div className="relative z-10 text-center px-4 max-w-6xl mx-auto">
-      <div className="min-h-[400px] flex items-center justify-center">
+      {/* Title and Slogan */}
+      <div className="mb-12">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-alef font-bold text-black mb-4">
+          רות פריסמן - מאמנת רגשית
+        </h1>
+        <p className="text-lg md:text-xl text-black/80 font-heebo">
+          מבט חדש על חיים מוכרים
+        </p>
+      </div>
+
+      <div className="min-h-[400px] flex flex-col items-center justify-center">
         {currentScene < scenes.length && (
-          <div key={currentScene} className="max-w-5xl">
+          <div key={currentScene} className="max-w-5xl mb-8">
             {renderScene(scenes[currentScene], currentScene)}
           </div>
         )}
@@ -178,7 +189,7 @@ export default function ScrollytellingHero() {
           <div className="animate-[spring-scale_0.6s_cubic-bezier(0.175,0.885,0.32,1.275)]">
             <Link 
               to="/contact"
-              className="inline-block bg-primary hover:bg-primary/90 text-white px-16 py-6 rounded-[40px] text-2xl font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl animate-pulse"
+              className="inline-block bg-primary hover:bg-primary/90 text-white px-16 py-6 rounded-[40px] text-2xl font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
             >
               לתיאום פגישה אישית
             </Link>

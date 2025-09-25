@@ -59,16 +59,18 @@ export default function NewHome() {
       <Navigation />
 
       {/* Hero Section - Scrollytelling Banner */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[200vh] flex items-center justify-center overflow-hidden">
         {/* Parallax Background */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-fixed"
+          className="fixed inset-0 bg-cover bg-center"
           style={{
             backgroundImage: 'linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.7)), url("/assets/glass-stones-beach.jpg")',
           }}
         />
         
-        <ScrollytellingHero />
+        <div className="sticky top-0 h-screen flex items-center justify-center">
+          <ScrollytellingHero />
+        </div>
       </section>
 
       {/* About Section */}
