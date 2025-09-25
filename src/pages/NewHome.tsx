@@ -82,7 +82,7 @@ export default function NewHome() {
         />
         
         <div className="relative z-10 text-center px-4 max-w-6xl mx-auto">
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-alef font-bold mb-6" style={{ color: '#52327D' }}>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-alef font-bold mb-6" style={{ color: '#52327D' }}>
             רות פריסמן - מאמנת רגשית
           </h1>
           
