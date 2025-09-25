@@ -268,39 +268,13 @@ export default function NewHome() {
             הצטרפי לרשימות התפוצה שלי
           </h2>
           
-          <div className="bg-muted/30 rounded-lg p-8 reveal-on-scroll">
-            <form className="flex flex-col md:flex-row gap-4 items-end">
-              <div className="flex-1">
-                <label htmlFor="name" className="block text-right font-heebo text-foreground mb-2">
-                  שם פרטי
-                </label>
-                <input 
-                  type="text" 
-                  id="name"
-                  className="w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="השם שלך"
-                />
-              </div>
-              
-              <div className="flex-1">
-                <label htmlFor="email" className="block text-right font-heebo text-foreground mb-2">
-                  כתובת אימייל
-                </label>
-                <input 
-                  type="email" 
-                  id="email"
-                  className="w-full px-4 py-3 rounded-lg border border-border focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="האימייל שלך"
-                />
-              </div>
-              
-              <Link 
-                to="/subscribe"
-                className="bg-secondary border-2 border-secondary text-secondary-foreground hover:bg-secondary/90 px-8 py-3 rounded-lg font-heebo transition-colors duration-300"
-              >
-                שלחו לי ♥
-              </Link>
-            </form>
+          <div className="reveal-on-scroll">
+            <Link 
+              to="/subscribe"
+              className="inline-block bg-primary hover:bg-primary/90 text-white px-12 py-4 rounded-xl text-lg font-heebo transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              הצטרפי לרשימת התפוצה ♥
+            </Link>
           </div>
         </div>
       </section>
