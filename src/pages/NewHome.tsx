@@ -150,8 +150,136 @@ export default function NewHome() {
         </div>
       </section>
 
+      {/* New Unified Section */}
+      <section dir="rtl" style={{
+        marginTop: '8rem',
+        padding: '0 1.5rem',
+        background: '#FFFFFF'
+      }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '60% 40%',
+          alignItems: 'center',
+          gap: '3rem'
+        }} className="max-w-6xl mx-auto">
+          {/* text column */}
+          <div>
+            <h2 style={{
+              fontFamily: 'Alef, sans-serif',
+              color: '#52327D',
+              fontSize: 'clamp(1.8rem, 4vw, 2.4rem)',
+              margin: '0 0 2rem'
+            }}>
+              מה נעשה ביחד?
+            </h2>
+
+            <ul role="list" style={{
+              listStyle: 'none',
+              padding: 0,
+              margin: 0,
+              fontFamily: 'Heebo, sans-serif',
+              color: '#141414',
+              fontSize: '1.125rem',
+              lineHeight: '1.8'
+            }}>
+              {[
+                { i: 0, text: 'נקשיב למה שקורה באמת, בפנים – מתחת למציאות החיצונית.', highlight: 'למה שקורה באמת' },
+                { i: 1, text: 'נזהה ונגדיר את הרצון הפנימי שלך.', highlight: 'את הרצון הפנימי שלך' },
+                { i: 2, text: 'נתחבר לכוחות הייחודיים דווקא לך.', highlight: 'לכוחות הייחודיים דווקא לך' },
+                { i: 3, text: 'נמצא ביחד את האיזון שכבר קיים בחיים שלך.', highlight: 'את האיזון שכבר קיים' },
+                { i: 4, text: 'נלמד לחיות בהווה – וליישם.', highlight: 'לחיות בהווה – וליישם' },
+                { i: 5, text: 'נשתחרר מתלות במצבים חיצוניים.', highlight: 'מתלות במצבים חיצוניים' }
+              ].map((item, index) => (
+                <li 
+                  key={index}
+                  style={{
+                    '--i': item.i,
+                    paddingRight: '2.2rem',
+                    marginBottom: '.8rem',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    animation: `textIn .6s ease forwards`,
+                    animationDelay: `calc(${item.i} * .25s)`
+                  } as React.CSSProperties}
+                  className="together-list-item"
+                >
+                  {item.text.split(item.highlight).map((part, partIndex, array) => (
+                    <React.Fragment key={partIndex}>
+                      {part}
+                      {partIndex < array.length - 1 && (
+                        <mark style={{
+                          color: '#3AB9C9',
+                          background: 'transparent',
+                          fontWeight: '600'
+                        }}>
+                          {item.highlight}
+                        </mark>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </li>
+              ))}
+              
+              <li style={{
+                '--i': 6,
+                paddingRight: '2.2rem',
+                marginBottom: '.8rem',
+                position: 'relative',
+                overflow: 'hidden',
+                animation: 'textIn .6s ease forwards',
+                animationDelay: 'calc(6 * .25s)'
+              } as React.CSSProperties}
+              className="together-list-item">
+                ונתפלל יחד…
+                <span style={{
+                  display: 'block',
+                  width: '80px',
+                  height: '2px',
+                  background: '#3AB9C9',
+                  margin: '.8rem 0 1.2rem'
+                }}></span>
+              </li>
+            </ul>
+
+            <a 
+              href="/contact" 
+              className="cta-outline"
+              style={{
+                display: 'inline-block',
+                marginTop: '1.5rem',
+                padding: '.75rem 2.2rem',
+                border: '2px solid #8C4FB9',
+                borderRadius: '40px',
+                background: 'transparent',
+                color: '#8C4FB9',
+                fontFamily: 'Heebo, sans-serif',
+                fontSize: '1rem',
+                transition: 'background .15s, color .15s',
+                textDecoration: 'none'
+              }}
+            >
+              אני רוצה להתחיל
+            </a>
+          </div>
+
+          {/* logo column */}
+          <div style={{ justifySelf: 'start' }}>
+            <img 
+              src="/assets/new-logo.png" 
+              alt="לוגו האבן על גלים"
+              style={{
+                maxWidth: '260px',
+                transition: 'transform .3s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'rotate(3deg)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'rotate(0deg)'}
+            />
+          </div>
+        </div>
+      </section>
+
       {/* About Section */}
-      <section className="py-20 bg-background">
+      <section className="py-20 bg-background hidden" id="about">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-alef font-bold text-center mb-16 reveal-on-scroll">על התהליך</h2>
           
@@ -174,7 +302,7 @@ export default function NewHome() {
       </section>
 
       {/* Journey Section */}
-      <section className="py-20 bg-muted/50">
+      <section className="py-20 bg-muted/50 hidden" id="journey">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-alef font-bold text-center mb-16 reveal-on-scroll">איך נראה תהליך איתי?</h2>
           

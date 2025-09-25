@@ -311,6 +311,48 @@
     color: #3AB9C9;
   }
 
+  /* Together Section Styles */
+  .together-list-item::before {
+    content: "●";
+    position: absolute;
+    right: 0;
+    top: .15rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    color: #8C4FB9;
+    font-size: 1.2rem;
+    transform: translateX(120%);
+    opacity: 0;
+    animation: stoneIn .6s ease forwards;
+    animation-delay: calc(var(--i) * .25s);
+  }
+
+  .together-list-item:hover {
+    text-decoration: underline;
+  }
+
+  @keyframes stoneIn {
+    from {
+      transform: translateX(120%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes textIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
   .gold-text-shadow {
     text-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
   }
