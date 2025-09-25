@@ -86,7 +86,7 @@ export default function NewHome() {
             רות פריסמן - מאמנת רגשית
           </h1>
           
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-alef font-bold mb-12" style={{ color: '#8C4FB9' }}>
+          <h2 className="text-xl md:text-3xl lg:text-4xl font-alef font-bold mb-12" style={{ color: '#8C4FB9' }}>
             מבט חדש על חיים מוכרים
           </h2>
           
