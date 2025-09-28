@@ -91,9 +91,17 @@ export default function NewHome() {
   return (
     <>
       <Helmet>
-        <title>רות פריסמן – מבט חדש על חיים מוכרים | טיפול רגשי ואיזון אישי</title>
-        <meta name="description" content="טיפול רגשי ותהליך אישי עם רות פריסמן. מבט חדש על חיים מוכרים, איזון רגשי, והתמודדות עם כאב, בגידה ודחייה." />
-        <meta name="keywords" content="טיפול רגשי, איזון רגשי, תהליך אישי, רות פריסמן, התמודדות רגשית" />
+        <title>רות פריסמן – סופרת | מאמנת | מנחת סדנאות</title>
+        <meta name="description" content="רות פריסמן – סופרת, מאמנת ומנחת סדנאות. תהליכים לאיזון רגשי ותובנה פנימית לנשים." />
+        <meta name="keywords" content="רות פריסמן, סופרת, מאמנת, מנחת סדנאות, טיפול רגשי, איזון רגשי, תהליך אישי, רות פריסמן מאמנת" />
+        
+        <meta property="og:title" content="רות פריסמן – מבט חדש על חיים מוכרים" />
+        <meta property="og:description" content="סופרת, מאמנת ומנחת סדנאות לאיזון רגשי. בואי להתחבר לעצמך מחדש." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://your-site.com/new-home" />
+        <meta property="og:image" content="/assets/new-logo.png" />
+        
+        <meta name="robots" content="index, follow" />
       </Helmet>
 
       <Navigation />
