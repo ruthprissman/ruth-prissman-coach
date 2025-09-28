@@ -294,7 +294,7 @@ const RuthFrissmanWorkshop = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-bold mb-4 text-center text-text-primary">חיבורים קטנים למילים גדולות</h2>
-              <p className="text-center text-muted-foreground mb-12">סדנאות להעמקת החיבור לתפילה</p>
+              <p className="text-center text-muted-foreground mb-12">סדנאות והרצאות על תפילה ונפש</p>
               
               <div className="grid md:grid-cols-2 gap-8">
                 {/* Workshop 1 */}
