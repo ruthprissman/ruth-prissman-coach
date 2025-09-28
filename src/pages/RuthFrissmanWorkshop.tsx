@@ -199,7 +199,7 @@ const RuthFrissmanWorkshop = () => {
               </p>
               
               <p className="text-lg mb-8 text-muted-foreground">
-                מחברות מחדש בין המילים המוכרות ללב
+                חיבורים חדשים בין המילים המוכרות ללב
               </p>
               
               <div className="flex justify-center mb-12">
