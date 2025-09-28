@@ -469,6 +469,9 @@ export default function NewHome() {
       {/* Newsletter Signup */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4 text-center max-w-2xl">
+          <p className="text-lg font-heebo text-muted-foreground mb-4 reveal-on-scroll">
+            רוצה להכיר אותי יותר?
+          </p>
           <h2 className="text-4xl font-alef font-bold text-foreground mb-8 reveal-on-scroll">
             הצטרפי לרשימות התפוצה שלי
           </h2>
