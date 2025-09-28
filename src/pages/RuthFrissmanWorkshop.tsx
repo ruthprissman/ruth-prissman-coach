@@ -331,7 +331,7 @@ const RuthFrissmanWorkshop = () => {
                 <Card className="border-2 border-muted/40 opacity-75">
                   <CardHeader>
                     <div className="flex items-center gap-2 mb-2">
-                      <CardTitle className="text-xl text-muted-foreground">תפילת השבת - יום של חיבור</CardTitle>
+                      <CardTitle className="text-xl text-muted-foreground">תפילה- יישום לאמונה</CardTitle>
                       <Badge variant="secondary">בקרוב</Badge>
                     </div>
                     <CardDescription>סדנה מיוחדת לחיבור עמוק יותר לתפילות השבת</CardDescription>
