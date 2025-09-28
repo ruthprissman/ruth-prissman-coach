@@ -241,22 +241,6 @@ export default function NewHome() {
               </li>
             </ul>
 
-          <div style={{ textAlign: 'center' }}>
-            <a 
-              href="/contact" 
-              className="cta-primary"
-              style={{
-                display: 'inline-block',
-                marginTop: '1.5rem',
-                padding: '.75rem 2.2rem',
-                fontFamily: 'Heebo, sans-serif',
-                fontSize: '1rem',
-                textDecoration: 'none'
-              }}
-            >
-              אני רוצה להתחיל
-            </a>
-          </div>
           </div>
 
           {/* logo column */}
@@ -272,6 +256,18 @@ export default function NewHome() {
               onMouseOut={(e) => e.currentTarget.style.transform = 'rotate(0deg)'}
             />
           </div>
+        </div>
+      </section>
+
+      {/* CTA Button Below Together Section */}
+      <section className="py-12" style={{ backgroundColor: '#FFFFFF' }}>
+        <div className="text-center">
+          <Link 
+            to="/contact"
+            className="inline-block cta-primary px-16 py-6 text-2xl font-heebo"
+          >
+            אני רוצה להתחיל
+          </Link>
         </div>
       </section>
 
