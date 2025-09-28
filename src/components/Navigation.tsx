@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link, useLocation } from 'react-router-dom';
+import newLogo from '@/assets/new-logo-header.png';
 
 const navItems = [
   { 
@@ -11,7 +12,7 @@ const navItems = [
     isHome: true,
     icon: (
       <img 
-        src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs//blwlogo.png" 
+        src={newLogo} 
         alt="דף הבית" 
         className="h-14 w-auto"
       />

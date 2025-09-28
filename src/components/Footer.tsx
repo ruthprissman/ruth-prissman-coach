@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
+import newLogo from '@/assets/new-logo-header.png';
 
 export function Footer() {
   return (
@@ -50,7 +51,7 @@ export function Footer() {
         <div className="mt-8 pt-4 border-t border-gray-200 text-center">
           <div className="flex flex-col items-center justify-center">
             <div className="flex items-center mb-3">
-              <img src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs//blwlogo.png" alt="לוגו רות פריסמן" className="h-10 w-auto ml-2" />
+              <img src={newLogo} alt="לוגו רות פריסמן" className="h-10 w-auto ml-2" />
             </div>
             <p className="text-purple-dark text-sm">© 2025 רות פריסמן - מאמנת וסופרת. כל הזכויות שמורות.</p>
             <Link to="/admin/login" className="text-purple-dark hover:text-gold transition-colors text-xs opacity-50 mt-2">
