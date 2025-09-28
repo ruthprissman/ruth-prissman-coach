@@ -404,10 +404,6 @@
     background-image: none !important;
   }
   
-  .filter-input {
-    height: 40px !important;
-    text-align: right !important;
-  }
   
   .write-to-me {
     color: #4A235A !important;
@@ -417,5 +413,36 @@
   
   .write-to-me:hover {
     color: #7E69AB !important;
+  }
+
+  /* Testimonials carousel */
+  .testimonials-carousel {
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .testimonials-track {
+    display: flex;
+    gap: 1.5rem;
+    animation: scroll-testimonials 30s linear infinite;
+  }
+
+  .testimonial-card {
+    flex-shrink: 0;
+    width: 320px;
+    min-height: 200px;
+  }
+
+  @keyframes scroll-testimonials {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .testimonials-track:hover {
+    animation-play-state: paused;
   }
 }

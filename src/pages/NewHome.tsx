@@ -322,68 +322,77 @@ export default function NewHome() {
         </div>
       </section>
 
-      {/* Certificates & Testimonials */}
+      {/* Certificates Section */}
       <section className="py-20" style={{ backgroundColor: '#F5F5F7' }}>
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-alef font-bold text-center mb-16 reveal-on-scroll">בואי תקראי בעצמך</h2>
+          <h2 className="text-4xl font-alef font-bold text-center mb-16 reveal-on-scroll">התעודות שלי</h2>
           
-          <div className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory">
-            {/* Certificates */}
-            <div className="flex-shrink-0 w-80 bg-white rounded-lg shadow-lg p-6 snap-center">
+          <div className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory justify-center">
+            <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-6 snap-center">
               <img 
                 src="/assets/certificate-1.png" 
                 alt="תעודה מקצועית 1"
-                className="w-full h-auto rounded-lg"
+                className="w-full h-full object-contain rounded-lg"
               />
             </div>
-            <div className="flex-shrink-0 w-80 bg-white rounded-lg shadow-lg p-6 snap-center">
+            <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-6 snap-center">
               <img 
                 src="/assets/certificate-2.png" 
                 alt="תעודה מקצועית 2"
-                className="w-full h-auto rounded-lg"
+                className="w-full h-full object-contain rounded-lg"
               />
             </div>
-            <div className="flex-shrink-0 w-80 bg-white rounded-lg shadow-lg p-6 snap-center">
+            <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-6 snap-center">
               <img 
                 src="/assets/certificate-3.png" 
                 alt="תעודה מקצועית 3"
-                className="w-full h-auto rounded-lg"
+                className="w-full h-full object-contain rounded-lg"
               />
             </div>
-            
-            {/* Testimonials */}
-            {testimonials.map((testimonial, index) => (
-              <div 
-                key={testimonial.id} 
-                className="flex-shrink-0 w-80 bg-white rounded-lg shadow-lg p-6 snap-center"
-              >
-                <div className="text-right">
-                  <p className="text-foreground mb-4 leading-relaxed font-heebo">
-                    {testimonial.summary}
-                  </p>
-                  <div className="flex items-center justify-end gap-3">
-                    {testimonial.image_url && (
-                      <img 
-                        src={testimonial.image_url} 
-                        alt="תמונת לקוח"
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                    )}
-                    <div>
-                      <p className="font-semibold text-foreground">
-                        {testimonial.name || 'אנונימי'}
-                      </p>
-                      {testimonial.source_type && (
-                        <p className="text-sm text-muted-foreground">
-                          {testimonial.source_type === 'whatsapp' ? 'WhatsApp' : 
-                           testimonial.source_type === 'email' ? 'אימייל' : 'טלפון'}
-                        </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-alef font-bold text-center mb-16 reveal-on-scroll">בואי תקראי בעצמך</h2>
+          
+          <div className="testimonials-carousel">
+            <div className="testimonials-track">
+              {testimonials.concat(testimonials).map((testimonial, index) => (
+                <div 
+                  key={`${testimonial.id}-${index}`}
+                  className="testimonial-card bg-white rounded-lg shadow-lg p-6"
+                >
+                  <div className="text-right">
+                    <p className="text-foreground mb-4 leading-relaxed font-heebo">
+                      {testimonial.summary}
+                    </p>
+                    <div className="flex items-center justify-end gap-3">
+                      {testimonial.image_url && (
+                        <img 
+                          src={testimonial.image_url} 
+                          alt="תמונת לקוח"
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
                       )}
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {testimonial.name || 'אנונימי'}
+                        </p>
+                        {testimonial.source_type && (
+                          <p className="text-sm text-muted-foreground">
+                            {testimonial.source_type === 'whatsapp' ? 'WhatsApp' : 
+                             testimonial.source_type === 'email' ? 'אימייל' : 'טלפון'}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
