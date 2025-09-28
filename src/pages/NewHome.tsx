@@ -98,7 +98,7 @@ export default function NewHome() {
         <meta property="og:title" content="רות פריסמן – מבט חדש על חיים מוכרים" />
         <meta property="og:description" content="סופרת, מאמנת ומנחת סדנאות לאיזון רגשי. בואי להתחבר לעצמך מחדש." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://your-site.com/new-home" />
+        <meta property="og:url" content="https://coach.ruthprissman.co.il/" />
         <meta property="og:image" content="/assets/new-logo.png" />
         
         <meta name="robots" content="index, follow" />
