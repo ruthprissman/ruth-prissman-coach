@@ -273,7 +273,7 @@ const RuthFrissmanWorkshop = () => {
                 <div className="grid md:grid-cols-3 gap-6 mt-8">
                   <div className="flex items-center gap-3 text-right">
                     <div className="w-3 h-3 bg-brand-purple rounded-full flex-shrink-0"></div>
-                    <span>מאמנת רגשית מוסמכת</span>
+                    <span>גדילה פנימית</span>
                   </div>
                   <div className="flex items-center gap-3 text-right">
                     <div className="w-3 h-3 bg-brand-purple rounded-full flex-shrink-0"></div>
