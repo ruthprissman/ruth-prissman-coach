@@ -22,7 +22,7 @@ const RuthFrissmanWorkshop = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
-    inquiry_title: 'Workshop Interest',
+    inquiry_title: '',
     email: '',
     phone: '',
     message: '',
@@ -76,7 +76,7 @@ const RuthFrissmanWorkshop = () => {
       // Reset form
       setFormData({
         full_name: '',
-        inquiry_title: 'Workshop Interest',
+        inquiry_title: '',
         email: '',
         phone: '',
         message: '',
