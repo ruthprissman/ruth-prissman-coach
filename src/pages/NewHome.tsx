@@ -319,25 +319,25 @@ export default function NewHome() {
           <h2 className="text-4xl font-alef font-bold text-center mb-16 reveal-on-scroll">התעודות שלי</h2>
           
           <div className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory justify-center">
-            <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-6 snap-center">
+            <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-4 snap-center">
               <img 
                 src="/assets/certificate-1.png" 
                 alt="תעודה מקצועית 1"
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-contain rounded-lg"
               />
             </div>
-            <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-6 snap-center">
+            <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-4 snap-center">
               <img 
                 src="/assets/certificate-2.png" 
                 alt="תעודה מקצועית 2"
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-contain rounded-lg"
               />
             </div>
-            <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-6 snap-center">
+            <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-4 snap-center">
               <img 
                 src="/assets/certificate-3.png" 
                 alt="תעודה מקצועית 3"
-                className="w-full h-full object-cover rounded-lg"
+                className="w-full h-full object-contain rounded-lg"
               />
             </div>
           </div>
