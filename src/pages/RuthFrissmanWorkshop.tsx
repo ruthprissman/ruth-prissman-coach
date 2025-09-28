@@ -418,10 +418,9 @@ const RuthFrissmanWorkshop = () => {
                       ))}
                     </div>
                     <blockquote className="text-lg italic mb-4 text-muted-foreground">
-                      "הסדנה שינתה לי את כל החוויה של התפילה. אני כבר לא אומרת מילים ריקות - 
-                      כל מילה הפכה משמעותית ומחברת אותי למשהו גדול יותר. תודה רות!"
+                      "תודה רות, היה מדהים, מרתק ומאוד מחבר ומתוק... ברגעים שהייתי היה נהדר."
                     </blockquote>
-                    <cite className="font-semibold text-text-primary">**מיכל, תל אביב**</cite>
+                    <cite className="font-semibold text-text-primary">**אילה**</cite>
                   </CardContent>
                 </Card>
                 
@@ -433,10 +432,9 @@ const RuthFrissmanWorkshop = () => {
                       ))}
                     </div>
                     <blockquote className="text-lg italic mb-4 text-muted-foreground">
-                      "חשבתי שאני יודעת לhitפלל, אבל רות הראתה לי שיש עולם שלם שלא הכרתי. 
-                      הכלים שקיבלתי עוזרים לי כל יום להתחבר לתפילה בצורה אחרת לגמרי."
+                      "הרגשתי שאת מאוד מחוברת לרצון, והלב והנתינה הגדולה... נקודות שנתנו כלים להתחבר לתפילה."
                     </blockquote>
-                    <cite className="font-semibold text-text-primary">**שרה, ירושלים**</cite>
+                    <cite className="font-semibold text-text-primary">**מרים**</cite>
                   </CardContent>
                 </Card>
               </div>
