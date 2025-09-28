@@ -766,6 +766,60 @@ export type Database = {
           },
         ]
       }
+      speaker_leads: {
+        Row: {
+          consent_privacy: boolean
+          created_at: string
+          date_option_1: string | null
+          date_option_2: string | null
+          date_option_3: string | null
+          email: string
+          format: string | null
+          full_name: string
+          group_type: string | null
+          id: number
+          inquiry_title: string
+          message: string | null
+          phone: string
+          source: string | null
+          status: string
+        }
+        Insert: {
+          consent_privacy?: boolean
+          created_at?: string
+          date_option_1?: string | null
+          date_option_2?: string | null
+          date_option_3?: string | null
+          email: string
+          format?: string | null
+          full_name: string
+          group_type?: string | null
+          id?: number
+          inquiry_title: string
+          message?: string | null
+          phone: string
+          source?: string | null
+          status?: string
+        }
+        Update: {
+          consent_privacy?: boolean
+          created_at?: string
+          date_option_1?: string | null
+          date_option_2?: string | null
+          date_option_3?: string | null
+          email?: string
+          format?: string | null
+          full_name?: string
+          group_type?: string | null
+          id?: number
+          inquiry_title?: string
+          message?: string | null
+          phone?: string
+          source?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       static_links: {
         Row: {
           fixed_text: string | null
