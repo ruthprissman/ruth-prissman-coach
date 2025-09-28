@@ -241,6 +241,7 @@ export default function NewHome() {
               </li>
             </ul>
 
+          <div style={{ textAlign: 'center' }}>
             <a 
               href="/contact" 
               className="cta-primary"
@@ -255,6 +256,7 @@ export default function NewHome() {
             >
               אני רוצה להתחיל
             </a>
+          </div>
           </div>
 
           {/* logo column */}
