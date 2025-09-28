@@ -41,9 +41,41 @@ const RuthFrissmanWorkshop = () => {
     }
   };
 
+  // Phone validation for Israeli numbers
+  const validatePhone = (phone: string): boolean => {
+    // Remove spaces, dashes and other formatting
+    const cleanPhone = phone.replace(/[\s-()]/g, '');
+    
+    // Israeli phone number patterns:
+    // Mobile: 05X-XXXXXXX (10 digits starting with 05)
+    // Landline: 0X-XXXXXXX (9-10 digits starting with 0)
+    // International: +972XXXXXXXXX or 972XXXXXXXXX
+    
+    const patterns = [
+      /^05[0-9]{8}$/, // Mobile: 05X-XXXXXXX
+      /^0[2-4,8-9][0-9]{7}$/, // Landline 9 digits: 02,03,04,08,09
+      /^0[2-4,8-9][0-9]{6,7}$/, // Landline 8-9 digits
+      /^\+?972[5][0-9]{8}$/, // International mobile
+      /^\+?972[2-4,8-9][0-9]{7}$/ // International landline
+    ];
+    
+    return patterns.some(pattern => pattern.test(cleanPhone));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    // Validate phone number
+    if (!validatePhone(formData.phone)) {
+      toast({
+        title: "מספר טלפון לא תקין",
+        description: "אנא הזיני מספר טלפון תקין (לדוגמה: 052-1234567)",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -536,10 +568,17 @@ const RuthFrissmanWorkshop = () => {
                       <div>
                         <label className="block text-sm font-medium mb-1 text-text-primary">טלפון *</label>
                         <Input
+                          type="tel"
                           required
                           value={formData.phone}
                           onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          placeholder="052-1234567"
+                          dir="ltr"
+                          className="text-right"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          פורמט: 052-1234567 או 02-1234567
+                        </p>
                       </div>
                     </div>
                     
