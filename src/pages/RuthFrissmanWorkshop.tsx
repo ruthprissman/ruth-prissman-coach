@@ -301,7 +301,7 @@ const RuthFrissmanWorkshop = () => {
                 <Card className="border-2 border-brand-purple/20 hover:border-brand-purple/40 transition-colors">
                   <CardHeader>
                     <CardTitle className="text-xl text-text-primary">חיבורים קטנים למילים גדולות</CardTitle>
-                    <CardDescription>סדנת יסוד לגילוי המשמעות האישית בתפילה</CardDescription>
+                    <CardDescription>סדנה על תפילה, רצון והנאה פנימית</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="mb-4 text-muted-foreground">
