@@ -80,7 +80,11 @@ export default {
           DEFAULT: '#6E59A5',
           dark: '#1A1F2C',
           darkest: '#4A148C',
-        }
+        },
+        'brand-purple': "hsl(var(--brand-purple))",
+        'brand-turquoise': "hsl(var(--brand-turquoise))",
+        'text-primary': "hsl(var(--text-primary))",
+        'surface-100': "hsl(var(--surface-100))",
       },
       borderRadius: {
         lg: "var(--radius)",
