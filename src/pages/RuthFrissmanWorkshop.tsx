@@ -172,8 +172,15 @@ const RuthFrissmanWorkshop = () => {
         <Navigation />
         
         {/* Hero Section */}
-        <section id="hero" className="relative py-20 lg:py-32 bg-gradient-to-br from-surface-100 to-white">
-          <div className="container mx-auto px-4">
+        <section 
+          id="hero" 
+          className="relative py-20 lg:py-32 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: 'url(/assets/glass-stones-beach.jpg)',
+          }}
+        >
+          <div className="absolute inset-0 bg-white/85"></div>
+          <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <div className="mb-8">
                 <img 
