@@ -417,17 +417,34 @@ export default function NewHome() {
               <img 
                 src="/assets/clinic-photo.png" 
                 alt="קליניקה של רות פריסמן - כסאות אפורים נוחים"
-                className="w-full rounded-lg shadow-lg"
+                className="w-full max-w-md rounded-lg shadow-lg"
               />
             </div>
             
-            <div className="text-center md:text-right reveal-on-scroll">
-              <h3 className="text-3xl md:text-4xl font-alef font-bold text-foreground mb-6">
-                בואי לגלות את עצמך המוכרת מחדש
+            <div className="text-right reveal-on-scroll" dir="rtl">
+              <h3 
+                className="font-alef font-bold mb-6"
+                style={{
+                  color: '#52327D',
+                  fontSize: 'clamp(2rem, 3vw, 3rem)'
+                }}
+              >
+                מרחב לחיבור ולהתבוננות מחודשת
               </h3>
-              <p className="text-lg font-heebo text-muted-foreground leading-relaxed">
-                מרחב בטוח ונוח שבו תוכלי להתחבר אליך, לרגשותיך ולחלומותיך.
-              </p>
+              <div 
+                className="font-heebo"
+                style={{
+                  color: '#141414',
+                  maxWidth: '450px',
+                  lineHeight: '1.6em'
+                }}
+              >
+                במפגש פרונטלי, בזום או בטלפון<br />
+                תוכלי לעצור את החיים לשעה –<br />
+                להרגיש אותם, להתבונן בהם מהצד,<br />
+                להגדיר ולהבין,<br />
+                להשתחרר, להאמין ולהודות.
+              </div>
             </div>
           </div>
         </div>
