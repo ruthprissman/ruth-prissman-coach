@@ -95,7 +95,7 @@ function App() {
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/workshop" element={<WorkshopLanding />} />
                 <Route path="/prayer-landing" element={<HebrewLandingPage />} />
-                <Route path="/workshops/ruth-frissman" element={<RuthFrissmanWorkshop />} />
+                <Route path="/main-workshops" element={<RuthFrissmanWorkshop />} />
 
                 {/* Admin auth routes */}
                 <Route path="/admin/login" element={<Login />} />

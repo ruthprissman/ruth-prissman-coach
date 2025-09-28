@@ -160,9 +160,9 @@ const RuthFrissmanWorkshop = () => {
         <meta name="description" content="מחברות מחדש בין המילים המוכרות ללב. סדנאות והרצאות חדשניות לחיבור עמוק יותר לתפילה עם רות פריסמן." />
         <meta property="og:title" content="רות פריסמן - חיבורים חדשים לתפילה" />
         <meta property="og:description" content="מחברות מחדש בין המילים המוכרות ללב. סדנאות והרצאות חדשניות לחיבור עמוק יותר לתפילה." />
-        <meta property="og:url" content="https://coach.ruthprissman.co.il/workshops/ruth-frissman" />
+        <meta property="og:url" content="https://coach.ruthprissman.co.il/main-workshops" />
         <meta property="og:type" content="website" />
-        <link rel="canonical" href="https://coach.ruthprissman.co.il/workshops/ruth-frissman" />
+        <link rel="canonical" href="https://coach.ruthprissman.co.il/main-workshops" />
         <script type="application/ld+json">
           {JSON.stringify(jsonLd)}
         </script>
