@@ -231,13 +231,6 @@ export default function NewHome() {
               } as React.CSSProperties}
               className="together-list-item">
                 ונתפלל יחד…
-                <span style={{
-                  display: 'block',
-                  width: '80px',
-                  height: '2px',
-                  background: '#3AB9C9',
-                  margin: '.8rem 0 1.2rem'
-                }}></span>
               </li>
             </ul>
 
