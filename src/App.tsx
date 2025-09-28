@@ -2,7 +2,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import Index from './pages/Index';
 import NewHome from './pages/NewHome';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -75,8 +74,7 @@ function App() {
               <ScrollToTop />
               <Routes>
                 {/* Public routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/new-home" element={<NewHome />} />
+                <Route path="/" element={<NewHome />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/stories" element={<Stories />} />
