@@ -424,10 +424,11 @@ export default function NewHome() {
                 className="font-alef font-bold mb-6"
                 style={{
                   color: '#52327D',
-                  fontSize: 'clamp(2rem, 3vw, 3rem)'
+                  fontSize: 'clamp(1.6rem, 2.5vw, 2.5rem)'
                 }}
               >
-                מרחב לחיבור ולהתבוננות מחודשת
+                מרחב לחיבור<br />
+                ולהתבוננות מחודשת
               </h3>
               <div 
                 className="font-heebo"
