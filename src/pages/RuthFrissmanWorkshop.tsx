@@ -217,7 +217,7 @@ const RuthFrissmanWorkshop = () => {
                   onClick={() => scrollToSection('about')}
                   className="text-brand-purple hover:underline"
                 >
-                  עלי
+                  מי אני?
                 </button>
                 <span className="text-muted-foreground">|</span>
                 <button 
@@ -256,7 +256,7 @@ const RuthFrissmanWorkshop = () => {
         <section id="about" className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-8 text-text-primary">עלי</h2>
+              <h2 className="text-3xl font-bold mb-8 text-text-primary">מי אני?</h2>
               <div className="text-lg leading-relaxed mb-8 text-muted-foreground">
                 <p className="mb-6">
                   כמאמנת רגשית ומלווה נשים, אני מאמינה שתפילה היא דרך חיבור עמוקה ואישית. 
