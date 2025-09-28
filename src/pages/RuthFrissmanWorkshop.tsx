@@ -315,7 +315,7 @@ const RuthFrissmanWorkshop = () => {
                       <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
                         <li>תגלי איך למצוא את עצמנו בתוך המילים המוכרות של הסידור.</li>
                         <li>תזהי את החסם האישי שלנו להתחברות ונהפוך אותו לכלי הכי חזק שלנו.</li>
-                        <li>טכניקות להפיכת התפילה לרגע של נוכחות</li>
+                        <li>תקבלי תרגילים מעשיים וקלים ליישום ליצירת חיבור.</li>
                       </ol>
                     </div>
                     
