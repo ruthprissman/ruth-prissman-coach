@@ -202,25 +202,13 @@ const RuthFrissmanWorkshop = () => {
                 מחברות מחדש בין המילים המוכרות ללב
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+              <div className="flex justify-center mb-12">
                 <Button 
                   size="lg"
-                  className="bg-brand-purple text-white hover:bg-brand-purple/90 px-8 py-3 text-lg"
+                  className="bg-brand-purple text-white hover:bg-brand-purple/90 px-12 py-4 text-lg rounded-full"
                   onClick={() => scrollToSection('contact')}
                 >
                   לבירור והרשמה
-                </Button>
-                <Button 
-                  variant="outline"
-                  size="lg"
-                  className="border-brand-turquoise text-brand-turquoise hover:bg-brand-turquoise/10 px-8 py-3 text-lg"
-                  onClick={() => {
-                    trackEvent('whatsapp_click', { source: 'hero' });
-                    window.open('https://wa.me/972556620273', '_blank');
-                  }}
-                  aria-label="פתיחת וואטסאפ לרות"
-                >
-                  שיחת היכרות בוואטסאפ
                 </Button>
               </div>
               
@@ -398,7 +386,7 @@ const RuthFrissmanWorkshop = () => {
                           placeholder="הערה (אופציונלי)" 
                           className="text-sm"
                         />
-                        <Button type="submit" size="sm" className="w-full">
+                        <Button type="submit" size="sm" className="w-full bg-brand-purple text-white hover:bg-brand-purple/90 rounded-full">
                           עדכני אותי
                         </Button>
                       </form>
@@ -570,7 +558,7 @@ const RuthFrissmanWorkshop = () => {
                   
                   <Button 
                     size="lg"
-                    className="w-full bg-brand-turquoise text-white hover:bg-brand-turquoise/90 md:hidden"
+                    className="w-full bg-brand-turquoise text-white hover:bg-brand-turquoise/90 md:hidden rounded-full"
                     onClick={() => {
                       trackEvent('whatsapp_click', { source: 'sticky' });
                       window.open('https://wa.me/972556620273', '_blank');
@@ -737,7 +725,7 @@ const RuthFrissmanWorkshop = () => {
                     <Button
                       type="submit"
                       size="lg"
-                      className="w-full bg-brand-purple text-white hover:bg-brand-purple/90"
+                      className="w-full bg-brand-purple text-white hover:bg-brand-purple/90 rounded-full"
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? 'שולח...' : 'שלחי את הפנייה'}
