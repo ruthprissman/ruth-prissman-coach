@@ -34,6 +34,11 @@
 
     --radius: 0.5rem;
 
+    --brand-purple: 270 50% 40%;
+    --brand-turquoise: 184 66% 50%;
+    --text-primary: 270 50% 25%;
+    --surface-100: 0 0% 98%;
+
     --purple-dark: #4A235A;
     --purple-light: #7E69AB;
     --purple-deep: #4B2E83;
