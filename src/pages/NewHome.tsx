@@ -321,21 +321,21 @@ export default function NewHome() {
               <img 
                 src="/assets/certificate-1.png" 
                 alt="תעודה מקצועית 1"
-                className="w-full h-full object-contain rounded-lg"
+                className="w-full h-full object-cover rounded-lg"
               />
             </div>
             <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-6 snap-center">
               <img 
                 src="/assets/certificate-2.png" 
                 alt="תעודה מקצועית 2"
-                className="w-full h-full object-contain rounded-lg"
+                className="w-full h-full object-cover rounded-lg"
               />
             </div>
             <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-6 snap-center">
               <img 
                 src="/assets/certificate-3.png" 
                 alt="תעודה מקצועית 3"
-                className="w-full h-full object-contain rounded-lg"
+                className="w-full h-full object-cover rounded-lg"
               />
             </div>
           </div>
