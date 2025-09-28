@@ -321,7 +321,7 @@ const RuthFrissmanWorkshop = () => {
                     
                     <div className="space-y-2 text-sm">
                       <p><strong>פורמט:</strong> זום או פרונטלי</p>
-                      <p><strong>משך:</strong> 2.5 שעות</p>
+                      <p><strong>משך:</strong> 1.5 שעות</p>
                       <p><strong>גודל קבוצה:</strong> 8-15 משתתפות</p>
                     </div>
                   </CardContent>
