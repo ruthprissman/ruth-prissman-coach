@@ -313,7 +313,7 @@ const RuthFrissmanWorkshop = () => {
                     <div className="mb-4">
                       <h4 className="font-semibold mb-2 text-text-primary">מה תרכשי בסדנה:</h4>
                       <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
-                        <li>כלים מעשיים לחיבור רגשי לתפילה</li>
+                        <li>תגלי איך למצוא את עצמנו בתוך המילים המוכרות של הסידור.</li>
                         <li>הבנה עמוקה של המשמעות האישית במילים</li>
                         <li>טכניקות להפיכת התפילה לרגע של נוכחות</li>
                       </ol>
