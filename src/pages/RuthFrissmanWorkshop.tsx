@@ -228,10 +228,10 @@ const RuthFrissmanWorkshop = () => {
                 </button>
                 <span className="text-muted-foreground">|</span>
                 <button 
-                  onClick={() => scrollToSection('audience')}
+                  onClick={() => scrollToSection('testimonials')}
                   className="text-brand-purple hover:underline"
                 >
-                  למי מתאים
+                  המלצות
                 </button>
                 <span className="text-muted-foreground">|</span>
                 <button 
@@ -398,71 +398,6 @@ const RuthFrissmanWorkshop = () => {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Audience Section */}
-        <section id="audience" className="py-16 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl font-bold mb-12 text-center text-text-primary">למי זה מתאים?</h2>
-              
-              <div className="grid md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-semibold mb-6 text-green-700 flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5" />
-                    הסדנה מתאימה לך אם:
-                  </h3>
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
-                      <span>את מתפללת אבל מרגישה מנותקת מהמילים</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
-                      <span>את רוצה לפתח קשר אישי ועמוק יותר לתפילה</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
-                      <span>את מחפשת דרכים חדשות לחוות רוחניות</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
-                      <span>את פתוחה ללמוד ולחקור את עצמך</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <CheckCircle className="w-4 h-4 text-green-600 mt-1 flex-shrink-0" />
-                      <span>את רוצה ליצור חיבור קבוצתי סביב תפילה</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="text-xl font-semibold mb-6 text-red-700 flex items-center gap-2">
-                    <XCircle className="w-5 h-5" />
-                    הסדנה פחות מתאימה אם:
-                  </h3>
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-3">
-                      <XCircle className="w-4 h-4 text-red-600 mt-1 flex-shrink-0" />
-                      <span>את מחפשת פתרונות מהירים וקלים</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <XCircle className="w-4 h-4 text-red-600 mt-1 flex-shrink-0" />
-                      <span>את לא מוכנה לשתף במעגל קבוצתי</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <XCircle className="w-4 h-4 text-red-600 mt-1 flex-shrink-0" />
-                      <span>את מעדיפה גישה תיאורטית בלבד</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <XCircle className="w-4 h-4 text-red-600 mt-1 flex-shrink-0" />
-                      <span>את מחפשת סדנה דתית-הלכתית</span>
-                    </li>
-                  </ul>
-                </div>
               </div>
             </div>
           </div>
