@@ -671,41 +671,6 @@ const RuthFrissmanWorkshop = () => {
           </div>
         </section>
 
-        {/* Footer Micro-copy */}
-        <div className="bg-brand-purple/5 py-8">
-          <div className="container mx-auto px-4 text-center">
-            <p className="text-lg italic mb-4 text-text-primary">
-              "תפילה היא זכות. בואי נחזיר לה את העדינות."
-            </p>
-            <div className="flex justify-center gap-4 text-sm">
-              <a 
-                href="tel:055-6620273"
-                className="text-brand-turquoise hover:underline"
-              >
-                055-6620273
-              </a>
-              <span className="text-muted-foreground">|</span>
-              <a 
-                href="mailto:ruth@ruthprissman.co.il"
-                className="text-brand-turquoise hover:underline"
-                onClick={() => trackEvent('email_click')}
-              >
-                ruth@ruthprissman.co.il
-              </a>
-              <span className="text-muted-foreground">|</span>
-              <button 
-                onClick={() => {
-                  trackEvent('whatsapp_click', { source: 'footer' });
-                  window.open('https://wa.me/972556620273', '_blank');
-                }}
-                className="text-brand-turquoise hover:underline"
-              >
-                וואטסאפ
-              </button>
-            </div>
-          </div>
-        </div>
-
         <Footer />
       </div>
     </>
