@@ -11,7 +11,6 @@ export const TestimonialsCarousel: React.FC = () => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const testimonialsPerPage = 3;
@@ -46,11 +45,10 @@ export const TestimonialsCarousel: React.FC = () => {
 
   const handleTestimonialClick = (testimonial: Testimonial) => {
     setSelectedTestimonial(testimonial);
-    setIsModalOpen(true);
   };
 
   const closeModal = () => {
-    setIsModalOpen(false);
+    setSelectedTestimonial(null);
   };
 
   // Don't render anything if there are no testimonials
@@ -119,7 +117,6 @@ export const TestimonialsCarousel: React.FC = () => {
       
       <TestimonialModal
         testimonial={selectedTestimonial}
-        isOpen={isModalOpen}
         onClose={closeModal}
       />
     </section>

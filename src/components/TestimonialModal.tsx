@@ -1,72 +1,106 @@
 
 import React from 'react';
-import { Testimonial } from '@/types/testimonial';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogClose
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { X } from 'lucide-react';
+import { Testimonial } from '@/types/testimonial';
 
 interface TestimonialModalProps {
   testimonial: Testimonial | null;
-  isOpen: boolean;
   onClose: () => void;
 }
 
 export const TestimonialModal: React.FC<TestimonialModalProps> = ({
   testimonial,
-  isOpen,
   onClose
 }) => {
   if (!testimonial) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md mx-auto">
-        <DialogHeader>
-          <DialogTitle className="text-center text-xl text-[#4A235A]">
-            {testimonial.name 
-              ? `המלצה מאת ${testimonial.name}` 
-              : 'המלצה'}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-          <X className="h-4 w-4" />
-          <span className="sr-only">סגור</span>
-        </DialogClose>
-        
-        <div className="py-4 text-right">
+    <Dialog open={!!testimonial} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-xl p-0">
+        <div className="relative">
+          <DialogClose className="absolute top-4 left-4 z-50 p-2 rounded-full bg-white/80 hover:bg-white transition-colors">
+            <X className="h-4 w-4" />
+          </DialogClose>
+          
           {testimonial.image_url ? (
-            <div className="flex justify-center mb-4">
+            /* Image testimonial */
+            <div className="p-8 text-center">
               <img 
                 src={testimonial.image_url} 
-                alt={`תמונה מאת ${testimonial.name || 'ממליץ'}`}
-                className="max-w-full h-auto rounded-md"
+                alt={`המלצה מ${testimonial.name || 'אנונימי'}`}
+                className="max-w-full h-auto mx-auto rounded-lg shadow-lg"
               />
+              <div className="mt-6 space-y-3">
+                <h3 className="text-2xl font-alef font-bold text-foreground">
+                  {testimonial.name || 'אנונימי'}
+                </h3>
+                {testimonial.summary && (
+                  <p className="text-lg font-heebo text-muted-foreground leading-relaxed">
+                    "{testimonial.summary}"
+                  </p>
+                )}
+                {testimonial.source_type && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <span className="w-2 h-2 bg-primary rounded-full"></span>
+                    <span>
+                      {testimonial.source_type === 'whatsapp' ? 'WhatsApp' : 
+                       testimonial.source_type === 'email' ? 'אימייל' : 'טלפון'}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-          ) : testimonial.text_full ? (
-            <p className="text-[#4A235A] text-right leading-relaxed">
-              {testimonial.text_full}
-            </p>
           ) : (
-            <p className="text-[#4A235A] text-right">
-              {testimonial.summary}
-            </p>
+            /* Text testimonial */
+            <div className="p-8" dir="rtl">
+              <div className="max-w-3xl mx-auto space-y-6">
+                <div className="text-center border-b pb-6 mb-8">
+                  <h3 className="text-3xl font-alef font-bold text-foreground mb-3">
+                    {testimonial.name || 'אנונימי'}
+                  </h3>
+                  {testimonial.source_type && (
+                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                      <span className="w-2 h-2 bg-primary rounded-full"></span>
+                      <span>
+                        {testimonial.source_type === 'whatsapp' ? 'WhatsApp' : 
+                         testimonial.source_type === 'email' ? 'אימייל' : 'טלפון'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="relative">
+                  <div className="absolute top-0 right-0 text-6xl text-primary/20 font-serif leading-none">
+                    "
+                  </div>
+                  <div className="pr-12">
+                    {testimonial.text_full ? (
+                      <div className="text-lg font-heebo text-foreground leading-relaxed whitespace-pre-line">
+                        {testimonial.text_full}
+                      </div>
+                    ) : (
+                      <div className="text-xl font-heebo text-foreground leading-relaxed">
+                        {testimonial.summary}
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute bottom-0 left-0 text-6xl text-primary/20 font-serif leading-none transform rotate-180">
+                    "
+                  </div>
+                </div>
+                
+                <div className="text-center pt-6 border-t">
+                  <div className="inline-flex items-center gap-3 px-6 py-3 bg-muted/50 rounded-full">
+                    <div className="w-3 h-3 bg-gradient-to-r from-primary to-secondary rounded-full"></div>
+                    <span className="font-heebo text-muted-foreground text-sm">
+                      המלצה אמיתית מלקוחה
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
-        </div>
-        
-        <div className="flex justify-center mt-2">
-          <Button 
-            onClick={onClose}
-            className="bg-gold hover:bg-gold-dark text-white"
-          >
-            סגור
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

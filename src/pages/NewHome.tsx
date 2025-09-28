@@ -5,10 +5,12 @@ import { fetchTestimonials } from '@/services/TestimonialService';
 import { Testimonial } from '@/types/testimonial';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
+import { TestimonialModal } from '@/components/TestimonialModal';
 
 export default function NewHome() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
+  const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null);
 
   const scrollytellingScenes = [
     {
@@ -352,31 +354,47 @@ export default function NewHome() {
               {testimonials.concat(testimonials).map((testimonial, index) => (
                 <div 
                   key={`${testimonial.id}-${index}`}
-                  className="testimonial-card bg-white rounded-lg shadow-lg p-6"
+                  className="testimonial-card bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 cursor-pointer group"
+                  onClick={() => setSelectedTestimonial(testimonial)}
                 >
                   <div className="text-right">
-                    <p className="text-foreground mb-4 leading-relaxed font-heebo">
-                      {testimonial.summary}
-                    </p>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="text-4xl text-primary/20 font-serif mb-2">"</div>
+                        <p className="text-foreground mb-4 leading-relaxed font-heebo text-base line-clamp-3 group-hover:text-primary transition-colors">
+                          {testimonial.summary}
+                        </p>
+                      </div>
+                    </div>
+                    
                     <div className="flex items-center justify-end gap-3">
                       {testimonial.image_url && (
                         <img 
                           src={testimonial.image_url} 
                           alt="תמונת לקוח"
-                          className="w-12 h-12 rounded-full object-cover"
+                          className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
                         />
                       )}
-                      <div>
-                        <p className="font-semibold text-foreground">
+                      <div className="text-right">
+                        <p className="font-semibold text-foreground font-alef">
                           {testimonial.name || 'אנונימי'}
                         </p>
                         {testimonial.source_type && (
-                          <p className="text-sm text-muted-foreground">
-                            {testimonial.source_type === 'whatsapp' ? 'WhatsApp' : 
-                             testimonial.source_type === 'email' ? 'אימייל' : 'טלפון'}
-                          </p>
+                          <div className="flex items-center gap-1 justify-end">
+                            <span className="text-xs text-muted-foreground font-heebo">
+                              {testimonial.source_type === 'whatsapp' ? 'WhatsApp' : 
+                               testimonial.source_type === 'email' ? 'אימייל' : 'טלפון'}
+                            </span>
+                            <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                          </div>
                         )}
                       </div>
+                    </div>
+                    
+                    <div className="mt-4 text-center">
+                      <span className="text-xs text-primary/60 font-heebo hover:text-primary transition-colors">
+                        לחצי לקריאת ההמלצה המלאה ←
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -384,6 +402,11 @@ export default function NewHome() {
             </div>
           </div>
         </div>
+        
+        <TestimonialModal 
+          testimonial={selectedTestimonial}
+          onClose={() => setSelectedTestimonial(null)}
+        />
       </section>
 
       {/* Clinic Section */}
