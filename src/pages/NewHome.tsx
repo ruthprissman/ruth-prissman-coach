@@ -243,18 +243,13 @@ export default function NewHome() {
 
             <a 
               href="/contact" 
-              className="cta-outline"
+              className="cta-primary"
               style={{
                 display: 'inline-block',
                 marginTop: '1.5rem',
                 padding: '.75rem 2.2rem',
-                border: '2px solid #8C4FB9',
-                borderRadius: '40px',
-                background: 'transparent',
-                color: '#8C4FB9',
                 fontFamily: 'Heebo, sans-serif',
                 fontSize: '1rem',
-                transition: 'background .15s, color .15s',
                 textDecoration: 'none'
               }}
             >
