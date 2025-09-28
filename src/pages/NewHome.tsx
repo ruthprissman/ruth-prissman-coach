@@ -316,8 +316,6 @@ export default function NewHome() {
       {/* Certificates Section */}
       <section className="py-20" style={{ backgroundColor: '#F5F5F7' }}>
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-alef font-bold text-center mb-16 reveal-on-scroll">התעודות שלי</h2>
-          
           <div className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory justify-center">
             <div className="flex-shrink-0 w-80 h-96 bg-white rounded-lg shadow-lg p-4 snap-center">
               <img 
