@@ -205,7 +205,7 @@ const RuthFrissmanWorkshop = () => {
               <div className="flex justify-center mb-12">
                 <Button 
                   size="lg"
-                  className="bg-brand-purple text-white hover:bg-brand-purple/90 px-12 py-4 text-lg rounded-full"
+                  className="bg-brand-purple text-white hover:bg-brand-purple/90 px-8 py-3 text-lg rounded-full shadow-lg"
                   onClick={() => scrollToSection('contact')}
                 >
                   לבירור והרשמה
