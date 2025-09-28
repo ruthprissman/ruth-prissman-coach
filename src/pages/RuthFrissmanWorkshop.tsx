@@ -194,7 +194,7 @@ const RuthFrissmanWorkshop = () => {
                 רות פריסמן
               </h1>
               
-              <p className="text-xl lg:text-2xl mb-4 text-muted-foreground italic">
+              <p className="text-xl lg:text-2xl mb-4 text-brand-purple">
                 מאמנת רגשית ומלווה נשים | הרצאות וסדנאות: חיבורים חדשים לתפילה
               </p>
               
