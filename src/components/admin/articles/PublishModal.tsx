@@ -306,44 +306,94 @@ const PublishModal: React.FC<PublishModalProps> = ({
             continue;
           }
           
-          if (option.id) {
-            await publicationService.retryPublication(option.id);
-            console.log('PublishModal: Publication with ID completed:', option.id);
-          } else {
-            const freshClient = await getFreshSupabaseClient();
+          // Check if specific recipients were selected for Email publication
+          const hasSelectedRecipients = (window as any).selectedEmailRecipients && 
+                                       Array.isArray((window as any).selectedEmailRecipients) && 
+                                       (window as any).selectedEmailRecipients.length > 0;
+          
+          if (option.publish_location === 'Email' && hasSelectedRecipients) {
+            console.log('PublishModal: Email publication with selected recipients detected');
             
-            const { data, error } = await freshClient
-              .from('article_publications')
-              .select('id')
-              .eq('content_id', article.id)
-              .eq('publish_location', option.publish_location)
-              .single();
+            // Import EmailPublicationService dynamically to send directly
+            const { EmailPublicationService } = await import('@/services/EmailPublicationService');
+            const emailService = new EmailPublicationService();
+            
+            // Send email directly with selected recipients
+            const result = await emailService.sendEmailPublication(article);
+            
+            console.log('PublishModal: Direct email sending result:', result);
+            
+            if (result.sent) {
+              // Update publication record to mark as published
+              const freshClient = await getFreshSupabaseClient();
               
-            if (error) throw error;
-            
-            if (data?.id) {
-              await publicationService.retryPublication(data.id);
-              console.log('PublishModal: Publication with found ID completed:', data.id);
+              if (option.id) {
+                await freshClient
+                  .from('article_publications')
+                  .update({ published_date: new Date().toISOString() })
+                  .eq('id', option.id);
+              } else {
+                // Find or create publication record
+                const { data: existingPub } = await freshClient
+                  .from('article_publications')
+                  .select('id')
+                  .eq('content_id', article.id)
+                  .eq('publish_location', 'Email')
+                  .maybeSingle();
+                
+                if (existingPub?.id) {
+                  await freshClient
+                    .from('article_publications')
+                    .update({ published_date: new Date().toISOString() })
+                    .eq('id', existingPub.id);
+                }
+              }
+              
+              console.log('PublishModal: Email sent to selected recipients successfully');
             } else {
-              console.log('PublishModal: No publication ID found, creating direct publication');
+              throw new Error('Failed to send email to selected recipients');
+            }
+          } else {
+            // Use normal retry flow for non-Email or when no specific recipients
+            if (option.id) {
+              await publicationService.retryPublication(option.id);
+              console.log('PublishModal: Publication with ID completed:', option.id);
+            } else {
+              const freshClient = await getFreshSupabaseClient();
               
-              const { data: newPub, error: insertError } = await freshClient
+              const { data, error } = await freshClient
                 .from('article_publications')
-                .insert({
-                  content_id: article.id,
-                  publish_location: option.publish_location,
-                  scheduled_date: option.scheduled_date // Allow null for immediate publishing
-                })
                 .select('id')
+                .eq('content_id', article.id)
+                .eq('publish_location', option.publish_location)
                 .single();
                 
-              if (insertError) throw insertError;
+              if (error) throw error;
               
-              if (newPub?.id) {
-                await publicationService.retryPublication(newPub.id);
-                console.log('PublishModal: New publication completed with ID:', newPub.id);
+              if (data?.id) {
+                await publicationService.retryPublication(data.id);
+                console.log('PublishModal: Publication with found ID completed:', data.id);
               } else {
-                throw new Error(`Failed to create publication record for ${option.publish_location}`);
+                console.log('PublishModal: No publication ID found, creating direct publication');
+                
+                const { data: newPub, error: insertError } = await freshClient
+                  .from('article_publications')
+                  .insert({
+                    content_id: article.id,
+                    publish_location: option.publish_location,
+                    scheduled_date: option.scheduled_date // Allow null for immediate publishing
+                  })
+                  .select('id')
+                  .single();
+                  
+                if (insertError) throw insertError;
+                
+                if (newPub?.id) {
+                  await publicationService.retryPublication(newPub.id);
+                  console.log('PublishModal: New publication completed with ID:', newPub.id);
+                } else {
+                  throw new Error(`Failed to create publication record for ${option.publish_location}`);
+                }
               }
             }
           }
