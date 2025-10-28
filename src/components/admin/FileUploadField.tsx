@@ -34,7 +34,7 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({
       objectsPerTick: 50,
     });
     
-    return new File([pdfBytes], file.name, {
+    return new File([pdfBytes as BlobPart], file.name, {
       type: 'application/pdf',
       lastModified: Date.now(),
     });
