@@ -94,7 +94,7 @@ const PrayerGuideLanding = () => {
       if (existingSubscriber) {
         if (existingSubscriber.is_subscribed) {
           // Resend the guide
-          const pdfUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_file/prayer-guide-ruth-prissman.pdf';
+          const pdfUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_file/GUID.pdf';
           
           const { error: emailError } = await supabase.functions.invoke('send-guide-email', {
             body: {
@@ -150,7 +150,7 @@ const PrayerGuideLanding = () => {
       }
 
       // Send email with PDF
-      const pdfUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_file/prayer-guide-ruth-prissman.pdf';
+      const pdfUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_file/GUID.pdf';
       
       const { error: emailError } = await supabase.functions.invoke('send-guide-email', {
         body: {
