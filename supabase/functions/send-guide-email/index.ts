@@ -165,7 +165,7 @@ const handler = async (req: Request): Promise<Response> => {
     const brevoPayload = {
       sender: {
         name: 'רות פריסמן',
-        email: 'ruthprissman@gmail.com'
+        email: 'ruth@ruthprissman.co.il'
       },
       to: [
         {
