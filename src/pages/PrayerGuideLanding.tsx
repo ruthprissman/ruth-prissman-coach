@@ -538,7 +538,7 @@ const PrayerGuideLanding = () => {
             textAlign: 'center',
             marginBottom: '3rem'
           }}>
-            מה תמצאי במדריך?
+            מה את מקבלת כשאת מצטרפת?
           </h2>
 
           <div style={{
