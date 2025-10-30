@@ -429,27 +429,9 @@ const PrayerGuideLanding = () => {
             display: 'flex',
             flexDirection: 'column-reverse',
             gap: '3rem',
-            alignItems: 'center'
+            alignItems: 'flex-start'
           }}
-          className="md:flex-row md:gap-8 md:items-start">
-            {/* Image Column - Left */}
-            <div style={{ 
-              flex: '0 0 auto',
-              width: '100%',
-              maxWidth: '450px'
-            }}>
-              <img
-                src="/assets/butterfly.png"
-                alt="פרפר - סמל לחופש ושחרור"
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                  borderRadius: '16px',
-                  filter: 'drop-shadow(0 10px 25px rgba(82, 50, 125, 0.15))'
-                }}
-              />
-            </div>
-
+          className="md:flex-row-reverse md:gap-8">
             {/* Text Column - Right */}
             <div style={{ flex: 1, width: '100%' }}>
               <h2 style={{
@@ -521,6 +503,24 @@ const PrayerGuideLanding = () => {
               >
                 רוצה את המדריך? לחצי כאן ←
               </button>
+            </div>
+
+            {/* Image Column - Left */}
+            <div style={{ 
+              flex: '0 0 auto',
+              width: '100%',
+              maxWidth: '450px'
+            }}>
+              <img
+                src="/assets/butterfly.png"
+                alt="פרפר - סמל לחופש ושחרור"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  borderRadius: '16px',
+                  filter: 'drop-shadow(0 10px 25px rgba(82, 50, 125, 0.15))'
+                }}
+              />
             </div>
           </div>
         </div>
