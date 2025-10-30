@@ -29,6 +29,27 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Sending guide email to:', email);
 
+    // Fetch signature image and convert to base64
+    const signatureUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/ruth-signature.png';
+    let signatureBase64 = '';
+    
+    try {
+      const signatureResponse = await fetch(signatureUrl);
+      if (signatureResponse.ok) {
+        const signatureBuffer = await signatureResponse.arrayBuffer();
+        const signatureBytes = new Uint8Array(signatureBuffer);
+        let signatureBinary = '';
+        const chunkSize = 8192;
+        for (let i = 0; i < signatureBytes.byteLength; i += chunkSize) {
+          const chunk = signatureBytes.subarray(i, Math.min(i + chunkSize, signatureBytes.byteLength));
+          signatureBinary += String.fromCharCode.apply(null, Array.from(chunk));
+        }
+        signatureBase64 = btoa(signatureBinary);
+      }
+    } catch (error) {
+      console.error('Error fetching signature image:', error);
+    }
+
     // Generate HTML email content
     const htmlContent = `
 <!DOCTYPE html>
@@ -37,105 +58,128 @@ const handler = async (req: Request): Promise<Response> => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
+    
     body { 
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-      background-color: #f8f5f2;
+      font-family: 'Assistant', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background-color: #faf8ff;
       direction: rtl;
       text-align: right;
       margin: 0;
       padding: 0;
+      line-height: 1.7;
+    }
+    .email-wrapper {
+      background-color: #faf8ff;
+      padding: 40px 20px;
     }
     .container { 
-      max-width: 600px; 
+      max-width: 640px; 
       margin: 0 auto; 
-      background: white;
-      padding: 40px 30px;
+      background: #ffffff;
+      padding: 40px 32px;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     }
-    .header { 
+    .title { 
       text-align: center; 
-      color: #6B46C1; 
-      margin-bottom: 30px; 
-      border-bottom: 2px solid #E9D8FD;
-      padding-bottom: 20px;
-    }
-    .header h1 {
-      margin: 0 0 10px 0;
+      color: #3b2a7b;
       font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 32px 0;
+      line-height: 1.4;
     }
     .content { 
-      color: #2D3748; 
-      line-height: 1.8; 
-      font-size: 16px; 
+      color: #3b2a7b; 
+      line-height: 1.7; 
+      font-size: 16px;
+      font-weight: 400;
     }
-    .highlight { 
-      background-color: #E9D8FD; 
-      padding: 20px; 
-      border-radius: 8px; 
-      margin: 20px 0;
-      border-right: 4px solid #6B46C1;
+    .content p {
+      margin: 0 0 20px 0;
     }
-    .highlight strong {
-      color: #6B46C1;
-      font-size: 18px;
+    .content strong {
+      font-weight: 600;
+      color: #5c3db3;
     }
-    ul {
-      margin: 15px 0;
-      padding-right: 20px;
+    .signature-section {
+      margin-top: 40px;
+      text-align: center;
+      padding-top: 30px;
+      border-top: 1px solid rgba(82, 50, 125, 0.1);
     }
-    ul li {
-      margin-bottom: 10px;
+    .signature-image {
+      max-width: 180px;
+      height: auto;
+      margin: 0 auto 12px auto;
+      display: block;
+    }
+    .signature-text {
+      color: #5c3db3;
+      font-size: 14px;
+      font-weight: 400;
+      margin: 0;
+      line-height: 1.5;
     }
     .footer { 
       text-align: center; 
-      color: #718096; 
-      font-size: 14px; 
-      margin-top: 40px; 
-      border-top: 1px solid #E2E8F0;
+      color: #777; 
+      font-size: 12px; 
+      margin-top: 32px; 
       padding-top: 20px;
+      border-top: 1px solid rgba(82, 50, 125, 0.1);
+      line-height: 1.6;
+    }
+    .footer p {
+      margin: 8px 0;
     }
     .footer a {
-      color: #6B46C1;
-      text-decoration: none;
+      color: #5c3db3;
+      text-decoration: underline;
     }
-    .signature {
-      margin-top: 30px;
-      font-style: italic;
-      color: #4A5568;
+    @media only screen and (max-width: 640px) {
+      .container {
+        padding: 32px 24px;
+      }
+      .title {
+        font-size: 24px;
+      }
+      .content {
+        font-size: 15px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>שלום ${firstName}! 🙏</h1>
-      <p style="margin: 0; color: #805AD5; font-size: 18px;">המדריך שלך כאן - מצורף למייל הזה</p>
-    </div>
-    
-    <div class="content">
-      <p>שמחתי שהחלטת להצטרף!</p>
+  <div class="email-wrapper">
+    <div class="container">
+      <h1 class="title">החוברת כאן! – להתפלל כשאין זמן</h1>
       
-      <div class="highlight">
-        <strong>📎 המדריך מצורף למייל הזה</strong><br>
-        <span style="font-size: 16px;">"להתפלל כשאין זמן – סדר קדימויות התפילה לנשים"</span>
+      <div class="content">
+        <p>שלום ${firstName},</p>
+        
+        <p>שמחה שהצטרפת 💜</p>
+        
+        <p>מצורף המדריך המעשי <strong>"להתפלל כשאין זמן – סדר קדימויות התפילה לנשים"</strong><br>
+        שיעזור לך לראות את סדר קדימויות התפילה בצורה ברורה.<br>
+        גלי על מה מדלגים קודם כשהזמן קצר, בלי לוותר על החיבור.</p>
+        
+        <p>בכל שבוע אשלח לך מייל עם תוכן מחבר למילים הגדולות של אנשי כנסת הגדולה –<br>
+        תובנות קצרות, חיבור ללב, וקרן אור קטנה לשגרה שלך.</p>
+        
+        <p>אם יום אחד תרגישי שמספיק לך, תמיד תוכלי להסיר את עצמך בלחיצה אחת –<br>
+        אבל אני מקווה שתישארי איתי קצת... ✨</p>
       </div>
       
-      <p><strong>במדריך תמצאי:</strong></p>
-      <ul>
-        <li>✨ סדר קדימויות ברור לתפילה</li>
-        <li>⏰ על מה מדלגים קודם כשהזמן קצר</li>
-        <li>💫 איך להפוך תפילה לחוויה של חיבור</li>
-      </ul>
+      <div class="signature-section">
+        ${signatureBase64 ? `<img src="data:image/png;base64,${signatureBase64}" alt="חתימה של רות פריסמן" class="signature-image">` : ''}
+        <p class="signature-text">רות פריסמן – מאמנת רגשית ומנחת סדנאות תפילה ונפש</p>
+      </div>
       
-      <p>בכל שבוע תקבלי ממני מייל קצר עם <strong>"חיבורים קטנים"</strong> - רעיונות מעשיים לחיים רוחניים משמעותיים, בלי הפרזות ובלי לחץ.</p>
-      
-      <p>אני כאן בשבילך בכל שאלה או רעיון שעולה.</p>
-      
-      <p class="signature">בברכה,<br>רות פריסמן</p>
-    </div>
-    
-    <div class="footer">
-      <p>קיבלת את המייל הזה כי נרשמת לקבלת תכנים מרות פריסמן</p>
-      <p>רוצה להסיר את עצמך? <a href="https://ruthprissman.co.il/unsubscribe">לחצי כאן</a></p>
+      <div class="footer">
+        <p>הודעה זו נשלחה אליך כי נרשמת לקבלת המדריך 'להתפלל כשאין זמן'.</p>
+        <p>ניתן להסיר את עצמך בלחיצה אחת בתחתית כל מייל עתידי.</p>
+      </div>
     </div>
   </div>
 </body>
@@ -173,7 +217,7 @@ const handler = async (req: Request): Promise<Response> => {
           name: firstName
         }
       ],
-      subject: 'המדריך שלך בדרך! – להורדה: להתפלל כשאין זמן',
+      subject: 'החוברת כאן! – להתפלל כשאין זמן',
       htmlContent: htmlContent,
       attachment: [
         {
