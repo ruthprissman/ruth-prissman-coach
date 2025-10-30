@@ -427,15 +427,15 @@ const PrayerGuideLanding = () => {
         }}>
           <div style={{
             display: 'flex',
-            flexDirection: 'row',
             gap: '3rem',
-            alignItems: 'center',
             marginBottom: '3rem'
-          }}>
-            {/* Text Column - 60% */}
+          }}
+          className="flex-col md:flex-row md:items-center items-start">
+            {/* Text Column - 100% on mobile, 60% on desktop */}
             <div style={{ 
-              width: '60%'
-            }}>
+              width: '100%'
+            }}
+            className="md:w-[60%]">
               <h2 style={{
                 fontFamily: 'Alef, sans-serif',
                 fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -504,10 +504,11 @@ const PrayerGuideLanding = () => {
               </div>
             </div>
 
-            {/* Image Column - 40% */}
+            {/* Image Column - 100% on mobile, 40% on desktop */}
             <div style={{ 
-              width: '40%'
-            }}>
+              width: '100%'
+            }}
+            className="md:w-[40%]">
               <img
                 src="/assets/butterfly.png"
                 alt="פרפר - סמל לחופש ושחרור"
