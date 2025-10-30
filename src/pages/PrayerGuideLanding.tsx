@@ -282,20 +282,10 @@ const PrayerGuideLanding = () => {
             fontWeight: 'bold',
             color: '#52327D',
             textAlign: 'center',
-            marginBottom: '1rem'
-          }}>
-            קבלי את המדריך החינמי שלך
-          </h2>
-
-          <p style={{
-            fontFamily: 'Heebo, sans-serif',
-            fontSize: '1.125rem',
-            color: '#4A5568',
-            textAlign: 'center',
             marginBottom: '2.5rem'
           }}>
-            רק מלאי פרטים ותקבלי את המדריך ישירות למייל
-          </p>
+            קבלי את החוברת
+          </h2>
 
           <form onSubmit={handleSubmit} style={{
             display: 'flex',
@@ -404,7 +394,7 @@ const PrayerGuideLanding = () => {
                   cursor: 'pointer'
                 }}
               >
-                אני מאשרת קבלת תוכן וחומרים שיווקיים באופן תקופתי. ניתן להסיר הסכמה בכל עת.
+                בהרשמתי אני מסכימה לקבל מרות פריסמן תכנים במייל בנושאי תפילה והתפתחות אישית, כולל מדריכים, תוכן שבועי, ועדכונים על סדנאות והרצאות. ניתן להסיר את עצמי מהרשימה בכל עת בלחיצה אחת.
               </label>
             </div>
 
