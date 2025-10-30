@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowDown, Check, Target, Clock, Sparkles } from 'lucide-react';
+import { ArrowDown, Check, FileText, Mail, Users } from 'lucide-react';
 
 const PrayerGuideLanding = () => {
   const { toast } = useToast();
@@ -553,19 +553,19 @@ const PrayerGuideLanding = () => {
           }}>
             {[
               {
-                icon: Target,
-                title: 'כיוון ברור',
-                description: 'איך למצוא כיוון אישי בתפילה, גם כשהמילים נראות תמיד אותו דבר'
+                icon: FileText,
+                title: 'חוברת להורדה',
+                description: 'מיד לאחר ההרשמה, תקבלי למייל קובץ PDF בן 3 עמודים – ברור, ממוקד ונגיש – עם כל מה שאת צריכה לדעת על סדר הקדימויות ההלכתי בתפילה.\nבלי בלבול.\nבלי רגשות אשם.\nעם סדר, ביטחון ובהירות – גם כשיש רק כמה דקות.'
               },
               {
-                icon: Clock,
-                title: 'מעשי וקצר',
-                description: 'תובנות שאפשר ליישם מיד – בלי לדרוש שעות נוספות ביום'
+                icon: Mail,
+                title: 'תוכן שבועי – "חיבורים קטנים למילים גדולות"',
+                description: 'בכל שבוע נצלול יחד לקטע קצר מהתפילה – מתוך החלקים שנשים לרוב כן מצליחות לומר:\nכמו ברכות השחר, שמע ישראל, שמונה עשרה.\nבכל שבוע תגלי:\nעומק והפתעה במילים המוכרות\nרובד נוסף של חיבור\nתובנה ומבט חדש על התפילה'
               },
               {
-                icon: Sparkles,
-                title: 'חיבור אמיתי',
-                description: 'טכניקות פשוטות להתחבר לתפילה מהלב, לא רק מהסידור'
+                icon: Users,
+                title: 'הרצאות וסדנאות',
+                description: 'מעת לעת תקבלי עדכון על הרצאות וסדנאות עומק בנושא תפילה ונפש – למי שרוצה להמשיך להעמיק מעבר למייל.'
               }
             ].map((benefit, index) => (
               <div
@@ -612,7 +612,8 @@ const PrayerGuideLanding = () => {
                   fontFamily: 'Heebo, sans-serif',
                   fontSize: '1.125rem',
                   color: '#4A5568',
-                  lineHeight: 1.8
+                  lineHeight: 1.8,
+                  whiteSpace: 'pre-line'
                 }}>
                   {benefit.description}
                 </p>
