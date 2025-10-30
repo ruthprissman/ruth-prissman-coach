@@ -658,7 +658,8 @@ const PrayerGuideLanding = () => {
             color: '#52327D',
             marginBottom: '2rem'
           }}>
-            מי אני?
+            נעים מאוד, אני רות פריסמן<br />
+            מאמנת רגשית ומנחת סדנאות על תפילה ונפש.
           </h2>
 
           <div style={{
