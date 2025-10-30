@@ -34,10 +34,15 @@ const handler = async (req: Request): Promise<Response> => {
     let signatureBase64 = '';
     
     try {
+      console.log('Fetching signature image from:', signatureUrl);
       const signatureResponse = await fetch(signatureUrl);
+      console.log('Signature response status:', signatureResponse.status, signatureResponse.statusText);
+      
       if (signatureResponse.ok) {
         const signatureBuffer = await signatureResponse.arrayBuffer();
         const signatureBytes = new Uint8Array(signatureBuffer);
+        console.log('Signature image size:', signatureBytes.byteLength, 'bytes');
+        
         let signatureBinary = '';
         const chunkSize = 8192;
         for (let i = 0; i < signatureBytes.byteLength; i += chunkSize) {
@@ -45,6 +50,9 @@ const handler = async (req: Request): Promise<Response> => {
           signatureBinary += String.fromCharCode.apply(null, Array.from(chunk));
         }
         signatureBase64 = btoa(signatureBinary);
+        console.log('Signature converted to base64, length:', signatureBase64.length);
+      } else {
+        console.error('Failed to fetch signature:', signatureResponse.status, signatureResponse.statusText);
       }
     } catch (error) {
       console.error('Error fetching signature image:', error);
