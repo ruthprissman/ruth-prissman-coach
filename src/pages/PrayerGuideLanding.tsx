@@ -423,112 +423,117 @@ const PrayerGuideLanding = () => {
       }}>
         <div style={{
           maxWidth: '1200px',
-          margin: '0 auto',
-          display: 'flex',
-          flexDirection: 'row',
-          gap: '3rem',
-          alignItems: 'center'
+          margin: '0 auto'
         }}>
-          {/* Text Column - 60% */}
-          <div style={{ 
-            width: '60%'
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: '3rem',
+            alignItems: 'center',
+            marginBottom: '3rem'
           }}>
-            <h2 style={{
-              fontFamily: 'Alef, sans-serif',
-              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
-              fontWeight: 'bold',
-              color: '#52327D',
-              marginBottom: '1.5rem'
+            {/* Text Column - 60% */}
+            <div style={{ 
+              width: '60%'
             }}>
-              מרגישה שהתפילה הפכה לעוד משימה ברשימה העמוסה של היום?
-            </h2>
+              <h2 style={{
+                fontFamily: 'Alef, sans-serif',
+                fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+                fontWeight: 'bold',
+                color: '#52327D',
+                marginBottom: '1.5rem'
+              }}>
+                מרגישה שהתפילה הפכה לעוד משימה ברשימה העמוסה של היום?
+              </h2>
 
-            <div style={{
-              fontFamily: 'Heebo, sans-serif',
-              fontSize: '1.125rem',
-              color: '#4A5568',
-              lineHeight: 1.8,
-              marginBottom: '2rem'
-            }}>
-              <p style={{ marginBottom: '0.3rem' }}>
-                מכירה את התחושה הזו – שהתפילה היא עוד מטלה שמחכה ל"וי"?
-              </p>
-              <p style={{ marginBottom: '0.3rem' }}>
-                שהמילים יוצאות מהפה – אבל הראש רץ למיליון כיוונים?
-              </p>
-              <p style={{ marginBottom: '0.3rem' }}>
-                קרה לך פעם שסיימת להתפלל והרגשת… כלום? ריק?
-              </p>
-              <p style={{ marginBottom: '0.3rem' }}>
-                שלא היה שם חיבור או סיפוק? תחושה שמישהו מקשיב? ועונה?
-              </p>
-              <p style={{ marginBottom: '0.3rem' }}>
-                לתפילה מתלווה לפעמים תחושת אשמה? החמצה?
-              </p>
-              <p style={{ marginBottom: '1rem' }}>
-                ולפעמים, כשכבר יש כמה דקות של שקט – את לא בטוחה מה את צריכה להגיד, ומה את רוצה להגיד?
-              </p>
-              
-              <p style={{ marginBottom: '0.5rem', fontWeight: '600', color: '#52327D' }}>
-                המדריך "להתפלל כשאין זמן – סדר התפילה לנשים עסוקות", והמאמרים השבועיים שלי – נוצרו בדיוק בשבילך.
-              </p>
-              
-              <p style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
-                המדריך הוא לא ספר הלכה! אלא תמצות מדוייק מתוך ספרי הלכה, מעשי ופרקטי שמביא בדיוק:
-              </p>
-              
-              <div style={{ marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem', marginBottom: '0.3rem' }}>
-                  <ListOrdered size={20} style={{ color: '#5FA6A6', marginTop: '0.2rem', flexShrink: 0 }} />
-                  <span>סדר הקדימויות בתפילה. תדעי על מה את מדלגת כשהזמן דוחק או הילדים מחכים.</span>
+              <div style={{
+                fontFamily: 'Heebo, sans-serif',
+                fontSize: '1.125rem',
+                color: '#4A5568',
+                lineHeight: 1.8,
+                marginBottom: '2rem'
+              }}>
+                <p style={{ marginBottom: '0.3rem' }}>
+                  מכירה את התחושה הזו – שהתפילה היא עוד מטלה שמחכה ל"וי"?
+                </p>
+                <p style={{ marginBottom: '0.3rem' }}>
+                  שהמילים יוצאות מהפה – אבל הראש רץ למיליון כיוונים?
+                </p>
+                <p style={{ marginBottom: '0.3rem' }}>
+                  קרה לך פעם שסיימת להתפלל והרגשת… כלום? ריק?
+                </p>
+                <p style={{ marginBottom: '0.3rem' }}>
+                  שלא היה שם חיבור או סיפוק? תחושה שמישהו מקשיב? ועונה?
+                </p>
+                <p style={{ marginBottom: '0.3rem' }}>
+                  לתפילה מתלווה לפעמים תחושת אשמה? החמצה?
+                </p>
+                <p style={{ marginBottom: '1rem' }}>
+                  ולפעמים, כשכבר יש כמה דקות של שקט – את לא בטוחה מה את צריכה להגיד, ומה את רוצה להגיד?
+                </p>
+                
+                <p style={{ marginBottom: '0.5rem', fontWeight: '600', color: '#52327D' }}>
+                  המדריך "להתפלל כשאין זמן – סדר התפילה לנשים עסוקות", והמאמרים השבועיים שלי – נוצרו בדיוק בשבילך.
+                </p>
+                
+                <p style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
+                  המדריך הוא לא ספר הלכה! אלא תמצות מדוייק מתוך ספרי הלכה, מעשי ופרקטי שמביא בדיוק:
+                </p>
+                
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem', marginBottom: '0.3rem' }}>
+                    <ListOrdered size={20} style={{ color: '#5FA6A6', marginTop: '0.2rem', flexShrink: 0 }} />
+                    <span>סדר הקדימויות בתפילה. תדעי על מה את מדלגת כשהזמן דוחק או הילדים מחכים.</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem', marginBottom: '0.3rem' }}>
+                    <Lightbulb size={20} style={{ color: '#5FA6A6', marginTop: '0.2rem', flexShrink: 0 }} />
+                    <span>תקבלי בהירות על הגדרת מצוות התפילה.</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem', marginBottom: '0.3rem' }}>
+                    <Shield size={20} style={{ color: '#5FA6A6', marginTop: '0.2rem', flexShrink: 0 }} />
+                    <span>אפשרות להתפלל בביטחון גם כשיש לך רק כמה דקות.</span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem', marginBottom: '0.3rem' }}>
-                  <Lightbulb size={20} style={{ color: '#5FA6A6', marginTop: '0.2rem', flexShrink: 0 }} />
-                  <span>תקבלי בהירות על הגדרת מצוות התפילה.</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem', marginBottom: '0.3rem' }}>
-                  <Shield size={20} style={{ color: '#5FA6A6', marginTop: '0.2rem', flexShrink: 0 }} />
-                  <span>אפשרות להתפלל בביטחון גם כשיש לך רק כמה דקות.</span>
-                </div>
+                
+                <p style={{ marginBottom: '0.3rem' }}>
+                  בדיוור השבועי תקבלי מידי שבוע חמצן וחיבור למילים הגדולות של אנשי כנסת הגדולה.
+                </p>
+                <p style={{ marginBottom: '1.5rem' }}>
+                  תגלי מבט חדש על המילים המוכרות. תובנות מפתיעות וחיבור לנשמה.
+                </p>
               </div>
-              
-              <p style={{ marginBottom: '0.3rem' }}>
-                בדיוור השבועי תקבלי מידי שבוע חמצן וחיבור למילים הגדולות של אנשי כנסת הגדולה.
-              </p>
-              <p style={{ marginBottom: '1.5rem' }}>
-                תגלי מבט חדש על המילים המוכרות. תובנות מפתיעות וחיבור לנשמה.
-              </p>
             </div>
 
-            <div style={{ textAlign: 'center' }}>
-              <button
-                onClick={scrollToSignup}
-                className="cta-primary"
+            {/* Image Column - 40% */}
+            <div style={{ 
+              width: '40%'
+            }}>
+              <img
+                src="/assets/butterfly.png"
+                alt="פרפר - סמל לחופש ושחרור"
                 style={{
-                  fontFamily: 'Heebo, sans-serif',
-                  fontSize: '1.25rem',
-                  padding: '1rem 2.5rem'
+                  width: '100%',
+                  height: 'auto',
+                  borderRadius: '16px',
+                  filter: 'drop-shadow(0 10px 25px rgba(82, 50, 125, 0.15))'
                 }}
-              >
-                רוצה את המדריך? לחצי כאן ←
-              </button>
+              />
             </div>
           </div>
 
-          {/* Image Column - 40% */}
-          <div style={{ 
-            width: '40%'
-          }}>
-            <img
-              src="/assets/butterfly.png"
-              alt="פרפר - סמל לחופש ושחרור"
+          {/* Button - Centered for entire page width */}
+          <div style={{ textAlign: 'center' }}>
+            <button
+              onClick={scrollToSignup}
+              className="cta-primary"
               style={{
-                width: '100%',
-                height: 'auto',
-                borderRadius: '16px',
-                filter: 'drop-shadow(0 10px 25px rgba(82, 50, 125, 0.15))'
+                fontFamily: 'Heebo, sans-serif',
+                fontSize: '1.25rem',
+                padding: '1rem 2.5rem'
               }}
-            />
+            >
+              רוצה את המדריך? לחצי כאן ←
+            </button>
           </div>
         </div>
       </section>
