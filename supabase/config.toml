@@ -60,6 +60,9 @@ enable_confirmations = false
 [functions.send-email]
 verify_jwt = false
 
+[functions.send-guide-email]
+verify_jwt = false
+
 [functions.schedule-email]
 verify_jwt = false
 

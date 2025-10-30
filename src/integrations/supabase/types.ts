@@ -152,27 +152,33 @@ export type Database = {
       }
       content_subscribers: {
         Row: {
+          consent: boolean | null
           email: string
           first_name: string | null
           id: number
           is_subscribed: boolean | null
           joined_at: string | null
+          source: string | null
           unsubscribed_at: string | null
         }
         Insert: {
+          consent?: boolean | null
           email: string
           first_name?: string | null
           id?: number
           is_subscribed?: boolean | null
           joined_at?: string | null
+          source?: string | null
           unsubscribed_at?: string | null
         }
         Update: {
+          consent?: boolean | null
           email?: string
           first_name?: string | null
           id?: number
           is_subscribed?: boolean | null
           joined_at?: string | null
+          source?: string | null
           unsubscribed_at?: string | null
         }
         Relationships: []
@@ -1068,10 +1074,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      clean_expired_publication_locks: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      clean_expired_publication_locks: { Args: never; Returns: number }
     }
     Enums: {
       content_type: "article" | "poem" | "humor"

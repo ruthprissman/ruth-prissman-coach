@@ -45,6 +45,7 @@ import Terms from './pages/Terms';
 import WorkshopLanding from './pages/WorkshopLanding';
 import HebrewLandingPage from './components/HebrewLandingPage';
 import RuthFrissmanWorkshop from './pages/RuthFrissmanWorkshop';
+import PrayerGuideLanding from './pages/PrayerGuideLanding';
 import { ScrollToTop } from './components/ScrollToTop';
 import { runSessionDiagnostics } from './utils/SessionDiagnostics';
 
@@ -95,6 +96,7 @@ function App() {
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/workshop" element={<WorkshopLanding />} />
                 <Route path="/prayer-landing" element={<HebrewLandingPage />} />
+                <Route path="/prayer-guide" element={<PrayerGuideLanding />} />
                 <Route path="/main-workshops" element={<RuthFrissmanWorkshop />} />
 
                 {/* Admin auth routes */}

@@ -15,6 +15,13 @@ export const landingPages: LandingPageConfig[] = [
     publicPath: '/prayer-landing',
     defaultEmailSubject: 'הסוד להפוך תפילה מעוד חובה למילים של חיבור אמיתי 🙏',
     generateHtml: generatePrayerLandingEmailHTML
+  },
+  {
+    id: 'prayer-guide',
+    name: 'מדריך תפילה',
+    publicPath: '/prayer-guide',
+    defaultEmailSubject: 'המדריך שלך בדרך! – להורדה: להתפלל כשאין זמן',
+    generateHtml: () => '' // Email is sent via Edge Function with PDF attachment
   }
   // כאן אפשר להוסיף דפי נחיתה נוספים בעתיד
 ];
