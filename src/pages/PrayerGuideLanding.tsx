@@ -491,17 +491,19 @@ const PrayerGuideLanding = () => {
               </p>
             </div>
 
-            <button
-              onClick={scrollToSignup}
-              className="cta-primary"
-              style={{
-                fontFamily: 'Heebo, sans-serif',
-                fontSize: '1.25rem',
-                padding: '1rem 2.5rem'
-              }}
-            >
-              רוצה את המדריך? לחצי כאן ←
-            </button>
+            <div style={{ textAlign: 'center' }}>
+              <button
+                onClick={scrollToSignup}
+                className="cta-primary"
+                style={{
+                  fontFamily: 'Heebo, sans-serif',
+                  fontSize: '1.25rem',
+                  padding: '1rem 2.5rem'
+                }}
+              >
+                רוצה את המדריך? לחצי כאן ←
+              </button>
+            </div>
           </div>
 
           {/* Image Column - 40% */}
