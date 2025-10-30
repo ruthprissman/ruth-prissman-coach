@@ -208,13 +208,14 @@ const PrayerGuideLanding = () => {
         overflow: 'hidden',
         padding: '3rem 1.5rem'
       }}>
-        {/* Background Image - NO overlay */}
+        {/* Background Image - Very high transparency */}
         <div style={{
           position: 'absolute',
           inset: 0,
           backgroundImage: 'url("/assets/pearl-hero-bg.png")',
           backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundPosition: 'center',
+          opacity: 0.08
         }} />
 
         {/* Content */}
