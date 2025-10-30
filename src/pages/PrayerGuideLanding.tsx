@@ -227,7 +227,7 @@ const PrayerGuideLanding = () => {
         }}>
           <h1 style={{
             fontFamily: 'Alef, sans-serif',
-            fontSize: 'clamp(2.25rem, 5vw, 4rem)',
+            fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
             fontWeight: 'bold',
             color: '#52327D',
             marginBottom: '1.5rem',
