@@ -198,26 +198,6 @@ const PrayerGuideLanding = () => {
         <meta name="description" content="קבלי את המדריך החינמי: להתפלל כשאין זמן. מדריך מעשי לתפילה משמעותית גם בלוח זמנים עמוס." />
       </Helmet>
 
-      {/* Sticky Top Bar with Logo */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(82, 50, 125, 0.1)',
-        padding: '0.75rem 0',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
-      }}>
-        <div className="container mx-auto px-4 flex justify-center">
-          <img 
-            src="/assets/logo.png" 
-            alt="לוגו רות פריסמן"
-            style={{ height: '56px', width: 'auto' }}
-          />
-        </div>
-      </div>
-
       {/* Hero Section */}
       <section dir="rtl" style={{
         minHeight: '65vh',
@@ -226,17 +206,15 @@ const PrayerGuideLanding = () => {
         justifyContent: 'center',
         position: 'relative',
         overflow: 'hidden',
-        padding: '3rem 1.5rem',
-        background: 'linear-gradient(135deg, rgba(82, 50, 125, 0.03) 0%, rgba(95, 166, 166, 0.03) 100%)'
+        padding: '3rem 1.5rem'
       }}>
-        {/* Background Image */}
+        {/* Background Image - NO overlay */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: 'url("/assets/pearl-bg.png")',
+          backgroundImage: 'url("/assets/pearl-hero-bg.png")',
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          opacity: 0.12
+          backgroundPosition: 'center'
         }} />
 
         {/* Content */}

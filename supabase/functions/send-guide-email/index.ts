@@ -150,7 +150,16 @@ const handler = async (req: Request): Promise<Response> => {
     }
     
     const pdfBuffer = await pdfResponse.arrayBuffer();
-    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
+    
+    // Convert ArrayBuffer to base64 in chunks to avoid stack overflow
+    const bytes = new Uint8Array(pdfBuffer);
+    let binary = '';
+    const chunkSize = 8192; // Process in chunks
+    for (let i = 0; i < bytes.byteLength; i += chunkSize) {
+      const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.byteLength));
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    const pdfBase64 = btoa(binary);
 
     // Send email via Brevo
     const brevoPayload = {
