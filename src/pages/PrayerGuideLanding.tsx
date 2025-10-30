@@ -194,7 +194,7 @@ const PrayerGuideLanding = () => {
   return (
     <>
       <Helmet>
-        <title>מדריך תפילה חינמי - רות פריסמן</title>
+        <title>להתפלל כשאין זמן- סדר קדימויות התפילה לנשים</title>
         <meta name="description" content="קבלי את המדריך החינמי: להתפלל כשאין זמן. מדריך מעשי לתפילה משמעותית גם בלוח זמנים עמוס." />
       </Helmet>
 
