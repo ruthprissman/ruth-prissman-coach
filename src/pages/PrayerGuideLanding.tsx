@@ -427,11 +427,11 @@ const PrayerGuideLanding = () => {
           display: 'grid',
           gridTemplateColumns: '1fr',
           gap: '3rem',
-          alignItems: 'center'
+          alignItems: 'start'
         }}
         className="md:grid-cols-2">
           {/* Text Column - Right on Desktop */}
-          <div style={{ order: 1 }}>
+          <div style={{ order: 2 }} className="md:order-2">
             <h2 style={{
               fontFamily: 'Alef, sans-serif',
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -504,7 +504,7 @@ const PrayerGuideLanding = () => {
           </div>
 
           {/* Image Column - Left on Desktop */}
-          <div style={{ order: 2 }} className="md:order-first">
+          <div style={{ order: 1 }} className="md:order-1">
             <img
               src="/assets/butterfly.png"
               alt="פרפר - סמל לחופש ושחרור"
@@ -514,6 +514,7 @@ const PrayerGuideLanding = () => {
                 height: 'auto',
                 margin: '0 auto',
                 display: 'block',
+                borderRadius: '16px',
                 filter: 'drop-shadow(0 10px 25px rgba(82, 50, 125, 0.15))'
               }}
             />
