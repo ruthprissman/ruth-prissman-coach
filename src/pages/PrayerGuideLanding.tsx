@@ -427,7 +427,7 @@ const PrayerGuideLanding = () => {
           display: 'flex',
           flexDirection: 'row',
           gap: '3rem',
-          alignItems: 'flex-start'
+          alignItems: 'center'
         }}>
           {/* Text Column - 60% */}
           <div style={{ 
