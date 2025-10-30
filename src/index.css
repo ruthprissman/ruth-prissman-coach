@@ -290,16 +290,17 @@
 
   /* Button Styles */
   .cta-primary {
-    background: #8C4FB9;
+    background: linear-gradient(135deg, #8C4FB9 0%, #5FA6A6 100%);
     color: #FFFFFF;
     border: none;
     border-radius: 40px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    transition: transform .15s ease;
+    transition: transform .15s ease, box-shadow .15s ease;
   }
   
   .cta-primary:hover {
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(95, 166, 166, 0.3);
   }
   
   .cta-outline {
