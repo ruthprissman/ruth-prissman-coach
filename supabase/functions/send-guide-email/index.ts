@@ -193,8 +193,8 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
       
       <div class="signature-section">
-        ${signatureBase64 ? `<img src="data:image/png;base64,${signatureBase64}" alt="חתימה של רות פריסמן" class="signature-image" style="display: block; margin: 0 auto 12px auto; max-width: 180px; height: auto;">` : '<p style="color: #999; font-size: 12px;">טעינת החתימה נכשלה</p>'}
-        <p class="signature-text">רות פריסמן – מאמנת רגשית ומנחת סדנאות תפילה ונפש</p>
+        <p class="signature-text" style="margin-bottom: 8px;">מחכה לך</p>
+        <p class="signature-text">רות</p>
       </div>
       
       <div class="footer">
