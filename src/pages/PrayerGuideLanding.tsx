@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowDown, Check, FileText, Mail, Users } from 'lucide-react';
+import { ArrowDown, Check, FileText, Mail, Users, ListOrdered, Lightbulb, Shield } from 'lucide-react';
 
 const PrayerGuideLanding = () => {
   const { toast } = useToast();
@@ -477,11 +477,20 @@ const PrayerGuideLanding = () => {
                 המדריך הוא לא ספר הלכה! אלא תמצות מדוייק מתוך ספרי הלכה, מעשי ופרקטי שמביא בדיוק:
               </p>
               
-              <ul style={{ marginBottom: '1rem', paddingRight: '1.5rem' }}>
-                <li style={{ marginBottom: '0.3rem' }}>סדר הקדימויות בתפילה. תדעי על מה את מדלגת כשהזמן דוחק או הילדים מחכים.</li>
-                <li style={{ marginBottom: '0.3rem' }}>תקבלי בהירות על הגדרת מצוות התפילה.</li>
-                <li style={{ marginBottom: '0.3rem' }}>אפשרות להתפלל בביטחון גם כשיש לך רק כמה דקות.</li>
-              </ul>
+              <div style={{ marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem', marginBottom: '0.3rem' }}>
+                  <ListOrdered size={20} style={{ color: '#5FA6A6', marginTop: '0.2rem', flexShrink: 0 }} />
+                  <span>סדר הקדימויות בתפילה. תדעי על מה את מדלגת כשהזמן דוחק או הילדים מחכים.</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem', marginBottom: '0.3rem' }}>
+                  <Lightbulb size={20} style={{ color: '#5FA6A6', marginTop: '0.2rem', flexShrink: 0 }} />
+                  <span>תקבלי בהירות על הגדרת מצוות התפילה.</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem', marginBottom: '0.3rem' }}>
+                  <Shield size={20} style={{ color: '#5FA6A6', marginTop: '0.2rem', flexShrink: 0 }} />
+                  <span>אפשרות להתפלל בביטחון גם כשיש לך רק כמה דקות.</span>
+                </div>
+              </div>
               
               <p style={{ marginBottom: '0.3rem' }}>
                 בדיוור השבועי תקבלי מידי שבוע חמצן וחיבור למילים הגדולות של אנשי כנסת הגדולה.
