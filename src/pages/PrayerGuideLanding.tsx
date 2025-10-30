@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowDown, Check } from 'lucide-react';
+import { ArrowDown, Check, Target, Clock, Sparkles } from 'lucide-react';
 
 const PrayerGuideLanding = () => {
   const { toast } = useToast();
@@ -549,17 +549,17 @@ const PrayerGuideLanding = () => {
           }}>
             {[
               {
-                icon: '🎯',
+                icon: Target,
                 title: 'כיוון ברור',
                 description: 'איך למצוא כיוון אישי בתפילה, גם כשהמילים נראות תמיד אותו דבר'
               },
               {
-                icon: '⏱️',
+                icon: Clock,
                 title: 'מעשי וקצר',
                 description: 'תובנות שאפשר ליישם מיד – בלי לדרוש שעות נוספות ביום'
               },
               {
-                icon: '💫',
+                icon: Sparkles,
                 title: 'חיבור אמיתי',
                 description: 'טכניקות פשוטות להתחבר לתפילה מהלב, לא רק מהסידור'
               }
@@ -586,10 +586,14 @@ const PrayerGuideLanding = () => {
                 }}
               >
                 <div style={{
-                  fontSize: '3.5rem',
-                  marginBottom: '1.25rem'
+                  marginBottom: '1.25rem',
+                  display: 'flex',
+                  justifyContent: 'center'
                 }}>
-                  {benefit.icon}
+                  <benefit.icon 
+                    size={48} 
+                    style={{ color: '#5FA6A6' }}
+                  />
                 </div>
                 <h3 style={{
                   fontFamily: 'Alef, sans-serif',
