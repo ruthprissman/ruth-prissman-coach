@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { ArrowDown, Check } from 'lucide-react';
 
 const PrayerGuideLanding = () => {
   const { toast } = useToast();
@@ -193,290 +194,584 @@ const PrayerGuideLanding = () => {
   return (
     <>
       <Helmet>
-        <title>מדריך חינם: להתפלל כשאין זמן | רות פריסמן</title>
-        <meta 
-          name="description" 
-          content="קבלי מדריך מעשי חינם לסדר קדימויות בתפילה לנשים עסוקות. גלי איך להפוך תפילה קצרה לחוויה משמעותית." 
-        />
-        <meta property="og:title" content="מדריך חינם: להתפלל כשאין זמן | רות פריסמן" />
-        <meta property="og:description" content="קבלי מדריך מעשי חינם לסדר קדימויות בתפילה" />
-        <meta property="og:image" content={`${window.location.origin}/assets/pearl-bg.png`} />
-        <meta property="og:type" content="website" />
+        <title>מדריך תפילה חינמי - רות פריסמן</title>
+        <meta name="description" content="קבלי את המדריך החינמי: להתפלל כשאין זמן. מדריך מעשי לתפילה משמעותית גם בלוח זמנים עמוס." />
       </Helmet>
 
-      <div className="min-h-screen bg-background text-foreground" dir="rtl">
-        {/* Sticky Top Bar */}
-        <div className="sticky top-0 z-50 bg-primary/95 backdrop-blur-sm shadow-md">
-          <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-            <h2 className="text-white font-semibold text-lg">מדריך תפילה לנשים עסוקות</h2>
-            <Button 
-              onClick={scrollToSignup}
-              variant="secondary"
-              size="sm"
-              className="shadow-lg"
+      {/* Sticky Top Bar with Logo */}
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(82, 50, 125, 0.1)',
+        padding: '0.75rem 0',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+      }}>
+        <div className="container mx-auto px-4 flex justify-center">
+          <img 
+            src="/assets/logo.png" 
+            alt="לוגו רות פריסמן"
+            style={{ height: '56px', width: 'auto' }}
+          />
+        </div>
+      </div>
+
+      {/* Hero Section */}
+      <section dir="rtl" style={{
+        minHeight: '65vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        padding: '3rem 1.5rem',
+        background: 'linear-gradient(135deg, rgba(82, 50, 125, 0.03) 0%, rgba(95, 166, 166, 0.03) 100%)'
+      }}>
+        {/* Background Image */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'url("/assets/pearl-bg.png")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.12
+        }} />
+
+        {/* Content */}
+        <div style={{
+          position: 'relative',
+          zIndex: 10,
+          textAlign: 'center',
+          maxWidth: '900px'
+        }}>
+          <h1 style={{
+            fontFamily: 'Alef, sans-serif',
+            fontSize: 'clamp(2.25rem, 5vw, 4rem)',
+            fontWeight: 'bold',
+            color: '#52327D',
+            marginBottom: '1.5rem',
+            lineHeight: 1.2
+          }}>
+            להתפלל כשאין זמן
+          </h1>
+
+          <p style={{
+            fontFamily: 'Heebo, sans-serif',
+            fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+            color: '#4A5568',
+            marginBottom: '3rem',
+            lineHeight: 1.8
+          }}>
+            מדריך מעשי וקצר לתפילה משמעותית,<br />
+            גם בלוח זמנים עמוס
+          </p>
+
+          <button
+            onClick={scrollToSignup}
+            className="cta-primary"
+            style={{
+              fontFamily: 'Heebo, sans-serif',
+              fontSize: '1.5rem',
+              padding: '1.25rem 3rem'
+            }}
+          >
+            להורדה חינמית <ArrowDown className="inline mr-2" size={24} />
+          </button>
+        </div>
+      </section>
+
+      {/* Signup Form - RIGHT AFTER HERO */}
+      <section 
+        id="signup" 
+        ref={signupRef}
+        dir="rtl" 
+        style={{
+          padding: '5rem 1.5rem',
+          backgroundColor: '#FFFFFF'
+        }}
+      >
+        <div style={{
+          maxWidth: '600px',
+          margin: '0 auto'
+        }}>
+          <h2 style={{
+            fontFamily: 'Alef, sans-serif',
+            fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+            fontWeight: 'bold',
+            color: '#52327D',
+            textAlign: 'center',
+            marginBottom: '1rem'
+          }}>
+            קבלי את המדריך החינמי שלך
+          </h2>
+
+          <p style={{
+            fontFamily: 'Heebo, sans-serif',
+            fontSize: '1.125rem',
+            color: '#4A5568',
+            textAlign: 'center',
+            marginBottom: '2.5rem'
+          }}>
+            רק מלאי פרטים ותקבלי את המדריך ישירות למייל
+          </p>
+
+          <form onSubmit={handleSubmit} style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.5rem',
+            backgroundColor: 'rgba(82, 50, 125, 0.03)',
+            padding: '2.5rem',
+            borderRadius: '12px',
+            border: '2px solid rgba(82, 50, 125, 0.1)'
+          }}>
+            {/* Honeypot field (hidden from users) */}
+            <input
+              type="text"
+              name="website"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              style={{ display: 'none' }}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+
+            <div>
+              <label style={{
+                fontFamily: 'Heebo, sans-serif',
+                fontSize: '1rem',
+                fontWeight: '500',
+                color: '#52327D',
+                marginBottom: '0.5rem',
+                display: 'block'
+              }}>
+                שם מלא
+              </label>
+              <Input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                disabled={isLoading}
+                placeholder="השם המלא שלך"
+                style={{
+                  width: '100%',
+                  padding: '0.875rem',
+                  fontSize: '1rem',
+                  fontFamily: 'Heebo, sans-serif',
+                  borderRadius: '8px',
+                  border: '2px solid rgba(82, 50, 125, 0.2)',
+                  outline: 'none',
+                  transition: 'border-color 0.3s'
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = '#8C4FB9'}
+                onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(82, 50, 125, 0.2)'}
+              />
+            </div>
+
+            <div>
+              <label style={{
+                fontFamily: 'Heebo, sans-serif',
+                fontSize: '1rem',
+                fontWeight: '500',
+                color: '#52327D',
+                marginBottom: '0.5rem',
+                display: 'block'
+              }}>
+                כתובת מייל
+              </label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isLoading}
+                placeholder="הכתובת שלך"
+                style={{
+                  width: '100%',
+                  padding: '0.875rem',
+                  fontSize: '1rem',
+                  fontFamily: 'Heebo, sans-serif',
+                  borderRadius: '8px',
+                  border: '2px solid rgba(82, 50, 125, 0.2)',
+                  outline: 'none',
+                  transition: 'border-color 0.3s'
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = '#8C4FB9'}
+                onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(82, 50, 125, 0.2)'}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem' }}>
+              <Checkbox
+                id="consent"
+                checked={consent}
+                onCheckedChange={(checked) => setConsent(checked as boolean)}
+                required
+                disabled={isLoading}
+                style={{
+                  marginTop: '0.25rem'
+                }}
+              />
+              <label
+                htmlFor="consent"
+                style={{
+                  fontFamily: 'Heebo, sans-serif',
+                  fontSize: '0.9rem',
+                  color: '#4A5568',
+                  lineHeight: 1.6,
+                  cursor: 'pointer'
+                }}
+              >
+                אני מאשרת קבלת תוכן וחומרים שיווקיים באופן תקופתי. ניתן להסיר הסכמה בכל עת.
+              </label>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="cta-primary"
+              style={{
+                width: '100%',
+                padding: '1rem',
+                fontSize: '1.25rem',
+                fontFamily: 'Heebo, sans-serif',
+                marginTop: '0.5rem'
+              }}
             >
-              קבלי את המדריך
+              {isLoading ? 'שולח...' : 'שלחי לי את המדריך →'}
             </Button>
+          </form>
+        </div>
+      </section>
+
+      {/* Pain + Solution Section */}
+      <section dir="rtl" style={{
+        padding: '5rem 1.5rem',
+        background: 'linear-gradient(135deg, rgba(95, 166, 166, 0.05) 0%, rgba(82, 50, 125, 0.05) 100%)'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: '3rem',
+          alignItems: 'center'
+        }}
+        className="md:grid-cols-2">
+          {/* Text Column - Right on Desktop */}
+          <div style={{ order: 1 }}>
+            <h2 style={{
+              fontFamily: 'Alef, sans-serif',
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+              fontWeight: 'bold',
+              color: '#52327D',
+              marginBottom: '1.5rem'
+            }}>
+              מכירה את זה?
+            </h2>
+
+            <div style={{
+              fontFamily: 'Heebo, sans-serif',
+              fontSize: '1.125rem',
+              color: '#4A5568',
+              lineHeight: 1.8,
+              marginBottom: '2rem'
+            }}>
+              <p style={{ marginBottom: '1rem' }}>
+                יש לך רצון אמיתי להתפלל, אבל…
+              </p>
+              <p style={{ marginBottom: '1rem' }}>
+                ⏰ הזמן לא מספיק<br />
+                🌪️ הראש מלא<br />
+                😔 המילים מרגישות ריקות
+              </p>
+            </div>
+
+            <div style={{
+              padding: '1.5rem',
+              backgroundColor: 'rgba(95, 166, 166, 0.1)',
+              borderRight: '4px solid #5FA6A6',
+              borderRadius: '8px'
+            }}>
+              <h3 style={{
+                fontFamily: 'Alef, sans-serif',
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                color: '#52327D',
+                marginBottom: '0.75rem'
+              }}>
+                הפתרון כאן
+              </h3>
+              <p style={{
+                fontFamily: 'Heebo, sans-serif',
+                fontSize: '1.125rem',
+                color: '#4A5568',
+                lineHeight: 1.7
+              }}>
+                מדריך קצר ומעשי שיעזור לך להתחבר לתפילה באמת –<br />
+                גם כשהזמן מוגבל והלב מוסח.
+              </p>
+            </div>
+          </div>
+
+          {/* Image Column - Left on Desktop */}
+          <div style={{ order: 2 }} className="md:order-first">
+            <img
+              src="/assets/butterfly.png"
+              alt="פרפר - סמל לחופש ושחרור"
+              style={{
+                width: '100%',
+                maxWidth: '400px',
+                height: 'auto',
+                margin: '0 auto',
+                display: 'block',
+                filter: 'drop-shadow(0 10px 25px rgba(82, 50, 125, 0.15))'
+              }}
+            />
           </div>
         </div>
+      </section>
 
-        {/* Hero Section */}
-        <section 
-          className="relative min-h-[70vh] flex items-center justify-center overflow-hidden"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), url(/assets/pearl-bg.png)`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed'
-          }}
-        >
-          <div className="container mx-auto px-4 py-20 text-center relative z-10">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-              גם כשהתפילה קצרה והמחשבות נודדות,<br />
-              יש לך זכות ויכולת להפוך אותה לחוויה.<br />
-              כזו שתחכי לה כל יום.
-            </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
-              הורידי בחינם את המדריך המעשי <strong>"להתפלל כשאין זמן – סדר קדימויות התפילה לנשים"</strong> וקבלי את סדר קדימויות התפילה בצורה ברורה. גלי על מה מדלגים קודם כשהזמן קצר, בלי לוותר על החיבור.
-            </p>
-            <Button 
+      {/* Benefits Section */}
+      <section dir="rtl" style={{
+        padding: '5rem 1.5rem',
+        backgroundColor: '#FFFFFF'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto'
+        }}>
+          <h2 style={{
+            fontFamily: 'Alef, sans-serif',
+            fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+            fontWeight: 'bold',
+            color: '#52327D',
+            textAlign: 'center',
+            marginBottom: '3rem'
+          }}>
+            מה תמצאי במדריך?
+          </h2>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '2rem'
+          }}>
+            {[
+              {
+                icon: '🎯',
+                title: 'כיוון ברור',
+                description: 'איך למצוא כיוון אישי בתפילה, גם כשהמילים נראות תמיד אותו דבר'
+              },
+              {
+                icon: '⏱️',
+                title: 'מעשי וקצר',
+                description: 'תובנות שאפשר ליישם מיד – בלי לדרוש שעות נוספות ביום'
+              },
+              {
+                icon: '💫',
+                title: 'חיבור אמיתי',
+                description: 'טכניקות פשוטות להתחבר לתפילה מהלב, לא רק מהסידור'
+              }
+            ].map((benefit, index) => (
+              <div
+                key={index}
+                style={{
+                  backgroundColor: 'rgba(82, 50, 125, 0.03)',
+                  padding: '2.5rem',
+                  borderRadius: '16px',
+                  textAlign: 'center',
+                  border: '2px solid rgba(82, 50, 125, 0.1)',
+                  transition: 'all 0.3s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px)';
+                  e.currentTarget.style.borderColor = '#8C4FB9';
+                  e.currentTarget.style.boxShadow = '0 12px 30px rgba(82, 50, 125, 0.15)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.borderColor = 'rgba(82, 50, 125, 0.1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <div style={{
+                  fontSize: '3.5rem',
+                  marginBottom: '1.25rem'
+                }}>
+                  {benefit.icon}
+                </div>
+                <h3 style={{
+                  fontFamily: 'Alef, sans-serif',
+                  fontSize: '1.5rem',
+                  fontWeight: 'bold',
+                  color: '#52327D',
+                  marginBottom: '1rem'
+                }}>
+                  {benefit.title}
+                </h3>
+                <p style={{
+                  fontFamily: 'Heebo, sans-serif',
+                  fontSize: '1.125rem',
+                  color: '#4A5568',
+                  lineHeight: 1.8
+                }}>
+                  {benefit.description}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA after benefits */}
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: '3rem' 
+          }}>
+            <button
               onClick={scrollToSignup}
-              size="lg"
-              className="text-lg px-8 py-6 shadow-xl hover:scale-105 transition-transform"
+              className="cta-primary"
+              style={{
+                fontFamily: 'Heebo, sans-serif',
+                fontSize: '1.25rem',
+                padding: '1rem 2.5rem'
+              }}
             >
-              אני רוצה את המדריך
-            </Button>
+              רוצה את המדריך? לחצי כאן ←
+            </button>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Pain + Solution Section */}
-        <section className="py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
-              <div className="order-2 md:order-1">
-                <img 
-                  src="/assets/butterfly.png" 
-                  alt="פרפר צבעוני"
-                  className="w-full h-auto rounded-2xl shadow-2xl"
-                />
-              </div>
-              <div className="order-1 md:order-2 space-y-6">
-                <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-4">
-                  מרגישה שהתפילה הפכה לעוד משימה ברשימה העמוסה של היום?
-                </div>
-                <p className="text-lg leading-relaxed">
-                  את לא לבד. הרבה נשים מרגישות שהתפילה היומיומית היא עוד דבר שצריך "לסיים", במקום חוויה שמחברת. השאלות הן תמיד אותן השאלות: "האם אני עושה את זה נכון?", "מה חייבים ומה אפשר לדלג?", "איך אני מתפללת כשיש לי רק 10 דקות?".
-                </p>
-                <p className="text-lg leading-relaxed">
-                  המדריך הזה נותן לך תשובות ברורות, כך שתוכלי להתפלל בראש שקט ובלב פתוח – גם כשהזמן קצוב.
-                </p>
-                <Button 
-                  onClick={scrollToSignup}
-                  variant="outline"
-                  size="lg"
-                  className="mt-4"
-                >
-                  לעבור לטופס ההרשמה
-                </Button>
-              </div>
+      {/* About Section */}
+      <section dir="rtl" style={{
+        padding: '5rem 1.5rem',
+        background: 'linear-gradient(135deg, rgba(82, 50, 125, 0.05) 0%, rgba(95, 166, 166, 0.05) 100%)'
+      }}>
+        <div style={{
+          maxWidth: '900px',
+          margin: '0 auto',
+          textAlign: 'center'
+        }}>
+          <h2 style={{
+            fontFamily: 'Alef, sans-serif',
+            fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+            fontWeight: 'bold',
+            color: '#52327D',
+            marginBottom: '2rem'
+          }}>
+            מי אני?
+          </h2>
+
+          <div style={{
+            fontFamily: 'Heebo, sans-serif',
+            fontSize: '1.125rem',
+            color: '#4A5568',
+            lineHeight: 1.9,
+            textAlign: 'right'
+          }}>
+            <p style={{ marginBottom: '1.5rem' }}>
+              שמי רות פריסמן, ואני מאמנת רגשית, סופרת ומנחת סדנאות.
+            </p>
+            <p style={{ marginBottom: '1.5rem' }}>
+              במשך שנים ליוויתי נשים בתהליכי שינוי – בעבודה על עצמן, בהתמודדות עם חרדות, ובמציאת שלום פנימי.
+            </p>
+            <p style={{ marginBottom: '1.5rem' }}>
+              בתוך כל זה גיליתי שתפילה יכולה להיות לא רק חובה, אלא כלי עוצמתי לחיבור – לעצמנו, לבורא, ולחיים שלנו.
+            </p>
+            <p>
+              ולכן כתבתי את המדריך הזה – כדי לעזור לך למצוא את הדרך שלך לתפילה שמרגישה אמיתית.
+            </p>
+          </div>
+
+          {/* Final CTA */}
+          <div style={{ marginTop: '3rem' }}>
+            <button
+              onClick={scrollToSignup}
+              className="cta-primary"
+              style={{
+                fontFamily: 'Heebo, sans-serif',
+                fontSize: '1.25rem',
+                padding: '1rem 2.5rem'
+              }}
+            >
+              קבלי את המדריך עכשיו ←
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Thanks Section - Only shown after successful submission */}
+      {showSuccess && (
+        <section id="thanks" dir="rtl" style={{
+          padding: '5rem 1.5rem',
+          backgroundColor: '#FFFFFF',
+          borderTop: '2px solid rgba(82, 50, 125, 0.1)'
+        }}>
+          <div style={{
+            maxWidth: '800px',
+            margin: '0 auto',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              fontSize: '4rem',
+              marginBottom: '1.5rem'
+            }}>
+              ✅
             </div>
-          </div>
-        </section>
 
-        {/* Benefits Section */}
-        <section className="py-16 bg-background">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-              מה את מקבלת כשאת מצטרפת?
+            <h2 style={{
+              fontFamily: 'Alef, sans-serif',
+              fontSize: 'clamp(2rem, 4vw, 3rem)',
+              fontWeight: 'bold',
+              color: '#52327D',
+              marginBottom: '1.5rem'
+            }}>
+              תודה! שלחנו לך את המדריך
             </h2>
-            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              <div className="bg-card p-8 rounded-2xl shadow-lg border border-border hover:shadow-xl transition-shadow">
-                <div className="text-4xl mb-4">📄</div>
-                <h3 className="text-xl font-bold mb-3">המדריך המיידי (PDF להורדה)</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  סדר קדימויות מפורט ומעשי – מה מחויב, מה מומלץ, ומה אפשר לדלג. הכל בצורה ברורה, נוחה להדפסה ולשמירה.
-                </p>
-              </div>
 
-              <div className="bg-card p-8 rounded-2xl shadow-lg border border-border hover:shadow-xl transition-shadow">
-                <div className="text-4xl mb-4">✉️</div>
-                <h3 className="text-xl font-bold mb-3">תוכן שבועי – "חיבורים קטנים"</h3>
-                <ul className="text-muted-foreground space-y-2 list-disc list-inside leading-relaxed">
-                  <li>רעיונות קצרים להתפללות יומיומית</li>
-                  <li>תובנות על התפתחות אישית והורות</li>
-                  <li>מדריכים נוספים שיעזרו לך לגדול</li>
-                </ul>
-              </div>
+            <p style={{
+              fontFamily: 'Heebo, sans-serif',
+              fontSize: '1.25rem',
+              color: '#4A5568',
+              lineHeight: 1.8,
+              marginBottom: '2rem'
+            }}>
+              המדריך בדרך אלייך במייל. תוך דקה-שתיים הוא יגיע.<br />
+              אם לא רואה אותו, כדאי לבדוק בתיבת הספאם.
+            </p>
 
-              <div className="bg-card p-8 rounded-2xl shadow-lg border border-border hover:shadow-xl transition-shadow">
-                <div className="text-4xl mb-4">🗣</div>
-                <h3 className="text-xl font-bold mb-3">הרצאות וסדנאות</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  תהיי הראשונה לדעת על סדנאות, שיעורים והרצאות בנושאי תפילה, התפתחות אישית ומנהיגות נשית.
-                </p>
-              </div>
-            </div>
-
-            <div className="text-center mt-12">
-              <Button 
-                onClick={scrollToSignup}
-                size="lg"
-                className="text-lg px-8 py-6"
-              >
-                להורדת המדריך והצטרפות לרשימה
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        {/* Signup Form */}
-        <section 
-          id="signup" 
-          ref={signupRef}
-          className="py-16 bg-primary/5"
-        >
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto bg-card p-8 md:p-12 rounded-2xl shadow-2xl border border-border">
-              <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
-                הצטרפי וקבלי מיד למייל את המדריך
-              </h2>
-
-              {showSuccess ? (
-                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6 text-center">
-                  <div className="text-5xl mb-4">✅</div>
-                  <h3 className="text-xl font-bold text-green-800 dark:text-green-200 mb-2">
-                    מעולה!
-                  </h3>
-                  <p className="text-green-700 dark:text-green-300">
-                    שלחנו אלייך עכשיו את המדריך למייל.<br />
-                    אם לא הגיע תוך דקה, בדקי בתיבת הספאם.
-                  </p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Honeypot field (hidden from users) */}
-                  <input
-                    type="text"
-                    name="website"
-                    value={honeypot}
-                    onChange={(e) => setHoneypot(e.target.value)}
-                    style={{ display: 'none' }}
-                    tabIndex={-1}
-                    autoComplete="off"
-                  />
-
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName" className="text-lg">
-                      שם מלא <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="הכניסי את שמך המלא"
-                      className="text-lg p-6"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-lg">
-                      דוא״ל <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="example@email.com"
-                      className="text-lg p-6"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-
-                  <div className="flex items-start space-x-3 space-x-reverse">
-                    <Checkbox
-                      id="consent"
-                      checked={consent}
-                      onCheckedChange={(checked) => setConsent(checked as boolean)}
-                      disabled={isLoading}
-                      required
-                    />
-                    <Label 
-                      htmlFor="consent" 
-                      className="text-sm leading-relaxed cursor-pointer"
-                    >
-                      בהרשמתי אני מסכימה לקבל מרות פריסמן תכנים במייל בנושאי תפילה והתפתחות אישית, כולל מדריכים, תוכן שבועי, ועדכונים על סדנאות והרצאות. ניתן להסיר את עצמי מהרשימה בכל עת בלחיצה אחת.
-                    </Label>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full text-lg py-6"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'שולחות...' : 'אני רוצה את המדריך'}
-                  </Button>
-                </form>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* About Section */}
-        <section className="py-16 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">
-                נעים מאוד, אני רות פריסמן
-              </h2>
-              <div className="prose prose-lg dark:prose-invert mx-auto text-right" dir="rtl">
-                <p className="text-lg leading-relaxed">
-                  אני מאמנת תפילה ומטפלת בגישה רגשית-רוחנית. עבדתי שנים רבות עם נשים שמחפשות דרך להתחבר מחדש לתפילה – לא מתוך חובה, אלא מתוך רצון אמיתי.
-                </p>
-                <p className="text-lg leading-relaxed">
-                  המדריך הזה נולד מתוך אלפי שיחות עם נשים שמרגישות לחוצות, אשמות, או פשוט מבולבלות לגבי התפילה שלהן. הוא נותן תשובות ברורות, מעשיות ומלאות חמלה – כדי שכל אחת תוכל להתפלל בדרך שלה, בקצב שלה, ועדיין להרגיש מחוברת.
-                </p>
-                <p className="text-lg leading-relaxed">
-                  אני מזמינה אותך לקחת את המדריך, לנסות, ולראות איך התפילה יכולה להפוך למשהו שאת באמת מחכה לו.
-                </p>
-              </div>
-              <div className="text-center mt-8">
-                <Button 
-                  onClick={scrollToSignup}
-                  size="lg"
-                  variant="outline"
-                >
-                  להצטרפות וקבלת המדריך
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Thanks Section */}
-        <section id="thanks" className="py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto bg-card p-8 rounded-2xl shadow-lg text-center border border-border">
-              <div className="text-5xl mb-4">🙏</div>
-              <h2 className="text-2xl font-bold mb-4">תודה שנרשמת!</h2>
-              <p className="text-lg text-muted-foreground mb-6">
-                המדריך כבר בדרך אלייך. בדקי את תיבת המייל (ואם לא מצאת, גם את תיבת הספאם).
+            <div style={{
+              backgroundColor: 'rgba(95, 166, 166, 0.1)',
+              padding: '2rem',
+              borderRadius: '12px',
+              border: '2px solid rgba(95, 166, 166, 0.2)',
+              marginTop: '2.5rem'
+            }}>
+              <h3 style={{
+                fontFamily: 'Alef, sans-serif',
+                fontSize: '1.5rem',
+                fontWeight: 'bold',
+                color: '#52327D',
+                marginBottom: '1rem'
+              }}>
+                מה עכשיו?
+              </h3>
+              <p style={{
+                fontFamily: 'Heebo, sans-serif',
+                fontSize: '1.125rem',
+                color: '#4A5568',
+                lineHeight: 1.8
+              }}>
+                <Check className="inline ml-2" size={20} style={{ color: '#5FA6A6' }} /> המדריך כבר במייל שלך<br />
+                <Check className="inline ml-2" size={20} style={{ color: '#5FA6A6' }} /> בקרוב תקבלי תכנים נוספים שיעזרו לך<br />
+                <Check className="inline ml-2" size={20} style={{ color: '#5FA6A6' }} /> ותהיי הראשונה לדעת על סדנאות והרצאות חדשות
               </p>
-              <Button 
-                onClick={scrollToSignup}
-                variant="outline"
-              >
-                חזרה לטופס
-              </Button>
             </div>
           </div>
         </section>
-      </div>
+      )}
     </>
   );
 };
