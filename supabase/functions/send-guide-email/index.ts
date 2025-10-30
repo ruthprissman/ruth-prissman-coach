@@ -60,6 +60,11 @@ const handler = async (req: Request): Promise<Response> => {
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap');
     
+    * {
+      direction: rtl;
+      text-align: right;
+    }
+    
     body { 
       font-family: 'Assistant', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
       background-color: #faf8ff;
@@ -72,6 +77,8 @@ const handler = async (req: Request): Promise<Response> => {
     .email-wrapper {
       background-color: #faf8ff;
       padding: 40px 20px;
+      direction: rtl;
+      text-align: right;
     }
     .container { 
       max-width: 640px; 
@@ -80,6 +87,8 @@ const handler = async (req: Request): Promise<Response> => {
       padding: 40px 32px;
       border-radius: 16px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      direction: rtl;
+      text-align: right;
     }
     .title { 
       text-align: center; 
@@ -94,9 +103,13 @@ const handler = async (req: Request): Promise<Response> => {
       line-height: 1.7; 
       font-size: 16px;
       font-weight: 400;
+      direction: rtl;
+      text-align: right;
     }
     .content p {
       margin: 0 0 20px 0;
+      direction: rtl;
+      text-align: right;
     }
     .content strong {
       font-weight: 600;
@@ -172,7 +185,7 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
       
       <div class="signature-section">
-        ${signatureBase64 ? `<img src="data:image/png;base64,${signatureBase64}" alt="חתימה של רות פריסמן" class="signature-image">` : ''}
+        ${signatureBase64 ? `<img src="data:image/png;base64,${signatureBase64}" alt="חתימה של רות פריסמן" class="signature-image" style="display: block; margin: 0 auto 12px auto; max-width: 180px; height: auto;">` : '<p style="color: #999; font-size: 12px;">טעינת החתימה נכשלה</p>'}
         <p class="signature-text">רות פריסמן – מאמנת רגשית ומנחת סדנאות תפילה ונפש</p>
       </div>
       
