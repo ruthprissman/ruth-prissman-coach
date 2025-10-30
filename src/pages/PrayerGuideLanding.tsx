@@ -424,14 +424,14 @@ const PrayerGuideLanding = () => {
         <div style={{
           maxWidth: '1200px',
           margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: '1fr',
+          display: 'flex',
+          flexDirection: 'column',
           gap: '3rem',
-          alignItems: 'start'
+          alignItems: 'center'
         }}
-        className="md:grid-cols-2">
-          {/* Text Column - Right on Desktop */}
-          <div style={{ order: 2 }} className="md:order-2">
+        className="md:flex-row md:items-start">
+          {/* Text Column - Right */}
+          <div style={{ flex: 1 }}>
             <h2 style={{
               fontFamily: 'Alef, sans-serif',
               fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
@@ -503,17 +503,18 @@ const PrayerGuideLanding = () => {
             </button>
           </div>
 
-          {/* Image Column - Left on Desktop */}
-          <div style={{ order: 1 }} className="md:order-1">
+          {/* Image Column - Left */}
+          <div style={{ 
+            flex: '0 0 auto',
+            width: '100%',
+            maxWidth: '400px'
+          }}>
             <img
               src="/assets/butterfly.png"
               alt="פרפר - סמל לחופש ושחרור"
               style={{
                 width: '100%',
-                maxWidth: '400px',
                 height: 'auto',
-                margin: '0 auto',
-                display: 'block',
                 borderRadius: '16px',
                 filter: 'drop-shadow(0 10px 25px rgba(82, 50, 125, 0.15))'
               }}
