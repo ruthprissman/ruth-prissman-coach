@@ -450,40 +450,40 @@ const PrayerGuideLanding = () => {
               lineHeight: 1.8,
               marginBottom: '2rem'
             }}>
-              <p style={{ marginBottom: '1rem' }}>
+              <p style={{ marginBottom: '0.3rem' }}>
                 מכירה את התחושה הזו – שהתפילה היא עוד מטלה שמחכה ל"וי"?
               </p>
-              <p style={{ marginBottom: '1rem' }}>
+              <p style={{ marginBottom: '0.3rem' }}>
                 שהמילים יוצאות מהפה – אבל הראש רץ למיליון כיוונים?
               </p>
-              <p style={{ marginBottom: '1rem' }}>
+              <p style={{ marginBottom: '0.3rem' }}>
                 קרה לך פעם שסיימת להתפלל והרגשת… כלום? ריק?
               </p>
-              <p style={{ marginBottom: '1rem' }}>
+              <p style={{ marginBottom: '0.3rem' }}>
                 שלא היה שם חיבור או סיפוק? תחושה שמישהו מקשיב? ועונה?
               </p>
-              <p style={{ marginBottom: '1rem' }}>
+              <p style={{ marginBottom: '0.3rem' }}>
                 לתפילה מתלווה לפעמים תחושת אשמה? החמצה?
               </p>
-              <p style={{ marginBottom: '1.5rem' }}>
+              <p style={{ marginBottom: '1rem' }}>
                 ולפעמים, כשכבר יש כמה דקות של שקט – את לא בטוחה מה את צריכה להגיד, ומה את רוצה להגיד?
               </p>
               
-              <p style={{ marginBottom: '1rem', fontWeight: '600', color: '#52327D' }}>
+              <p style={{ marginBottom: '0.5rem', fontWeight: '600', color: '#52327D' }}>
                 המדריך "להתפלל כשאין זמן – סדר התפילה לנשים עסוקות", והמאמרים השבועיים שלי – נוצרו בדיוק בשבילך.
               </p>
               
-              <p style={{ marginBottom: '1rem', fontWeight: '500' }}>
+              <p style={{ marginBottom: '0.5rem', fontWeight: '500' }}>
                 המדריך הוא לא ספר הלכה! אלא תמצות מדוייק מתוך ספרי הלכה, מעשי ופרקטי שמביא בדיוק:
               </p>
               
-              <ul style={{ marginBottom: '1.5rem', paddingRight: '1.5rem' }}>
-                <li style={{ marginBottom: '0.5rem' }}>סדר הקדימויות בתפילה. תדעי על מה את מדלגת כשהזמן דוחק או הילדים מחכים.</li>
-                <li style={{ marginBottom: '0.5rem' }}>תקבלי בהירות על הגדרת מצוות התפילה.</li>
-                <li style={{ marginBottom: '0.5rem' }}>אפשרות להתפלל בביטחון גם כשיש לך רק כמה דקות.</li>
+              <ul style={{ marginBottom: '1rem', paddingRight: '1.5rem' }}>
+                <li style={{ marginBottom: '0.3rem' }}>סדר הקדימויות בתפילה. תדעי על מה את מדלגת כשהזמן דוחק או הילדים מחכים.</li>
+                <li style={{ marginBottom: '0.3rem' }}>תקבלי בהירות על הגדרת מצוות התפילה.</li>
+                <li style={{ marginBottom: '0.3rem' }}>אפשרות להתפלל בביטחון גם כשיש לך רק כמה דקות.</li>
               </ul>
               
-              <p style={{ marginBottom: '1rem' }}>
+              <p style={{ marginBottom: '0.3rem' }}>
                 בדיוור השבועי תקבלי מידי שבוע חמצן וחיבור למילים הגדולות של אנשי כנסת הגדולה.
               </p>
               <p style={{ marginBottom: '1.5rem' }}>
