@@ -419,7 +419,7 @@ const PrayerGuideLanding = () => {
       {/* Pain + Solution Section */}
       <section dir="rtl" style={{
         padding: '5rem 1.5rem',
-        background: 'linear-gradient(135deg, rgba(95, 166, 166, 0.05) 0%, rgba(82, 50, 125, 0.05) 100%)'
+        backgroundColor: '#FFFFFF'
       }}>
         <div style={{
           maxWidth: '1200px',
@@ -439,7 +439,7 @@ const PrayerGuideLanding = () => {
               color: '#52327D',
               marginBottom: '1.5rem'
             }}>
-              מכירה את זה?
+              מרגישה שהתפילה הפכה לעוד משימה ברשימה העמוסה של היום?
             </h2>
 
             <div style={{
@@ -450,40 +450,57 @@ const PrayerGuideLanding = () => {
               marginBottom: '2rem'
             }}>
               <p style={{ marginBottom: '1rem' }}>
-                יש לך רצון אמיתי להתפלל, אבל…
+                מכירה את התחושה הזו – שהתפילה היא עוד מטלה שמחכה ל"וי"?
               </p>
               <p style={{ marginBottom: '1rem' }}>
-                ⏰ הזמן לא מספיק<br />
-                🌪️ הראש מלא<br />
-                😔 המילים מרגישות ריקות
+                שהמילים יוצאות מהפה – אבל הראש רץ למיליון כיוונים?
+              </p>
+              <p style={{ marginBottom: '1rem' }}>
+                קרה לך פעם שסיימת להתפלל והרגשת… כלום? ריק?
+              </p>
+              <p style={{ marginBottom: '1rem' }}>
+                שלא היה שם חיבור או סיפוק? תחושה שמישהו מקשיב? ועונה?
+              </p>
+              <p style={{ marginBottom: '1rem' }}>
+                לתפילה מתלווה לפעמים תחושת אשמה? החמצה?
+              </p>
+              <p style={{ marginBottom: '1.5rem' }}>
+                ולפעמים, כשכבר יש כמה דקות של שקט – את לא בטוחה מה את צריכה להגיד, ומה את רוצה להגיד?
+              </p>
+              
+              <p style={{ marginBottom: '1rem', fontWeight: '600', color: '#52327D' }}>
+                המדריך "להתפלל כשאין זמן – סדר התפילה לנשים עסוקות", והמאמרים השבועיים שלי – נוצרו בדיוק בשבילך.
+              </p>
+              
+              <p style={{ marginBottom: '1rem', fontWeight: '500' }}>
+                המדריך הוא לא ספר הלכה! אלא תמצות מדוייק מתוך ספרי הלכה, מעשי ופרקטי שמביא בדיוק:
+              </p>
+              
+              <ul style={{ marginBottom: '1.5rem', paddingRight: '1.5rem' }}>
+                <li style={{ marginBottom: '0.5rem' }}>סדר הקדימויות בתפילה. תדעי על מה את מדלגת כשהזמן דוחק או הילדים מחכים.</li>
+                <li style={{ marginBottom: '0.5rem' }}>תקבלי בהירות על הגדרת מצוות התפילה.</li>
+                <li style={{ marginBottom: '0.5rem' }}>אפשרות להתפלל בביטחון גם כשיש לך רק כמה דקות.</li>
+              </ul>
+              
+              <p style={{ marginBottom: '1rem' }}>
+                בדיוור השבועי תקבלי מידי שבוע חמצן וחיבור למילים הגדולות של אנשי כנסת הגדולה.
+              </p>
+              <p style={{ marginBottom: '1.5rem' }}>
+                תגלי מבט חדש על המילים המוכרות. תובנות מפתיעות וחיבור לנשמה.
               </p>
             </div>
 
-            <div style={{
-              padding: '1.5rem',
-              backgroundColor: 'rgba(95, 166, 166, 0.1)',
-              borderRight: '4px solid #5FA6A6',
-              borderRadius: '8px'
-            }}>
-              <h3 style={{
-                fontFamily: 'Alef, sans-serif',
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                color: '#52327D',
-                marginBottom: '0.75rem'
-              }}>
-                הפתרון כאן
-              </h3>
-              <p style={{
+            <button
+              onClick={scrollToSignup}
+              className="cta-primary"
+              style={{
                 fontFamily: 'Heebo, sans-serif',
-                fontSize: '1.125rem',
-                color: '#4A5568',
-                lineHeight: 1.7
-              }}>
-                מדריך קצר ומעשי שיעזור לך להתחבר לתפילה באמת –<br />
-                גם כשהזמן מוגבל והלב מוסח.
-              </p>
-            </div>
+                fontSize: '1.25rem',
+                padding: '1rem 2.5rem'
+              }}
+            >
+              רוצה את המדריך? לחצי כאן ←
+            </button>
           </div>
 
           {/* Image Column - Left on Desktop */}
