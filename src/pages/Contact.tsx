@@ -233,7 +233,7 @@ export default function Contact() {
               <div className="flex flex-wrap justify-center gap-4 mt-8">
                 <Button
                   asChild
-                  className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
+                  className="cta-primary px-6 py-3"
                 >
                   <a href="tel:+972556620273" className="flex gap-2 items-center">
                     <Phone size={18} />
@@ -243,7 +243,7 @@ export default function Contact() {
                 
                 <Button
                   asChild
-                  className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
+                  className="cta-primary px-6 py-3"
                 >
                   <a 
                     href="https://api.whatsapp.com/send?phone=+972556620273" 
@@ -267,7 +267,7 @@ export default function Contact() {
                   <div className="text-lg text-gray-700">רות תיצור איתך קשר בהקדם.</div>
                   <Button 
                     onClick={() => setFormSubmitted(false)}
-                    className="mt-8 bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-6 border border-gold-DEFAULT shadow-sm"
+                    className="mt-8 cta-primary px-8 py-3"
                   >
                     שלח פנייה נוספת
                   </Button>
@@ -338,7 +338,7 @@ export default function Contact() {
                     <div className="pt-4 text-center">
                       <Button 
                         type="submit" 
-                        className="bg-[#F5E6C5] hover:bg-gold-light text-[#4A235A] font-medium px-8 py-2 w-full md:w-auto border border-gold-DEFAULT shadow-md"
+                        className="cta-primary px-8 py-3 w-full md:w-auto"
                         disabled={formspreeState.submitting}
                       >
                         {formspreeState.submitting ? "שולח..." : "שלח פנייה"}
