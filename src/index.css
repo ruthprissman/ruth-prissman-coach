@@ -289,24 +289,27 @@
   }
 
   /* Button Styles */
-  @keyframes color-swap {
-    0%, 100% {
-      background: linear-gradient(135deg, #8C4FB9 0%, #5FA6A6 100%);
+  @keyframes gradient-flow {
+    0% {
+      background-position: 0% 50%;
     }
     50% {
-      background: linear-gradient(135deg, #5FA6A6 0%, #8C4FB9 100%);
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
     }
   }
   
   .cta-primary {
-    background: linear-gradient(135deg, #8C4FB9 0%, #5FA6A6 100%);
+    background: linear-gradient(135deg, #8C4FB9 0%, #5FA6A6 50%, #8C4FB9 100%);
+    background-size: 200% 200%;
     color: #FFFFFF;
     border: none;
     border-radius: 40px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     transition: transform .15s ease, box-shadow .15s ease;
-    animation: color-swap 3s ease-in-out infinite;
-    background-size: 200% 200%;
+    animation: gradient-flow 3s ease infinite;
   }
   
   .cta-primary:hover {
