@@ -76,6 +76,7 @@ export function generatePrayerGuideEmailHTML(): string {
       color: #52327D;
       margin-bottom: 20px;
       line-height: 1.4;
+      text-align: right;
     }
     .pain-questions {
       background: #faf8f5;
@@ -105,17 +106,20 @@ export function generatePrayerGuideEmailHTML(): string {
       font-size: 15px;
       color: #4a4a4a;
       line-height: 1.6;
+      text-align: right;
     }
     .guide-intro {
       font-weight: 600;
       color: #52327D;
       font-size: 16px;
       margin-bottom: 12px;
+      text-align: right;
     }
     .guide-description {
       font-weight: 500;
       margin-bottom: 16px;
       font-size: 15px;
+      text-align: right;
     }
     .guide-features {
       background: white;
@@ -128,6 +132,8 @@ export function generatePrayerGuideEmailHTML(): string {
       align-items: start;
       margin-bottom: 10px;
       font-size: 15px;
+      text-align: right;
+      direction: rtl;
     }
     .guide-feature:last-child {
       margin-bottom: 0;
@@ -143,9 +149,11 @@ export function generatePrayerGuideEmailHTML(): string {
       font-size: 15px;
       line-height: 1.7;
       margin-top: 16px;
+      text-align: right;
     }
     .weekly-content p {
       margin-bottom: 8px;
+      text-align: right;
     }
     .benefits-grid {
       display: grid;
@@ -157,11 +165,13 @@ export function generatePrayerGuideEmailHTML(): string {
       padding: 24px;
       border-radius: 12px;
       border: 2px solid rgba(82, 50, 125, 0.1);
+      text-align: right;
     }
     .benefit-icon {
       font-size: 36px;
       margin-bottom: 12px;
       color: #5FA6A6;
+      text-align: center;
     }
     .benefit-title {
       font-family: 'Alef', 'Heebo', sans-serif;
@@ -169,12 +179,14 @@ export function generatePrayerGuideEmailHTML(): string {
       font-size: 18px;
       color: #52327D;
       margin-bottom: 10px;
+      text-align: right;
     }
     .benefit-description {
       font-size: 15px;
       color: #4A5568;
       line-height: 1.7;
       white-space: pre-line;
+      text-align: right;
     }
     .author-section {
       background: linear-gradient(135deg, rgba(82, 50, 125, 0.05) 0%, rgba(95, 166, 166, 0.05) 100%);
