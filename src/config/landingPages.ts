@@ -1,4 +1,5 @@
 import { generatePrayerLandingEmailHTML } from '@/utils/emailTemplates/landing/prayer';
+import { generatePrayerGuideEmailHTML } from '@/utils/emailTemplates/landing/prayerGuide';
 
 export interface LandingPageConfig {
   id: string;
@@ -21,7 +22,7 @@ export const landingPages: LandingPageConfig[] = [
     name: 'מדריך תפילה',
     publicPath: '/prayer-guide',
     defaultEmailSubject: 'המדריך שלך בדרך! – להורדה: להתפלל כשאין זמן',
-    generateHtml: () => '' // Email is sent via Edge Function with PDF attachment
+    generateHtml: generatePrayerGuideEmailHTML
   }
   // כאן אפשר להוסיף דפי נחיתה נוספים בעתיד
 ];
