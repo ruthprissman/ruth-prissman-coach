@@ -17,10 +17,10 @@ export function generatePrayerGuideEmailHTML(): string {
       box-sizing: border-box;
     }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Heebo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%);
-      color: #2d1810;
-      line-height: 1.7;
+      color: #4A5568;
+      line-height: 1.8;
       padding: 20px;
     }
     .container {
@@ -32,21 +32,36 @@ export function generatePrayerGuideEmailHTML(): string {
       overflow: hidden;
     }
     .header {
-      background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+      background: linear-gradient(135deg, #52327D 0%, #8C4FB9 100%);
       color: white;
       padding: 40px 30px;
       text-align: center;
+      position: relative;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url('https://coach.ruthprissman.co.il/assets/pearl-hero-bg.png');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.15;
+    }
+    .header-content {
+      position: relative;
+      z-index: 1;
     }
     .header h1 {
+      font-family: 'Alef', 'Heebo', sans-serif;
       font-size: 28px;
       font-weight: bold;
       margin-bottom: 16px;
-      line-height: 1.4;
+      line-height: 1.3;
     }
     .header p {
-      font-size: 18px;
+      font-size: 17px;
       opacity: 0.95;
-      margin-bottom: 8px;
+      line-height: 1.7;
     }
     .content {
       padding: 40px 30px;
@@ -55,53 +70,82 @@ export function generatePrayerGuideEmailHTML(): string {
       margin-bottom: 40px;
     }
     .section-title {
+      font-family: 'Alef', 'Heebo', sans-serif;
       font-size: 24px;
       font-weight: bold;
-      color: #8B4513;
+      color: #52327D;
       margin-bottom: 20px;
-      text-align: center;
+      line-height: 1.4;
     }
-    .section-subtitle {
-      font-size: 18px;
-      color: #5a4a3a;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .items-list {
+    .pain-questions {
       background: #faf8f5;
       border-radius: 12px;
       padding: 24px;
+      margin-bottom: 24px;
     }
-    .item {
+    .pain-question {
       display: flex;
-      align-items: flex-start;
-      margin-bottom: 16px;
+      align-items: start;
+      margin-bottom: 12px;
       padding: 12px;
       background: white;
       border-radius: 8px;
-      border-right: 4px solid #D2691E;
+      border-right: 3px solid #5FA6A6;
     }
-    .item:last-child {
+    .pain-question:last-child {
       margin-bottom: 0;
     }
-    .item-icon {
-      font-size: 24px;
+    .pain-icon {
+      font-size: 20px;
       margin-left: 12px;
       flex-shrink: 0;
+      margin-top: 2px;
     }
-    .item-content {
-      flex: 1;
-    }
-    .item-title {
-      font-weight: bold;
-      font-size: 18px;
-      color: #8B4513;
-      margin-bottom: 4px;
-    }
-    .item-text {
-      font-size: 16px;
+    .pain-text {
+      font-size: 15px;
       color: #4a4a4a;
       line-height: 1.6;
+    }
+    .guide-intro {
+      font-weight: 600;
+      color: #52327D;
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+    .guide-description {
+      font-weight: 500;
+      margin-bottom: 16px;
+      font-size: 15px;
+    }
+    .guide-features {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .guide-feature {
+      display: flex;
+      align-items: start;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+    .guide-feature:last-child {
+      margin-bottom: 0;
+    }
+    .feature-icon {
+      color: #5FA6A6;
+      font-size: 18px;
+      margin-left: 10px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .weekly-content {
+      font-size: 15px;
+      line-height: 1.7;
+      margin-top: 16px;
+    }
+    .weekly-content p {
+      margin-bottom: 8px;
     }
     .benefits-grid {
       display: grid;
@@ -109,78 +153,90 @@ export function generatePrayerGuideEmailHTML(): string {
       margin-top: 24px;
     }
     .benefit-card {
-      background: white;
+      background: #faf8f5;
       padding: 24px;
       border-radius: 12px;
-      border: 2px solid #D2691E;
-      text-align: center;
+      border: 2px solid rgba(82, 50, 125, 0.1);
     }
     .benefit-icon {
       font-size: 36px;
       margin-bottom: 12px;
+      color: #5FA6A6;
     }
     .benefit-title {
+      font-family: 'Alef', 'Heebo', sans-serif;
       font-weight: bold;
       font-size: 18px;
-      color: #8B4513;
-      margin-bottom: 8px;
+      color: #52327D;
+      margin-bottom: 10px;
     }
     .benefit-description {
       font-size: 15px;
-      color: #5a4a3a;
-      line-height: 1.6;
+      color: #4A5568;
+      line-height: 1.7;
+      white-space: pre-line;
     }
     .author-section {
-      background: #faf8f5;
+      background: linear-gradient(135deg, rgba(82, 50, 125, 0.05) 0%, rgba(95, 166, 166, 0.05) 100%);
       border-radius: 12px;
       padding: 30px;
+    }
+    .author-title {
+      font-family: 'Alef', 'Heebo', sans-serif;
+      font-size: 24px;
+      font-weight: bold;
+      color: #52327D;
+      margin-bottom: 8px;
       text-align: center;
     }
-    .author-name {
-      font-size: 22px;
-      font-weight: bold;
-      color: #8B4513;
-      margin-bottom: 16px;
-    }
-    .author-text {
+    .author-subtitle {
       font-size: 16px;
+      color: #4A5568;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .author-paragraph {
+      font-size: 15px;
       color: #4a4a4a;
-      line-height: 1.7;
-      margin-bottom: 12px;
+      line-height: 1.8;
+      margin-bottom: 16px;
+      text-align: right;
+    }
+    .author-paragraph:last-of-type {
+      margin-bottom: 0;
+    }
+    .author-paragraph strong {
+      color: #52327D;
+      font-weight: 600;
     }
     .cta-section {
       text-align: center;
       padding: 40px 30px;
       background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%);
       margin: 40px -30px -40px -30px;
-      border-radius: 0 0 16px 16px;
-    }
-    .cta-title {
-      font-size: 26px;
-      font-weight: bold;
-      color: #8B4513;
-      margin-bottom: 12px;
-    }
-    .cta-subtitle {
-      font-size: 18px;
-      color: #5a4a3a;
-      margin-bottom: 24px;
     }
     .cta-button {
       display: inline-block;
-      background: linear-gradient(135deg, #D2691E 0%, #8B4513 100%);
+      background: linear-gradient(135deg, #8C4FB9 0%, #52327D 100%);
       color: white;
       padding: 18px 40px;
-      font-size: 20px;
+      font-size: 19px;
       font-weight: bold;
       text-decoration: none;
       border-radius: 50px;
-      box-shadow: 0 6px 20px rgba(139, 69, 19, 0.3);
+      box-shadow: 0 6px 20px rgba(82, 50, 125, 0.3);
       transition: transform 0.2s;
     }
     .cta-button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(139, 69, 19, 0.4);
+      box-shadow: 0 8px 24px rgba(82, 50, 125, 0.4);
+    }
+    .butterfly-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 16px;
+      margin: 24px 0;
+      box-shadow: 0 8px 20px rgba(82, 50, 125, 0.15);
     }
     .footer {
       text-align: center;
@@ -205,7 +261,7 @@ export function generatePrayerGuideEmailHTML(): string {
       }
       .cta-button {
         padding: 16px 32px;
-        font-size: 18px;
+        font-size: 17px;
       }
     }
   </style>
@@ -214,50 +270,80 @@ export function generatePrayerGuideEmailHTML(): string {
   <div class="container">
     <!-- Header -->
     <div class="header">
-      <h1>${prayerGuideLandingContent.hero.title}</h1>
-      <p>${prayerGuideLandingContent.hero.subtitle}</p>
-      <p style="font-size: 16px; margin-top: 16px;">${prayerGuideLandingContent.hero.description}</p>
+      <div class="header-content">
+        <h1>
+          ${prayerGuideLandingContent.hero.titleLine1}<br />
+          ${prayerGuideLandingContent.hero.titleLine2}<br />
+          ${prayerGuideLandingContent.hero.titleLine3}
+        </h1>
+        <p>${prayerGuideLandingContent.hero.description}</p>
+      </div>
     </div>
 
     <!-- Content -->
     <div class="content">
-      <!-- Problem Section -->
+      <!-- Pain Section -->
       <div class="section">
-        <h2 class="section-title">${prayerGuideLandingContent.problem.title}</h2>
-        <p class="section-subtitle">${prayerGuideLandingContent.problem.subtitle}</p>
-        <div class="items-list">
-          ${prayerGuideLandingContent.problem.items.map(item => `
-            <div class="item">
-              <div class="item-icon">💭</div>
-              <div class="item-content">
-                <div class="item-text">${item}</div>
-              </div>
+        <h2 class="section-title">${prayerGuideLandingContent.painSection.title}</h2>
+        
+        <div class="pain-questions">
+          ${prayerGuideLandingContent.painSection.questions.map(q => `
+            <div class="pain-question">
+              <div class="pain-icon">💭</div>
+              <div class="pain-text">${q.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
             </div>
           `).join('')}
         </div>
+
+        <p class="guide-intro">${prayerGuideLandingContent.painSection.guideIntro}</p>
+        
+        <p class="guide-description">${prayerGuideLandingContent.painSection.guideDescription}</p>
+        
+        <div class="guide-features">
+          <div class="guide-feature">
+            <div class="feature-icon">📋</div>
+            <div>${prayerGuideLandingContent.painSection.guideFeatures[0]}</div>
+          </div>
+          <div class="guide-feature">
+            <div class="feature-icon">💡</div>
+            <div>${prayerGuideLandingContent.painSection.guideFeatures[1]}</div>
+          </div>
+          <div class="guide-feature">
+            <div class="feature-icon">🛡️</div>
+            <div>${prayerGuideLandingContent.painSection.guideFeatures[2]}</div>
+          </div>
+        </div>
+
+        <div class="weekly-content">
+          ${prayerGuideLandingContent.painSection.weeklyContent.map(p => `<p>${p}</p>`).join('')}
+        </div>
+
+        <img src="https://coach.ruthprissman.co.il${prayerGuideLandingContent.painSection.butterflyImage}" alt="פרפר - סמל לחופש ושחרור" class="butterfly-image" />
       </div>
 
-      <!-- Solution Section -->
+      <!-- Benefits Section -->
       <div class="section">
-        <h2 class="section-title">${prayerGuideLandingContent.solution.title}</h2>
+        <h2 class="section-title">${prayerGuideLandingContent.benefits.title}</h2>
         <div class="benefits-grid">
-          ${prayerGuideLandingContent.solution.items.map(item => `
+          ${prayerGuideLandingContent.benefits.items.map((benefit, index) => {
+            const icons = ['📄', '✉️', '👥'];
+            return `
             <div class="benefit-card">
-              <div class="benefit-icon">${item.icon}</div>
-              <div class="benefit-title">${item.title}</div>
-              <div class="benefit-description">${item.description}</div>
+              <div class="benefit-icon">${icons[index]}</div>
+              <div class="benefit-title">${benefit.title}</div>
+              <div class="benefit-description">${benefit.description}</div>
             </div>
-          `).join('')}
+          `}).join('')}
         </div>
       </div>
 
       <!-- Author Section -->
       <div class="section">
-        <h2 class="section-title">${prayerGuideLandingContent.author.title}</h2>
         <div class="author-section">
-          <div class="author-name">${prayerGuideLandingContent.author.name}</div>
-          ${prayerGuideLandingContent.author.description.map(paragraph => `
-            <p class="author-text">${paragraph}</p>
+          <div class="author-title">${prayerGuideLandingContent.author.title}</div>
+          <div class="author-subtitle">${prayerGuideLandingContent.author.subtitle}</div>
+          ${prayerGuideLandingContent.author.paragraphs.map(p => `
+            <p class="author-paragraph">${p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>
           `).join('')}
         </div>
       </div>
@@ -265,10 +351,8 @@ export function generatePrayerGuideEmailHTML(): string {
 
     <!-- CTA Section -->
     <div class="cta-section">
-      <div class="cta-title">${prayerGuideLandingContent.finalCta.title}</div>
-      <div class="cta-subtitle">${prayerGuideLandingContent.finalCta.subtitle}</div>
       <a href="${publicLandingUrl}" class="cta-button">
-        ${prayerGuideLandingContent.finalCta.cta}
+        ${prayerGuideLandingContent.hero.cta} ←
       </a>
     </div>
 
@@ -284,13 +368,12 @@ export function generatePrayerGuideEmailHTML(): string {
 
 export function verifyPrayerGuideEmailContent(generatedHtml: string): { isValid: boolean; missingContent: string[] } {
   const requiredTexts = [
-    prayerGuideLandingContent.hero.title,
-    prayerGuideLandingContent.hero.subtitle,
-    prayerGuideLandingContent.problem.title,
-    prayerGuideLandingContent.solution.title,
+    prayerGuideLandingContent.hero.titleLine1,
+    prayerGuideLandingContent.hero.titleLine2,
+    prayerGuideLandingContent.painSection.title,
+    prayerGuideLandingContent.benefits.title,
     prayerGuideLandingContent.author.title,
-    prayerGuideLandingContent.author.name,
-    prayerGuideLandingContent.finalCta.title
+    prayerGuideLandingContent.author.subtitle
   ];
 
   const missingContent: string[] = [];
