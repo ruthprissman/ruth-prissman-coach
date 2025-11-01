@@ -92,13 +92,14 @@ export function generatePrayerGuideEmailHTML(): string {
       background: white;
       border-radius: 8px;
       border-right: 3px solid #5FA6A6;
+      direction: rtl;
     }
     .pain-question:last-child {
       margin-bottom: 0;
     }
     .pain-icon {
       font-size: 20px;
-      margin-left: 12px;
+      margin-right: 12px;
       flex-shrink: 0;
       margin-top: 2px;
     }
@@ -141,7 +142,7 @@ export function generatePrayerGuideEmailHTML(): string {
     .feature-icon {
       color: #5FA6A6;
       font-size: 18px;
-      margin-left: 10px;
+      margin-right: 10px;
       flex-shrink: 0;
       margin-top: 2px;
     }
