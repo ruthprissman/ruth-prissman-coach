@@ -22,6 +22,7 @@ export function generatePrayerGuideEmailHTML(): string {
       color: #4A5568;
       line-height: 1.8;
       padding: 20px;
+      direction: rtl;
     }
     .container {
       max-width: 650px;
@@ -65,9 +66,11 @@ export function generatePrayerGuideEmailHTML(): string {
     }
     .content {
       padding: 40px 30px;
+      direction: rtl;
     }
     .section {
       margin-bottom: 40px;
+      direction: rtl;
     }
     .section-title {
       font-family: 'Alef', 'Heebo', sans-serif;
