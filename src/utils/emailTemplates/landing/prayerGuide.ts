@@ -287,79 +287,79 @@ export function generatePrayerGuideEmailHTML(): string {
     <!-- Header -->
     <div class="header">
       <div class="header-content">
-        <h1>
+        <h1 dir="rtl">
           ${prayerGuideLandingContent.hero.titleLine1}<br />
           ${prayerGuideLandingContent.hero.titleLine2}<br />
           ${prayerGuideLandingContent.hero.titleLine3}
         </h1>
-        <p>${prayerGuideLandingContent.hero.description}</p>
+        <p dir="rtl">${prayerGuideLandingContent.hero.description}</p>
       </div>
     </div>
 
     <!-- Content -->
-    <div class="content">
+    <div class="content" dir="rtl">
       <!-- Pain Section -->
-      <div class="section">
-        <h2 class="section-title">${prayerGuideLandingContent.painSection.title}</h2>
+      <div class="section" dir="rtl">
+        <h2 class="section-title" dir="rtl">${prayerGuideLandingContent.painSection.title}</h2>
         
-        <div class="pain-questions">
+        <div class="pain-questions" dir="rtl">
           ${prayerGuideLandingContent.painSection.questions.map(q => `
-            <div class="pain-question">
+            <div class="pain-question" dir="rtl">
               <div class="pain-icon">💭</div>
-              <div class="pain-text">${q.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
+              <div class="pain-text" dir="rtl">${q.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
             </div>
           `).join('')}
         </div>
 
-        <p class="guide-intro">${prayerGuideLandingContent.painSection.guideIntro}</p>
+        <p class="guide-intro" dir="rtl">${prayerGuideLandingContent.painSection.guideIntro}</p>
         
-        <p class="guide-description">${prayerGuideLandingContent.painSection.guideDescription}</p>
+        <p class="guide-description" dir="rtl">${prayerGuideLandingContent.painSection.guideDescription}</p>
         
-        <div class="guide-features">
-          <div class="guide-feature">
+        <div class="guide-features" dir="rtl">
+          <div class="guide-feature" dir="rtl">
             <div class="feature-icon">📋</div>
-            <div>${prayerGuideLandingContent.painSection.guideFeatures[0]}</div>
+            <div dir="rtl">${prayerGuideLandingContent.painSection.guideFeatures[0]}</div>
           </div>
-          <div class="guide-feature">
+          <div class="guide-feature" dir="rtl">
             <div class="feature-icon">💡</div>
-            <div>${prayerGuideLandingContent.painSection.guideFeatures[1]}</div>
+            <div dir="rtl">${prayerGuideLandingContent.painSection.guideFeatures[1]}</div>
           </div>
-          <div class="guide-feature">
+          <div class="guide-feature" dir="rtl">
             <div class="feature-icon">🛡️</div>
-            <div>${prayerGuideLandingContent.painSection.guideFeatures[2]}</div>
+            <div dir="rtl">${prayerGuideLandingContent.painSection.guideFeatures[2]}</div>
           </div>
         </div>
 
-        <div class="weekly-content">
-          ${prayerGuideLandingContent.painSection.weeklyContent.map(p => `<p>${p}</p>`).join('')}
+        <div class="weekly-content" dir="rtl">
+          ${prayerGuideLandingContent.painSection.weeklyContent.map(p => `<p dir="rtl">${p}</p>`).join('')}
         </div>
 
         <img src="https://coach.ruthprissman.co.il${prayerGuideLandingContent.painSection.butterflyImage}" alt="פרפר - סמל לחופש ושחרור" class="butterfly-image" />
       </div>
 
       <!-- Benefits Section -->
-      <div class="section">
-        <h2 class="section-title">${prayerGuideLandingContent.benefits.title}</h2>
-        <div class="benefits-grid">
+      <div class="section" dir="rtl">
+        <h2 class="section-title" dir="rtl">${prayerGuideLandingContent.benefits.title}</h2>
+        <div class="benefits-grid" dir="rtl">
           ${prayerGuideLandingContent.benefits.items.map((benefit, index) => {
             const icons = ['📄', '✉️', '👥'];
             return `
-            <div class="benefit-card">
+            <div class="benefit-card" dir="rtl">
               <div class="benefit-icon">${icons[index]}</div>
-              <div class="benefit-title">${benefit.title}</div>
-              <div class="benefit-description">${benefit.description}</div>
+              <div class="benefit-title" dir="rtl">${benefit.title}</div>
+              <div class="benefit-description" dir="rtl">${benefit.description}</div>
             </div>
           `}).join('')}
         </div>
       </div>
 
       <!-- Author Section -->
-      <div class="section">
-        <div class="author-section">
-          <div class="author-title">${prayerGuideLandingContent.author.title}</div>
-          <div class="author-subtitle">${prayerGuideLandingContent.author.subtitle}</div>
+      <div class="section" dir="rtl">
+        <div class="author-section" dir="rtl">
+          <div class="author-title" dir="rtl">${prayerGuideLandingContent.author.title}</div>
+          <div class="author-subtitle" dir="rtl">${prayerGuideLandingContent.author.subtitle}</div>
           ${prayerGuideLandingContent.author.paragraphs.map(p => `
-            <p class="author-paragraph">${p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>
+            <p class="author-paragraph" dir="rtl">${p.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>
           `).join('')}
         </div>
       </div>
@@ -373,7 +373,7 @@ export function generatePrayerGuideEmailHTML(): string {
     </div>
 
     <!-- Footer -->
-    <div class="footer">
+    <div class="footer" dir="rtl">
       ${prayerGuideLandingContent.footer.text}
     </div>
   </div>
