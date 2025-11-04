@@ -92,7 +92,7 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
             <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto; text-align: center;">
               <tr>
                 <td style="text-align: center;">
-                  <img src="${signatureUrl}" 
+                  <img src="https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/email-signature.png" 
                        alt="רות פריסמן" 
                        style="max-width: 250px; width: 100%; height: auto; margin-bottom: 15px; border-radius: 10px; display: block;" />
                 </td>
