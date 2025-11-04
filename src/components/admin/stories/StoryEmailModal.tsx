@@ -81,16 +81,15 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
             <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto; text-align: center;">
               <tr>
                 <td style="text-align: center;">
-                  <img src="https://drive.google.com/uc?export=view&id=1HSpCu_iV7E7uTk3rxtideWZd8FwHfaX1" 
-                       alt="רות פריסמן - חתימה" 
+                  <img src="${window.location.origin}/assets/email-signature.png" 
+                       alt="רות פריסמן" 
                        style="max-width: 250px; width: 100%; height: auto; margin-bottom: 15px; border-radius: 10px; display: block;" />
                 </td>
               </tr>
             </table>
             <div style="margin-top: 20px;">
-              <p style="margin: 5px 0; color: #4A235A; font-size: 18px; font-weight: 600;">רות פריסמן - קוד הנפש</p>
-              <p style="margin: 5px 0; color: #666; font-size: 14px;">מאמנת בגישה טיפולית | קוד הנפש | SEFT</p>
-              <p style="margin: 5px 0; color: #666; font-size: 14px;">מבט חדש על חיים מוכרים</p>
+              <p style="margin: 5px 0; color: #4A235A; font-size: 18px; font-weight: 600;">רות פריסמן</p>
+              <p style="margin: 5px 0; color: #666; font-size: 14px;">הרצאות | סדנאות | ליווי אישי</p>
               <div style="margin-top: 15px;">
                 <p style="margin: 3px 0; color: #4A235A; font-size: 14px;">
                   📧 <a href="mailto:Ruth@RuthPrissman.co.il" style="color: #4A235A; text-decoration: none;">Ruth@RuthPrissman.co.il</a>
