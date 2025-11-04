@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -6,6 +6,7 @@ import { Send, Mail, TestTube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { Story } from '@/types/story';
+import { uploadSignatureToStorage, getSignatureUrl } from '@/utils/uploadSignatureToStorage';
 
 interface StoryEmailModalProps {
   isOpen: boolean;
@@ -20,7 +21,17 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
   const [allSubscribers, setAllSubscribers] = useState<Array<{email: string, firstName?: string, alreadySent: boolean}>>([]);
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
+  const [signatureUrl, setSignatureUrl] = useState<string>(getSignatureUrl());
   const { toast } = useToast();
+
+  // Upload signature to storage on mount
+  useEffect(() => {
+    uploadSignatureToStorage().then(url => {
+      setSignatureUrl(url);
+    }).catch(error => {
+      console.error('Failed to ensure signature upload:', error);
+    });
+  }, []);
 
   const handleSendStoryEmail = async () => {
     if (!story) return;
@@ -81,7 +92,7 @@ const StoryEmailModal: React.FC<StoryEmailModalProps> = ({ isOpen, onClose, stor
             <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto; text-align: center;">
               <tr>
                 <td style="text-align: center;">
-                  <img src="${window.location.origin}/assets/email-signature.png" 
+                  <img src="${signatureUrl}" 
                        alt="רות פריסמן" 
                        style="max-width: 250px; width: 100%; height: auto; margin-bottom: 15px; border-radius: 10px; display: block;" />
                 </td>
