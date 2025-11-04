@@ -285,12 +285,12 @@ export function generatePrayerGuideEmailHTML(): string {
 <body>
   <div class="container">
     <!-- Header -->
-    <div class="header">
-      <div class="header-content">
+    <div class="header" dir="rtl">
+      <div class="header-content" dir="rtl">
         <h1 dir="rtl">
-          ${prayerGuideLandingContent.hero.titleLine1}<br />
-          ${prayerGuideLandingContent.hero.titleLine2}<br />
-          ${prayerGuideLandingContent.hero.titleLine3}
+          <span dir="rtl">${prayerGuideLandingContent.hero.titleLine1}</span><br />
+          <span dir="rtl">${prayerGuideLandingContent.hero.titleLine2}</span><br />
+          <span dir="rtl">${prayerGuideLandingContent.hero.titleLine3}</span>
         </h1>
         <p dir="rtl">${prayerGuideLandingContent.hero.description}</p>
       </div>
