@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import NewHome from './pages/NewHome';
@@ -95,7 +95,7 @@ function App() {
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/workshop" element={<WorkshopLanding />} />
-                <Route path="/prayer-landing" element={<HebrewLandingPage />} />
+                <Route path="/prayer-landing" element={<Navigate to="/prayer-guide" replace />} />
                 <Route path="/prayer-guide" element={<PrayerGuideLanding />} />
                 <Route path="/main-workshops" element={<RuthFrissmanWorkshop />} />
 
