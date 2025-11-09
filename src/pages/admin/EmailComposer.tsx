@@ -26,6 +26,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 
 interface EmailItem {
   id: number;
@@ -79,6 +80,7 @@ const EmailComposer: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [editMode, setEditMode] = useState<'visual' | 'code'>('visual');
 
   // Load email items
   const loadEmailItems = useCallback(async () => {
@@ -233,13 +235,6 @@ const EmailComposer: React.FC = () => {
       `;
 
       setComposedHtml(fullHtml);
-
-      // Update iframe
-      if (editorRef.current && editorRef.current.contentWindow) {
-        editorRef.current.contentWindow.document.open();
-        editorRef.current.contentWindow.document.write(fullHtml);
-        editorRef.current.contentWindow.document.close();
-      }
 
       toast({
         title: 'מיפוי הושלם',
@@ -501,6 +496,15 @@ const EmailComposer: React.FC = () => {
     }
   }, [composedHtml, editableSubject, toast]);
 
+  // Update iframe when composedHtml changes
+  useEffect(() => {
+    if (composedHtml && editorRef.current && editorRef.current.contentWindow) {
+      editorRef.current.contentWindow.document.open();
+      editorRef.current.contentWindow.document.write(composedHtml);
+      editorRef.current.contentWindow.document.close();
+    }
+  }, [composedHtml]);
+
   // Load data on mount
   useEffect(() => {
     loadEmailItems();
@@ -655,23 +659,43 @@ const EmailComposer: React.FC = () => {
             </ScrollArea>
           </Card>
 
-          {/* Right: Template preview */}
+          {/* Right: Template preview with edit modes */}
           <Card className="p-4">
-            <h3 className="font-bold text-lg mb-4">תצוגה</h3>
-            <div className="border rounded h-[600px] bg-gray-50">
-              {composedHtml ? (
-                <iframe
-                  ref={editorRef}
-                  className="w-full h-full"
-                  title="Email Preview"
-                  sandbox="allow-same-origin"
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  לחץ על "מיפוי אוטומטי" לצפייה בתבנית
-                </div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">תבנית</h3>
+              {composedHtml && (
+                <Tabs value={editMode} onValueChange={(v) => setEditMode(v as any)}>
+                  <TabsList>
+                    <TabsTrigger value="visual">תצוגה</TabsTrigger>
+                    <TabsTrigger value="code">עריכת קוד</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               )}
             </div>
+            {composedHtml ? (
+              <div className="border rounded h-[600px] bg-gray-50">
+                {editMode === 'visual' ? (
+                  <iframe
+                    ref={editorRef}
+                    className="w-full h-full"
+                    title="Email Preview"
+                    sandbox="allow-same-origin"
+                  />
+                ) : (
+                  <Textarea
+                    value={composedHtml}
+                    onChange={(e) => setComposedHtml(e.target.value)}
+                    className="w-full h-full font-mono text-xs resize-none"
+                    dir="ltr"
+                    placeholder="HTML code..."
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="border rounded h-[600px] bg-gray-50 flex items-center justify-center text-muted-foreground">
+                לחץ על "טעינה" ואז "מיפוי אוטומטי" לצפייה בתבנית
+              </div>
+            )}
           </Card>
         </div>
       </div>
