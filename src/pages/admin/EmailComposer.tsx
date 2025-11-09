@@ -713,6 +713,13 @@ const EmailComposer: React.FC = () => {
     loadTemplates();
   }, [loadEmailItems, loadTemplates]);
 
+  // Auto-load when item and template are selected
+  useEffect(() => {
+    if (selectedItemId && selectedTemplateId) {
+      loadComposeContext();
+    }
+  }, [selectedItemId, selectedTemplateId, loadComposeContext]);
+
   // Expose window API
   useEffect(() => {
     (window as any).loadComposeContext = loadComposeContext;
