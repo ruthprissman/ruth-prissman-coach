@@ -340,20 +340,19 @@ const EmailTemplateDesigner: React.FC = () => {
     console.log(`CSS optimized: ${originalLength} -> ${optimizedLength} characters (${Math.round((1 - optimizedLength/originalLength) * 100)}% reduction)`);
     setCssSize(optimizedLength);
     
-    // Check CSS size and warn if too large
+    // Warn if CSS is too large (but don't block saving)
     if (optimizedLength > 50000) {
       toast({
-        title: 'אזהרה: CSS גדול מדי',
-        description: `ה-CSS מכיל ${optimizedLength.toLocaleString()} תווים. מומלץ מאוד לפשט את העיצוב כדי להימנע מחיתוך מיילים.`,
-        variant: 'destructive'
+        title: 'אזהרה: CSS גדול מאוד',
+        description: `ה-CSS מכיל ${optimizedLength.toLocaleString()} תווים. התבנית תישמר אבל מיילים עלולים להיחתך. מומלץ מאוד לפשט את העיצוב.`,
+        variant: 'destructive',
+        duration: 8000
       });
-      return;
-    }
-    
-    if (optimizedLength > 20000) {
+    } else if (optimizedLength > 20000) {
       toast({
         title: 'אזהרה',
         description: `ה-CSS מכיל ${optimizedLength.toLocaleString()} תווים. שקול לפשט את העיצוב.`,
+        duration: 5000
       });
     }
 
