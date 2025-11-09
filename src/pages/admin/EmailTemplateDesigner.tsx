@@ -35,6 +35,7 @@ const EmailTemplateDesigner: React.FC = () => {
   const [showPlaceholderPanel, setShowPlaceholderPanel] = useState(false);
   const [savedTemplates, setSavedTemplates] = useState<any[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null);
   const [placeholders, setPlaceholders] = useState<Record<string, string>>({
     title: '',
     subtitle: '',
@@ -298,14 +299,35 @@ const EmailTemplateDesigner: React.FC = () => {
     const html = editorRef.current.getHtml();
     const css = editorRef.current.getCss();
 
-    const { error } = await supabase
-      .from('email_templates')
-      .insert({
-        name: templateName,
-        html,
-        css,
-        placeholders
-      });
+    let error;
+
+    if (currentTemplateId) {
+      // Update existing template
+      const result = await supabase
+        .from('email_templates')
+        .update({
+          name: templateName,
+          html,
+          css,
+          placeholders,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', currentTemplateId);
+      
+      error = result.error;
+    } else {
+      // Insert new template
+      const result = await supabase
+        .from('email_templates')
+        .insert({
+          name: templateName,
+          html,
+          css,
+          placeholders
+        });
+      
+      error = result.error;
+    }
 
     if (error) {
       toast({
@@ -317,12 +339,11 @@ const EmailTemplateDesigner: React.FC = () => {
     }
 
     toast({
-      title: 'התבנית נשמרה',
-      description: `התבנית "${templateName}" נשמרה בהצלחה במערכת`
+      title: currentTemplateId ? 'התבנית עודכנה' : 'התבנית נשמרה',
+      description: `התבנית "${templateName}" ${currentTemplateId ? 'עודכנה' : 'נשמרה'} בהצלחה במערכת`
     });
 
-    loadTemplates();
-    setTemplateName('');
+    await loadTemplates();
   };
 
   const handleLoadTemplate = async (templateId: string) => {
@@ -334,6 +355,7 @@ const EmailTemplateDesigner: React.FC = () => {
     editorRef.current.setComponents(template.html);
     editorRef.current.setStyle(template.css);
     setTemplateName(template.name);
+    setCurrentTemplateId(template.id);
     setPlaceholders(template.placeholders || {});
 
     toast({
@@ -412,8 +434,22 @@ const EmailTemplateDesigner: React.FC = () => {
             <div className="flex gap-2 flex-wrap">
               <Button onClick={handleSave} className="gap-2">
                 <Save className="h-4 w-4" />
-                שמור
+                {currentTemplateId ? 'עדכן תבנית' : 'שמור כחדש'}
               </Button>
+
+              {currentTemplateId && (
+                <Button 
+                  onClick={() => {
+                    setCurrentTemplateId(null);
+                    setTemplateName('');
+                    setSelectedTemplateId('');
+                  }} 
+                  variant="outline" 
+                  className="gap-2"
+                >
+                  תבנית חדשה
+                </Button>
+              )}
               
               <Button onClick={handleExportHtml} variant="outline" className="gap-2">
                 <FileCode className="h-4 w-4" />
