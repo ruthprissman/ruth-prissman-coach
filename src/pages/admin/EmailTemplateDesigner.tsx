@@ -90,22 +90,7 @@ const EmailTemplateDesigner: React.FC = () => {
         sectors: [{
           name: 'גופנים ועיצוב',
           open: true,
-          buildProps: ['font-size', 'font-weight', 'line-height', 'letter-spacing', 'color', 'text-align'],
-          properties: [{
-            type: 'select',
-            label: 'משפחת גופן',
-            property: 'font-family',
-            defaults: 'Heebo, Arial, sans-serif',
-            options: [
-              { id: 'Heebo, Arial, sans-serif', label: 'Heebo' },
-              { id: 'Alef, Arial, sans-serif', label: 'Alef' },
-              { id: 'Arial, sans-serif', label: 'Arial' },
-              { id: 'Helvetica, sans-serif', label: 'Helvetica' },
-              { id: 'Times New Roman, serif', label: 'Times New Roman' },
-              { id: 'Georgia, serif', label: 'Georgia' },
-              { id: 'Courier New, monospace', label: 'Courier New' },
-            ]
-          }]
+          buildProps: ['font-family', 'font-size', 'font-weight', 'line-height', 'letter-spacing', 'color', 'text-align'],
         }, {
           name: 'רקע',
           open: false,
@@ -148,6 +133,23 @@ const EmailTemplateDesigner: React.FC = () => {
           'direction': 'rtl',
           'text-align': 'center'
         });
+      }
+
+      // Customize font-family property with Hebrew fonts
+      const styleManager = editor.StyleManager;
+      const fontFamilyProp = styleManager.getProperty('גופנים ועיצוב', 'font-family');
+      if (fontFamilyProp) {
+        fontFamilyProp.set('options', [
+          { value: 'Heebo, Arial, sans-serif', name: 'Heebo' },
+          { value: 'Alef, Arial, sans-serif', name: 'Alef' },
+          { value: 'Arial, sans-serif', name: 'Arial' },
+          { value: 'Helvetica, sans-serif', name: 'Helvetica' },
+          { value: 'Times New Roman, serif', name: 'Times New Roman' },
+          { value: 'Georgia, serif', name: 'Georgia' },
+          { value: 'Courier New, monospace', name: 'Courier New' },
+          { value: 'Verdana, sans-serif', name: 'Verdana' },
+          { value: 'Tahoma, sans-serif', name: 'Tahoma' },
+        ]);
       }
     });
 
