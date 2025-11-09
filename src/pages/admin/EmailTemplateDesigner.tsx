@@ -91,7 +91,33 @@ const EmailTemplateDesigner: React.FC = () => {
         sectors: [{
           name: 'גופנים ועיצוב',
           open: true,
-          buildProps: ['font-family', 'font-size', 'font-weight', 'line-height', 'letter-spacing', 'color', 'text-align'],
+          properties: [
+            {
+              name: 'גופן',
+              property: 'font-family',
+              type: 'select',
+              default: 'Heebo, Arial, sans-serif',
+              options: [
+                { id: 'Heebo, Arial, sans-serif', label: 'Heebo - היבו' },
+                { id: 'Alef, Arial, sans-serif', label: 'Alef - אלף' },
+                { id: 'Rubik, Arial, sans-serif', label: 'Rubik - רוביק' },
+                { id: 'Assistant, Arial, sans-serif', label: 'Assistant - אסיסטנט' },
+                { id: '"Frank Ruhl Libre", serif', label: 'Frank Ruhl Libre - פרנק רוהל' },
+                { id: '"Varela Round", Arial, sans-serif', label: 'Varela Round - וארלה' },
+                { id: '"Open Sans Hebrew", Arial, sans-serif', label: 'Open Sans Hebrew' },
+                { id: 'Arial, sans-serif', label: 'Arial' },
+                { id: 'Helvetica, sans-serif', label: 'Helvetica' },
+                { id: 'Times New Roman, serif', label: 'Times New Roman' },
+                { id: 'Georgia, serif', label: 'Georgia' },
+              ]
+            },
+            'font-size',
+            'font-weight',
+            'line-height',
+            'letter-spacing',
+            'color',
+            'text-align'
+          ]
         }, {
           name: 'רקע',
           open: false,
@@ -136,24 +162,6 @@ const EmailTemplateDesigner: React.FC = () => {
         });
       }
 
-      // Customize font-family property with Hebrew fonts
-      const styleManager = editor.StyleManager;
-      const fontFamilyProp = styleManager.getProperty('גופנים ועיצוב', 'font-family');
-      if (fontFamilyProp) {
-        fontFamilyProp.set('options', [
-          { value: 'Heebo, Arial, sans-serif', name: 'Heebo - היבו' },
-          { value: 'Alef, Arial, sans-serif', name: 'Alef - אלף' },
-          { value: 'Rubik, Arial, sans-serif', name: 'Rubik - רוביק' },
-          { value: 'Assistant, Arial, sans-serif', name: 'Assistant - אסיסטנט' },
-          { value: '"Frank Ruhl Libre", serif', name: 'Frank Ruhl Libre - פרנק רוהל' },
-          { value: '"Varela Round", Arial, sans-serif', name: 'Varela Round - וארלה' },
-          { value: '"Open Sans Hebrew", Arial, sans-serif', name: 'Open Sans Hebrew' },
-          { value: 'Arial, sans-serif', name: 'Arial' },
-          { value: 'Helvetica, sans-serif', name: 'Helvetica' },
-          { value: 'Times New Roman, serif', name: 'Times New Roman' },
-          { value: 'Georgia, serif', name: 'Georgia' },
-        ]);
-      }
     });
 
     // Custom commands for Hebrew UI
