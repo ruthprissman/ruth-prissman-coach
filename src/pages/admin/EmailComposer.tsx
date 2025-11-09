@@ -304,14 +304,44 @@ const EmailComposer: React.FC = () => {
         html = html.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), value);
       });
 
-      // Build full HTML with CSS
+      // Check CSS size and limit it to prevent email truncation
+      const cssLength = css.length;
+      console.log(`Template CSS length: ${cssLength} characters`);
+      
+      let cssToInclude = '';
+      if (cssLength > 50000) {
+        console.warn(`CSS too large (${cssLength} chars), omitting to prevent email truncation`);
+        toast({
+          title: 'אזהרה: CSS גדול מדי',
+          description: 'ה-CSS של התבנית גדול מדי ולא ייכלל במייל. שקול לערוך מחדש את התבנית.',
+        });
+        cssToInclude = '/* CSS omitted - too large (prevents email truncation) */';
+      } else if (cssLength > 10000) {
+        console.warn(`CSS is large (${cssLength} chars), consider optimizing`);
+        cssToInclude = css;
+      } else {
+        cssToInclude = css;
+      }
+
+      // Build full HTML with limited CSS
       const fullHtml = `
         <!DOCTYPE html>
         <html dir="rtl" lang="he">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>${css}</style>
+          <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet">
+          <style>
+            body { 
+              font-family: 'Heebo', Arial, sans-serif; 
+              direction: rtl;
+              max-width: 600px;
+              margin: 0 auto;
+              line-height: 1.6;
+              color: #333;
+            }
+            ${cssToInclude}
+          </style>
         </head>
         <body>${html}</body>
         </html>

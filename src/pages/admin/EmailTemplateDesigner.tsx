@@ -36,6 +36,7 @@ const EmailTemplateDesigner: React.FC = () => {
   const [savedTemplates, setSavedTemplates] = useState<any[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null);
+  const [cssSize, setCssSize] = useState<number>(0);
   const [placeholders, setPlaceholders] = useState<Record<string, string>>({
     title: '',
     subtitle: '',
@@ -44,6 +45,28 @@ const EmailTemplateDesigner: React.FC = () => {
     cta_url: '',
     hero_image: ''
   });
+
+  // Clean and optimize CSS
+  const cleanAndOptimizeCss = (css: string): string => {
+    let cleanedCss = css;
+    
+    // 1. Remove comments
+    cleanedCss = cleanedCss.replace(/\/\*[\s\S]*?\*\//g, '');
+    
+    // 2. Remove extra whitespace
+    cleanedCss = cleanedCss.replace(/\s+/g, ' ').trim();
+    
+    // 3. Remove empty rules
+    cleanedCss = cleanedCss.replace(/[^}]+\{\s*\}/g, '');
+    
+    // 4. Remove unnecessary !important
+    cleanedCss = cleanedCss.replace(/\s*!important/g, '');
+    
+    // 5. Remove duplicate semicolons
+    cleanedCss = cleanedCss.replace(/;+/g, ';');
+    
+    return cleanedCss;
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -307,7 +330,32 @@ const EmailTemplateDesigner: React.FC = () => {
     }
 
     const html = editorRef.current.getHtml();
-    const css = editorRef.current.getCss();
+    let css = editorRef.current.getCss();
+    
+    // Clean and optimize CSS
+    const originalLength = css.length;
+    css = cleanAndOptimizeCss(css);
+    const optimizedLength = css.length;
+    
+    console.log(`CSS optimized: ${originalLength} -> ${optimizedLength} characters (${Math.round((1 - optimizedLength/originalLength) * 100)}% reduction)`);
+    setCssSize(optimizedLength);
+    
+    // Check CSS size and warn if too large
+    if (optimizedLength > 50000) {
+      toast({
+        title: 'אזהרה: CSS גדול מדי',
+        description: `ה-CSS מכיל ${optimizedLength.toLocaleString()} תווים. מומלץ מאוד לפשט את העיצוב כדי להימנע מחיתוך מיילים.`,
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    if (optimizedLength > 20000) {
+      toast({
+        title: 'אזהרה',
+        description: `ה-CSS מכיל ${optimizedLength.toLocaleString()} תווים. שקול לפשט את העיצוב.`,
+      });
+    }
 
     let error;
 
@@ -445,6 +493,11 @@ const EmailTemplateDesigner: React.FC = () => {
               <Button onClick={handleSave} className="gap-2">
                 <Save className="h-4 w-4" />
                 {currentTemplateId ? 'עדכן תבנית' : 'שמור כחדש'}
+                {cssSize > 0 && (
+                  <span className="text-xs opacity-70">
+                    ({(cssSize / 1024).toFixed(1)}KB)
+                  </span>
+                )}
               </Button>
 
               {currentTemplateId && (
