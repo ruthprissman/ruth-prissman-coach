@@ -713,75 +713,29 @@ const EmailComposer: React.FC = () => {
     const doc = iframe?.contentWindow?.document;
     if (!doc || !iframe?.contentWindow) return;
     
-    console.log('Attempting to change font to:', fontFamily);
-    
     // Get selection
     const selection = doc.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-      console.log('No selection found');
-      return;
-    }
+    if (!selection || selection.rangeCount === 0) return;
     
     const range = selection.getRangeAt(0);
-    console.log('Selection range:', range.toString());
-    
-    // If nothing selected, don't do anything
-    if (range.collapsed) {
-      console.log('Selection is collapsed (nothing selected)');
-      return;
-    }
+    if (range.collapsed) return;
     
     try {
-      // Get all text nodes in the selection
-      const walker = doc.createTreeWalker(
-        range.commonAncestorContainer,
-        NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
-        {
-          acceptNode: function(node) {
-            if (node.nodeType === Node.TEXT_NODE && range.intersectsNode(node)) {
-              return NodeFilter.FILTER_ACCEPT;
-            }
-            if (node.nodeType === Node.ELEMENT_NODE && range.intersectsNode(node)) {
-              return NodeFilter.FILTER_SKIP;
-            }
-            return NodeFilter.FILTER_REJECT;
-          }
-        }
-      );
+      // Create a span element with the font
+      const span = doc.createElement('span');
+      span.style.fontFamily = fontFamily;
       
-      const nodes = [];
-      let currentNode;
-      while (currentNode = walker.nextNode()) {
-        if (currentNode.nodeType === Node.TEXT_NODE) {
-          nodes.push(currentNode);
-        }
-      }
+      // Use surroundContents which is more stable than replaceChild
+      // This preserves the DOM structure and doesn't break table layouts
+      range.surroundContents(span);
       
-      // Wrap each text node in a span with the font
-      nodes.forEach(textNode => {
-        if (textNode.parentElement && textNode.textContent && textNode.textContent.trim()) {
-          const span = doc.createElement('span');
-          span.style.fontFamily = fontFamily;
-          span.textContent = textNode.textContent;
-          textNode.parentElement.replaceChild(span, textNode);
-        }
-      });
+      // Restore selection
+      selection.removeAllRanges();
+      selection.addRange(range);
       
-      console.log('Font applied successfully to', nodes.length, 'nodes');
+      console.log('Font applied:', fontFamily);
     } catch (error) {
       console.error('Error applying font:', error);
-      
-      // Fallback: simple wrap
-      try {
-        const span = doc.createElement('span');
-        span.style.fontFamily = fontFamily;
-        const contents = range.extractContents();
-        span.appendChild(contents);
-        range.insertNode(span);
-        console.log('Fallback: Font applied with simple wrap');
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
-      }
     }
   };
 
