@@ -35,6 +35,7 @@ import FinancialSettings from './pages/admin/FinancialSettings';
 import WorkshopsManagement from './pages/admin/WorkshopsManagement';
 import LandingPagesManagement from './pages/admin/LandingPagesManagement';
 import LeadsManagement from './pages/admin/LeadsManagement';
+import EmailTemplateDesigner from './pages/admin/EmailTemplateDesigner';
 import { ThemeProvider } from './components/ui/theme-provider';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -118,6 +119,7 @@ function App() {
                 <Route path="/admin/financial-settings" element={<ProtectedRoute><FinancialSettings /></ProtectedRoute>} />
                 <Route path="/admin/workshops" element={<ProtectedRoute><WorkshopsManagement /></ProtectedRoute>} />
                 <Route path="/admin/landing-pages" element={<ProtectedRoute><LandingPagesManagement /></ProtectedRoute>} />
+                <Route path="/admin/email-templates" element={<ProtectedRoute><EmailTemplateDesigner /></ProtectedRoute>} />
                 
                 {/* Article management routes wrapped with PublicationProvider */}
                 <Route path="/admin/articles/*" element={
