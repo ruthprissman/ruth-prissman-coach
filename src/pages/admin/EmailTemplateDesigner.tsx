@@ -47,11 +47,10 @@ const EmailTemplateDesigner: React.FC = () => {
     hero_image: ''
   });
 
-  // Clean and optimize CSS - only for smaller CSS files
+  // Clean and optimize CSS for email compatibility
   const cleanAndOptimizeCss = (css: string): string => {
-    if (css.length > 100000) {
-      console.warn('CSS too large for optimization, skipping cleanup');
-      return css; // Don't try to clean very large CSS - it will freeze the page
+    if (css.length > 200000) {
+      console.warn('CSS extremely large, applying aggressive cleanup');
     }
     
     let cleanedCss = css;
@@ -60,17 +59,38 @@ const EmailTemplateDesigner: React.FC = () => {
       // 1. Remove comments
       cleanedCss = cleanedCss.replace(/\/\*[\s\S]*?\*\//g, '');
       
-      // 2. Remove extra whitespace
+      // 2. Remove GrapesJS specific classes (that cause bloat)
+      cleanedCss = cleanedCss.replace(/\.gjs-[^{]+\{[^}]*\}/g, '');
+      cleanedCss = cleanedCss.replace(/\[data-gjs[^\]]*\][^{]*\{[^}]*\}/g, '');
+      
+      // 3. Remove media queries (most email clients don't support them well)
+      cleanedCss = cleanedCss.replace(/@media[^{]+\{[\s\S]*?\}\s*\}/g, '');
+      
+      // 4. Remove pseudo selectors that don't work in emails
+      cleanedCss = cleanedCss.replace(/:hover[^{]*\{[^}]*\}/g, '');
+      cleanedCss = cleanedCss.replace(/:before[^{]*\{[^}]*\}/g, '');
+      cleanedCss = cleanedCss.replace(/:after[^{]*\{[^}]*\}/g, '');
+      
+      // 5. Remove complex selectors (keep only simple ones for emails)
+      cleanedCss = cleanedCss.replace(/[^,{]+(?:>|\+|~)[^{]*\{[^}]*\}/g, '');
+      
+      // 6. Remove extra whitespace
       cleanedCss = cleanedCss.replace(/\s+/g, ' ').trim();
       
-      // 3. Remove empty rules
+      // 7. Remove empty rules
       cleanedCss = cleanedCss.replace(/[^}]+\{\s*\}/g, '');
       
-      // 4. Remove duplicate semicolons
+      // 8. Remove duplicate semicolons
       cleanedCss = cleanedCss.replace(/;+/g, ';');
+      
+      // 9. Remove !important (not needed for emails)
+      cleanedCss = cleanedCss.replace(/\s*!important/gi, '');
+      
+      console.log(`CSS cleaned: ${css.length} -> ${cleanedCss.length} (${Math.round((1 - cleanedCss.length/css.length) * 100)}% reduction)`);
+      
     } catch (error) {
       console.error('Error cleaning CSS:', error);
-      return css; // Return original if cleaning fails
+      return css;
     }
     
     return cleanedCss;
@@ -346,39 +366,31 @@ const EmailTemplateDesigner: React.FC = () => {
       
       console.log('Original CSS length:', css.length);
       
-      // If CSS is extremely large, offer to clear it
-      if (css.length > 100000) {
-        const shouldClear = window.confirm(
-          `ה-CSS גדול מאוד (${(css.length / 1024).toFixed(0)}KB).\n\n` +
-          'CSS כל כך גדול יגרום למיילים להיחתך.\n\n' +
-          'האם למחוק את ה-CSS ולשמור רק את ה-HTML?\n\n' +
-          '(לחץ OK למחיקה, Cancel לשמירה כמו שהוא)'
-        );
-        
-        if (shouldClear) {
-          css = '';
-          console.log('CSS cleared by user choice');
-        } else {
-          console.log('User chose to keep large CSS');
-        }
-      } else {
-        // Clean and optimize CSS only for smaller files
-        const originalLength = css.length;
-        css = cleanAndOptimizeCss(css);
-        const optimizedLength = css.length;
-        
-        console.log(`CSS optimized: ${originalLength} -> ${optimizedLength} characters`);
-      }
+      // Always clean and optimize CSS for emails
+      const originalLength = css.length;
+      css = cleanAndOptimizeCss(css);
+      const optimizedLength = css.length;
       
-      setCssSize(css.length);
+      console.log(`CSS optimized: ${originalLength} -> ${optimizedLength} characters`);
+      setCssSize(optimizedLength);
       
-      // Warn if CSS is still large
-      if (css.length > 50000) {
+      // Warn if CSS is still large after optimization
+      if (optimizedLength > 50000) {
         toast({
-          title: 'אזהרה: CSS גדול',
-          description: `ה-CSS מכיל ${(css.length / 1024).toFixed(1)}KB. מיילים עלולים להיחתך.`,
+          title: 'אזהרה: CSS עדיין גדול',
+          description: `ה-CSS מכיל ${(optimizedLength / 1024).toFixed(1)}KB אחרי אופטימיזציה. מיילים עלולים להיחתך. שקול לפשט את העיצוב.`,
           variant: 'destructive',
           duration: 8000
+        });
+      } else if (optimizedLength > 20000) {
+        toast({
+          title: 'CSS מאופטם',
+          description: `ה-CSS קוצר מ-${(originalLength / 1024).toFixed(1)}KB ל-${(optimizedLength / 1024).toFixed(1)}KB`,
+        });
+      } else {
+        toast({
+          title: 'מעולה!',
+          description: `ה-CSS מאופטם למיילים (${(optimizedLength / 1024).toFixed(1)}KB)`,
         });
       }
 
