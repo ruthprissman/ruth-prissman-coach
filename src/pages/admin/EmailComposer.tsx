@@ -715,25 +715,24 @@ const EmailComposer: React.FC = () => {
     const selection = doc.getSelection();
     if (!selection || selection.rangeCount === 0) return;
     
-    // Get the selected range
     const range = selection.getRangeAt(0);
     
-    // If nothing is selected, apply to the whole body
-    if (range.collapsed) {
-      doc.body.style.fontFamily = fontFamily;
-    } else {
-      // Wrap selection in a span with the font
-      const span = doc.createElement('span');
-      span.style.fontFamily = fontFamily;
-      
-      try {
-        range.surroundContents(span);
-      } catch (e) {
-        // If surroundContents fails (e.g., selection spans multiple elements),
-        // use execCommand as fallback
-        doc.execCommand('fontName', false, fontFamily);
-      }
-    }
+    // Extract the selected content
+    const selectedContent = range.extractContents();
+    
+    // Create a new span with the font
+    const span = doc.createElement('span');
+    span.style.fontFamily = fontFamily;
+    span.style.fontSize = 'inherit';
+    span.appendChild(selectedContent);
+    
+    // Insert the span at the range
+    range.insertNode(span);
+    
+    // Select the new span
+    range.selectNodeContents(span);
+    selection.removeAllRanges();
+    selection.addRange(range);
   };
 
   // Load data on mount
