@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, Eye, Send, Mail, RefreshCw, Play, Loader2, Bold, Underline, Type, AlignRight, AlignCenter, AlignLeft } from 'lucide-react';
+import { Save, Eye, Send, Mail, RefreshCw, Play, Loader2, Bold, Underline, Type, AlignRight, AlignCenter, AlignLeft, Upload, X } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,6 +67,7 @@ const EmailComposer: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const editorRef = useRef<HTMLIFrameElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const [emailItems, setEmailItems] = useState<EmailItem[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -81,6 +82,7 @@ const EmailComposer: React.FC = () => {
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [editMode, setEditMode] = useState<'visual-readonly' | 'visual-edit' | 'code'>('visual-readonly');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // Load email items
   const loadEmailItems = useCallback(async () => {
@@ -167,6 +169,83 @@ const EmailComposer: React.FC = () => {
     } catch (error) {
       console.error('Error generating links block:', error);
       return '';
+    }
+  };
+
+  // Handle image upload
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !currentItem) return;
+
+    setIsUploadingImage(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { error } = await supabase.storage
+        .from('site_imgs')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('site_imgs')
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from('email_items')
+        .update({ hero_image_url: publicUrl })
+        .eq('id', currentItem.id);
+
+      if (updateError) throw updateError;
+
+      setCurrentItem(prev => prev ? { ...prev, hero_image_url: publicUrl } : null);
+
+      toast({
+        title: 'התמונה הועלתה בהצלחה',
+      });
+      
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: 'שגיאה בהעלאת תמונה',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!currentItem) return;
+
+    try {
+      const { error } = await supabase
+        .from('email_items')
+        .update({ hero_image_url: null })
+        .eq('id', currentItem.id);
+
+      if (error) throw error;
+
+      setCurrentItem(prev => prev ? { ...prev, hero_image_url: '' } : null);
+
+      toast({
+        title: 'התמונה הוסרה',
+      });
+    } catch (error: any) {
+      console.error('Error removing image:', error);
+      toast({
+        title: 'שגיאה בהסרת תמונה',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
   };
 
@@ -640,6 +719,49 @@ const EmailComposer: React.FC = () => {
                 className="mt-1"
                 dir="rtl"
               />
+            </div>
+
+            <div>
+              <Label>תמונה ראשית</Label>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  type="file"
+                  ref={imageInputRef}
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={isUploadingImage || !currentItem}
+                  className="hidden"
+                  id="image-upload"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isUploadingImage || !currentItem}
+                  className="flex-1"
+                >
+                  <Upload className="h-4 w-4 ml-2" />
+                  {isUploadingImage ? 'מעלה...' : 'העלאת תמונה'}
+                </Button>
+                {currentItem?.hero_image_url && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleRemoveImage}
+                    disabled={isUploadingImage}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              {currentItem?.hero_image_url && (
+                <div className="mt-2 relative">
+                  <img 
+                    src={currentItem.hero_image_url} 
+                    alt="תצוגה מקדימה" 
+                    className="max-w-full max-h-32 object-contain rounded border"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
