@@ -273,16 +273,14 @@ const EmailComposer: React.FC = () => {
       const linksBlock = await generateLinksBlock(currentItem.links_ref);
 
       // Replace placeholders (support both new and legacy naming)
-      const heroImageTag = currentItem.hero_image_url 
-        ? `<img src="${currentItem.hero_image_url}" alt="${currentItem.title}" style="max-width: 100%; height: auto; display: block;" />` 
-        : '';
+      const heroImageUrl = currentItem.hero_image_url || '';
       
       const replacements: Record<string, string> = {
         '{{title}}': currentItem.title || '',
         '{{subject}}': currentItem.subject || '',
         '{{subtitle}}': currentItem.subtitle || '',
-        '{{hero_image}}': heroImageTag,
-        '{{image}}': heroImageTag, // Legacy support
+        '{{hero_image}}': heroImageUrl,
+        '{{image}}': heroImageUrl, // Legacy support
         '{{poem_html}}': poemHtml,
         '{{song}}': poemHtml, // Legacy support
         '{{section1_title}}': currentItem.section1_title || '',
