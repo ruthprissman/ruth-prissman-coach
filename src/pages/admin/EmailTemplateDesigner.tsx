@@ -47,11 +47,9 @@ const EmailTemplateDesigner: React.FC = () => {
     hero_image: ''
   });
 
-  // Clean and optimize CSS for email compatibility
+  // Clean and optimize CSS for email compatibility - CAREFUL not to remove essential styles
   const cleanAndOptimizeCss = (css: string): string => {
-    if (css.length > 200000) {
-      console.warn('CSS extremely large, applying aggressive cleanup');
-    }
+    console.log('Original CSS length:', css.length);
     
     let cleanedCss = css;
     
@@ -59,32 +57,31 @@ const EmailTemplateDesigner: React.FC = () => {
       // 1. Remove comments
       cleanedCss = cleanedCss.replace(/\/\*[\s\S]*?\*\//g, '');
       
-      // 2. Remove GrapesJS specific classes (that cause bloat)
-      cleanedCss = cleanedCss.replace(/\.gjs-[^{]+\{[^}]*\}/g, '');
-      cleanedCss = cleanedCss.replace(/\[data-gjs[^\]]*\][^{]*\{[^}]*\}/g, '');
+      // 2. Remove ONLY GrapesJS UI classes (gjs-*) - NOT content classes
+      cleanedCss = cleanedCss.replace(/\.gjs-(?:cv-canvas|frame|wrapper|editor|pn-|am-|cm-|sm-|tm-|clm-|mdl-|rte-)[^{]*\{[^}]*\}/g, '');
+      cleanedCss = cleanedCss.replace(/\[data-gjs-(?:type|highlightable|selected|hoverable)[^\]]*\][^{]*\{[^}]*\}/g, '');
       
-      // 3. Remove media queries (most email clients don't support them well)
-      cleanedCss = cleanedCss.replace(/@media[^{]+\{[\s\S]*?\}\s*\}/g, '');
+      // 3. Remove media queries (email clients don't support them well)
+      cleanedCss = cleanedCss.replace(/@media[^{]+\{([\s\S]*?)\}\s*\}/g, '');
       
       // 4. Remove pseudo selectors that don't work in emails
-      cleanedCss = cleanedCss.replace(/:hover[^{]*\{[^}]*\}/g, '');
-      cleanedCss = cleanedCss.replace(/:before[^{]*\{[^}]*\}/g, '');
-      cleanedCss = cleanedCss.replace(/:after[^{]*\{[^}]*\}/g, '');
+      cleanedCss = cleanedCss.replace(/([^{]+):(?:hover|focus|active|visited|before|after|first-child|last-child|nth-child)[^{]*\{[^}]*\}/g, '');
       
-      // 5. Remove complex selectors (keep only simple ones for emails)
-      cleanedCss = cleanedCss.replace(/[^,{]+(?:>|\+|~)[^{]*\{[^}]*\}/g, '');
+      // 5. Remove complex selectors with combinators (>, +, ~) but keep descendant selectors (space)
+      cleanedCss = cleanedCss.replace(/([^{,]+)[>+~]([^{]*)\{[^}]*\}/g, '');
       
-      // 6. Remove extra whitespace
-      cleanedCss = cleanedCss.replace(/\s+/g, ' ').trim();
+      // 6. Remove !important declarations
+      cleanedCss = cleanedCss.replace(/\s*!important/gi, '');
       
       // 7. Remove empty rules
       cleanedCss = cleanedCss.replace(/[^}]+\{\s*\}/g, '');
       
-      // 8. Remove duplicate semicolons
-      cleanedCss = cleanedCss.replace(/;+/g, ';');
-      
-      // 9. Remove !important (not needed for emails)
-      cleanedCss = cleanedCss.replace(/\s*!important/gi, '');
+      // 8. Compact whitespace but preserve structure
+      cleanedCss = cleanedCss.replace(/\s+/g, ' ').trim();
+      cleanedCss = cleanedCss.replace(/\s*\{\s*/g, '{');
+      cleanedCss = cleanedCss.replace(/\s*\}\s*/g, '}');
+      cleanedCss = cleanedCss.replace(/\s*;\s*/g, ';');
+      cleanedCss = cleanedCss.replace(/;\}/g, '}');
       
       console.log(`CSS cleaned: ${css.length} -> ${cleanedCss.length} (${Math.round((1 - cleanedCss.length/css.length) * 100)}% reduction)`);
       
