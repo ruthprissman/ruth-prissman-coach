@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, Eye, Send, Mail, RefreshCw, Play, Loader2 } from 'lucide-react';
+import { Save, Eye, Send, Mail, RefreshCw, Play, Loader2, Bold, Underline, Type, AlignRight, AlignCenter, AlignLeft } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,7 +80,7 @@ const EmailComposer: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [showSendDialog, setShowSendDialog] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
-  const [editMode, setEditMode] = useState<'visual' | 'code'>('visual');
+  const [editMode, setEditMode] = useState<'visual-readonly' | 'visual-edit' | 'code'>('visual-readonly');
 
   // Load email items
   const loadEmailItems = useCallback(async () => {
@@ -194,11 +194,16 @@ const EmailComposer: React.FC = () => {
       const linksBlock = await generateLinksBlock(currentItem.links_ref);
 
       // Replace placeholders (support both new and legacy naming)
+      const heroImageTag = currentItem.hero_image_url 
+        ? `<img src="${currentItem.hero_image_url}" alt="${currentItem.title}" style="max-width: 100%; height: auto; display: block;" />` 
+        : '';
+      
       const replacements: Record<string, string> = {
         '{{title}}': currentItem.title || '',
         '{{subject}}': currentItem.subject || '',
         '{{subtitle}}': currentItem.subtitle || '',
-        '{{hero_image}}': currentItem.hero_image_url || '',
+        '{{hero_image}}': heroImageTag,
+        '{{image}}': heroImageTag, // Legacy support
         '{{poem_html}}': poemHtml,
         '{{song}}': poemHtml, // Legacy support
         '{{section1_title}}': currentItem.section1_title || '',
@@ -315,11 +320,19 @@ const EmailComposer: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // Get the latest HTML (in case it was edited visually)
+      let finalHtml = composedHtml;
+      if (editMode === 'visual-edit' && editorRef.current?.contentWindow?.document) {
+        const doc = editorRef.current.contentWindow.document;
+        finalHtml = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+        setComposedHtml(finalHtml);
+      }
+      
       // Update email_items
       const { data: updatedItem, error: updateError } = await supabase
         .from('email_items')
         .update({
-          render_html: composedHtml,
+          render_html: finalHtml,
           template_id: selectedTemplateId,
           subject: editableSubject,
         })
@@ -389,7 +402,7 @@ const EmailComposer: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentItem, composedHtml, selectedTemplateId, editableSubject, toast]);
+  }, [currentItem, composedHtml, selectedTemplateId, editableSubject, editMode, toast]);
 
   // Send test email
   const sendTest = useCallback(async () => {
@@ -496,14 +509,62 @@ const EmailComposer: React.FC = () => {
     }
   }, [composedHtml, editableSubject, toast]);
 
-  // Update iframe when composedHtml changes
+  // Update iframe when composedHtml or editMode changes
   useEffect(() => {
     if (composedHtml && editorRef.current && editorRef.current.contentWindow) {
-      editorRef.current.contentWindow.document.open();
-      editorRef.current.contentWindow.document.write(composedHtml);
-      editorRef.current.contentWindow.document.close();
+      const doc = editorRef.current.contentWindow.document;
+      doc.open();
+      doc.write(composedHtml);
+      doc.close();
+      
+      // Enable editing if in visual-edit mode
+      if (editMode === 'visual-edit') {
+        doc.designMode = 'on';
+        doc.body.style.cursor = 'text';
+      } else {
+        doc.designMode = 'off';
+        doc.body.style.cursor = 'default';
+      }
     }
+  }, [composedHtml, editMode]);
+
+  // Get edited HTML from iframe
+  const getEditedHtml = useCallback(() => {
+    if (editorRef.current?.contentWindow?.document) {
+      const doc = editorRef.current.contentWindow.document;
+      return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+    }
+    return composedHtml;
   }, [composedHtml]);
+
+  // Visual editing toolbar handlers
+  const handleBold = () => {
+    editorRef.current?.contentWindow?.document.execCommand('bold', false);
+  };
+
+  const handleUnderline = () => {
+    editorRef.current?.contentWindow?.document.execCommand('underline', false);
+  };
+
+  const handleIncreaseFontSize = () => {
+    editorRef.current?.contentWindow?.document.execCommand('fontSize', false, '5');
+  };
+
+  const handleDecreaseFontSize = () => {
+    editorRef.current?.contentWindow?.document.execCommand('fontSize', false, '3');
+  };
+
+  const handleAlignRight = () => {
+    editorRef.current?.contentWindow?.document.execCommand('justifyRight', false);
+  };
+
+  const handleAlignCenter = () => {
+    editorRef.current?.contentWindow?.document.execCommand('justifyCenter', false);
+  };
+
+  const handleAlignLeft = () => {
+    editorRef.current?.contentWindow?.document.execCommand('justifyLeft', false);
+  };
 
   // Load data on mount
   useEffect(() => {
@@ -516,6 +577,7 @@ const EmailComposer: React.FC = () => {
     (window as any).loadComposeContext = loadComposeContext;
     (window as any).autoMapPlaceholders = autoMapPlaceholders;
     (window as any).getComposedHtml = () => composedHtml;
+    (window as any).getEditedHtml = getEditedHtml;
     (window as any).saveComposed = saveComposed;
     (window as any).sendTest = sendTest;
     (window as any).sendToRecipients = sendToRecipients;
@@ -524,11 +586,12 @@ const EmailComposer: React.FC = () => {
       delete (window as any).loadComposeContext;
       delete (window as any).autoMapPlaceholders;
       delete (window as any).getComposedHtml;
+      delete (window as any).getEditedHtml;
       delete (window as any).saveComposed;
       delete (window as any).sendTest;
       delete (window as any).sendToRecipients;
     };
-  }, [loadComposeContext, autoMapPlaceholders, composedHtml, saveComposed, sendTest, sendToRecipients]);
+  }, [loadComposeContext, autoMapPlaceholders, composedHtml, getEditedHtml, saveComposed, sendTest, sendToRecipients]);
 
   return (
     <AdminLayout title="הרכבת מייל ושליחה">
@@ -666,28 +729,61 @@ const EmailComposer: React.FC = () => {
               {composedHtml && (
                 <Tabs value={editMode} onValueChange={(v) => setEditMode(v as any)}>
                   <TabsList>
-                    <TabsTrigger value="visual">תצוגה</TabsTrigger>
+                    <TabsTrigger value="visual-readonly">תצוגה</TabsTrigger>
+                    <TabsTrigger value="visual-edit">עריכה ויזואלית</TabsTrigger>
                     <TabsTrigger value="code">עריכת קוד</TabsTrigger>
                   </TabsList>
                 </Tabs>
               )}
             </div>
+            
+            {/* Visual editing toolbar */}
+            {composedHtml && editMode === 'visual-edit' && (
+              <div className="flex gap-2 mb-2 p-2 bg-muted rounded-md flex-wrap">
+                <Button size="sm" variant="outline" onClick={handleBold} title="מודגש">
+                  <Bold className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleUnderline} title="קו תחתון">
+                  <Underline className="h-4 w-4" />
+                </Button>
+                <Separator orientation="vertical" className="h-8" />
+                <Button size="sm" variant="outline" onClick={handleIncreaseFontSize} title="הגדל טקסט">
+                  <Type className="h-4 w-4" />
+                  <span className="text-xs mr-1">+</span>
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleDecreaseFontSize} title="הקטן טקסט">
+                  <Type className="h-3 w-3" />
+                  <span className="text-xs mr-1">-</span>
+                </Button>
+                <Separator orientation="vertical" className="h-8" />
+                <Button size="sm" variant="outline" onClick={handleAlignRight} title="יישור לימין">
+                  <AlignRight className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleAlignCenter} title="יישור למרכז">
+                  <AlignCenter className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleAlignLeft} title="יישור לשמאל">
+                  <AlignLeft className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
             {composedHtml ? (
-              <div className="border rounded h-[600px] bg-gray-50">
-                {editMode === 'visual' ? (
-                  <iframe
-                    ref={editorRef}
-                    className="w-full h-full"
-                    title="Email Preview"
-                    sandbox="allow-same-origin"
-                  />
-                ) : (
+              <div className="border rounded h-[600px] bg-gray-50 overflow-hidden">
+                {editMode === 'code' ? (
                   <Textarea
                     value={composedHtml}
                     onChange={(e) => setComposedHtml(e.target.value)}
                     className="w-full h-full font-mono text-xs resize-none"
                     dir="ltr"
                     placeholder="HTML code..."
+                  />
+                ) : (
+                  <iframe
+                    ref={editorRef}
+                    className="w-full h-full"
+                    title="Email Preview"
+                    sandbox="allow-same-origin"
                   />
                 )}
               </div>
