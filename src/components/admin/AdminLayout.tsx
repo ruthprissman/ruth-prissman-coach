@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, Home, Users, Calendar, ChevronRight, ChevronLeft, Menu, FileText, BookOpenText, BookIcon, Clock, CreditCard, ChartBar, Settings, GraduationCap, Mail, Paintbrush, PenLine } from 'lucide-react';
+import { LogOut, Home, Users, Calendar, ChevronRight, ChevronLeft, Menu, FileText, BookOpenText, BookIcon, Clock, CreditCard, ChartBar, Settings, GraduationCap, Mail, Paintbrush, PenLine, Combine } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -46,6 +46,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
     { label: 'ניהול סיפורים', icon: <BookIcon className="ml-2 h-5 w-5" />, path: '/admin/stories' },
     { label: 'הזנת תוכן גולמי', icon: <PenLine className="ml-2 h-5 w-5" />, path: '/admin/email-items/new' },
     { label: 'עיצוב תבניות אימייל', icon: <Paintbrush className="ml-2 h-5 w-5" />, path: '/admin/email-templates' },
+    { label: 'הרכבת מייל ושליחה', icon: <Combine className="ml-2 h-5 w-5" />, path: '/admin/email-composer' },
     { label: 'שליחת דפי נחיתה', icon: <Mail className="ml-2 h-5 w-5" />, path: '/admin/landing-pages' },
     { label: 'ניהול סדנאות', icon: <GraduationCap className="ml-2 h-5 w-5" />, path: '/admin/workshops' },
   ];

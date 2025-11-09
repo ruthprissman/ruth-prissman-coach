@@ -37,6 +37,7 @@ import LandingPagesManagement from './pages/admin/LandingPagesManagement';
 import LeadsManagement from './pages/admin/LeadsManagement';
 import EmailTemplateDesigner from './pages/admin/EmailTemplateDesigner';
 import EmailItemsEditor from './pages/admin/EmailItemsEditor';
+import EmailComposer from './pages/admin/EmailComposer';
 import { ThemeProvider } from './components/ui/theme-provider';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -123,6 +124,7 @@ function App() {
                 <Route path="/admin/email-templates" element={<ProtectedRoute><EmailTemplateDesigner /></ProtectedRoute>} />
                 <Route path="/admin/email-items/new" element={<ProtectedRoute><EmailItemsEditor /></ProtectedRoute>} />
                 <Route path="/admin/email-items/:id" element={<ProtectedRoute><EmailItemsEditor /></ProtectedRoute>} />
+                <Route path="/admin/email-composer" element={<ProtectedRoute><EmailComposer /></ProtectedRoute>} />
                 
                 {/* Article management routes wrapped with PublicationProvider */}
                 <Route path="/admin/articles/*" element={
