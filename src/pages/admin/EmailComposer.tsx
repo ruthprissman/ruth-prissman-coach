@@ -732,27 +732,56 @@ const EmailComposer: React.FC = () => {
     }
     
     try {
-      // Create a span element with inline font-family style
-      const span = doc.createElement('span');
-      span.style.fontFamily = fontFamily;
+      // Get all text nodes in the selection
+      const walker = doc.createTreeWalker(
+        range.commonAncestorContainer,
+        NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+        {
+          acceptNode: function(node) {
+            if (node.nodeType === Node.TEXT_NODE && range.intersectsNode(node)) {
+              return NodeFilter.FILTER_ACCEPT;
+            }
+            if (node.nodeType === Node.ELEMENT_NODE && range.intersectsNode(node)) {
+              return NodeFilter.FILTER_SKIP;
+            }
+            return NodeFilter.FILTER_REJECT;
+          }
+        }
+      );
       
-      // Extract the contents
-      const contents = range.extractContents();
+      const nodes = [];
+      let currentNode;
+      while (currentNode = walker.nextNode()) {
+        if (currentNode.nodeType === Node.TEXT_NODE) {
+          nodes.push(currentNode);
+        }
+      }
       
-      // Append contents to span
-      span.appendChild(contents);
+      // Wrap each text node in a span with the font
+      nodes.forEach(textNode => {
+        if (textNode.parentElement && textNode.textContent && textNode.textContent.trim()) {
+          const span = doc.createElement('span');
+          span.style.fontFamily = fontFamily;
+          span.textContent = textNode.textContent;
+          textNode.parentElement.replaceChild(span, textNode);
+        }
+      });
       
-      // Insert the span
-      range.insertNode(span);
-      
-      // Re-select the content
-      range.selectNode(span);
-      selection.removeAllRanges();
-      selection.addRange(range);
-      
-      console.log('Font applied successfully:', fontFamily);
+      console.log('Font applied successfully to', nodes.length, 'nodes');
     } catch (error) {
       console.error('Error applying font:', error);
+      
+      // Fallback: simple wrap
+      try {
+        const span = doc.createElement('span');
+        span.style.fontFamily = fontFamily;
+        const contents = range.extractContents();
+        span.appendChild(contents);
+        range.insertNode(span);
+        console.log('Fallback: Font applied with simple wrap');
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+      }
     }
   };
 
