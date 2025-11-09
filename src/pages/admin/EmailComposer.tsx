@@ -83,6 +83,7 @@ const EmailComposer: React.FC = () => {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [editMode, setEditMode] = useState<'visual-readonly' | 'visual-edit' | 'code'>('visual-readonly');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [selectedFont, setSelectedFont] = useState<string>('Heebo, Arial, sans-serif');
 
   // Load email items
   const loadEmailItems = useCallback(async () => {
@@ -602,6 +603,15 @@ const EmailComposer: React.FC = () => {
       doc.write(composedHtml);
       doc.close();
       
+      // Add Google Fonts to iframe head
+      const head = doc.head;
+      if (head && !head.querySelector('link[href*="fonts.googleapis.com"]')) {
+        const fontLink = doc.createElement('link');
+        fontLink.rel = 'stylesheet';
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&family=Alef:wght@400;700&family=Rubik:wght@400;700&family=Assistant:wght@400;700&family=Frank+Ruhl+Libre:wght@400;700&family=Varela+Round&family=Open+Sans+Hebrew:wght@400;700&display=swap';
+        head.appendChild(fontLink);
+      }
+      
       // Enable editing if in visual-edit mode
       if (editMode === 'visual-edit') {
         doc.designMode = 'on';
@@ -649,6 +659,11 @@ const EmailComposer: React.FC = () => {
 
   const handleAlignLeft = () => {
     editorRef.current?.contentWindow?.document.execCommand('justifyLeft', false);
+  };
+
+  const handleFontChange = (fontFamily: string) => {
+    setSelectedFont(fontFamily);
+    editorRef.current?.contentWindow?.document.execCommand('fontName', false, fontFamily);
   };
 
   // Load data on mount
@@ -874,6 +889,25 @@ const EmailComposer: React.FC = () => {
                 <Button size="sm" variant="outline" onClick={handleUnderline} title="קו תחתון">
                   <Underline className="h-4 w-4" />
                 </Button>
+                <Separator orientation="vertical" className="h-8" />
+                <Select value={selectedFont} onValueChange={handleFontChange}>
+                  <SelectTrigger className="w-[180px] h-8 text-xs">
+                    <SelectValue placeholder="בחר גופן..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Heebo, Arial, sans-serif">Heebo - היבו</SelectItem>
+                    <SelectItem value="Alef, Arial, sans-serif">Alef - אלף</SelectItem>
+                    <SelectItem value="Rubik, Arial, sans-serif">Rubik - רוביק</SelectItem>
+                    <SelectItem value="Assistant, Arial, sans-serif">Assistant - אסיסטנט</SelectItem>
+                    <SelectItem value="Frank Ruhl Libre, serif">Frank Ruhl Libre - פרנק רוהל</SelectItem>
+                    <SelectItem value="Varela Round, Arial, sans-serif">Varela Round - וארלה</SelectItem>
+                    <SelectItem value="Open Sans Hebrew, Arial, sans-serif">Open Sans Hebrew</SelectItem>
+                    <SelectItem value="Arial, sans-serif">Arial</SelectItem>
+                    <SelectItem value="Helvetica, sans-serif">Helvetica</SelectItem>
+                    <SelectItem value="Times New Roman, serif">Times New Roman</SelectItem>
+                    <SelectItem value="Georgia, serif">Georgia</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Separator orientation="vertical" className="h-8" />
                 <Button size="sm" variant="outline" onClick={handleIncreaseFontSize} title="הגדל טקסט">
                   <Type className="h-4 w-4" />
