@@ -37,6 +37,7 @@ const EmailTemplateDesigner: React.FC = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null);
   const [cssSize, setCssSize] = useState<number>(0);
+  const [isSaving, setIsSaving] = useState(false);
   const [placeholders, setPlaceholders] = useState<Record<string, string>>({
     title: '',
     subtitle: '',
@@ -46,24 +47,31 @@ const EmailTemplateDesigner: React.FC = () => {
     hero_image: ''
   });
 
-  // Clean and optimize CSS
+  // Clean and optimize CSS - only for smaller CSS files
   const cleanAndOptimizeCss = (css: string): string => {
+    if (css.length > 100000) {
+      console.warn('CSS too large for optimization, skipping cleanup');
+      return css; // Don't try to clean very large CSS - it will freeze the page
+    }
+    
     let cleanedCss = css;
     
-    // 1. Remove comments
-    cleanedCss = cleanedCss.replace(/\/\*[\s\S]*?\*\//g, '');
-    
-    // 2. Remove extra whitespace
-    cleanedCss = cleanedCss.replace(/\s+/g, ' ').trim();
-    
-    // 3. Remove empty rules
-    cleanedCss = cleanedCss.replace(/[^}]+\{\s*\}/g, '');
-    
-    // 4. Remove unnecessary !important
-    cleanedCss = cleanedCss.replace(/\s*!important/g, '');
-    
-    // 5. Remove duplicate semicolons
-    cleanedCss = cleanedCss.replace(/;+/g, ';');
+    try {
+      // 1. Remove comments
+      cleanedCss = cleanedCss.replace(/\/\*[\s\S]*?\*\//g, '');
+      
+      // 2. Remove extra whitespace
+      cleanedCss = cleanedCss.replace(/\s+/g, ' ').trim();
+      
+      // 3. Remove empty rules
+      cleanedCss = cleanedCss.replace(/[^}]+\{\s*\}/g, '');
+      
+      // 4. Remove duplicate semicolons
+      cleanedCss = cleanedCss.replace(/;+/g, ';');
+    } catch (error) {
+      console.error('Error cleaning CSS:', error);
+      return css; // Return original if cleaning fails
+    }
     
     return cleanedCss;
   };
@@ -329,78 +337,111 @@ const EmailTemplateDesigner: React.FC = () => {
       return;
     }
 
-    const html = editorRef.current.getHtml();
-    let css = editorRef.current.getCss();
-    
-    // Clean and optimize CSS
-    const originalLength = css.length;
-    css = cleanAndOptimizeCss(css);
-    const optimizedLength = css.length;
-    
-    console.log(`CSS optimized: ${originalLength} -> ${optimizedLength} characters (${Math.round((1 - optimizedLength/originalLength) * 100)}% reduction)`);
-    setCssSize(optimizedLength);
-    
-    // Warn if CSS is too large (but don't block saving)
-    if (optimizedLength > 50000) {
-      toast({
-        title: 'אזהרה: CSS גדול מאוד',
-        description: `ה-CSS מכיל ${optimizedLength.toLocaleString()} תווים. התבנית תישמר אבל מיילים עלולים להיחתך. מומלץ מאוד לפשט את העיצוב.`,
-        variant: 'destructive',
-        duration: 8000
-      });
-    } else if (optimizedLength > 20000) {
-      toast({
-        title: 'אזהרה',
-        description: `ה-CSS מכיל ${optimizedLength.toLocaleString()} תווים. שקול לפשט את העיצוב.`,
-        duration: 5000
-      });
-    }
+    setIsSaving(true);
+    console.log('Starting save process...');
 
-    let error;
-
-    if (currentTemplateId) {
-      // Update existing template
-      const result = await supabase
-        .from('email_templates')
-        .update({
-          name: templateName,
-          html,
-          css,
-          placeholders,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', currentTemplateId);
+    try {
+      const html = editorRef.current.getHtml();
+      let css = editorRef.current.getCss();
       
-      error = result.error;
-    } else {
-      // Insert new template
-      const result = await supabase
-        .from('email_templates')
-        .insert({
-          name: templateName,
-          html,
-          css,
-          placeholders
+      console.log('Original CSS length:', css.length);
+      
+      // If CSS is extremely large, offer to clear it
+      if (css.length > 100000) {
+        const shouldClear = window.confirm(
+          `ה-CSS גדול מאוד (${(css.length / 1024).toFixed(0)}KB).\n\n` +
+          'CSS כל כך גדול יגרום למיילים להיחתך.\n\n' +
+          'האם למחוק את ה-CSS ולשמור רק את ה-HTML?\n\n' +
+          '(לחץ OK למחיקה, Cancel לשמירה כמו שהוא)'
+        );
+        
+        if (shouldClear) {
+          css = '';
+          console.log('CSS cleared by user choice');
+        } else {
+          console.log('User chose to keep large CSS');
+        }
+      } else {
+        // Clean and optimize CSS only for smaller files
+        const originalLength = css.length;
+        css = cleanAndOptimizeCss(css);
+        const optimizedLength = css.length;
+        
+        console.log(`CSS optimized: ${originalLength} -> ${optimizedLength} characters`);
+      }
+      
+      setCssSize(css.length);
+      
+      // Warn if CSS is still large
+      if (css.length > 50000) {
+        toast({
+          title: 'אזהרה: CSS גדול',
+          description: `ה-CSS מכיל ${(css.length / 1024).toFixed(1)}KB. מיילים עלולים להיחתך.`,
+          variant: 'destructive',
+          duration: 8000
         });
-      
-      error = result.error;
-    }
+      }
 
-    if (error) {
+      console.log('Saving to database...');
+      
+      let error;
+
+      if (currentTemplateId) {
+        // Update existing template
+        const result = await supabase
+          .from('email_templates')
+          .update({
+            name: templateName,
+            html,
+            css,
+            placeholders,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', currentTemplateId);
+        
+        error = result.error;
+      } else {
+        // Insert new template
+        const result = await supabase
+          .from('email_templates')
+          .insert({
+            name: templateName,
+            html,
+            css,
+            placeholders
+          });
+        
+        error = result.error;
+      }
+
+      if (error) {
+        console.error('Database error:', error);
+        toast({
+          title: 'שגיאה',
+          description: 'לא ניתן לשמור את התבנית',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      console.log('Save successful!');
+      toast({
+        title: currentTemplateId ? 'התבנית עודכנה' : 'התבנית נשמרה',
+        description: `התבנית "${templateName}" ${currentTemplateId ? 'עודכנה' : 'נשמרה'} בהצלחה`
+      });
+
+      await loadTemplates();
+    } catch (error: any) {
+      console.error('Error in handleSave:', error);
       toast({
         title: 'שגיאה',
-        description: 'לא ניתן לשמור את התבנית',
+        description: error.message || 'שגיאה לא צפויה',
         variant: 'destructive'
       });
-      return;
+    } finally {
+      setIsSaving(false);
+      console.log('Save process completed');
     }
-
-    toast({
-      title: currentTemplateId ? 'התבנית עודכנה' : 'התבנית נשמרה',
-      description: `התבנית "${templateName}" ${currentTemplateId ? 'עודכנה' : 'נשמרה'} בהצלחה במערכת`
-    });
-
-    await loadTemplates();
   };
 
   const handleLoadTemplate = async (templateId: string) => {
@@ -489,10 +530,14 @@ const EmailTemplateDesigner: React.FC = () => {
             </div>
 
             <div className="flex gap-2 flex-wrap">
-              <Button onClick={handleSave} className="gap-2">
+              <Button 
+                onClick={handleSave} 
+                className="gap-2"
+                disabled={isSaving}
+              >
                 <Save className="h-4 w-4" />
-                {currentTemplateId ? 'עדכן תבנית' : 'שמור כחדש'}
-                {cssSize > 0 && (
+                {isSaving ? 'שומר...' : (currentTemplateId ? 'עדכן תבנית' : 'שמור כחדש')}
+                {cssSize > 0 && !isSaving && (
                   <span className="text-xs opacity-70">
                     ({(cssSize / 1024).toFixed(1)}KB)
                   </span>
