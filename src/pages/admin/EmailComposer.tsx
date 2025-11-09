@@ -191,25 +191,32 @@ const EmailComposer: React.FC = () => {
       const section3Html = textToHtml(currentItem.section3_text);
       const linksBlock = await generateLinksBlock(currentItem.links_ref);
 
-      // Replace placeholders
+      // Replace placeholders (support both new and legacy naming)
       const replacements: Record<string, string> = {
         '{{title}}': currentItem.title || '',
         '{{subject}}': currentItem.subject || '',
         '{{subtitle}}': currentItem.subtitle || '',
         '{{hero_image}}': currentItem.hero_image_url || '',
         '{{poem_html}}': poemHtml,
+        '{{song}}': poemHtml, // Legacy support
         '{{section1_title}}': currentItem.section1_title || '',
+        '{{subtitle1}}': currentItem.section1_title || '', // Legacy support
         '{{section1_html}}': section1Html,
+        '{{body1}}': section1Html, // Legacy support
         '{{section2_title}}': currentItem.section2_title || '',
+        '{{subtitle2}}': currentItem.section2_title || '', // Legacy support
         '{{section2_html}}': section2Html,
+        '{{body2}}': section2Html, // Legacy support
         '{{section3_title}}': currentItem.section3_title || '',
+        '{{subtitle3}}': currentItem.section3_title || '', // Legacy support
         '{{section3_html}}': section3Html,
+        '{{body3}}': section3Html, // Legacy support
         '{{links_block}}': linksBlock,
         '{{rights_text}}': currentItem.rights_text || '',
       };
 
       Object.entries(replacements).forEach(([placeholder, value]) => {
-        html = html.replace(new RegExp(placeholder, 'g'), value);
+        html = html.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), value);
       });
 
       // Build full HTML with CSS
