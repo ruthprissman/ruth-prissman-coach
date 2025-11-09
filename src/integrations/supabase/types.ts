@@ -313,6 +313,36 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          created_at: string
+          css: string
+          html: string
+          id: string
+          name: string
+          placeholders: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          css: string
+          html: string
+          id?: string
+          name: string
+          placeholders?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          css?: string
+          html?: string
+          id?: string
+          name?: string
+          placeholders?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           created_at: string | null

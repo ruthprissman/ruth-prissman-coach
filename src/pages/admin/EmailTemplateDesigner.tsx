@@ -18,6 +18,14 @@ import {
 import grapesjs from 'grapesjs';
 import grapesjsPresetNewsletter from 'grapesjs-preset-newsletter';
 import 'grapesjs/dist/css/grapes.min.css';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const EmailTemplateDesigner: React.FC = () => {
   const editorRef = useRef<any>(null);
@@ -25,6 +33,8 @@ const EmailTemplateDesigner: React.FC = () => {
   const { toast } = useToast();
   const [templateName, setTemplateName] = useState('');
   const [showPlaceholderPanel, setShowPlaceholderPanel] = useState(false);
+  const [savedTemplates, setSavedTemplates] = useState<any[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [placeholders, setPlaceholders] = useState<Record<string, string>>({
     title: '',
     subtitle: '',
@@ -81,6 +91,20 @@ const EmailTemplateDesigner: React.FC = () => {
           name: 'גופנים ועיצוב',
           open: true,
           buildProps: ['font-family', 'font-size', 'font-weight', 'line-height', 'letter-spacing', 'color', 'text-align'],
+          properties: [{
+            type: 'select',
+            name: 'font-family',
+            property: 'font-family',
+            list: [
+              { value: 'Heebo, Arial, sans-serif', name: 'Heebo' },
+              { value: 'Alef, Arial, sans-serif', name: 'Alef' },
+              { value: 'Arial, sans-serif', name: 'Arial' },
+              { value: 'Helvetica, sans-serif', name: 'Helvetica' },
+              { value: 'Times New Roman, serif', name: 'Times New Roman' },
+              { value: 'Georgia, serif', name: 'Georgia' },
+              { value: 'Courier New, monospace', name: 'Courier New' },
+            ]
+          }]
         }, {
           name: 'רקע',
           open: false,
@@ -234,7 +258,29 @@ const EmailTemplateDesigner: React.FC = () => {
     };
   }, []);
 
-  const handleSave = () => {
+  const loadTemplates = async () => {
+    const { data, error } = await supabase
+      .from('email_templates')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast({
+        title: 'שגיאה',
+        description: 'לא ניתן לטעון תבניות',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setSavedTemplates(data || []);
+  };
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const handleSave = async () => {
     if (!editorRef.current) return;
     
     if (!templateName.trim()) {
@@ -249,21 +295,47 @@ const EmailTemplateDesigner: React.FC = () => {
     const html = editorRef.current.getHtml();
     const css = editorRef.current.getCss();
 
-    // Save to localStorage for now (later can be saved to database)
-    const template = {
-      name: templateName,
-      html,
-      css,
-      created: new Date().toISOString()
-    };
+    const { error } = await supabase
+      .from('email_templates')
+      .insert({
+        name: templateName,
+        html,
+        css,
+        placeholders
+      });
 
-    const savedTemplates = JSON.parse(localStorage.getItem('emailTemplates') || '[]');
-    savedTemplates.push(template);
-    localStorage.setItem('emailTemplates', JSON.stringify(savedTemplates));
+    if (error) {
+      toast({
+        title: 'שגיאה',
+        description: 'לא ניתן לשמור את התבנית',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     toast({
       title: 'התבנית נשמרה',
-      description: `התבנית "${templateName}" נשמרה בהצלחה`
+      description: `התבנית "${templateName}" נשמרה בהצלחה במערכת`
+    });
+
+    loadTemplates();
+    setTemplateName('');
+  };
+
+  const handleLoadTemplate = async (templateId: string) => {
+    if (!templateId || !editorRef.current) return;
+
+    const template = savedTemplates.find(t => t.id === templateId);
+    if (!template) return;
+
+    editorRef.current.setComponents(template.html);
+    editorRef.current.setStyle(template.css);
+    setTemplateName(template.name);
+    setPlaceholders(template.placeholders || {});
+
+    toast({
+      title: 'התבנית נטענה',
+      description: `התבנית "${template.name}" נטענה בהצלחה`
     });
   };
 
@@ -313,6 +385,25 @@ const EmailTemplateDesigner: React.FC = () => {
                 placeholder="הזן שם לתבנית..."
                 className="mt-1"
               />
+            </div>
+
+            <div className="flex-1 min-w-[200px]">
+              <Label htmlFor="load-template">טען תבנית שמורה</Label>
+              <Select value={selectedTemplateId} onValueChange={(value) => {
+                setSelectedTemplateId(value);
+                handleLoadTemplate(value);
+              }}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="בחר תבנית..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {savedTemplates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex gap-2 flex-wrap">
@@ -380,11 +471,12 @@ const EmailTemplateDesigner: React.FC = () => {
         <Card className="p-4 bg-blue-50 border-blue-200">
           <h3 className="font-bold text-blue-900 mb-2">הערות חשובות:</h3>
           <ul className="list-disc list-inside space-y-1 text-sm text-blue-800">
-            <li>התבניות נשמרות כרגע במחשב שלך (localStorage)</li>
+            <li>התבניות נשמרות בבסיס הנתונים</li>
             <li>השתמש בגופן Heebo לתמיכה מלאה בעברית</li>
             <li>התבניות מותאמות ל-Gmail, Apple Mail ו-Yahoo</li>
             <li>כפתורים נוצרים עם טבלאות לתאימות מקסימלית</li>
-            <li>בהמשך ניתן יהיה לחבר את התבניות למערכת שליחת המאמרים</li>
+            <li>ניתן לטעון תבניות שמורות ולערוך אותן</li>
+            <li>בהמשך ניתן יהיה לקשר תבניות למאמרים לשליחה</li>
           </ul>
         </Card>
       </div>
