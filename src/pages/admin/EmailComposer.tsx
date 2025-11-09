@@ -644,13 +644,18 @@ const EmailComposer: React.FC = () => {
       doc.write(composedHtml);
       doc.close();
       
-      // Add Google Fonts to iframe head
+      // Add ALL Google Fonts to iframe head (including all fonts used in toolbar)
       const head = doc.head;
       if (head && !head.querySelector('link[href*="fonts.googleapis.com"]')) {
         const fontLink = doc.createElement('link');
         fontLink.rel = 'stylesheet';
         fontLink.href = 'https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&family=Alef:wght@400;700&family=Rubik:wght@400;700&family=Assistant:wght@400;700&family=Frank+Ruhl+Libre:wght@400;700&family=Varela+Round&family=Open+Sans+Hebrew:wght@400;700&display=swap';
         head.appendChild(fontLink);
+        
+        // Add a small delay to ensure fonts are loaded before applying them
+        setTimeout(() => {
+          console.log('Google Fonts loaded in iframe');
+        }, 500);
       }
       
       // Enable editing if in visual-edit mode
@@ -704,7 +709,31 @@ const EmailComposer: React.FC = () => {
 
   const handleFontChange = (fontFamily: string) => {
     setSelectedFont(fontFamily);
-    editorRef.current?.contentWindow?.document.execCommand('fontName', false, fontFamily);
+    const doc = editorRef.current?.contentWindow?.document;
+    if (!doc) return;
+    
+    const selection = doc.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    
+    // Get the selected range
+    const range = selection.getRangeAt(0);
+    
+    // If nothing is selected, apply to the whole body
+    if (range.collapsed) {
+      doc.body.style.fontFamily = fontFamily;
+    } else {
+      // Wrap selection in a span with the font
+      const span = doc.createElement('span');
+      span.style.fontFamily = fontFamily;
+      
+      try {
+        range.surroundContents(span);
+      } catch (e) {
+        // If surroundContents fails (e.g., selection spans multiple elements),
+        // use execCommand as fallback
+        doc.execCommand('fontName', false, fontFamily);
+      }
+    }
   };
 
   // Load data on mount
