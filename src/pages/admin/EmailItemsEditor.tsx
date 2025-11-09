@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Save, FileText, Trash2, Plus, Eye, Palette } from 'lucide-react';
+import { Save, FileText, Trash2, Plus, Eye, Palette, Upload } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +81,7 @@ const EmailItemsEditor: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Load recent items
   const loadRecentItems = useCallback(async () => {
@@ -334,6 +335,72 @@ const EmailItemsEditor: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'קובץ לא תקין',
+        description: 'יש להעלות קובץ תמונה בלבד',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'קובץ גדול מדי',
+        description: 'גודל הקובץ לא יכול לעלות על 5MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `email-items/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('site_imgs')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('site_imgs')
+        .getPublicUrl(fileName);
+
+      // Update form data
+      setFormData(prev => ({ ...prev, hero_image_url: publicUrl }));
+
+      toast({
+        title: 'התמונה הועלתה בהצלחה',
+        description: 'ה-URL של התמונה עודכן',
+      });
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: 'שגיאה בהעלאת תמונה',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+      // Clear the input
+      event.target.value = '';
+    }
+  };
+
   return (
     <AdminLayout title="הזנת תוכן גולמי">
       <div className="flex gap-6">
@@ -414,14 +481,45 @@ const EmailItemsEditor: React.FC = () => {
 
               <div>
                 <Label htmlFor="hero_image_url">תמונה</Label>
-                <Input
-                  id="hero_image_url"
-                  value={formData.hero_image_url}
-                  onChange={(e) => handleInputChange('hero_image_url', e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                  className="mt-2"
-                  dir="ltr"
-                />
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    id="hero_image_url"
+                    value={formData.hero_image_url}
+                    onChange={(e) => handleInputChange('hero_image_url', e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="flex-1"
+                    dir="ltr"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isUploading}
+                    className="gap-2 shrink-0"
+                    onClick={() => document.getElementById('image-upload-input')?.click()}
+                  >
+                    <Upload className="h-4 w-4" />
+                    {isUploading ? 'מעלה...' : 'העלה'}
+                  </Button>
+                  <input
+                    id="image-upload-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </div>
+                {formData.hero_image_url && (
+                  <div className="mt-2">
+                    <img 
+                      src={formData.hero_image_url} 
+                      alt="תצוגה מקדימה" 
+                      className="max-w-xs max-h-32 object-contain rounded border"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
