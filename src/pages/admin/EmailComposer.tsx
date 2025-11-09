@@ -399,10 +399,21 @@ const EmailComposer: React.FC = () => {
       if (templateError) throw templateError;
       setCurrentTemplate(templateData);
 
-      toast({
-        title: 'טעינה הושלמה',
-        description: 'המאמר והתבנית נטענו בהצלחה',
-      });
+      // If there's already saved HTML, load it directly
+      if (itemData.render_html) {
+        setComposedHtml(itemData.render_html);
+        toast({
+          title: 'טעינה הושלמה',
+          description: 'המאמר והתבנית נטענו, והעריכה השמורה נטענה אוטומטית',
+        });
+      } else {
+        // No saved HTML, user will need to click "מיפוי אוטומטי"
+        setComposedHtml('');
+        toast({
+          title: 'טעינה הושלמה',
+          description: 'המאמר והתבנית נטענו. לחץ על "מיפוי אוטומטי" להרכבת המייל',
+        });
+      }
     } catch (error: any) {
       console.error('Error loading context:', error);
       toast({
