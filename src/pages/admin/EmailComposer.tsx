@@ -709,30 +709,15 @@ const EmailComposer: React.FC = () => {
 
   const handleFontChange = (fontFamily: string) => {
     setSelectedFont(fontFamily);
-    const doc = editorRef.current?.contentWindow?.document;
-    if (!doc) return;
+    const iframe = editorRef.current;
+    const doc = iframe?.contentWindow?.document;
+    if (!doc || !iframe?.contentWindow) return;
     
-    const selection = doc.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
+    // Focus on the iframe
+    iframe.contentWindow.focus();
     
-    const range = selection.getRangeAt(0);
-    
-    // Extract the selected content
-    const selectedContent = range.extractContents();
-    
-    // Create a new span with the font
-    const span = doc.createElement('span');
-    span.style.fontFamily = fontFamily;
-    span.style.fontSize = 'inherit';
-    span.appendChild(selectedContent);
-    
-    // Insert the span at the range
-    range.insertNode(span);
-    
-    // Select the new span
-    range.selectNodeContents(span);
-    selection.removeAllRanges();
-    selection.addRange(range);
+    // Use the simple execCommand - it works!
+    doc.execCommand('fontName', false, fontFamily);
   };
 
   // Load data on mount
