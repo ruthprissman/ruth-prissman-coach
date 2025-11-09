@@ -77,7 +77,7 @@ const EmailTemplateDesigner: React.FC = () => {
 
       canvas: {
         styles: [
-          'https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&family=Alef:wght@400;700&display=swap'
+          'https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&family=Alef:wght@400;700&family=Rubik:wght@300;400;500;600;700&family=Assistant:wght@300;400;500;600;700;800&family=Frank+Ruhl+Libre:wght@300;400;500;700;900&family=Varela+Round&family=Open+Sans+Hebrew:wght@300;400;700&display=swap'
         ]
       },
 
@@ -141,15 +141,17 @@ const EmailTemplateDesigner: React.FC = () => {
       const fontFamilyProp = styleManager.getProperty('גופנים ועיצוב', 'font-family');
       if (fontFamilyProp) {
         fontFamilyProp.set('options', [
-          { value: 'Heebo, Arial, sans-serif', name: 'Heebo' },
-          { value: 'Alef, Arial, sans-serif', name: 'Alef' },
+          { value: 'Heebo, Arial, sans-serif', name: 'Heebo - היבו' },
+          { value: 'Alef, Arial, sans-serif', name: 'Alef - אלף' },
+          { value: 'Rubik, Arial, sans-serif', name: 'Rubik - רוביק' },
+          { value: 'Assistant, Arial, sans-serif', name: 'Assistant - אסיסטנט' },
+          { value: '"Frank Ruhl Libre", serif', name: 'Frank Ruhl Libre - פרנק רוהל' },
+          { value: '"Varela Round", Arial, sans-serif', name: 'Varela Round - וארלה' },
+          { value: '"Open Sans Hebrew", Arial, sans-serif', name: 'Open Sans Hebrew' },
           { value: 'Arial, sans-serif', name: 'Arial' },
           { value: 'Helvetica, sans-serif', name: 'Helvetica' },
           { value: 'Times New Roman, serif', name: 'Times New Roman' },
           { value: 'Georgia, serif', name: 'Georgia' },
-          { value: 'Courier New, monospace', name: 'Courier New' },
-          { value: 'Verdana, sans-serif', name: 'Verdana' },
-          { value: 'Tahoma, sans-serif', name: 'Tahoma' },
         ]);
       }
     });
