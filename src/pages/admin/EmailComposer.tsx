@@ -498,9 +498,13 @@ const EmailComposer: React.FC = () => {
     try {
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
-          to: 'ruth@ruthprissman.co.il',
+          emailList: ['ruth@ruthprissman.co.il'],
           subject: editableSubject,
-          html: composedHtml,
+          sender: {
+            email: 'ruth@ruthprissman.co.il',
+            name: 'רות פריסמן'
+          },
+          htmlContent: composedHtml,
         },
       });
 
@@ -564,9 +568,13 @@ const EmailComposer: React.FC = () => {
       // Use existing edge function
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
-          recipients,
+          emailList: recipients,
           subject: editableSubject,
-          html: composedHtml,
+          sender: {
+            email: 'ruth@ruthprissman.co.il',
+            name: 'רות פריסמן'
+          },
+          htmlContent: composedHtml,
         },
       });
 
