@@ -278,6 +278,84 @@ export type Database = {
         }
         Relationships: []
       }
+      email_items: {
+        Row: {
+          created_at: string
+          full_plain_text: string | null
+          hero_image_url: string | null
+          id: number
+          legacy_prof_content_id: number | null
+          links_ref: string | null
+          poem_text: string | null
+          published_at: string | null
+          render_html: string | null
+          rights_text: string | null
+          scheduled_publish: string | null
+          section1_text: string | null
+          section1_title: string | null
+          section2_text: string | null
+          section2_title: string | null
+          section3_text: string | null
+          section3_title: string | null
+          status: string
+          subject: string | null
+          subtitle: string | null
+          template_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_plain_text?: string | null
+          hero_image_url?: string | null
+          id?: number
+          legacy_prof_content_id?: number | null
+          links_ref?: string | null
+          poem_text?: string | null
+          published_at?: string | null
+          render_html?: string | null
+          rights_text?: string | null
+          scheduled_publish?: string | null
+          section1_text?: string | null
+          section1_title?: string | null
+          section2_text?: string | null
+          section2_title?: string | null
+          section3_text?: string | null
+          section3_title?: string | null
+          status?: string
+          subject?: string | null
+          subtitle?: string | null
+          template_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_plain_text?: string | null
+          hero_image_url?: string | null
+          id?: number
+          legacy_prof_content_id?: number | null
+          links_ref?: string | null
+          poem_text?: string | null
+          published_at?: string | null
+          render_html?: string | null
+          rights_text?: string | null
+          scheduled_publish?: string | null
+          section1_text?: string | null
+          section1_title?: string | null
+          section2_text?: string | null
+          section2_title?: string | null
+          section3_text?: string | null
+          section3_title?: string | null
+          status?: string
+          subject?: string | null
+          subtitle?: string | null
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           article_id: number | null
