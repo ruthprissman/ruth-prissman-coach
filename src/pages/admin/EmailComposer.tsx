@@ -713,11 +713,47 @@ const EmailComposer: React.FC = () => {
     const doc = iframe?.contentWindow?.document;
     if (!doc || !iframe?.contentWindow) return;
     
-    // Focus on the iframe
-    iframe.contentWindow.focus();
+    console.log('Attempting to change font to:', fontFamily);
     
-    // Use the simple execCommand - it works!
-    doc.execCommand('fontName', false, fontFamily);
+    // Get selection
+    const selection = doc.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      console.log('No selection found');
+      return;
+    }
+    
+    const range = selection.getRangeAt(0);
+    console.log('Selection range:', range.toString());
+    
+    // If nothing selected, don't do anything
+    if (range.collapsed) {
+      console.log('Selection is collapsed (nothing selected)');
+      return;
+    }
+    
+    try {
+      // Create a span element with inline font-family style
+      const span = doc.createElement('span');
+      span.style.fontFamily = fontFamily;
+      
+      // Extract the contents
+      const contents = range.extractContents();
+      
+      // Append contents to span
+      span.appendChild(contents);
+      
+      // Insert the span
+      range.insertNode(span);
+      
+      // Re-select the content
+      range.selectNode(span);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      console.log('Font applied successfully:', fontFamily);
+    } catch (error) {
+      console.error('Error applying font:', error);
+    }
   };
 
   // Load data on mount
