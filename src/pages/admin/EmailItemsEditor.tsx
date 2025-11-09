@@ -515,12 +515,12 @@ const EmailItemsEditor: React.FC = () => {
 
               <div>
                 <Label htmlFor="links_ref">מזהה סט קישורים</Label>
-                <Select value={formData.links_ref} onValueChange={(value) => handleInputChange('links_ref', value)}>
+                <Select value={formData.links_ref || 'none'} onValueChange={(value) => handleInputChange('links_ref', value === 'none' ? '' : value)}>
                   <SelectTrigger className="mt-2">
                     <SelectValue placeholder="בחר סט קישורים..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">ללא קישורים</SelectItem>
+                    <SelectItem value="none">ללא קישורים</SelectItem>
                     {linkGroups.map((group) => (
                       <SelectItem key={group} value={group}>
                         {group}
