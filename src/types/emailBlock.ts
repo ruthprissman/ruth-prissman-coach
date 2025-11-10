@@ -19,6 +19,7 @@ export interface EmailBlock {
   imageUrl?: string;
   imageWidth?: string;
   imageHeight?: string;
+  imageBorderRadius?: string;
   buttonUrl?: string;
   buttonText?: string;
 }

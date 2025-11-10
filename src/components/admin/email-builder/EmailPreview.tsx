@@ -33,10 +33,11 @@ export function EmailPreview({ blocks }: EmailPreviewProps) {
         
         const imageWidth = block.imageWidth || '100%';
         const imageHeight = block.imageHeight || 'auto';
+        const imageBorderRadius = block.imageBorderRadius || '0';
         
         const imageDisplay = block.imageUrl.startsWith('{{') 
           ? `<div style="padding: 20px; background: #f0f0f0; text-align: center; border: 2px dashed #ccc; color: #666;">${block.imageUrl}<br/><small>${imageWidth} × ${imageHeight}</small></div>`
-          : `<img src="${block.imageUrl}" alt="Email image" style="width: ${imageWidth}; height: ${imageHeight}; display: block; margin: 0 auto;" />`;
+          : `<img src="${block.imageUrl}" alt="Email image" style="width: ${imageWidth}; height: ${imageHeight}; border-radius: ${imageBorderRadius}; display: block; margin: 0 auto;" />`;
         
         return `
           <div style="${styleString}">

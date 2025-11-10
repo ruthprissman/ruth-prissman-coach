@@ -55,6 +55,7 @@ interface Template {
   name: string;
   html: string;
   css: string;
+  placeholders?: any;
 }
 
 interface LinkItem {
@@ -157,6 +158,49 @@ const EmailComposer: React.FC = () => {
       return '';
     }
 
+    // Get link block styles from template
+    const getLinkBlockStyles = () => {
+      if (!currentTemplate?.placeholders) {
+        return {
+          fontSize: '16px',
+          fontFamily: '\'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif',
+          color: '#4A148C',
+          fontWeight: 'bold',
+        };
+      }
+
+      try {
+        const blocks = typeof currentTemplate.placeholders === 'string' 
+          ? JSON.parse(currentTemplate.placeholders)
+          : currentTemplate.placeholders;
+        
+        const linksBlock = Array.isArray(blocks) ? blocks.find((block: any) => 
+          block.content && block.content.includes('{{links_block}}')
+        ) : null;
+
+        if (linksBlock && linksBlock.styles) {
+          return {
+            fontSize: linksBlock.styles.fontSize || '16px',
+            fontFamily: linksBlock.styles.fontFamily || '\'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif',
+            color: linksBlock.styles.color || '#4A148C',
+            fontWeight: linksBlock.styles.fontWeight || 'bold',
+          };
+        }
+      } catch (error) {
+        console.error('Error parsing template blocks:', error);
+      }
+
+      return {
+        fontSize: '16px',
+        fontFamily: '\'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif',
+        color: '#4A148C',
+        fontWeight: 'bold',
+      };
+    };
+
+    const linkStyles = getLinkBlockStyles();
+    console.log('[generateLinksBlock] Using link styles:', linkStyles);
+
     try {
       console.log('[generateLinksBlock] Fetching links for ref:', linksRef);
       const { data: links, error } = await supabase
@@ -218,14 +262,14 @@ const EmailComposer: React.FC = () => {
             const safeUrl = escapeHtml(link.url);
             
             linksHtml += '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" ' +
-                        'style="color: #4A148C !important; font-weight: bold !important; text-decoration: none !important; font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif !important; font-size: 32px !important;">' +
+                        'style="color: ' + linkStyles.color + ' !important; font-weight: ' + linkStyles.fontWeight + ' !important; text-decoration: none !important; font-family: ' + linkStyles.fontFamily + ' !important; font-size: ' + linkStyles.fontSize + ' !important;">' +
                         linkText + '</a>';
             console.log('[generateLinksBlock] Generated regular link HTML');
           } 
           // Text only (no URL)
           else {
             console.log('[generateLinksBlock] Processing as text-only (no URL)');
-            linksHtml += '<strong style="color: #4A148C !important; font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif !important; font-weight: bold !important; font-size: 32px !important;">' + 
+            linksHtml += '<strong style="color: ' + linkStyles.color + ' !important; font-family: ' + linkStyles.fontFamily + ' !important; font-weight: ' + linkStyles.fontWeight + ' !important; font-size: ' + linkStyles.fontSize + ' !important;">' + 
                         linkText + '</strong>';
             console.log('[generateLinksBlock] Generated text-only HTML');
           }

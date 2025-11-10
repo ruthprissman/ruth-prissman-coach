@@ -196,6 +196,20 @@ export function BlockEditor({ block, onUpdate, onClose }: BlockEditorProps) {
             </p>
           </div>
 
+          {/* Border radius control */}
+          <div className="border-t pt-4">
+            <Label>פינות עגולות</Label>
+            <Input
+              value={block.imageBorderRadius || '0'}
+              onChange={(e) => onUpdate({ ...block, imageBorderRadius: e.target.value })}
+              placeholder="0, 8px, 16px, 50%"
+              className="mt-1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              דוגמאות: 0 (ללא), 8px (קלות), 16px (בינוניות), 50% (עיגול מלא)
+            </p>
+          </div>
+
           {block.imageUrl && !block.imageUrl.startsWith('{{') && (
             <div>
               <Label>תצוגה מקדימה</Label>
