@@ -240,6 +240,12 @@ const EmailComposer: React.FC = () => {
       }
       
       console.log('[generateLinksBlock] Completed links array. Final HTML length:', linksHtml.length);
+      
+      // Wrap with identification comments for future updates
+      if (linksHtml) {
+        linksHtml = '<!-- LINKS_BLOCK_START -->\n' + linksHtml + '\n<!-- LINKS_BLOCK_END -->';
+      }
+      
       return linksHtml;
     } catch (err) {
       console.error('[generateLinksBlock] Unexpected error:', err);
@@ -323,6 +329,76 @@ const EmailComposer: React.FC = () => {
       });
     }
   };
+
+  // Update links only (without destroying existing design)
+  const updateLinksOnly = useCallback(async () => {
+    if (!currentItem) {
+      toast({
+        title: 'חסר מידע',
+        description: 'יש לבחור מאמר תחילה',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!composedHtml) {
+      toast({
+        title: 'אין תוכן',
+        description: 'יש למפות תוכן תחילה (לחץ "מפה תוכן")',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const linksBlock = await generateLinksBlock(currentItem.links_ref);
+      
+      console.log('[updateLinksOnly] Generated new links block, length:', linksBlock.length);
+      
+      let updatedHtml = composedHtml;
+      
+      // Try to find and replace existing links block
+      const startMarker = '<!-- LINKS_BLOCK_START -->';
+      const endMarker = '<!-- LINKS_BLOCK_END -->';
+      
+      if (updatedHtml.includes(startMarker) && updatedHtml.includes(endMarker)) {
+        const startIndex = updatedHtml.indexOf(startMarker);
+        const endIndex = updatedHtml.indexOf(endMarker) + endMarker.length;
+        
+        updatedHtml = updatedHtml.substring(0, startIndex) + linksBlock + updatedHtml.substring(endIndex);
+        console.log('[updateLinksOnly] Replaced existing links block');
+      } else if (updatedHtml.includes('{{links_block}}')) {
+        // Fallback: replace placeholder if it still exists
+        updatedHtml = updatedHtml.replace(/\{\{links_block\}\}/g, linksBlock);
+        console.log('[updateLinksOnly] Replaced {{links_block}} placeholder');
+      } else {
+        toast({
+          title: 'לא נמצא מיקום לקישורים',
+          description: 'המייל לא מכיל מיקום מסומן לקישורים. השתמש ב"מפה תוכן" תחילה.',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      setComposedHtml(updatedHtml);
+      
+      toast({
+        title: 'הקישורים עודכנו',
+        description: 'הקישורים עודכנו מבלי לדרוס את העיצוב',
+      });
+    } catch (error: any) {
+      console.error('Error updating links:', error);
+      toast({
+        title: 'שגיאה בעדכון קישורים',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentItem, composedHtml, toast]);
 
   // Auto-map placeholders
   const autoMapPlaceholders = useCallback(async () => {
@@ -907,6 +983,10 @@ const EmailComposer: React.FC = () => {
             <Button onClick={autoMapPlaceholders} disabled={isLoading || !currentItem || !currentTemplate} className="gap-2">
               <Play className="h-4 w-4" />
               מיפוי אוטומטי
+            </Button>
+            <Button onClick={updateLinksOnly} disabled={isLoading || !composedHtml || !currentItem} variant="outline" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              עדכן קישורים בלבד
             </Button>
             <Button onClick={saveComposed} disabled={isLoading || !composedHtml} variant="outline" className="gap-2">
               <Save className="h-4 w-4" />
