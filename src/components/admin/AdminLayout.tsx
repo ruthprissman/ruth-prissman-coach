@@ -70,7 +70,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
             <h1 className="text-2xl font-bold text-primary">לוח ניהול</h1>
           </div>
           
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {navItems.map(item => (
               <Link
                 key={item.path}
