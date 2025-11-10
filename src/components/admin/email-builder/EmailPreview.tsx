@@ -65,7 +65,7 @@ export function EmailPreview({ blocks }: EmailPreviewProps) {
   };
 
   const previewHTML = `
-    <div style="font-family: Heebo, Arial, sans-serif; direction: rtl; max-width: 600px; margin: 0 auto; background: #ffffff;">
+    <div style="direction: rtl; max-width: 600px; margin: 0 auto; background: #ffffff;">
       ${blocks.map(generateBlockHTML).join('')}
     </div>
   `;
