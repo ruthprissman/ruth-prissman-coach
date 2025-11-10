@@ -197,7 +197,7 @@ const EmailComposer: React.FC = () => {
           linkText = linkText.replace(/([,.?!;:])\s*/g, '$1<br>');
           
           // Start paragraph tag with inline styles using local fonts
-          linksHtml += '<p style="font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif; font-size: 16px; text-align: center; margin-bottom: 20px; color: #4A148C; font-weight: bold; direction: rtl; line-height: 1.6;">';
+          linksHtml += '<p style="font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif; font-size: 20px; text-align: center; margin-bottom: 20px; color: #4A148C; font-weight: bold; direction: rtl; line-height: 1.6;">';
           
           // Check if it's a WhatsApp link
           if (link.url && link.url.startsWith('https://wa.me/')) {
@@ -346,6 +346,11 @@ const EmailComposer: React.FC = () => {
       const section2Html = textToHtml(currentItem.section2_text);
       const section3Html = textToHtml(currentItem.section3_text);
       const linksBlock = await generateLinksBlock(currentItem.links_ref);
+
+      console.log('[autoMapPlaceholders] Starting with currentItem:', currentItem);
+      console.log('[autoMapPlaceholders] links_ref:', currentItem.links_ref);
+      console.log('[autoMapPlaceholders] Generated linksBlock length:', linksBlock.length);
+      console.log('[autoMapPlaceholders] linksBlock preview:', linksBlock.substring(0, 300));
 
       // Replace placeholders (support both new and legacy naming)
       const heroImageUrl = currentItem.hero_image_url || '';
