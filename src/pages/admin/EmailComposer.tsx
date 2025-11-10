@@ -161,12 +161,12 @@ const EmailComposer: React.FC = () => {
     // Get link block styles from template
     const getLinkBlockStyles = () => {
       if (!currentTemplate?.placeholders) {
-        return {
-          fontSize: '16px',
-          fontFamily: '\'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif',
-          color: '#4A148C',
-          fontWeight: 'bold',
-        };
+      return {
+        fontSize: '16px',
+        fontFamily: 'Arial, Helvetica, sans-serif',
+        color: '#4A148C',
+        fontWeight: 'bold',
+      };
       }
 
       try {
@@ -181,7 +181,7 @@ const EmailComposer: React.FC = () => {
         if (linksBlock && linksBlock.styles) {
           return {
             fontSize: linksBlock.styles.fontSize || '16px',
-            fontFamily: linksBlock.styles.fontFamily || '\'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif',
+            fontFamily: linksBlock.styles.fontFamily || 'Arial, Helvetica, sans-serif',
             color: linksBlock.styles.color || '#4A148C',
             fontWeight: linksBlock.styles.fontWeight || 'bold',
           };
@@ -192,7 +192,7 @@ const EmailComposer: React.FC = () => {
 
       return {
         fontSize: '16px',
-        fontFamily: '\'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif',
+        fontFamily: 'Arial, Helvetica, sans-serif',
         color: '#4A148C',
         fontWeight: 'bold',
       };

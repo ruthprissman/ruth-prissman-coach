@@ -34,12 +34,16 @@ export interface EmailTemplate {
 }
 
 export const DEFAULT_FONTS = [
-  { value: 'Heebo, Arial, sans-serif', label: 'היבו (Heebo)' },
-  { value: 'Alef, Arial, sans-serif', label: 'אלף (Alef)' },
-  { value: 'Rubik, Arial, sans-serif', label: 'רוביק (Rubik)' },
-  { value: 'Assistant, Arial, sans-serif', label: 'אסיסטנט (Assistant)' },
-  { value: 'Frank Ruhl Libre, serif', label: 'פרנק רוהל (Frank Ruhl Libre)' },
-  { value: 'Arial, sans-serif', label: 'אריאל (Arial)' },
+  { value: 'Heebo, Arial, sans-serif', label: 'היבו - לאתר (Heebo)' },
+  { value: 'Alef, Arial, sans-serif', label: 'אלף - לאתר (Alef)' },
+  { value: 'Rubik, Arial, sans-serif', label: 'רוביק - לאתר (Rubik)' },
+  { value: 'Assistant, Arial, sans-serif', label: 'אסיסטנט - לאתר (Assistant)' },
+  { value: 'Frank Ruhl Libre, Georgia, serif', label: 'פרנק רוהל - לאתר (Frank Ruhl Libre)' },
+  { value: 'Arial, Helvetica, sans-serif', label: '✓ אריאל - בטוח למייל (Arial)' },
+  { value: 'Tahoma, Arial, sans-serif', label: '✓ טאהומה - בטוח למייל (Tahoma)' },
+  { value: 'Verdana, Arial, sans-serif', label: '✓ ורדנה - בטוח למייל (Verdana)' },
+  { value: 'Georgia, Times New Roman, serif', label: '✓ ג\'ורג\'יה - בטוח למייל (Georgia)' },
+  { value: 'Times New Roman, Times, serif', label: '✓ טיימס - בטוח למייל (Times)' },
 ];
 
 export const FONT_SIZES = [
@@ -58,7 +62,7 @@ export const FONT_SIZES = [
 
 export const DEFAULT_BLOCK_STYLES: Record<BlockType, Partial<EmailBlockStyles>> = {
   header: {
-    fontFamily: 'Heebo, Arial, sans-serif',
+    fontFamily: 'Arial, Helvetica, sans-serif',
     fontSize: '32px',
     color: '#ffffff',
     textAlign: 'center',
@@ -68,7 +72,7 @@ export const DEFAULT_BLOCK_STYLES: Record<BlockType, Partial<EmailBlockStyles>> 
     lineHeight: '1.4',
   },
   subtitle: {
-    fontFamily: 'Heebo, Arial, sans-serif',
+    fontFamily: 'Arial, Helvetica, sans-serif',
     fontSize: '24px',
     color: '#333333',
     textAlign: 'center',
@@ -78,7 +82,7 @@ export const DEFAULT_BLOCK_STYLES: Record<BlockType, Partial<EmailBlockStyles>> 
     lineHeight: '1.5',
   },
   text: {
-    fontFamily: 'Heebo, Arial, sans-serif',
+    fontFamily: 'Arial, Helvetica, sans-serif',
     fontSize: '16px',
     color: '#333333',
     textAlign: 'right',
@@ -93,7 +97,7 @@ export const DEFAULT_BLOCK_STYLES: Record<BlockType, Partial<EmailBlockStyles>> 
     padding: '20px',
   },
   cta: {
-    fontFamily: 'Heebo, Arial, sans-serif',
+    fontFamily: 'Arial, Helvetica, sans-serif',
     fontSize: '18px',
     color: '#ffffff',
     textAlign: 'center',
@@ -106,7 +110,7 @@ export const DEFAULT_BLOCK_STYLES: Record<BlockType, Partial<EmailBlockStyles>> 
     padding: '20px',
   },
   footer: {
-    fontFamily: 'Heebo, Arial, sans-serif',
+    fontFamily: 'Arial, Helvetica, sans-serif',
     fontSize: '12px',
     color: '#666666',
     textAlign: 'center',
