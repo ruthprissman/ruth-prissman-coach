@@ -36,6 +36,7 @@ import WorkshopsManagement from './pages/admin/WorkshopsManagement';
 import LandingPagesManagement from './pages/admin/LandingPagesManagement';
 import LeadsManagement from './pages/admin/LeadsManagement';
 import EmailTemplateDesigner from './pages/admin/EmailTemplateDesigner';
+import CustomEmailTemplateBuilder from './pages/admin/CustomEmailTemplateBuilder';
 import EmailItemsEditor from './pages/admin/EmailItemsEditor';
 import EmailComposer from './pages/admin/EmailComposer';
 import { ThemeProvider } from './components/ui/theme-provider';
@@ -122,6 +123,7 @@ function App() {
                 <Route path="/admin/workshops" element={<ProtectedRoute><WorkshopsManagement /></ProtectedRoute>} />
                 <Route path="/admin/landing-pages" element={<ProtectedRoute><LandingPagesManagement /></ProtectedRoute>} />
                 <Route path="/admin/email-templates" element={<ProtectedRoute><EmailTemplateDesigner /></ProtectedRoute>} />
+                <Route path="/admin/email-builder" element={<ProtectedRoute><CustomEmailTemplateBuilder /></ProtectedRoute>} />
                 <Route path="/admin/email-items/new" element={<ProtectedRoute><EmailItemsEditor /></ProtectedRoute>} />
                 <Route path="/admin/email-items/:id" element={<ProtectedRoute><EmailItemsEditor /></ProtectedRoute>} />
                 <Route path="/admin/email-composer" element={<ProtectedRoute><EmailComposer /></ProtectedRoute>} />
