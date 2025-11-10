@@ -197,7 +197,7 @@ const EmailComposer: React.FC = () => {
           linkText = linkText.replace(/([,.?!;:])\s*/g, '$1<br>');
           
           // Start paragraph tag with inline styles using local fonts
-          linksHtml += '<p style="font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif; font-size: 20px; text-align: center; margin-bottom: 20px; color: #4A148C; font-weight: bold; direction: rtl; line-height: 1.6;">';
+          linksHtml += '<p style="font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif; font-size: 26px; text-align: center; margin-bottom: 20px; color: #4A148C; font-weight: bold; direction: rtl; line-height: 1.6;">';
           
           // Check if it's a WhatsApp link
           if (link.url && link.url.startsWith('https://wa.me/')) {
