@@ -1,7 +1,7 @@
 import { EmailBlock } from '@/types/emailBlock';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowUp, ArrowDown, Edit, Trash2, GripVertical } from 'lucide-react';
+import { ArrowUp, ArrowDown, Edit, Trash2, GripVertical, Copy } from 'lucide-react';
 
 interface BlocksListProps {
   blocks: EmailBlock[];
@@ -9,9 +9,10 @@ interface BlocksListProps {
   onMoveDown: (index: number) => void;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
+  onDuplicate: (index: number) => void;
 }
 
-export function BlocksList({ blocks, onMoveUp, onMoveDown, onEdit, onDelete }: BlocksListProps) {
+export function BlocksList({ blocks, onMoveUp, onMoveDown, onEdit, onDelete, onDuplicate }: BlocksListProps) {
   const getBlockLabel = (block: EmailBlock) => {
     switch (block.type) {
       case 'header': return 'כותרת';
@@ -90,6 +91,15 @@ export function BlocksList({ blocks, onMoveUp, onMoveDown, onEdit, onDelete }: B
                 className="h-8 w-8"
               >
                 <ArrowDown className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onDuplicate(index)}
+                className="h-8 w-8"
+                title="העתק בלוק"
+              >
+                <Copy className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"

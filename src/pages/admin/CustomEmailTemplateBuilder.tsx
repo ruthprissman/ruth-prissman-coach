@@ -107,6 +107,22 @@ export default function CustomEmailTemplateBuilder() {
     if (editingIndex === index) setEditingIndex(null);
   };
 
+  const duplicateBlock = (index: number) => {
+    const blockToDuplicate = blocks[index];
+    const newBlock: EmailBlock = {
+      ...blockToDuplicate,
+      id: `block-${Date.now()}-${Math.random()}`,
+    };
+    const newBlocks = [...blocks];
+    newBlocks.splice(index + 1, 0, newBlock);
+    setBlocks(newBlocks);
+    
+    toast({
+      title: 'הצלחה',
+      description: 'הבלוק שוכפל בהצלחה',
+    });
+  };
+
   const generateEmailHTML = (): string => {
     const blocksHTML = blocks.map((block) => {
       const styles = {
@@ -427,6 +443,7 @@ export default function CustomEmailTemplateBuilder() {
               onMoveDown={(index) => moveBlock(index, 'down')}
               onEdit={(index) => setEditingIndex(index)}
               onDelete={deleteBlock}
+              onDuplicate={duplicateBlock}
             />
           </Card>
 
