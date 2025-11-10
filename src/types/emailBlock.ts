@@ -1,4 +1,4 @@
-export type BlockType = 'header' | 'text' | 'image' | 'cta' | 'spacer' | 'footer';
+export type BlockType = 'header' | 'subtitle' | 'text' | 'image' | 'cta' | 'spacer' | 'footer';
 
 export interface EmailBlockStyles {
   fontFamily: string;
@@ -63,6 +63,16 @@ export const DEFAULT_BLOCK_STYLES: Record<BlockType, Partial<EmailBlockStyles>> 
     padding: '40px 20px',
     fontWeight: 'bold',
     lineHeight: '1.4',
+  },
+  subtitle: {
+    fontFamily: 'Heebo, Arial, sans-serif',
+    fontSize: '24px',
+    color: '#333333',
+    textAlign: 'center',
+    backgroundColor: 'transparent',
+    padding: '20px',
+    fontWeight: '600',
+    lineHeight: '1.5',
   },
   text: {
     fontFamily: 'Heebo, Arial, sans-serif',

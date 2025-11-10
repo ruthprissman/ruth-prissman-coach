@@ -15,6 +15,7 @@ export function BlocksList({ blocks, onMoveUp, onMoveDown, onEdit, onDelete }: B
   const getBlockLabel = (block: EmailBlock) => {
     switch (block.type) {
       case 'header': return 'כותרת';
+      case 'subtitle': return 'תת כותרת';
       case 'text': return 'טקסט';
       case 'image': return 'תמונה';
       case 'cta': return 'כפתור';
@@ -27,11 +28,14 @@ export function BlocksList({ blocks, onMoveUp, onMoveDown, onEdit, onDelete }: B
   const getBlockPreview = (block: EmailBlock) => {
     switch (block.type) {
       case 'header':
+      case 'subtitle':
       case 'text':
       case 'footer':
         return block.content?.substring(0, 50) || 'ללא תוכן';
       case 'image':
-        return block.imageUrl ? 'תמונה הועלתה' : 'ללא תמונה';
+        return block.imageUrl 
+          ? (block.imageUrl.startsWith('{{') ? block.imageUrl : 'תמונה הועלתה')
+          : 'ללא תמונה';
       case 'cta':
         return block.content || 'כפתור';
       case 'spacer':

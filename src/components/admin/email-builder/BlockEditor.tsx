@@ -91,6 +91,7 @@ export function BlockEditor({ block, onUpdate, onClose }: BlockEditorProps) {
   const getBlockTitle = () => {
     switch (block.type) {
       case 'header': return 'עריכת כותרת';
+      case 'subtitle': return 'עריכת תת כותרת';
       case 'text': return 'עריכת טקסט';
       case 'image': return 'עריכת תמונה';
       case 'cta': return 'עריכת כפתור';
@@ -133,42 +134,57 @@ export function BlockEditor({ block, onUpdate, onClose }: BlockEditorProps) {
         </div>
       )}
 
-      {/* Image upload */}
+      {/* Image upload or placeholder */}
       {block.type === 'image' && (
-        <div>
-          <Label>תמונה</Label>
-          {block.imageUrl ? (
-            <div className="mt-2 space-y-2">
+        <div className="space-y-4">
+          <div>
+            <Label>URL תמונה או Placeholder</Label>
+            <Input
+              value={block.imageUrl || ''}
+              onChange={(e) => onUpdate({ ...block, imageUrl: e.target.value })}
+              placeholder="{{image}} או https://..."
+              className="mt-1"
+              dir="ltr"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              השתמש ב-{`{{image}}`} לטעינת תמונה דינמית או הזן URL ישירות
+            </p>
+          </div>
+
+          <div className="border-t pt-4">
+            <Label>או העלה תמונה</Label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={uploading}
+              className="cursor-pointer mt-2"
+            />
+            {uploading && (
+              <div className="flex items-center justify-center mt-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                מעלה תמונה...
+              </div>
+            )}
+          </div>
+
+          {block.imageUrl && !block.imageUrl.startsWith('{{') && (
+            <div>
+              <Label>תצוגה מקדימה</Label>
               <img
                 src={block.imageUrl}
                 alt="Block preview"
-                className="w-full max-h-48 object-contain rounded border border-border"
+                className="w-full max-h-48 object-contain rounded border border-border mt-2"
               />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleRemoveImage}
-                className="w-full"
+                className="w-full mt-2"
               >
                 <X className="h-4 w-4 ml-2" />
                 הסר תמונה
               </Button>
-            </div>
-          ) : (
-            <div className="mt-2">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploading}
-                className="cursor-pointer"
-              />
-              {uploading && (
-                <div className="flex items-center justify-center mt-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin ml-2" />
-                  מעלה תמונה...
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -230,6 +246,42 @@ export function BlockEditor({ block, onUpdate, onClose }: BlockEditorProps) {
               ))}
             </SelectContent>
           </Select>
+        </div>
+      )}
+
+      {/* Font Weight (Bold) - not for spacer or image */}
+      {block.type !== 'spacer' && block.type !== 'image' && (
+        <div>
+          <Label>עובי גופן</Label>
+          <div className="flex gap-2 mt-1">
+            <Button
+              type="button"
+              variant={block.styles.fontWeight === 'normal' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleStyleChange('fontWeight', 'normal')}
+              className="flex-1"
+            >
+              רגיל
+            </Button>
+            <Button
+              type="button"
+              variant={block.styles.fontWeight === '600' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleStyleChange('fontWeight', '600')}
+              className="flex-1"
+            >
+              בינוני
+            </Button>
+            <Button
+              type="button"
+              variant={block.styles.fontWeight === 'bold' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleStyleChange('fontWeight', 'bold')}
+              className="flex-1"
+            >
+              <strong>מודגש</strong>
+            </Button>
+          </div>
         </div>
       )}
 

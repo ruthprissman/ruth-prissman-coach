@@ -56,10 +56,17 @@ export default function CustomEmailTemplateBuilder() {
   };
 
   const createBlock = (type: BlockType): EmailBlock => {
+    const defaultContent = type === 'header' ? 'כותרת חדשה'
+      : type === 'subtitle' ? 'תת כותרת חדשה'
+      : type === 'text' ? 'תוכן חדש'
+      : type === 'footer' ? 'פוטר'
+      : type === 'cta' ? 'לחץ כאן'
+      : null;
+
     return {
       id: `block-${Date.now()}-${Math.random()}`,
       type,
-      content: type === 'spacer' || type === 'image' ? null : 'תוכן חדש',
+      content: defaultContent,
       styles: {
         fontFamily: DEFAULT_BLOCK_STYLES[type]?.fontFamily || 'Heebo, Arial, sans-serif',
         fontSize: DEFAULT_BLOCK_STYLES[type]?.fontSize || '16px',
@@ -119,6 +126,7 @@ export default function CustomEmailTemplateBuilder() {
 
       switch (block.type) {
         case 'header':
+        case 'subtitle':
         case 'text':
         case 'footer':
           return `<tr><td style="${styleString}">${block.content || ''}</td></tr>`;
@@ -350,8 +358,17 @@ export default function CustomEmailTemplateBuilder() {
                 onClick={() => addBlock('header')}
                 className="w-full justify-start"
               >
-                <FileText className="h-4 w-4 ml-2" />
+                <Type className="h-4 w-4 ml-2" />
                 כותרת
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => addBlock('subtitle')}
+                className="w-full justify-start"
+              >
+                <Type className="h-4 w-4 ml-2" />
+                תת כותרת
               </Button>
               <Button
                 variant="outline"
@@ -359,7 +376,7 @@ export default function CustomEmailTemplateBuilder() {
                 onClick={() => addBlock('text')}
                 className="w-full justify-start"
               >
-                <Type className="h-4 w-4 ml-2" />
+                <FileText className="h-4 w-4 ml-2" />
                 טקסט
               </Button>
               <Button
