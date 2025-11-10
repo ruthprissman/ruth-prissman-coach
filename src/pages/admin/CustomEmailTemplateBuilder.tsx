@@ -149,7 +149,9 @@ export default function CustomEmailTemplateBuilder() {
 
         case 'image':
           if (!block.imageUrl) return '';
-          return `<tr><td style="${styleString}"><img src="${block.imageUrl}" alt="" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" /></td></tr>`;
+          const imageWidth = block.imageWidth || '100%';
+          const imageHeight = block.imageHeight || 'auto';
+          return `<tr><td style="${styleString}"><img src="${block.imageUrl}" alt="" style="width: ${imageWidth}; height: ${imageHeight}; display: block; margin: 0 auto;" /></td></tr>`;
 
         case 'cta':
           return `<tr><td style="text-align: ${block.styles.textAlign}; padding: ${block.styles.padding};"><a href="${block.buttonUrl || '#'}" style="display: inline-block; ${styleString} text-decoration: none; border-radius: 8px;">${block.content || 'לחץ כאן'}</a></td></tr>`;

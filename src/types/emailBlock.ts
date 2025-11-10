@@ -17,6 +17,8 @@ export interface EmailBlock {
   content: string | null;
   styles: EmailBlockStyles;
   imageUrl?: string;
+  imageWidth?: string;
+  imageHeight?: string;
   buttonUrl?: string;
   buttonText?: string;
 }

@@ -31,9 +31,12 @@ export function EmailPreview({ blocks }: EmailPreviewProps) {
       case 'image':
         if (!block.imageUrl) return '<div style="padding: 20px; text-align: center; color: #999;">ללא תמונה</div>';
         
+        const imageWidth = block.imageWidth || '100%';
+        const imageHeight = block.imageHeight || 'auto';
+        
         const imageDisplay = block.imageUrl.startsWith('{{') 
-          ? `<div style="padding: 20px; background: #f0f0f0; text-align: center; border: 2px dashed #ccc; color: #666;">${block.imageUrl}</div>`
-          : `<img src="${block.imageUrl}" alt="Email image" style="max-width: 100%; height: auto; display: block; margin: 0 auto;" />`;
+          ? `<div style="padding: 20px; background: #f0f0f0; text-align: center; border: 2px dashed #ccc; color: #666;">${block.imageUrl}<br/><small>${imageWidth} × ${imageHeight}</small></div>`
+          : `<img src="${block.imageUrl}" alt="Email image" style="width: ${imageWidth}; height: ${imageHeight}; display: block; margin: 0 auto;" />`;
         
         return `
           <div style="${styleString}">

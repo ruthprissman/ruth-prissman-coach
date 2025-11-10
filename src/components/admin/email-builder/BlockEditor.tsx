@@ -168,6 +168,34 @@ export function BlockEditor({ block, onUpdate, onClose }: BlockEditorProps) {
             )}
           </div>
 
+          {/* Image size controls */}
+          <div className="border-t pt-4 space-y-3">
+            <Label>גודל תמונה</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">רוחב</Label>
+                <Input
+                  value={block.imageWidth || '100%'}
+                  onChange={(e) => onUpdate({ ...block, imageWidth: e.target.value })}
+                  placeholder="100% או 400px"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">גובה</Label>
+                <Input
+                  value={block.imageHeight || 'auto'}
+                  onChange={(e) => onUpdate({ ...block, imageHeight: e.target.value })}
+                  placeholder="auto או 300px"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              דוגמאות: 100%, 50%, 400px, auto
+            </p>
+          </div>
+
           {block.imageUrl && !block.imageUrl.startsWith('{{') && (
             <div>
               <Label>תצוגה מקדימה</Label>
