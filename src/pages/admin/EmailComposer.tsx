@@ -196,8 +196,8 @@ const EmailComposer: React.FC = () => {
           // Add line breaks after punctuation marks
           linkText = linkText.replace(/([,.?!;:])\s*/g, '$1<br>');
           
-          // Start paragraph tag with inline styles using local fonts
-          linksHtml += '<p style="font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif; font-size: 32px; text-align: center; margin-bottom: 20px; color: #4A148C; font-weight: bold; direction: rtl; line-height: 1.6;">';
+          // Start paragraph tag with inline styles using local fonts - WITH !important to override template CSS
+          linksHtml += '<p style="font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif !important; font-size: 32px !important; text-align: center !important; margin-bottom: 20px !important; color: #4A148C !important; font-weight: bold !important; direction: rtl !important; line-height: 1.6 !important;">';
           
           // Check if it's a WhatsApp link
           if (link.url && link.url.startsWith('https://wa.me/')) {
@@ -205,8 +205,8 @@ const EmailComposer: React.FC = () => {
             const safeUrl = escapeHtml(link.url);
             
             linksHtml += '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" ' +
-                        'style="display: inline-flex; align-items: center; color: #4A148C; font-weight: bold; text-decoration: none; font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif;">' +
-                        '<svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366" style="margin-left: 5px;">' +
+                        'style="display: inline-flex !important; align-items: center !important; color: #4A148C !important; font-weight: bold !important; text-decoration: none !important; font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif !important; font-size: 32px !important;">' +
+                        '<svg viewBox="0 0 24 24" width="24" height="24" fill="#25D366" style="margin-left: 8px;">' +
                         '<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>' +
                         '</svg>' + 
                         linkText + '</a>';
@@ -218,14 +218,14 @@ const EmailComposer: React.FC = () => {
             const safeUrl = escapeHtml(link.url);
             
             linksHtml += '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" ' +
-                        'style="color: #4A148C; font-weight: bold; text-decoration: none; font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif;">' +
+                        'style="color: #4A148C !important; font-weight: bold !important; text-decoration: none !important; font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif !important; font-size: 32px !important;">' +
                         linkText + '</a>';
             console.log('[generateLinksBlock] Generated regular link HTML');
           } 
           // Text only (no URL)
           else {
             console.log('[generateLinksBlock] Processing as text-only (no URL)');
-            linksHtml += '<strong style="color: #4A148C; font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif; font-weight: bold;">' + 
+            linksHtml += '<strong style="color: #4A148C !important; font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif !important; font-weight: bold !important; font-size: 32px !important;">' + 
                         linkText + '</strong>';
             console.log('[generateLinksBlock] Generated text-only HTML');
           }
@@ -355,10 +355,18 @@ const EmailComposer: React.FC = () => {
       const linksBlock = await generateLinksBlock(currentItem.links_ref);
       
       console.log('[updateLinksOnly] Generated new links block, length:', linksBlock.length);
+      console.log('[updateLinksOnly] Links block preview:', linksBlock.substring(0, 500));
       
-      let updatedHtml = composedHtml;
+      // Get the latest HTML from visual editor if applicable
+      let currentHtml = composedHtml;
+      if (editMode === 'visual-edit' && editorRef.current?.contentWindow?.document) {
+        const doc = editorRef.current.contentWindow.document;
+        currentHtml = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+      }
       
-      // Try to find and replace existing links block
+      let updatedHtml = currentHtml;
+      
+      // Strategy 1: Try to find and replace existing links block with markers
       const startMarker = '<!-- LINKS_BLOCK_START -->';
       const endMarker = '<!-- LINKS_BLOCK_END -->';
       
@@ -367,29 +375,42 @@ const EmailComposer: React.FC = () => {
         const endIndex = updatedHtml.indexOf(endMarker) + endMarker.length;
         
         updatedHtml = updatedHtml.substring(0, startIndex) + linksBlock + updatedHtml.substring(endIndex);
-        console.log('[updateLinksOnly] Replaced existing links block');
-      } else if (updatedHtml.includes('{{links_block}}')) {
-        // Fallback: replace placeholder if it still exists
+        console.log('[updateLinksOnly] ✅ Replaced existing links block with markers');
+      } 
+      // Strategy 2: Look for the placeholder that might still exist
+      else if (updatedHtml.includes('{{links_block}}')) {
         updatedHtml = updatedHtml.replace(/\{\{links_block\}\}/g, linksBlock);
-        console.log('[updateLinksOnly] Replaced {{links_block}} placeholder');
-      } else {
-        toast({
-          title: 'לא נמצא מיקום לקישורים',
-          description: 'המייל לא מכיל מיקום מסומן לקישורים. השתמש ב"מפה תוכן" תחילה.',
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
+        console.log('[updateLinksOnly] ✅ Replaced {{links_block}} placeholder');
+      } 
+      // Strategy 3: Try to find any existing links section by looking for common patterns
+      else {
+        // Look for a section that might contain links (e.g., multiple <a> tags in sequence)
+        const linksSectionPattern = /(<p[^>]*>.*?<a[^>]*href.*?<\/a>.*?<\/p>\s*){2,}/gi;
+        const matches = updatedHtml.match(linksSectionPattern);
+        
+        if (matches && matches.length > 0) {
+          // Replace the first match (assume it's the links section)
+          updatedHtml = updatedHtml.replace(matches[0], linksBlock);
+          console.log('[updateLinksOnly] ✅ Replaced detected links section');
+        } else {
+          toast({
+            title: 'לא נמצא מיקום לקישורים',
+            description: 'המייל לא מכיל קישורים קיימים. בצע "מיפוי אוטומטי" מחדש כדי להוסיף קישורים.',
+            variant: 'destructive',
+          });
+          setIsLoading(false);
+          return;
+        }
       }
       
       setComposedHtml(updatedHtml);
       
       toast({
         title: 'הקישורים עודכנו',
-        description: 'הקישורים עודכנו מבלי לדרוס את העיצוב',
+        description: 'הקישורים עודכנו בהצלחה',
       });
     } catch (error: any) {
-      console.error('Error updating links:', error);
+      console.error('[updateLinksOnly] Error:', error);
       toast({
         title: 'שגיאה בעדכון קישורים',
         description: error.message,
@@ -398,7 +419,7 @@ const EmailComposer: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentItem, composedHtml, toast]);
+  }, [currentItem, composedHtml, editMode, toast]);
 
   // Auto-map placeholders
   const autoMapPlaceholders = useCallback(async () => {
