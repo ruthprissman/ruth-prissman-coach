@@ -133,7 +133,7 @@ export default function CustomEmailTemplateBuilder() {
         background: block.styles.backgroundColor,
         padding: block.styles.padding,
         fontWeight: block.styles.fontWeight,
-        lineHeight: block.styles.lineHeight || '1.5',
+        lineHeight: block.styles.lineHeight || '1.6',
       };
 
       const styleString = Object.entries(styles)
@@ -145,7 +145,8 @@ export default function CustomEmailTemplateBuilder() {
         case 'subtitle':
         case 'text':
         case 'footer':
-          return `<tr><td style="${styleString}">${block.content || ''}</td></tr>`;
+          const content = (block.content || '').replace(/\n/g, '<br/>');
+          return `<tr><td style="${styleString}">${content}</td></tr>`;
 
         case 'image':
           if (!block.imageUrl) return '';

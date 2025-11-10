@@ -14,7 +14,7 @@ export function EmailPreview({ blocks }: EmailPreviewProps) {
       background: block.styles.backgroundColor,
       padding: block.styles.padding,
       fontWeight: block.styles.fontWeight,
-      lineHeight: block.styles.lineHeight || '1.5',
+      lineHeight: block.styles.lineHeight || '1.6',
     };
 
     const styleString = Object.entries(styles)
@@ -26,7 +26,8 @@ export function EmailPreview({ blocks }: EmailPreviewProps) {
       case 'subtitle':
       case 'text':
       case 'footer':
-        return `<div style="${styleString}">${block.content || ''}</div>`;
+        const content = (block.content || '').replace(/\n/g, '<br/>');
+        return `<div style="${styleString}">${content}</div>`;
 
       case 'image':
         if (!block.imageUrl) return '<div style="padding: 20px; text-align: center; color: #999;">ללא תמונה</div>';
