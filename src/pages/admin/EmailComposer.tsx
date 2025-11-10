@@ -143,31 +143,106 @@ const EmailComposer: React.FC = () => {
   };
 
   // Generate links block HTML
+  // Helper function to escape HTML
+  const escapeHtml = (text: string | null | undefined): string => {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  };
+
   const generateLinksBlock = async (linksRef: string): Promise<string> => {
-    if (!linksRef) return '';
+    if (!linksRef) {
+      console.log('[generateLinksBlock] No linksRef provided');
+      return '';
+    }
 
     try {
-      const { data, error } = await supabase
+      console.log('[generateLinksBlock] Fetching links for ref:', linksRef);
+      const { data: links, error } = await supabase
         .from('static_links')
         .select('*')
-        .eq('list_type', linksRef);
+        .eq('list_type', linksRef)
+        .order('id', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[generateLinksBlock] Error fetching links:', error);
+        return '';
+      }
 
-      const links = data as LinkItem[];
-      if (!links || links.length === 0) return '';
+      if (!links || links.length === 0) {
+        console.log('[generateLinksBlock] No links found for ref:', linksRef);
+        return '';
+      }
 
-      return `
-        <div style="text-align: center; direction: rtl; padding: 20px 0;">
-          ${links.map(link => `
-            <a href="${link.url}" style="display: inline-block; margin: 5px 10px; color: #4A148C; text-decoration: none;">
-              ${link.fixed_text || link.name}
-            </a>
-          `).join('')}
-        </div>
-      `;
-    } catch (error) {
-      console.error('Error generating links block:', error);
+      console.log('[generateLinksBlock] Found links:', links);
+      
+      // Generate sophisticated HTML for links (same logic as EmailGenerator)
+      let linksHtml = '';
+      
+      for (const link of links) {
+        try {
+          console.log('[generateLinksBlock] Processing link:', JSON.stringify(link, null, 2));
+          
+          // Skip empty links
+          if (!link.fixed_text) {
+            console.log('[generateLinksBlock] Skipping link with empty text');
+            continue;
+          }
+          
+          // Check for punctuation marks that should trigger line breaks
+          let linkText = escapeHtml(link.fixed_text);
+          
+          // Add line breaks after punctuation marks
+          linkText = linkText.replace(/([,.?!;:])\s*/g, '$1<br>');
+          
+          // Start paragraph tag with inline styles using local fonts
+          linksHtml += '<p style="font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif; font-size: 16px; text-align: center; margin-bottom: 20px; color: #4A148C; font-weight: bold; direction: rtl; line-height: 1.6;">';
+          
+          // Check if it's a WhatsApp link
+          if (link.url && link.url.startsWith('https://wa.me/')) {
+            console.log('[generateLinksBlock] Processing as WhatsApp link with icon');
+            const safeUrl = escapeHtml(link.url);
+            
+            linksHtml += '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" ' +
+                        'style="display: inline-flex; align-items: center; color: #4A148C; font-weight: bold; text-decoration: none; font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif;">' +
+                        '<svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366" style="margin-left: 5px;">' +
+                        '<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>' +
+                        '</svg>' + 
+                        linkText + '</a>';
+            console.log('[generateLinksBlock] Generated WhatsApp link HTML');
+          } 
+          // Regular link with URL
+          else if (link.url) {
+            console.log('[generateLinksBlock] Processing as regular link with URL:', link.url);
+            const safeUrl = escapeHtml(link.url);
+            
+            linksHtml += '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" ' +
+                        'style="color: #4A148C; font-weight: bold; text-decoration: none; font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif;">' +
+                        linkText + '</a>';
+            console.log('[generateLinksBlock] Generated regular link HTML');
+          } 
+          // Text only (no URL)
+          else {
+            console.log('[generateLinksBlock] Processing as text-only (no URL)');
+            linksHtml += '<strong style="color: #4A148C; font-family: \'Alef\',\'Noto Sans Hebrew\',\'Arial Hebrew\',\'Segoe UI\',Arial,Tahoma,sans-serif; font-weight: bold;">' + 
+                        linkText + '</strong>';
+            console.log('[generateLinksBlock] Generated text-only HTML');
+          }
+          
+          // Close paragraph tag
+          linksHtml += '</p>';
+          console.log('[generateLinksBlock] Completed HTML for this link');
+        } catch (linkError) {
+          console.error('[generateLinksBlock] Error processing link:', linkError);
+          // Continue with next link if one fails
+        }
+      }
+      
+      console.log('[generateLinksBlock] Completed links array. Final HTML length:', linksHtml.length);
+      return linksHtml;
+    } catch (err) {
+      console.error('[generateLinksBlock] Unexpected error:', err);
       return '';
     }
   };
