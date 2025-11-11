@@ -32,24 +32,26 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title }) => {
   };
 
   const navItems = [
-    { label: 'דף הבית', icon: <Home className="ml-2 h-5 w-5" />, path: '/' }, // Added Home link
+    // Main navigation - most important
+    { label: 'דף הבית', icon: <Home className="ml-2 h-5 w-5" />, path: '/' },
     { label: 'לוח ניהול', icon: <Home className="ml-2 h-5 w-5" />, path: '/admin/dashboard' },
-    { label: 'ניהול לידים', icon: <Users className="ml-2 h-5 w-5" />, path: '/admin/leads' },
     { label: 'לקוחות', icon: <Users className="ml-2 h-5 w-5" />, path: '/admin/patients' },
-    { label: 'כל הפגישות', icon: <Calendar className="ml-2 h-5 w-5" />, path: '/admin/sessions' },
     { label: 'ניהול זמינות', icon: <Clock className="ml-2 h-5 w-5" />, path: '/admin/calendar' },
     { label: 'ניהול כספים', icon: <CreditCard className="ml-2 h-5 w-5" />, path: '/admin/finances' },
+    { label: 'ניהול מאמרים', icon: <BookOpenText className="ml-2 h-5 w-5" />, path: '/admin/articles' },
+    { label: 'הזנת תוכן גולמי', icon: <PenLine className="ml-2 h-5 w-5" />, path: '/admin/email-items/new' },
+    { label: 'הרכבת מייל ושליחה', icon: <Combine className="ml-2 h-5 w-5" />, path: '/admin/email-composer' },
+    { label: 'ניהול סיפורים', icon: <BookIcon className="ml-2 h-5 w-5" />, path: '/admin/stories' },
+    { label: 'דפי נחיתה', icon: <Mail className="ml-2 h-5 w-5" />, path: '/admin/landing-pages' },
+    { label: 'ניהול סדנאות', icon: <GraduationCap className="ml-2 h-5 w-5" />, path: '/admin/workshops' },
+    // Additional navigation - less frequently used
+    { label: 'ניהול לידים', icon: <Users className="ml-2 h-5 w-5" />, path: '/admin/leads' },
+    { label: 'כל הפגישות', icon: <Calendar className="ml-2 h-5 w-5" />, path: '/admin/sessions' },
     { label: 'ניתוחים גרפיים', icon: <ChartBar className="ml-2 h-5 w-5" />, path: '/admin/financial-analytics' },
     { label: 'הגדרות פיננסיות', icon: <Settings className="ml-2 h-5 w-5" />, path: '/admin/financial-settings' },
     { label: 'ניהול תרגילים', icon: <FileText className="ml-2 h-5 w-5" />, path: '/admin/exercises' },
-    { label: 'ניהול מאמרים', icon: <BookOpenText className="ml-2 h-5 w-5" />, path: '/admin/articles' },
-    { label: 'ניהול סיפורים', icon: <BookIcon className="ml-2 h-5 w-5" />, path: '/admin/stories' },
-    { label: 'הזנת תוכן גולמי', icon: <PenLine className="ml-2 h-5 w-5" />, path: '/admin/email-items/new' },
-    { label: 'עיצוב תבניות אימייל (ישן)', icon: <Paintbrush className="ml-2 h-5 w-5" />, path: '/admin/email-templates' },
+    { label: 'עיצוב תבניות (ישן)', icon: <Paintbrush className="ml-2 h-5 w-5" />, path: '/admin/email-templates' },
     { label: 'יוצר תבניות מייל', icon: <Paintbrush className="ml-2 h-5 w-5" />, path: '/admin/email-builder' },
-    { label: 'הרכבת מייל ושליחה', icon: <Combine className="ml-2 h-5 w-5" />, path: '/admin/email-composer' },
-    { label: 'שליחת דפי נחיתה', icon: <Mail className="ml-2 h-5 w-5" />, path: '/admin/landing-pages' },
-    { label: 'ניהול סדנאות', icon: <GraduationCap className="ml-2 h-5 w-5" />, path: '/admin/workshops' },
   ];
 
   // For debugging purposes
