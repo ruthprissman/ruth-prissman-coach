@@ -67,7 +67,7 @@ export function EmailPreview({ blocks, backgroundGradient = 'transparent' }: Ema
 
   const previewHTML = `
     <div style="direction: rtl; background: ${backgroundGradient}; padding: 20px;">
-      <div style="max-width: 600px; margin: 0 auto; background: #ffffff;">
+      <div style="max-width: 600px; margin: 0 auto;">
         ${blocks.map(generateBlockHTML).join('')}
       </div>
     </div>
