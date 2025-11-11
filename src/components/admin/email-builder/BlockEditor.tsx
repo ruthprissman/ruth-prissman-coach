@@ -353,23 +353,39 @@ export function BlockEditor({ block, onUpdate, onClose }: BlockEditorProps) {
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Label>רקע</Label>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              const isGradient = block.styles.backgroundColor.includes('gradient');
-              handleStyleChange(
-                'backgroundColor',
-                isGradient ? '#ffffff' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-              );
-            }}
-            className="text-xs h-6"
-          >
-            {block.styles.backgroundColor.includes('gradient') ? 'צבע אחיד' : 'גרדיאנט'}
-          </Button>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleStyleChange('backgroundColor', 'transparent')}
+              className="text-xs h-6"
+            >
+              ללא רקע
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const isGradient = block.styles.backgroundColor.includes('gradient');
+                const isTransparent = block.styles.backgroundColor === 'transparent';
+                if (isTransparent || isGradient) {
+                  handleStyleChange('backgroundColor', '#ffffff');
+                } else {
+                  handleStyleChange('backgroundColor', 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)');
+                }
+              }}
+              className="text-xs h-6"
+            >
+              {block.styles.backgroundColor.includes('gradient') ? 'צבע אחיד' : 'גרדיאנט'}
+            </Button>
+          </div>
         </div>
 
-        {block.styles.backgroundColor.includes('gradient') ? (
+        {block.styles.backgroundColor === 'transparent' ? (
+          <div className="p-4 border border-dashed border-border rounded text-center text-sm text-muted-foreground">
+            רקע שקוף - הבלוק יהיה ללא רקע
+          </div>
+        ) : block.styles.backgroundColor.includes('gradient') ? (
           <GradientPicker
             value={block.styles.backgroundColor}
             onChange={(value) => handleStyleChange('backgroundColor', value)}
