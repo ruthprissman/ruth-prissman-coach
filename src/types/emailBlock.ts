@@ -29,6 +29,7 @@ export interface EmailTemplate {
   name: string;
   html_content: string;
   blocks: EmailBlock[];
+  backgroundGradient?: string;
   created_at?: string;
   updated_at?: string;
 }

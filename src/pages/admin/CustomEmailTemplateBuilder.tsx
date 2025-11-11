@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BlocksList } from '@/components/admin/email-builder/BlocksList';
 import { BlockEditor } from '@/components/admin/email-builder/BlockEditor';
 import { EmailPreview } from '@/components/admin/email-builder/EmailPreview';
+import { GradientPicker } from '@/components/admin/email-builder/GradientPicker';
 import { EmailBlock, BlockType, DEFAULT_BLOCK_STYLES } from '@/types/emailBlock';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +36,7 @@ export default function CustomEmailTemplateBuilder() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('editor');
   const [htmlCode, setHtmlCode] = useState('');
+  const [backgroundGradient, setBackgroundGradient] = useState('transparent');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -173,7 +175,7 @@ export default function CustomEmailTemplateBuilder() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${templateName || 'Email Template'}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: Heebo, Arial, sans-serif; direction: rtl;">
+<body style="margin: 0; padding: 0; font-family: Heebo, Arial, sans-serif; direction: rtl; background: ${backgroundGradient};">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; margin: 0 auto; background: #ffffff;">
     ${blocksHTML}
   </table>
@@ -208,7 +210,7 @@ export default function CustomEmailTemplateBuilder() {
         name: templateName,
         html: html,
         css: '', // We're using inline styles, so no separate CSS needed
-        placeholders: JSON.stringify(blocks),
+        placeholders: JSON.stringify({ blocks, backgroundGradient }),
       };
 
       if (selectedTemplateId) {
@@ -264,13 +266,22 @@ export default function CustomEmailTemplateBuilder() {
 
       if (data.placeholders) {
         try {
-          const parsedBlocks = typeof data.placeholders === 'string' 
+          const parsed = typeof data.placeholders === 'string' 
             ? JSON.parse(data.placeholders) 
             : data.placeholders;
-          setBlocks(parsedBlocks);
+          
+          // Handle both old format (array) and new format (object with blocks and backgroundGradient)
+          if (Array.isArray(parsed)) {
+            setBlocks(parsed);
+            setBackgroundGradient('transparent');
+          } else {
+            setBlocks(parsed.blocks || []);
+            setBackgroundGradient(parsed.backgroundGradient || 'transparent');
+          }
         } catch (e) {
           console.error('Error parsing blocks:', e);
           setBlocks([]);
+          setBackgroundGradient('transparent');
         }
       }
 
@@ -304,13 +315,14 @@ export default function CustomEmailTemplateBuilder() {
     setTemplateName('');
     setSelectedTemplateId('');
     setEditingIndex(null);
+    setBackgroundGradient('transparent');
   };
 
   useEffect(() => {
     if (activeTab === 'code') {
       setHtmlCode(generateEmailHTML());
     }
-  }, [activeTab, blocks]);
+  }, [activeTab, blocks, backgroundGradient]);
 
   return (
     <AdminLayout title="יוצר תבניות מייל מותאם אישית">
@@ -364,6 +376,11 @@ export default function CustomEmailTemplateBuilder() {
               </Button>
             </div>
           </div>
+        </Card>
+
+        {/* Background settings */}
+        <Card className="p-4">
+          <GradientPicker value={backgroundGradient} onChange={setBackgroundGradient} />
         </Card>
 
         {/* Main content */}
@@ -476,7 +493,7 @@ export default function CustomEmailTemplateBuilder() {
               </TabsContent>
 
               <TabsContent value="preview" className="mt-4">
-                <EmailPreview blocks={blocks} />
+                <EmailPreview blocks={blocks} backgroundGradient={backgroundGradient} />
               </TabsContent>
 
               <TabsContent value="code" className="mt-4">

@@ -2,9 +2,10 @@ import { EmailBlock } from '@/types/emailBlock';
 
 interface EmailPreviewProps {
   blocks: EmailBlock[];
+  backgroundGradient?: string;
 }
 
-export function EmailPreview({ blocks }: EmailPreviewProps) {
+export function EmailPreview({ blocks, backgroundGradient = 'transparent' }: EmailPreviewProps) {
   const generateBlockHTML = (block: EmailBlock): string => {
     const styles = {
       fontFamily: block.styles.fontFamily,
@@ -65,8 +66,10 @@ export function EmailPreview({ blocks }: EmailPreviewProps) {
   };
 
   const previewHTML = `
-    <div style="direction: rtl; max-width: 600px; margin: 0 auto; background: #ffffff;">
-      ${blocks.map(generateBlockHTML).join('')}
+    <div style="direction: rtl; background: ${backgroundGradient}; padding: 20px;">
+      <div style="max-width: 600px; margin: 0 auto; background: #ffffff;">
+        ${blocks.map(generateBlockHTML).join('')}
+      </div>
     </div>
   `;
 
