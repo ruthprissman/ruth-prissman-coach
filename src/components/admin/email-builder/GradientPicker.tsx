@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,6 +33,14 @@ export function GradientPicker({ value, onChange }: GradientPickerProps) {
   const [startColor, setStartColor] = useState(parsed.startColor);
   const [endColor, setEndColor] = useState(parsed.endColor);
   const [angle, setAngle] = useState(parsed.angle);
+
+  // Update local state when value prop changes (e.g., when loading a template)
+  useEffect(() => {
+    const parsed = parseGradient(value);
+    setStartColor(parsed.startColor);
+    setEndColor(parsed.endColor);
+    setAngle(parsed.angle);
+  }, [value]);
 
   const updateGradient = (start: string, end: string, deg: string) => {
     const gradient = `linear-gradient(${deg}, ${start} 0%, ${end} 100%)`;
