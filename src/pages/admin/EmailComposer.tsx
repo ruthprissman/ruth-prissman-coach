@@ -484,6 +484,12 @@ const EmailComposer: React.FC = () => {
       let html = currentTemplate.html;
       const css = currentTemplate.css;
 
+      // Fix old templates with hardcoded white background on table
+      html = html.replace(
+        /(<table[^>]*style="[^"]*?)background:\s*#ffffff;([^"]*?")/gi,
+        '$1$2'
+      );
+
       // Generate dynamic content
       const poemHtml = textToHtml(currentItem.poem_text);
       const section1Html = textToHtml(currentItem.section1_text);
@@ -624,7 +630,12 @@ const EmailComposer: React.FC = () => {
 
       // If there's already saved HTML, load it directly
       if (itemData.render_html) {
-        setComposedHtml(itemData.render_html);
+        // Fix old HTML with hardcoded white background on table
+        const fixedHtml = itemData.render_html.replace(
+          /(<table[^>]*style="[^"]*?)background:\s*#ffffff;([^"]*?")/gi,
+          '$1$2'
+        );
+        setComposedHtml(fixedHtml);
         toast({
           title: 'טעינה הושלמה',
           description: 'המאמר והתבנית נטענו, והעריכה השמורה נטענה אוטומטית',
