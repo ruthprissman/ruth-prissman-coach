@@ -176,7 +176,7 @@ export default function CustomEmailTemplateBuilder() {
   <title>${templateName || 'Email Template'}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: Heebo, Arial, sans-serif; direction: rtl; background: ${backgroundGradient};">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; margin: 0 auto; background: #ffffff;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; margin: 0 auto;">
     ${blocksHTML}
   </table>
 </body>
