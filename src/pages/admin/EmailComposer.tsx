@@ -759,17 +759,34 @@ const EmailComposer: React.FC = () => {
 
   // Send test email
   const sendTest = useCallback(async () => {
-    if (!composedHtml || !editableSubject) {
+    if (!composedHtml) {
       toast({
         title: 'מידע חסר',
-        description: 'יש למפות ולשמור תוכן תחילה',
+        description: 'יש למפות תוכן תחילה',
         variant: 'destructive',
       });
       return;
     }
 
+    if (!editableSubject || editableSubject.trim() === '') {
+      toast({
+        title: 'נושא חסר',
+        description: 'נא להזין נושא למייל',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Get the latest HTML from visual editor if applicable
+    let finalHtml = composedHtml;
+    if (editMode === 'visual-edit' && editorRef.current?.contentWindow?.document) {
+      const doc = editorRef.current.contentWindow.document;
+      finalHtml = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+    }
+
     setIsLoading(true);
     try {
+      console.log('[sendTest] Sending test email with subject:', editableSubject);
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
           emailList: ['ruth@ruthprissman.co.il'],
@@ -778,7 +795,7 @@ const EmailComposer: React.FC = () => {
             email: 'ruth@ruthprissman.co.il',
             name: 'רות פריסמן'
           },
-          htmlContent: composedHtml,
+          htmlContent: finalHtml,
         },
       });
 
@@ -798,7 +815,7 @@ const EmailComposer: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [composedHtml, editableSubject, toast]);
+  }, [composedHtml, editableSubject, editMode, toast]);
 
   // Send to recipients
   const sendToRecipients = useCallback(async () => {
