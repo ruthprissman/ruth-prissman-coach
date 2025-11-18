@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { 
@@ -17,18 +17,81 @@ import {
   Check, 
   Sparkles,
   CheckCircle2,
-  ArrowDown
+  ArrowDown,
+  Loader2
 } from 'lucide-react';
 import { prePrayContent } from '@/content/landing/prePray';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+
+const leadFormSchema = z.object({
+  name: z.string().min(2, { message: 'נא להזין שם מלא' }),
+  phone: z.string().regex(/^0\d{1,2}-?\d{7}$/, { message: 'נא להזין מספר טלפון תקין' }),
+  email: z.string().email({ message: 'נא להזין כתובת אימייל תקינה' }),
+});
+
+type LeadFormData = z.infer<typeof leadFormSchema>;
 
 const PrePrayLanding = () => {
-  const [searchParams] = useSearchParams();
-  const showSuccess = searchParams.get('success') === 'true';
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const scrollToPayment = () => {
-    const element = document.getElementById('payment-section');
+  const form = useForm<LeadFormData>({
+    resolver: zodResolver(leadFormSchema),
+    defaultValues: {
+      name: '',
+      phone: '',
+      email: '',
+    },
+  });
+
+  const scrollToForm = () => {
+    const element = document.getElementById('lead-form-section');
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const onSubmit = async (data: LeadFormData) => {
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .insert({
+          name: data.name,
+          phone: data.phone,
+          email: data.email,
+          source: 'pre-pray-landing',
+          status: 'טופס התחלתי',
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: '✅ הפרטים נשמרו בהצלחה',
+        description: 'מעביר לדף התשלום...',
+      });
+
+      setTimeout(() => {
+        navigate('/pre-pray-payment', {
+          state: { leadData: data },
+        });
+      }, 1000);
+    } catch (error) {
+      console.error('Error saving lead:', error);
+      toast({
+        title: '❌ שגיאה',
+        description: 'אופס, משהו השתבש. נסי שוב או צרי קשר איתי.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -75,7 +138,7 @@ const PrePrayLanding = () => {
             </p>
             
             <button 
-              onClick={scrollToPayment}
+              onClick={scrollToForm}
               className="cta-primary"
               style={{
                 fontFamily: 'Alef, sans-serif',
@@ -121,7 +184,7 @@ const PrePrayLanding = () => {
               
               <div className="text-center mt-10">
                 <button 
-                  onClick={scrollToPayment}
+                  onClick={scrollToForm}
                   className="cta-primary"
                   style={{
                     fontFamily: 'Alef, sans-serif',
@@ -171,7 +234,7 @@ const PrePrayLanding = () => {
               
               <div className="text-center mt-10">
                 <button 
-                  onClick={scrollToPayment}
+                  onClick={scrollToForm}
                   className="cta-primary"
                   style={{
                     fontFamily: 'Alef, sans-serif',
@@ -225,7 +288,7 @@ const PrePrayLanding = () => {
               
               <div className="text-center mt-10">
                 <button 
-                  onClick={scrollToPayment}
+                  onClick={scrollToForm}
                   className="cta-primary"
                   style={{
                     fontFamily: 'Alef, sans-serif',
@@ -325,7 +388,7 @@ const PrePrayLanding = () => {
                 </p>
                 
                 <button 
-                  onClick={scrollToPayment}
+                  onClick={scrollToForm}
                   className="cta-primary"
                   style={{
                     fontFamily: 'Alef, sans-serif',
@@ -340,37 +403,102 @@ const PrePrayLanding = () => {
           </div>
         </section>
 
-        {/* Payment Section */}
-        <section id="payment-section" className="py-16 md:py-24 scroll-mt-20">
-          <div className="container max-w-4xl px-4">
-            {showSuccess ? (
-              <div className="border-4 border-green-400 rounded-lg p-8 md:p-12 text-center">
-                <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto mb-6" />
-                <h2 className="text-3xl md:text-4xl font-bold text-purple-darkest mb-4 font-alef">
-                  {prePrayContent.payment.successMessage.title}
-                </h2>
-                <p className="text-lg md:text-xl text-purple-dark leading-relaxed whitespace-pre-line font-heebo">
-                  {prePrayContent.payment.successMessage.content}
-                </p>
-              </div>
-            ) : (
-              <div className="text-center">
-                <p className="text-sm text-purple-dark/70 mb-4 font-heebo">
-                  {prePrayContent.payment.reassurance}
-                </p>
-                
-                <div className="flex justify-center">
-                  <iframe
-                    src={prePrayContent.payment.iframeUrl}
-                    width="100%"
-                    height="650"
-                    className="border-0 max-w-[600px] rounded-lg shadow-lg"
-                    loading="lazy"
-                    title="טופס תשלום מאובטח"
+        {/* Lead Form Section */}
+        <section id="lead-form-section" className="py-16 md:py-24 bg-gradient-to-br from-purple-light via-white to-[#E5F5F5] scroll-mt-20">
+          <div className="container max-w-2xl px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#5FA6A6] mb-4 font-alef">
+                {prePrayContent.leadForm.title}
+              </h2>
+              <p className="text-xl text-purple-dark font-heebo">
+                {prePrayContent.leadForm.subtitle}
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-2xl p-8 border border-purple-light/20">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-lg font-semibold text-purple-dark">
+                          {prePrayContent.leadForm.fields.name.label}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={prePrayContent.leadForm.fields.name.placeholder}
+                            {...field}
+                            className="text-lg py-6"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-              </div>
-            )}
+
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-lg font-semibold text-purple-dark">
+                          {prePrayContent.leadForm.fields.phone.label}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder={prePrayContent.leadForm.fields.phone.placeholder}
+                            {...field}
+                            className="text-lg py-6"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-lg font-semibold text-purple-dark">
+                          {prePrayContent.leadForm.fields.email.label}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder={prePrayContent.leadForm.fields.email.placeholder}
+                            {...field}
+                            className="text-lg py-6"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-[#5FA6A6] text-white py-6 text-xl font-bold hover:bg-[#4a8585] transition-all duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                        {prePrayContent.leadForm.loadingButton}
+                      </>
+                    ) : (
+                      prePrayContent.leadForm.submitButton
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </div>
           </div>
         </section>
 
@@ -411,7 +539,7 @@ const PrePrayLanding = () => {
             </p>
             
             <button 
-              onClick={scrollToPayment}
+              onClick={scrollToForm}
               className="cta-primary"
               style={{
                 fontFamily: 'Alef, sans-serif',

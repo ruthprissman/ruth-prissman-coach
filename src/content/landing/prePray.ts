@@ -135,6 +135,31 @@ export const prePrayContent = {
 אם לא קיבלת מייל תוך 10 דקות – בדקי בתיקיית "קידומי מכירות" או "ספאם", ואם אין שם – פני אלינו לכתובת: support@email.com`,
     },
   },
+  leadForm: {
+    title: 'מוכנה להצטרף?',
+    subtitle: 'מלאי את הפרטים שלך ונעבור לסיום ההרשמה',
+    fields: {
+      name: {
+        label: 'שם מלא',
+        placeholder: 'איך קוראים לך?',
+        error: 'נא להזין שם מלא',
+      },
+      phone: {
+        label: 'מספר טלפון',
+        placeholder: '052-1234567',
+        error: 'נא להזין מספר טלפון תקין',
+      },
+      email: {
+        label: 'כתובת אימייל',
+        placeholder: 'example@email.com',
+        error: 'נא להזין כתובת אימייל תקינה',
+      },
+    },
+    submitButton: 'המשך לתשלום',
+    loadingButton: 'שומר פרטים...',
+    successMessage: 'הפרטים נשמרו בהצלחה! מעביר לדף התשלום...',
+    errorMessage: 'אופס, משהו השתבש. נסי שוב או צרי קשר איתי.',
+  },
   faq: {
     title: 'אבל רגע, מה אם...',
     subtitle: 'אני יודעת, בטח יש לך כמה שאלות. בואי נענה עליהן בכנות.',
