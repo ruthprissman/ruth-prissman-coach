@@ -377,9 +377,12 @@ const PrePrayLanding = () => {
         {/* FAQ Section */}
         <section className="py-16 md:py-24">
           <div className="container max-w-4xl px-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#5FA6A6] text-center mb-12 font-alef">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#5FA6A6] text-center mb-4 font-alef">
               {prePrayContent.faq.title}
             </h2>
+            <p className="text-lg md:text-xl text-purple-dark text-center mb-12 font-heebo">
+              {prePrayContent.faq.subtitle}
+            </p>
             
             <Accordion type="single" collapsible className="space-y-4">
               {prePrayContent.faq.items.map((item, index) => (
