@@ -16,7 +16,8 @@ import {
   RefreshCw, 
   Check, 
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  ArrowDown
 } from 'lucide-react';
 import { prePrayContent } from '@/content/landing/prePray';
 
@@ -65,13 +66,17 @@ const PrePrayLanding = () => {
               {prePrayContent.hero.mainHeading}
             </h1>
             
-            <Button 
+            <button 
               onClick={scrollToPayment}
-              size="lg"
-              className="text-lg px-8 py-6 font-alef bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900"
+              className="cta-primary"
+              style={{
+                fontFamily: 'Alef, sans-serif',
+                fontSize: '1.5rem',
+                padding: '1.25rem 3rem'
+              }}
             >
-              {prePrayContent.hero.ctaButton}
-            </Button>
+              {prePrayContent.hero.ctaButton} <ArrowDown className="inline mr-2" size={24} />
+            </button>
           </div>
         </section>
 
@@ -103,14 +108,17 @@ const PrePrayLanding = () => {
               </blockquote>
               
               <div className="text-center mt-10">
-                <Button 
+                <button 
                   onClick={scrollToPayment}
-                  variant="outline"
-                  size="lg"
-                  className="text-lg px-8 py-6 font-alef border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white"
+                  className="cta-outline"
+                  style={{
+                    fontFamily: 'Alef, sans-serif',
+                    fontSize: '1.25rem',
+                    padding: '1rem 2.5rem'
+                  }}
                 >
-                  {prePrayContent.pain.ctaButton}
-                </Button>
+                  {prePrayContent.pain.ctaButton} <ArrowDown className="inline mr-2" size={20} />
+                </button>
               </div>
             </div>
           </div>
@@ -138,13 +146,17 @@ const PrePrayLanding = () => {
               </p>
               
               <div className="text-center mt-10">
-                <Button 
+                <button 
                   onClick={scrollToPayment}
-                  size="lg"
-                  className="text-lg px-8 py-6 font-alef bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900"
+                  className="cta-primary"
+                  style={{
+                    fontFamily: 'Alef, sans-serif',
+                    fontSize: '1.5rem',
+                    padding: '1.25rem 3rem'
+                  }}
                 >
-                  {prePrayContent.solution.ctaButton}
-                </Button>
+                  {prePrayContent.solution.ctaButton} <ArrowDown className="inline mr-2" size={24} />
+                </button>
               </div>
             </div>
           </div>
@@ -184,13 +196,17 @@ const PrePrayLanding = () => {
               </p>
               
               <div className="text-center mt-10">
-                <Button 
+                <button 
                   onClick={scrollToPayment}
-                  size="lg"
-                  className="text-lg px-8 py-6 font-alef bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900"
+                  className="cta-primary"
+                  style={{
+                    fontFamily: 'Alef, sans-serif',
+                    fontSize: '1.5rem',
+                    padding: '1.25rem 3rem'
+                  }}
                 >
-                  {prePrayContent.howItWorks.ctaButton}
-                </Button>
+                  {prePrayContent.howItWorks.ctaButton} <ArrowDown className="inline mr-2" size={24} />
+                </button>
               </div>
             </div>
           </div>
@@ -276,13 +292,17 @@ const PrePrayLanding = () => {
                   {prePrayContent.offer.specialPrice}
                 </p>
                 
-                <Button 
+                <button 
                   onClick={scrollToPayment}
-                  size="lg"
-                  className="text-lg px-8 py-6 font-alef bg-gradient-to-br from-gold to-gold/80 text-purple-darkest hover:from-gold/90 hover:to-gold/70 shadow-lg"
+                  className="cta-primary"
+                  style={{
+                    fontFamily: 'Alef, sans-serif',
+                    fontSize: '1.5rem',
+                    padding: '1.25rem 3rem'
+                  }}
                 >
-                  {prePrayContent.offer.ctaButton}
-                </Button>
+                  {prePrayContent.offer.ctaButton} <ArrowDown className="inline mr-2" size={24} />
+                </button>
               </div>
             </div>
           </div>
@@ -355,13 +375,17 @@ const PrePrayLanding = () => {
               {prePrayContent.finalCta.content}
             </p>
             
-            <Button 
+            <button 
               onClick={scrollToPayment}
-              size="lg"
-              className="text-lg px-8 py-6 font-alef bg-gold text-purple-darkest hover:bg-gold/90 shadow-xl"
+              className="cta-primary"
+              style={{
+                fontFamily: 'Alef, sans-serif',
+                fontSize: '1.5rem',
+                padding: '1.25rem 3rem'
+              }}
             >
-              {prePrayContent.finalCta.ctaButton}
-            </Button>
+              {prePrayContent.finalCta.ctaButton} <ArrowDown className="inline mr-2" size={24} />
+            </button>
           </div>
         </section>
       </div>
