@@ -136,8 +136,20 @@ const PrePrayLanding = () => {
         <section className="py-16 md:py-24 bg-gradient-to-br from-purple-50/30 to-gold-50/20">
           <div className="container max-w-4xl px-4">
             <div className="text-right space-y-6 font-heebo">
-              <p className="text-lg md:text-xl text-purple-dark leading-relaxed whitespace-pre-line">
-                {prePrayContent.solution.content}
+              <h2 className="text-3xl md:text-4xl font-bold text-[#5FA6A6] mb-6 font-alef leading-relaxed">
+                אבל מה אם הייתי אומרת לך שאת נמצאת במרחק שתי דקות בלבד מתפילה שאת משתוקקת לה?
+              </h2>
+              
+              <p className="text-lg md:text-xl text-purple-dark leading-relaxed">
+                אני יודעת, זה נשמע טוב מכדי להיות אמיתי. בתור מאמנת רגשית שליוויתי נשים רבות במסע הזה, גיליתי שהסוד הוא לא להוסיף עוד משימות, אלא לזהות ולדייק את מה שאת כבר עושה.
+              </p>
+              
+              <p className="text-lg md:text-xl text-purple-dark leading-relaxed">
+                ב"דקה לפני העמידה", ברכות השחר, המוכרות עוד מהגן, יהפכו להיות חלק ממך.
+              </p>
+              
+              <p className="text-lg md:text-xl text-purple-dark leading-relaxed font-bold">
+                עם "דקה לפני העמידה", את יכולה גם וגם:
               </p>
               
               <ul className="space-y-3 mr-4 mt-6">
