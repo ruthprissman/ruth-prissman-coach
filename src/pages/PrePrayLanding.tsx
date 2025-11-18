@@ -408,7 +408,7 @@ const PrePrayLanding = () => {
         {/* Final CTA Section */}
         <section className="py-16 md:py-24 bg-gradient-to-br from-purple-600 to-purple-800 text-white">
           <div className="container max-w-4xl px-4 text-center">
-            <p className="text-lg md:text-xl leading-relaxed mb-8 whitespace-pre-line font-heebo">
+            <p className="text-lg md:text-xl leading-relaxed mb-8 whitespace-pre-line font-heebo max-w-3xl mx-auto">
               {prePrayContent.finalCta.content}
             </p>
             
