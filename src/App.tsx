@@ -51,6 +51,7 @@ import HebrewLandingPage from './components/HebrewLandingPage';
 import RuthFrissmanWorkshop from './pages/RuthFrissmanWorkshop';
 import PrayerGuideLanding from './pages/PrayerGuideLanding';
 import PrePrayLanding from './pages/PrePrayLanding';
+import PrePrayPayment from './pages/PrePrayPayment';
 import { ScrollToTop } from './components/ScrollToTop';
 import { runSessionDiagnostics } from './utils/SessionDiagnostics';
 
