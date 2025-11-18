@@ -55,7 +55,7 @@ const PrePrayLanding = () => {
             backgroundPosition: 'center',
           }}
         >
-          <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-background/30 backdrop-blur-[2px]" />
           
           <div className="container relative z-10 max-w-4xl px-4 py-16 text-center">
             <p className="text-lg md:text-xl text-purple-dark/80 mb-6 font-heebo">
