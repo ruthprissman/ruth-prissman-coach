@@ -109,11 +109,11 @@ const PrePrayLanding = () => {
                 {prePrayContent.pain.closing}
               </p>
               
-              <blockquote className="border-r-4 border-gold pr-6 py-4 my-8 bg-gold/5 rounded-r-lg">
-                <p className="text-lg italic text-purple-darkest leading-relaxed">
+              <div className="bg-purple-50/30 p-6 rounded-lg my-8">
+                <p className="text-lg text-purple-darkest leading-relaxed">
                   "{prePrayContent.pain.quote}"
                 </p>
-              </blockquote>
+              </div>
               
               <div className="text-center mt-10">
                 <button 
