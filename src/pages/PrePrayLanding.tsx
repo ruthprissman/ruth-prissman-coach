@@ -118,7 +118,7 @@ const PrePrayLanding = () => {
               <div className="text-center mt-10">
                 <button 
                   onClick={scrollToPayment}
-                  className="cta-outline"
+                  className="cta-primary"
                   style={{
                     fontFamily: 'Alef, sans-serif',
                     fontSize: '1.25rem',
