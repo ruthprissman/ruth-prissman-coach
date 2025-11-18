@@ -62,9 +62,17 @@ const PrePrayLanding = () => {
               {prePrayContent.hero.introText}
             </p>
             
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-purple-darkest mb-8 leading-relaxed font-alef whitespace-pre-line">
-              {prePrayContent.hero.mainHeading}
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-purple-darkest mb-4 leading-tight font-alef">
+              התפילה שלך היא מטלה או מתנה?
             </h1>
+            
+            <p className="text-xl md:text-2xl lg:text-3xl text-gray-800 mb-8 leading-relaxed font-heebo">
+              גלי איך שתי דקות בבוקר יכולות להפוך מילים שנאמרות מעצמן
+              <br />
+              לחוויה מרגשת, משמעותית וממלאת כוח
+              <br />
+              עוד היום.
+            </p>
             
             <button 
               onClick={scrollToPayment}
