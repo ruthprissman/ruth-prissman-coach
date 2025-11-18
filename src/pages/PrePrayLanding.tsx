@@ -91,7 +91,7 @@ const PrePrayLanding = () => {
               <ul className="space-y-4 mr-4">
                 {prePrayContent.pain.feelings.map((feeling, index) => (
                   <li key={index} className="flex items-start gap-3 text-purple-dark/90">
-                    <span className="text-gold mt-1">•</span>
+                    <Heart className="w-4 h-4 text-[#5FA6A6] shrink-0 mt-1.5 fill-[#5FA6A6]/20" />
                     <span className="text-lg leading-relaxed">"{feeling}"</span>
                   </li>
                 ))}
