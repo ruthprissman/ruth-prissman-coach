@@ -22,6 +22,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { prePrayContent } from '@/content/landing/prePray';
+import prePrayInstruments from '@/assets/pre-pray-instruments.png';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -364,31 +365,47 @@ const PrePrayLanding = () => {
 
         {/* Offer & Price Section */}
         <section className="py-16 md:py-24">
-          <div className="container max-w-4xl px-4">
+          <div className="container max-w-6xl px-4">
             <div className="border-4 border-gold rounded-lg p-8 md:p-12 shadow-xl">
               <h2 className="text-3xl md:text-4xl font-bold text-[#5FA6A6] mb-6 font-alef leading-relaxed text-center">
                 אז מה את מקבלת ב"דקה לפני העמידה"?
               </h2>
               
-              <p className="text-lg md:text-xl text-purple-dark leading-relaxed mb-6 text-center font-heebo">
+              <p className="text-lg md:text-xl text-purple-dark leading-relaxed mb-8 text-center font-heebo">
                 חבילה מלאה שמלווה אותך צעד אחר צעד:
               </p>
               
-              <div className="space-y-6 mb-8 max-w-2xl mx-auto">
-                {prePrayContent.offer.items.map((item, index) => (
-                  <div key={index} className="flex items-center justify-center gap-4 text-center flex-col">
-                    <Sparkles className="w-6 h-6 text-gold shrink-0" />
-                    <div className="flex-1">
-                      <h4 className="font-bold text-lg text-purple-darkest mb-1 font-alef">
-                        {item.title}
-                      </h4>
-                      <p className="text-purple-dark mb-1 font-heebo">{item.description}</p>
-                      <p className="text-gold font-bold font-heebo">שווי: {item.value}</p>
+              {/* Image and content grid */}
+              <div className="grid md:grid-cols-2 gap-8 mb-8 items-center">
+                {/* Image on the left */}
+                <div className="order-2 md:order-1">
+                  <img 
+                    src={prePrayInstruments} 
+                    alt="נופים וכלי נגינה המייצגים את היופי והרוחניות של התפילה" 
+                    className="w-full h-auto rounded-lg shadow-lg"
+                  />
+                </div>
+                
+                {/* Text on the right */}
+                <div className="order-1 md:order-2 space-y-6">
+                  {prePrayContent.offer.items.map((item, index) => (
+                    <div key={index} className="flex items-start gap-4 text-right">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2 justify-end">
+                          <h4 className="font-bold text-lg text-purple-darkest font-alef">
+                            {item.title}
+                          </h4>
+                          <Sparkles className="w-6 h-6 text-gold shrink-0" />
+                        </div>
+                        <p className="text-purple-dark mb-1 font-heebo">{item.description}</p>
+                        <p className="text-gold font-bold font-heebo">שווי: {item.value}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
               
+              {/* Price and CTA - centered across full width */}
               <div className="border-t-2 border-gold pt-6 mt-6 text-center">
                 <p className="text-lg text-purple-dark mb-2 font-heebo">
                   <span className="font-bold">שווי כולל:</span>{' '}
