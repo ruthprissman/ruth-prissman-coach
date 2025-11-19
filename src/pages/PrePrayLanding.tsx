@@ -44,6 +44,8 @@ const PrePrayLanding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false);
+  const [savedLeadData, setSavedLeadData] = useState<LeadFormData | null>(null);
 
   const form = useForm<LeadFormData>({
     resolver: zodResolver(leadFormSchema),
@@ -56,11 +58,32 @@ const PrePrayLanding = () => {
     },
   });
 
+  // בדיקה אם המשתמש חזר מדף תשלום
+  useEffect(() => {
+    const savedData = localStorage.getItem("leadData");
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setSavedLeadData(parsedData);
+        setShowThankYou(true);
+      } catch (error) {
+        console.error("Error parsing saved lead data:", error);
+      }
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
   const scrollToForm = () => {
     const element = document.getElementById("lead-form-section");
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
     }
+  };
+
+  const handleBackToForm = () => {
+    localStorage.removeItem("leadData");
+    setShowThankYou(false);
+    setSavedLeadData(null);
   };
 
   const onSubmit = async (data: LeadFormData) => {
@@ -114,7 +137,7 @@ const PrePrayLanding = () => {
       }
 
       // שמירת הנתונים ב-localStorage כגיבוי
-      localStorage.setItem("prePrayLeadData", JSON.stringify(data));
+      localStorage.setItem("leadData", JSON.stringify(data));
 
       toast({
         title: "✅ הפרטים נשמרו בהצלחה",
@@ -138,11 +161,142 @@ const PrePrayLanding = () => {
     }
   };
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-
   const stepIcons = [Key, Headphones, Target, Heart, RefreshCw];
+
+  // מסך תודה אחרי תשלום
+  if (showThankYou && savedLeadData) {
+    return (
+      <>
+        <Helmet>
+          <title>תודה על הרכישה - דקה לפני התפילה</title>
+          <meta name="description" content="תודה על הרכישה של התוכנית דקה לפני התפילה" />
+        </Helmet>
+
+        <div className="min-h-screen bg-background" dir="rtl">
+          <section
+            className="relative min-h-screen flex items-center justify-center overflow-hidden"
+            style={{
+              backgroundImage: "url(/assets/pre-pray-hero-bg.png)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px]" />
+
+            <div className="container relative z-10 max-w-3xl px-4 py-16">
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 md:p-12 space-y-8">
+                {/* אייקון הצלחה */}
+                <div className="flex justify-center">
+                  <div className="bg-green-100 rounded-full p-6">
+                    <CheckCircle2 className="w-16 h-16 text-green-600" />
+                  </div>
+                </div>
+
+                {/* כותרת תודה */}
+                <div className="text-center space-y-4">
+                  <h1 className="text-3xl md:text-4xl font-bold text-purple-darkest font-alef">
+                    תודה רבה על הרכישה! 🙏
+                  </h1>
+                  <p className="text-xl text-purple-dark font-heebo">
+                    התשלום שלך בתהליך אישור
+                  </p>
+                </div>
+
+                {/* פרטי ההזמנה */}
+                <div className="bg-purple-light/20 rounded-xl p-6 space-y-4">
+                  <h2 className="text-xl font-bold text-purple-darkest font-alef text-center mb-4">
+                    פרטי ההזמנה שלך:
+                  </h2>
+                  <div className="space-y-3 text-lg font-heebo">
+                    <div className="flex justify-between items-center border-b border-purple-light/30 pb-2">
+                      <span className="text-purple-dark/70">שם:</span>
+                      <span className="font-semibold text-purple-darkest">{savedLeadData.name}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-purple-light/30 pb-2">
+                      <span className="text-purple-dark/70">אימייל:</span>
+                      <span className="font-semibold text-purple-darkest">{savedLeadData.email}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-purple-dark/70">טלפון:</span>
+                      <span className="font-semibold text-purple-darkest">{savedLeadData.phone}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* הסבר על המשך התהליך */}
+                <div className="bg-[#5FA6A6]/10 border-2 border-[#5FA6A6]/30 rounded-xl p-6 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="w-6 h-6 text-[#5FA6A6] shrink-0 mt-1" />
+                    <div className="space-y-3">
+                      <h3 className="text-xl font-bold text-purple-darkest font-alef">
+                        מה קורה עכשיו?
+                      </h3>
+                      <ul className="space-y-2 text-purple-dark font-heebo leading-relaxed">
+                        <li className="flex items-start gap-2">
+                          <Check className="w-5 h-5 text-[#5FA6A6] shrink-0 mt-0.5" />
+                          <span>התשלום שלך נמצא בתהליך אישור אצל חברת האשראי</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="w-5 h-5 text-[#5FA6A6] shrink-0 mt-0.5" />
+                          <span>
+                            <strong>המייל הראשון עם הקישור לתוכנית יישלח אליך מיד לאחר אישור התשלום</strong> (בדרך כלל תוך מספר דקות עד שעות ספורות)
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="w-5 h-5 text-[#5FA6A6] shrink-0 mt-0.5" />
+                          <span>בכל בוקר תקבלי מייל עם התכנים השבועיים</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* פרטי יצירת קשר */}
+                <div className="text-center space-y-4 pt-4">
+                  <p className="text-purple-dark font-heebo">
+                    יש לך שאלות? אנחנו כאן בשבילך!
+                  </p>
+                  <div className="flex flex-col items-center gap-2 text-[#5FA6A6] font-heebo">
+                    <a 
+                      href="mailto:coach@ruthprissman.co.il" 
+                      className="hover:text-[#4a8585] transition-colors"
+                    >
+                      📧 coach@ruthprissman.co.il
+                    </a>
+                    <a 
+                      href="https://wa.me/972547519045" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="hover:text-[#4a8585] transition-colors"
+                    >
+                      📱 WhatsApp: 054-751-9045
+                    </a>
+                  </div>
+                </div>
+
+                {/* כפתורי פעולה */}
+                <div className="flex flex-col gap-3 pt-4">
+                  <Button
+                    onClick={() => navigate("/")}
+                    className="w-full bg-[#5FA6A6] text-white py-6 text-lg font-bold hover:bg-[#4a8585] transition-all duration-300"
+                  >
+                    חזרה לעמוד הבית
+                  </Button>
+                  <Button
+                    onClick={handleBackToForm}
+                    variant="outline"
+                    className="w-full py-6 text-lg"
+                  >
+                    מלא טופס חדש
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
