@@ -104,6 +104,7 @@ function App() {
                 <Route path="/prayer-landing" element={<Navigate to="/prayer-guide" replace />} />
                 <Route path="/prayer-guide" element={<PrayerGuideLanding />} />
                 <Route path="/pre-pray" element={<PrePrayLanding />} />
+                <Route path="/pre-pray-payment" element={<PrePrayPayment />} />
                 <Route path="/main-workshops" element={<RuthFrissmanWorkshop />} />
 
                 {/* Admin auth routes */}
