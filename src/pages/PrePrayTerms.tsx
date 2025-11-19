@@ -16,8 +16,12 @@ export default function PrePrayTerms() {
 
       <div className="min-h-screen bg-background" dir="rtl">
         {/* Header */}
-        <div className="bg-gradient-to-br from-purple-600 to-purple-800 text-white py-12">
-          <div className="container max-w-4xl px-4">
+        <div 
+          className="relative text-white py-12 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/assets/pre-pray-terms-hero.png')" }}
+        >
+          <div className="absolute inset-0 bg-black/30"></div>
+          <div className="container max-w-4xl px-4 relative z-10">
             <Button
               variant="ghost"
               onClick={() => navigate('/pre-pray')}
