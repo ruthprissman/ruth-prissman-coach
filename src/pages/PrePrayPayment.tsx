@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { ArrowRight, Lock, Phone } from 'lucide-react';
+import { ArrowRight, Lock, Phone, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { prePrayPaymentContent } from '@/content/landing/prePrayPayment';
 import { useEffect } from 'react';
@@ -42,7 +42,21 @@ export default function PrePrayPayment() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
-      <div className="min-h-screen bg-gradient-to-b from-purple-light to-white font-heebo" dir="rtl">
+      <div 
+        className="min-h-screen font-heebo relative" 
+        dir="rtl"
+        style={{
+          backgroundImage: 'url(/assets/payment-bg.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        {/* Overlay for better readability */}
+        <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" />
+        
+        {/* Content wrapper */}
+        <div className="relative z-10">
         {/* Header */}
         <div className="container max-w-4xl px-4 py-8">
           <Button
@@ -55,19 +69,30 @@ export default function PrePrayPayment() {
           </Button>
 
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-[#5FA6A6] mb-4 font-alef">
+            <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg mb-4 font-alef">
               {prePrayPaymentContent.hero.title}
             </h1>
-            <p className="text-xl text-purple-dark mb-2">
+            <p className="text-xl text-white drop-shadow-md mb-2">
               שלום {leadData.name}! 👋
             </p>
-            <p className="text-lg text-purple-dark/80">
+            <p className="text-lg text-white/90 drop-shadow-md">
               {prePrayPaymentContent.hero.subtitle}
             </p>
           </div>
+          
+          {/* Debug Button - Remove Later */}
+          <div className="flex justify-center mb-4">
+            <Button
+              onClick={() => navigate('/pre-pray-thank-you', { state: { leadData } })}
+              className="bg-amber-500 hover:bg-amber-600 text-white font-bold"
+            >
+              <CheckCircle className="ml-2 h-5 w-5" />
+              מעבר לדף תודה (בדיקה)
+            </Button>
+          </div>
 
           {/* Secure Payment Badge */}
-          <div className="flex items-center justify-center gap-2 text-green-600 mb-6">
+          <div className="flex items-center justify-center gap-2 text-green-400 drop-shadow-md mb-6 bg-white/20 backdrop-blur-sm py-2 px-4 rounded-full">
             <Lock className="h-5 w-5" />
             <span className="font-semibold">{prePrayPaymentContent.payment.securePayment}</span>
           </div>
@@ -114,6 +139,7 @@ export default function PrePrayPayment() {
               {prePrayPaymentContent.support.phone}
             </a>
           </div>
+        </div>
         </div>
       </div>
     </>
