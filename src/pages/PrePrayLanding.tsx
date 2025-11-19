@@ -278,17 +278,8 @@ const PrePrayLanding = () => {
               
               {/* Image and content grid */}
               <div className="grid md:grid-cols-2 gap-8 items-center">
-                {/* Image on the left */}
-                <div className="order-2 md:order-1">
-                  <img 
-                    src={prePrayInstruments} 
-                    alt="נופים וכלי נגינה המייצגים את היופי והרוחניות של התפילה" 
-                    className="w-full h-auto rounded-lg shadow-lg"
-                  />
-                </div>
-                
-                {/* Text on the right */}
-                <div className="order-1 md:order-2 p-8 rounded-lg">
+                {/* Text on the left */}
+                <div className="order-1 md:order-1 p-8 rounded-lg">
                   <h3 className="text-2xl md:text-3xl font-bold text-purple-darkest mb-4 font-alef text-right">
                     {prePrayContent.howItWorks.secret.title}
                   </h3>
@@ -307,6 +298,15 @@ const PrePrayLanding = () => {
                       </li>
                     ))}
                   </ol>
+                </div>
+                
+                {/* Image on the right */}
+                <div className="order-2 md:order-2 flex justify-center">
+                  <img 
+                    src={prePrayInstruments} 
+                    alt="נופים וכלי נגינה המייצגים את היופי והרוחניות של התפילה" 
+                    className="w-full max-w-md h-auto rounded-lg shadow-lg"
+                  />
                 </div>
               </div>
               
