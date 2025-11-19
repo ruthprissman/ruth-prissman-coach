@@ -291,12 +291,12 @@ const PrePrayLanding = () => {
                     {prePrayContent.howItWorks.secret.steps.map((step, index) => {
                       const Icon = stepIcons[index];
                       return (
-                        <li key={index} className="flex items-start gap-3 justify-end">
+                        <li key={index} className="flex items-start gap-3 flex-row-reverse">
+                          <Icon className="w-6 h-6 text-[#5FA6A6] shrink-0" />
                           <div className="flex-1 text-right">
                             <span className="font-bold text-purple-darkest text-lg">{step.title}</span>
                             <span className="text-purple-dark"> – {step.content}</span>
                           </div>
-                          <Icon className="w-6 h-6 text-gold shrink-0" />
                         </li>
                       );
                     })}
