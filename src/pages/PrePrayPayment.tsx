@@ -82,7 +82,7 @@ export default function PrePrayPayment() {
             
             <div className="w-full" style={{ minHeight: '800px' }}>
               <iframe
-                src="https://upay.co.il/pay/ruthprissman/a-minute-before-prayer/"
+                src="https://app.upay.co.il/API6/s.php?m=UmFZY1oxTU5OM2tSN3g1Wjl1ekc4UT09"
                 width="100%"
                 height="800"
                 frameBorder="0"
