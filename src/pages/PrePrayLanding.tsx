@@ -288,15 +288,18 @@ const PrePrayLanding = () => {
                   </p>
                   
                   <ol className="space-y-4 text-right">
-                    {prePrayContent.howItWorks.secret.steps.map((step, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <div className="flex-1 text-right">
-                          <span className="font-bold text-purple-darkest text-lg">{step.title}</span>
-                          <span className="text-purple-dark"> – {step.content}</span>
-                        </div>
-                        <span className="text-gold font-bold text-xl">{index + 1}.</span>
-                      </li>
-                    ))}
+                    {prePrayContent.howItWorks.secret.steps.map((step, index) => {
+                      const Icon = stepIcons[index];
+                      return (
+                        <li key={index} className="flex items-start gap-3 justify-end">
+                          <div className="flex-1 text-right">
+                            <span className="font-bold text-purple-darkest text-lg">{step.title}</span>
+                            <span className="text-purple-dark"> – {step.content}</span>
+                          </div>
+                          <Icon className="w-6 h-6 text-gold shrink-0" />
+                        </li>
+                      );
+                    })}
                   </ol>
                 </div>
                 
@@ -305,7 +308,7 @@ const PrePrayLanding = () => {
                   <img 
                     src={prePrayInstruments} 
                     alt="נופים וכלי נגינה המייצגים את היופי והרוחניות של התפילה" 
-                    className="w-full max-w-md h-auto rounded-lg shadow-lg"
+                    className="w-full max-w-sm h-auto rounded-lg shadow-lg"
                   />
                 </div>
               </div>
