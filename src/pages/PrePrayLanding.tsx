@@ -18,7 +18,8 @@ import {
   Sparkles,
   CheckCircle2,
   ArrowDown,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { prePrayContent } from '@/content/landing/prePray';
 import { useForm } from 'react-hook-form';
@@ -27,12 +28,18 @@ import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { Link } from 'react-router-dom';
 
 const leadFormSchema = z.object({
   name: z.string().min(2, { message: 'נא להזין שם מלא' }),
   phone: z.string().regex(/^0\d{1,2}-?\d{7}$/, { message: 'נא להזין מספר טלפון תקין' }),
   email: z.string().email({ message: 'נא להזין כתובת אימייל תקינה' }),
+  agreeToTerms: z.boolean().refine((val) => val === true, {
+    message: 'יש לאשר את תנאי השימוש ומדיניות הפרטיות',
+  }),
+  agreeToMarketing: z.boolean(),
 });
 
 type LeadFormData = z.infer<typeof leadFormSchema>;
@@ -48,6 +55,8 @@ const PrePrayLanding = () => {
       name: '',
       phone: '',
       email: '',
+      agreeToTerms: false,
+      agreeToMarketing: false,
     },
   });
 
@@ -484,6 +493,69 @@ const PrePrayLanding = () => {
                       </FormItem>
                     )}
                   />
+
+                  <div className="space-y-4 pt-2">
+                    <FormField
+                      control={form.control}
+                      name="agreeToTerms"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting}
+                              className="mt-1"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-base text-purple-dark font-normal cursor-pointer">
+                              אני מאשר/ת שקראתי ואני מסכימ/ה ל
+                              <Link 
+                                to="/pre-pray-terms" 
+                                className="text-[#5FA6A6] hover:text-[#4a8585] underline mr-1"
+                                target="_blank"
+                              >
+                                תנאי השימוש ומדיניות הפרטיות
+                              </Link>
+                              של התוכנית "דקה לפני התפילה – ברכות השחר"
+                            </FormLabel>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="agreeToMarketing"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSubmitting}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-base text-purple-dark font-normal cursor-pointer">
+                              אני מאשר/ת קבלת דיוור שבועי לתוכן לימודי והצעות מסחריות נוספות, בהתאם לחוק התקשורת (תיקון 40)
+                            </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="bg-purple-light/20 border border-purple-light rounded-lg p-4 mt-4">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-[#5FA6A6] shrink-0 mt-0.5" />
+                      <p className="text-sm text-purple-dark leading-relaxed">
+                        <strong>גילוי נאות:</strong> ברכישת מוצר זה, שהינו תוכן דיגיטלי המסופק באופן מידי במייל ובגישה טלפונית, לא ניתן לבטל את העסקה ולקבל החזר, בהתאם לסעיף 14ג(ד)(1) לחוק הגנת הצרכן.
+                      </p>
+                    </div>
+                  </div>
 
                   <Button
                     type="submit"

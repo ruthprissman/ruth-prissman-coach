@@ -52,6 +52,7 @@ import RuthFrissmanWorkshop from './pages/RuthFrissmanWorkshop';
 import PrayerGuideLanding from './pages/PrayerGuideLanding';
 import PrePrayLanding from './pages/PrePrayLanding';
 import PrePrayPayment from './pages/PrePrayPayment';
+import PrePrayTerms from './pages/PrePrayTerms';
 import { ScrollToTop } from './components/ScrollToTop';
 import { runSessionDiagnostics } from './utils/SessionDiagnostics';
 
@@ -105,6 +106,7 @@ function App() {
                 <Route path="/prayer-guide" element={<PrayerGuideLanding />} />
                 <Route path="/pre-pray" element={<PrePrayLanding />} />
                 <Route path="/pre-pray-payment" element={<PrePrayPayment />} />
+                <Route path="/pre-pray-terms" element={<PrePrayTerms />} />
                 <Route path="/main-workshops" element={<RuthFrissmanWorkshop />} />
 
                 {/* Admin auth routes */}
