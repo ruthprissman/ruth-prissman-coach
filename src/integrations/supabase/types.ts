@@ -546,6 +546,8 @@ export type Database = {
       }
       leads: {
         Row: {
+          agreed_to_marketing: boolean | null
+          agreed_to_terms: boolean | null
           content_type: string | null
           created_at: string | null
           date: string | null
@@ -566,6 +568,8 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          agreed_to_marketing?: boolean | null
+          agreed_to_terms?: boolean | null
           content_type?: string | null
           created_at?: string | null
           date?: string | null
@@ -586,6 +590,8 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          agreed_to_marketing?: boolean | null
+          agreed_to_terms?: boolean | null
           content_type?: string | null
           created_at?: string | null
           date?: string | null

@@ -78,6 +78,8 @@ const PrePrayLanding = () => {
           email: data.email,
           source: 'pre-pray-landing',
           status: 'טופס התחלתי',
+          agreed_to_terms: data.agreeToTerms,
+          agreed_to_marketing: data.agreeToMarketing,
         });
 
       if (error) throw error;
