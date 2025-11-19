@@ -73,6 +73,9 @@ const PrePrayLanding = () => {
 
       if (error) throw error;
 
+      // שמירת הנתונים ב-localStorage כגיבוי
+      localStorage.setItem('prePrayLeadData', JSON.stringify(data));
+      
       toast({
         title: '✅ הפרטים נשמרו בהצלחה',
         description: 'מעביר לדף התשלום...',

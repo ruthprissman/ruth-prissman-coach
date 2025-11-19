@@ -8,10 +8,23 @@ import { useEffect } from 'react';
 export default function PrePrayPayment() {
   const location = useLocation();
   const navigate = useNavigate();
-  const leadData = location.state?.leadData;
+  
+  // ניסיון לקבל נתונים מ-state או מ-localStorage
+  let leadData = location.state?.leadData;
+  
+  if (!leadData) {
+    const storedData = localStorage.getItem('prePrayLeadData');
+    if (storedData) {
+      try {
+        leadData = JSON.parse(storedData);
+      } catch (e) {
+        console.error('Error parsing stored lead data:', e);
+      }
+    }
+  }
 
   useEffect(() => {
-    // אם אין נתוני ליד, נחזיר לדף הראשי
+    // אם אין נתוני ליד גם ב-localStorage, נחזיר לדף הראשי
     if (!leadData) {
       navigate('/pre-pray', { replace: true });
     }
