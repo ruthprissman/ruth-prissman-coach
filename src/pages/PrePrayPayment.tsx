@@ -105,14 +105,17 @@ export default function PrePrayPayment() {
               {prePrayPaymentContent.payment.title}
             </h2>
             
-            <div className="w-full" style={{ minHeight: '800px' }}>
+            <div className="w-full overflow-hidden rounded-lg">
               <iframe
                 src="https://app.upay.co.il/API6/s.php?m=UmFZY1oxTU5OM2tSN3g1Wjl1ekc4UT09"
-                width="100%"
-                height="800"
+                className="w-full rounded-lg border-0"
+                style={{
+                  minHeight: '100vh',
+                  height: '1200px',
+                  display: 'block'
+                }}
                 frameBorder="0"
-                scrolling="auto"
-                className="w-full rounded-lg"
+                scrolling="no"
                 title="טופס תשלום"
               />
             </div>
