@@ -11,7 +11,7 @@ export const prePrayPaymentContent = {
   },
   support: {
     title: 'צריכה עזרה?',
-    description: 'אם נתקלת בבעיה בתשלום, צרי קשר איתי ב-WhatsApp',
-    phone: '052-8887655',
+    description: 'אם נתקלת בבעיה בתשלום, צרי קשר איתי בטלפון או בוואטסאפ',
+    phone: '055-6620273',
   },
 };

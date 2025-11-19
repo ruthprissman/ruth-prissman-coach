@@ -105,7 +105,7 @@ export default function PrePrayPayment() {
               {prePrayPaymentContent.support.description}
             </p>
             <a
-              href={`https://wa.me/972528887655?text=${encodeURIComponent('שלום רות, אני צריכה עזרה עם התשלום לקורס "דקה לפני התפילה"')}`}
+              href={`https://wa.me/972556620273?text=${encodeURIComponent('שלום רות, אני צריכה עזרה עם התשלום לקורס "דקה לפני התפילה"')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-lg font-semibold text-[#5FA6A6] hover:text-[#4a8585] transition-colors"
