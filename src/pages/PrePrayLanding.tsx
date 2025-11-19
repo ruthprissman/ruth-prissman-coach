@@ -78,6 +78,41 @@ const PrePrayLanding = () => {
 
       if (error) throw error;
 
+      // אם המשתמש הסכים לקבל דיוור, הוסף אותו לרשימות התפוצה
+      if (data.agreeToMarketing) {
+        // הוספה ל-content_subscribers (תוכן מקצועי)
+        const { data: existingContentSub } = await supabase
+          .from("content_subscribers")
+          .select("email")
+          .eq("email", data.email)
+          .single();
+
+        if (!existingContentSub) {
+          await supabase.from("content_subscribers").insert({
+            email: data.email,
+            first_name: data.name,
+            is_subscribed: true,
+            consent: true,
+            source: "pre-pray-landing",
+          });
+        }
+
+        // הוספה ל-story_subscribers (סיפורים)
+        const { data: existingStorySub } = await supabase
+          .from("story_subscribers")
+          .select("email")
+          .eq("email", data.email)
+          .single();
+
+        if (!existingStorySub) {
+          await supabase.from("story_subscribers").insert({
+            email: data.email,
+            first_name: data.name,
+            is_subscribed: true,
+          });
+        }
+      }
+
       // שמירת הנתונים ב-localStorage כגיבוי
       localStorage.setItem("prePrayLeadData", JSON.stringify(data));
 
