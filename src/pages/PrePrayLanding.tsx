@@ -351,7 +351,7 @@ const PrePrayLanding = () => {
           <div className="container max-w-4xl px-4">
             <div className="text-center space-y-6 font-heebo">
               <h2 className="text-3xl md:text-4xl font-bold text-[#5FA6A6] mb-6 font-alef leading-relaxed">
-                את יודעת מה שאמרתי לך שזה מרגיש כמו יותר מידי בתפילה?
+                אם את מרגישה שהמילים האלו נכתבו עליך, את לא לבד.
               </h2>
 
               <p className="text-lg md:text-xl text-purple-dark leading-relaxed">אז זה לא רק אצלך.</p>
