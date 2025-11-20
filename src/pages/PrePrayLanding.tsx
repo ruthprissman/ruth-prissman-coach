@@ -234,17 +234,17 @@ const PrePrayLanding = () => {
                       <ul className="space-y-2 text-purple-dark font-heebo leading-relaxed">
                         <li className="flex items-start gap-2">
                           <Check className="w-5 h-5 text-[#5FA6A6] shrink-0 mt-0.5" />
-                          <span>התשלום שלך נמצא בתהליך אישור אצל חברת האשראי</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <Check className="w-5 h-5 text-[#5FA6A6] shrink-0 mt-0.5" />
                           <span>
-                            <strong>המייל הראשון עם הקישור לתוכנית יישלח אליך מיד לאחר אישור התשלום</strong> (בדרך כלל תוך מספר דקות עד שעות ספורות)
+                            <strong>הגישה לתכנים תישלח מיד לאחר השלמת התשלום</strong> לכתובת המייל: {savedLeadData.email}
                           </span>
                         </li>
                         <li className="flex items-start gap-2">
                           <Check className="w-5 h-5 text-[#5FA6A6] shrink-0 mt-0.5" />
-                          <span>בכל בוקר תקבלי מייל עם התכנים השבועיים</span>
+                          <span>מספר הטלפון שלך צורף למאגר שלנו ליצירת קשר במידת הצורך</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Check className="w-5 h-5 text-[#5FA6A6] shrink-0 mt-0.5" />
+                          <span>בכל בוקר תקבלי מייל עם התכנים השבועיים של התוכנית</span>
                         </li>
                       </ul>
                     </div>
