@@ -792,9 +792,17 @@ const PrePrayLanding = () => {
         </section>
 
         {/* Final CTA Section */}
-        <section className="py-16 md:py-24 bg-gradient-to-br from-purple-600 to-purple-800 text-white">
-          <div className="container max-w-4xl px-4 text-center">
-            <p className="text-lg md:text-xl leading-relaxed mb-8 max-w-3xl mx-auto font-heebo">
+        <section 
+          className="py-16 md:py-24 relative overflow-hidden"
+          style={{
+            backgroundImage: "url(/assets/pre-pray-hero-bg.png)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" />
+          <div className="container max-w-4xl px-4 text-center relative z-10">
+            <p className="text-lg md:text-xl leading-relaxed mb-8 max-w-3xl mx-auto font-heebo text-white drop-shadow-lg">
               {prePrayContent.finalCta.content}
             </p>
 
