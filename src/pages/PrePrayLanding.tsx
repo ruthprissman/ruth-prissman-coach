@@ -258,18 +258,18 @@ const PrePrayLanding = () => {
                   </p>
                   <div className="flex flex-col items-center gap-2 text-[#5FA6A6] font-heebo">
                     <a 
-                      href="mailto:coach@ruthprissman.co.il" 
+                      href="mailto:ruth@ruthprissman.co.il" 
                       className="hover:text-[#4a8585] transition-colors"
                     >
-                      📧 coach@ruthprissman.co.il
+                      📧 ruth@ruthprissman.co.il
                     </a>
                     <a 
-                      href="https://wa.me/972547519045" 
+                      href="https://wa.me/972556620273" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="hover:text-[#4a8585] transition-colors"
                     >
-                      📱 WhatsApp: 054-751-9045
+                      📱 WhatsApp: 055-6620273
                     </a>
                   </div>
                 </div>
