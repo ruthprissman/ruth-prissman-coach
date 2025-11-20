@@ -81,7 +81,7 @@ const PrePrayLanding = () => {
   };
 
   const handleBackToForm = () => {
-    localStorage.removeItem("leadData");
+    localStorage.removeItem("prePrayLeadData");
     setShowThankYou(false);
     setSavedLeadData(null);
   };
