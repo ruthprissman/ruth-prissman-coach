@@ -46,6 +46,7 @@ const PrePrayLanding = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [savedLeadData, setSavedLeadData] = useState<LeadFormData | null>(null);
+  const [dataSent, setDataSent] = useState(false);
 
   const form = useForm<LeadFormData>({
     resolver: zodResolver(leadFormSchema),
@@ -60,18 +61,47 @@ const PrePrayLanding = () => {
 
   // בדיקה אם המשתמש חזר מדף תשלום
   useEffect(() => {
-    const savedData = localStorage.getItem("leadData");
+    const savedData = localStorage.getItem("prePrayLeadData");
+    const alreadySent = localStorage.getItem("prePrayDataSent");
+    
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
         setSavedLeadData(parsedData);
         setShowThankYou(true);
+        
+        // שליחה אוטומטית לאפליקציה החיצונית (רק פעם אחת)
+        if (!alreadySent && !dataSent && parsedData.email) {
+          console.log("שולח נתונים לאפליקציה החיצונית...");
+          
+          fetch('https://wkgwyrosmcmocivivugr.supabase.co/functions/v1/register_customer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              full_name: parsedData.name,
+              email: parsedData.email,
+              phone: parsedData.phone
+            })
+          })
+          .then(response => {
+            if (response.ok) {
+              console.log("✅ הנתונים נשלחו בהצלחה לאפליקציה החיצונית");
+              localStorage.setItem("prePrayDataSent", "true");
+              setDataSent(true);
+            } else {
+              console.error("❌ שגיאה בשליחת נתונים:", response.status);
+            }
+          })
+          .catch(error => {
+            console.error("❌ שגיאה בחיבור לאפליקציה החיצונית:", error);
+          });
+        }
       } catch (error) {
         console.error("Error parsing saved lead data:", error);
       }
     }
     window.scrollTo(0, 0);
-  }, []);
+  }, [dataSent]);
 
   const scrollToForm = () => {
     const element = document.getElementById("lead-form-section");
@@ -82,8 +112,10 @@ const PrePrayLanding = () => {
 
   const handleBackToForm = () => {
     localStorage.removeItem("prePrayLeadData");
+    localStorage.removeItem("prePrayDataSent");
     setShowThankYou(false);
     setSavedLeadData(null);
+    setDataSent(false);
   };
 
   const onSubmit = async (data: LeadFormData) => {
