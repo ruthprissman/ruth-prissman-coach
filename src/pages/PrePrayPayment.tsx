@@ -83,7 +83,12 @@ export default function PrePrayPayment() {
           {/* Debug Button - Remove Later */}
           <div className="flex justify-center mb-4">
             <Button
-              onClick={() => navigate('/pre-pray-thank-you', { state: { leadData } })}
+              onClick={() => {
+                // וודא שה-leadData נשמר ב-localStorage
+                localStorage.setItem('prePrayLeadData', JSON.stringify(leadData));
+                // פנה לדף הנחיתה שיציג את מסך התודה
+                navigate('/pre-pray');
+              }}
               className="bg-amber-500 hover:bg-amber-600 text-white font-bold"
             >
               <CheckCircle className="ml-2 h-5 w-5" />
