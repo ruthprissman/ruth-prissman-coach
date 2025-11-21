@@ -69,8 +69,5 @@ verify_jwt = false
 [functions.process-scheduled-emails]
 verify_jwt = false
 
-[functions.register_customer]
-verify_jwt = false
-
 [edge-runtime]
 policy = "per_worker"
