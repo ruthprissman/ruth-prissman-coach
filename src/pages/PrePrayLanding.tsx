@@ -15,6 +15,7 @@ import {
   ArrowDown,
   Loader2,
   AlertCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { prePrayContent } from "@/content/landing/prePray";
 import prePrayInstruments from "@/assets/pre-pray-instruments.png";
@@ -849,6 +850,40 @@ const PrePrayLanding = () => {
             >
               {prePrayContent.finalCta.ctaButton} <ArrowDown className="inline mr-2" size={24} />
             </button>
+          </div>
+        </section>
+
+        {/* Guarantee Section */}
+        <section className="py-16 md:py-24">
+          <div className="container max-w-4xl px-4">
+            <div 
+              className="rounded-2xl shadow-xl overflow-hidden"
+              style={{
+                background: "linear-gradient(135deg, #8C4FB9 0%, #5FA6A6 50%, #8C4FB9 100%)",
+              }}
+            >
+              <div className="p-8 md:p-12 text-center space-y-6">
+                {/* אייקון מגן */}
+                <div className="flex justify-center">
+                  <div className="bg-white/20 rounded-full p-4">
+                    <ShieldCheck className="w-16 h-16 text-white" strokeWidth={2} />
+                  </div>
+                </div>
+
+                {/* כותרת */}
+                <h2 className="text-2xl md:text-3xl font-bold text-white font-alef leading-relaxed">
+                  אני כבר בטוחה בשיטה הזאת, שאני לוקחת את כל הסיכון על עצמי
+                </h2>
+
+                {/* טקסט הערבות */}
+                <p className="text-lg md:text-xl text-white/95 leading-relaxed font-heebo max-w-3xl mx-auto">
+                  אני רוצה שהמהלך שלך לתקופה הזו תהיה בלי סיכון כל השם. לכן, יש לך אחריות מלאה ל-30 שם, אם בקפסה 30 
+                  הימים הקרובים תגעו את "דקה לפני העמידה", תקשיבי להקלטות, ולא תרשי שום שינוי בתפילה שלך, שלא זה 
+                  שיפור בריכוז או בחיבור הנשימה שלך – פשוט שלחי לי מייל ואחזיר לך את כל הכסף בתוך, בלי שאלות ובלי 
+                  אותיות קטנות. הסיכון כולו עליי. את יצאה רק להרוויח תפילה משמעותית.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
       </div>
