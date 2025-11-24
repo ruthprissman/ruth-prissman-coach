@@ -64,38 +64,38 @@ const PrePrayLanding = () => {
   useEffect(() => {
     const savedData = localStorage.getItem("prePrayLeadData");
     const alreadySent = localStorage.getItem("prePrayDataSent");
-    
+
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
         setSavedLeadData(parsedData);
         setShowThankYou(true);
-        
+
         // שליחה אוטומטית לאפליקציה החיצונית (רק פעם אחת)
         if (!alreadySent && !dataSent && parsedData.email) {
           console.log("שולח נתונים לאפליקציה החיצונית...");
-          
-          fetch('https://wkgwyrosmcmocivivugr.supabase.co/functions/v1/register_customer', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+
+          fetch("https://wkgwyrosmcmocivivugr.supabase.co/functions/v1/register_customer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               full_name: parsedData.name,
               email: parsedData.email,
-              phone: parsedData.phone
+              phone: parsedData.phone,
+            }),
+          })
+            .then((response) => {
+              if (response.ok) {
+                console.log("✅ הנתונים נשלחו בהצלחה לאפליקציה החיצונית");
+                localStorage.setItem("prePrayDataSent", "true");
+                setDataSent(true);
+              } else {
+                console.error("❌ שגיאה בשליחת נתונים:", response.status);
+              }
             })
-          })
-          .then(response => {
-            if (response.ok) {
-              console.log("✅ הנתונים נשלחו בהצלחה לאפליקציה החיצונית");
-              localStorage.setItem("prePrayDataSent", "true");
-              setDataSent(true);
-            } else {
-              console.error("❌ שגיאה בשליחת נתונים:", response.status);
-            }
-          })
-          .catch(error => {
-            console.error("❌ שגיאה בחיבור לאפליקציה החיצונית:", error);
-          });
+            .catch((error) => {
+              console.error("❌ שגיאה בחיבור לאפליקציה החיצונית:", error);
+            });
         }
       } catch (error) {
         console.error("Error parsing saved lead data:", error);
@@ -230,16 +230,12 @@ const PrePrayLanding = () => {
                   <h1 className="text-3xl md:text-4xl font-bold text-purple-darkest font-alef">
                     תודה רבה על הרכישה! 🙏
                   </h1>
-                  <p className="text-xl text-purple-dark font-heebo">
-                    התשלום שלך בתהליך אישור
-                  </p>
+                  <p className="text-xl text-purple-dark font-heebo">התשלום שלך בתהליך אישור</p>
                 </div>
 
                 {/* פרטי ההזמנה */}
                 <div className="bg-purple-light/20 rounded-xl p-6 space-y-4">
-                  <h2 className="text-xl font-bold text-purple-darkest font-alef text-center mb-4">
-                    פרטי ההזמנה שלך:
-                  </h2>
+                  <h2 className="text-xl font-bold text-purple-darkest font-alef text-center mb-4">פרטי ההזמנה שלך:</h2>
                   <div className="space-y-3 text-lg font-heebo">
                     <div className="flex justify-between items-center border-b border-purple-light/30 pb-2">
                       <span className="text-purple-dark/70">שם:</span>
@@ -261,14 +257,13 @@ const PrePrayLanding = () => {
                   <div className="flex items-start gap-3">
                     <Sparkles className="w-6 h-6 text-[#5FA6A6] shrink-0 mt-1" />
                     <div className="space-y-3">
-                      <h3 className="text-xl font-bold text-purple-darkest font-alef">
-                        מה קורה עכשיו?
-                      </h3>
+                      <h3 className="text-xl font-bold text-purple-darkest font-alef">מה קורה עכשיו?</h3>
                       <ul className="space-y-2 text-purple-dark font-heebo leading-relaxed">
                         <li className="flex items-start gap-2">
                           <Check className="w-5 h-5 text-[#5FA6A6] shrink-0 mt-0.5" />
                           <span>
-                            <strong>הגישה לתכנים תישלח מיד לאחר השלמת התשלום</strong> לכתובת המייל: {savedLeadData.email}
+                            <strong>הגישה לתכנים תישלח מיד לאחר השלמת התשלום</strong> לכתובת המייל:{" "}
+                            {savedLeadData.email}
                           </span>
                         </li>
                         <li className="flex items-start gap-2">
@@ -286,19 +281,14 @@ const PrePrayLanding = () => {
 
                 {/* פרטי יצירת קשר */}
                 <div className="text-center space-y-4 pt-4">
-                  <p className="text-purple-dark font-heebo">
-                    יש לך שאלות? אנחנו כאן בשבילך!
-                  </p>
+                  <p className="text-purple-dark font-heebo">יש לך שאלות? אנחנו כאן בשבילך!</p>
                   <div className="flex flex-col items-center gap-2 text-[#5FA6A6] font-heebo">
-                    <a 
-                      href="mailto:ruth@ruthprissman.co.il" 
-                      className="hover:text-[#4a8585] transition-colors"
-                    >
+                    <a href="mailto:ruth@ruthprissman.co.il" className="hover:text-[#4a8585] transition-colors">
                       📧 ruth@ruthprissman.co.il
                     </a>
-                    <a 
-                      href="https://wa.me/972556620273" 
-                      target="_blank" 
+                    <a
+                      href="https://wa.me/972556620273"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="hover:text-[#4a8585] transition-colors"
                     >
@@ -315,11 +305,7 @@ const PrePrayLanding = () => {
                   >
                     חזרה לעמוד הבית
                   </Button>
-                  <Button
-                    onClick={handleBackToForm}
-                    variant="outline"
-                    className="w-full py-6 text-lg"
-                  >
+                  <Button onClick={handleBackToForm} variant="outline" className="w-full py-6 text-lg">
                     מלא טופס חדש
                   </Button>
                 </div>
@@ -825,7 +811,7 @@ const PrePrayLanding = () => {
         </section>
 
         {/* Final CTA Section */}
-        <section 
+        <section
           className="py-16 md:py-24 relative overflow-hidden"
           style={{
             backgroundImage: "url(/assets/pre-pray-hero-bg.png)",
@@ -856,7 +842,7 @@ const PrePrayLanding = () => {
         {/* Guarantee Section */}
         <section className="py-16 md:py-24">
           <div className="container max-w-4xl px-4">
-            <div 
+            <div
               className="rounded-2xl shadow-xl overflow-hidden"
               style={{
                 background: "linear-gradient(135deg, #8C4FB9 0%, #5FA6A6 50%, #8C4FB9 100%)",
@@ -877,10 +863,10 @@ const PrePrayLanding = () => {
 
                 {/* טקסט הערבות */}
                 <p className="text-lg md:text-xl text-white/95 leading-relaxed font-heebo max-w-3xl mx-auto">
-                  אני רוצה שהמהלך שלך לתקופה הזו תהיה בלי סיכון כל השם. לכן, יש לך אחריות מלאה ל-30 שם, אם בקפסה 30 
-                  הימים הקרובים תגעו את "דקה לפני העמידה", תקשיבי להקלטות, ולא תרשי שום שינוי בתפילה שלך, שלא זה 
-                  שיפור בריכוז או בחיבור הנשימה שלך – פשוט שלחי לי מייל ואחזיר לך את כל הכסף בתוך, בלי שאלות ובלי 
-                  אותיות קטנות. הסיכון כולו עליי. את יצאה רק להרוויח תפילה משמעותית.
+                  אני רוצה שההחלטה שלך להצטרף תהיה קלה ונטולת כל חשש. לכן, יש לך אחריות מלאה ל-30 יום. אם במשך 30 הימים
+                  הקרובים תנסי את "דקה לפני העמידה", תקשיבי להקלטות, ולא תרגישי שום שינוי בתפילה שלך, שלא חל שיפור
+                  בריכוז או בחיבור הרגשי שלך – פשוט שלחי לי מייל ואחזיר לך את כל כספך בחזרה, בלי שאלות ובלי אותיות
+                  קטנות. הסיכון כולו עלי. את יכולה רק להרוויח תפילה משמעותית.
                 </p>
               </div>
             </div>
