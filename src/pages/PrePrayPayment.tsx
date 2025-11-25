@@ -126,23 +126,23 @@ export default function PrePrayPayment() {
           </div>
 
           {/* Support Section */}
-          <div className="mt-8 p-6 bg-purple-light/10 rounded-xl text-center">
+          <div className="mt-8 p-6 bg-white/95 backdrop-blur-sm rounded-xl text-center shadow-lg border-2 border-[#5FA6A6]">
             <div className="flex items-center justify-center gap-2 mb-3">
-              <Phone className="h-5 w-5 text-[#5FA6A6]" />
-              <h3 className="text-xl font-bold text-purple-dark font-alef">
+              <Phone className="h-6 w-6 text-[#5FA6A6]" />
+              <h3 className="text-2xl font-bold text-[#5FA6A6] font-alef">
                 {prePrayPaymentContent.support.title}
               </h3>
             </div>
-            <p className="text-purple-dark mb-3">
+            <p className="text-gray-800 text-lg mb-4 font-medium">
               {prePrayPaymentContent.support.description}
             </p>
             <a
               href={`https://wa.me/972556620273?text=${encodeURIComponent('שלום רות, אני צריכה עזרה עם התשלום לקורס "דקה לפני התפילה"')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-lg font-semibold text-[#5FA6A6] hover:text-[#4a8585] transition-colors"
+              className="inline-flex items-center gap-2 text-xl font-bold text-[#5FA6A6] hover:text-[#4a8585] transition-colors"
             >
-              <Phone className="h-5 w-5" />
+              <Phone className="h-6 w-6" />
               {prePrayPaymentContent.support.phone}
             </a>
           </div>
