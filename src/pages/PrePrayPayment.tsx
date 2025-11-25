@@ -80,13 +80,11 @@ export default function PrePrayPayment() {
             </p>
           </div>
           
-          {/* Debug Button - Remove Later */}
+          {/* כפתור בדיקה - מוסתר. להחזרה: הסירי את הקומנטריה
           <div className="flex justify-center mb-4">
             <Button
               onClick={() => {
-                // וודא שה-leadData נשמר ב-localStorage
                 localStorage.setItem('prePrayLeadData', JSON.stringify(leadData));
-                // פנה לדף הנחיתה שיציג את מסך התודה
                 navigate('/pre-pray');
               }}
               className="bg-amber-500 hover:bg-amber-600 text-white font-bold"
@@ -95,6 +93,7 @@ export default function PrePrayPayment() {
               מעבר לדף תודה (בדיקה)
             </Button>
           </div>
+          */}
 
           {/* Secure Payment Badge */}
           <div className="flex items-center justify-center gap-2 text-green-400 drop-shadow-md mb-6 bg-white/20 backdrop-blur-sm py-2 px-4 rounded-full">
