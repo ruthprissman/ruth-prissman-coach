@@ -135,7 +135,7 @@ export const prePrayContent = {
   },
   payment: {
     reassurance: "מלאי את הפרטים ותועברי לתשלום מאובטח",
-    iframeUrl: "https://app.upay.co.il/API6/s.php?m=U0tTcEpxZ2NhdjJXNWZ5dW5aUmk4dz09",
+    iframeUrl: "https://app.upay.co.il/API6/s.php?m=Q0FxUWdjWjY3UG5IZVBQaElhcmh6QT09",
     successMessage: {
       title: "תודה רבה! ההרשמה שלך נקלטה בהצלחה ❤️",
       content: `בעוד רגע תקבלי מייל עם כל ההקלטות, ובחירה איך לשמוע אותן – דרך המייל או דרך קו טלפון.
