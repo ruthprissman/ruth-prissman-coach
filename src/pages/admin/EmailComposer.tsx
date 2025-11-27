@@ -300,6 +300,29 @@ const EmailComposer: React.FC = () => {
     }
   };
 
+  // Generate clean Markdown content for professional_content table
+  const generateCleanContent = (item: EmailItem): string => {
+    let cleanContent = '';
+    
+    if (item.poem_text) {
+      cleanContent += item.poem_text + '\n\n';
+    }
+    
+    if (item.section1_title && item.section1_text) {
+      cleanContent += `**${item.section1_title}**\n\n${item.section1_text}\n\n`;
+    }
+    
+    if (item.section2_title && item.section2_text) {
+      cleanContent += `**${item.section2_title}**\n\n${item.section2_text}\n\n`;
+    }
+    
+    if (item.section3_title && item.section3_text) {
+      cleanContent += `**${item.section3_title}**\n\n${item.section3_text}`;
+    }
+    
+    return cleanContent.trim();
+  };
+
   // Handle image upload
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -705,7 +728,7 @@ const EmailComposer: React.FC = () => {
           .insert({
             title: currentItem.title,
             image_url: currentItem.hero_image_url,
-            content_markdown: composedHtml,
+            content_markdown: generateCleanContent(currentItem),
             scheduled_publish: currentItem.scheduled_publish,
             published_at: currentItem.published_at,
             type: 'article',
@@ -729,7 +752,7 @@ const EmailComposer: React.FC = () => {
           .update({
             title: currentItem.title,
             image_url: currentItem.hero_image_url,
-            content_markdown: composedHtml,
+            content_markdown: generateCleanContent(currentItem),
             scheduled_publish: currentItem.scheduled_publish,
             published_at: currentItem.published_at,
           })
