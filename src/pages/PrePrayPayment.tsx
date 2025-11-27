@@ -111,7 +111,7 @@ export default function PrePrayPayment() {
             
             <div className="w-full overflow-hidden rounded-lg">
               <iframe
-                src="https://app.upay.co.il/API6/s.php?m=U0tTcEpxZ2NhdjJXNWZ5dW5aUmk4dz09"
+                src="https://app.upay.co.il/API6/s.php?m=Q0FxUWdjWjY3UG5IZVBQaElhcmh6QT09"
                 className="w-full rounded-lg border-0"
                 style={{
                   minHeight: '100vh',
