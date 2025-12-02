@@ -243,7 +243,7 @@ const handler = async (req: Request): Promise<Response> => {
         התוכנית המלאה מחכה לך עם 20 ימים של תכנים מעמיקים כאלה.
       </p>
       
-      <a href="https://ruthprissman.co.il/pre-pray-payment" class="cta-button">
+      <a href="https://coach.ruthprissman.co.il/pre-pray-payment" class="cta-button">
         לרכישת התוכנית המלאה ←
       </a>
     </div>
