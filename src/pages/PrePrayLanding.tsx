@@ -16,6 +16,7 @@ import {
   Loader2,
   AlertCircle,
   ShieldCheck,
+  Gift,
 } from "lucide-react";
 import { prePrayContent } from "@/content/landing/prePray";
 import prePrayInstruments from "@/assets/pre-pray-instruments.png";
@@ -28,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const leadFormSchema = z.object({
   name: z.string().min(2, { message: "נא להזין שם מלא" }),
@@ -48,6 +50,11 @@ const PrePrayLanding = () => {
   const [showThankYou, setShowThankYou] = useState(false);
   const [savedLeadData, setSavedLeadData] = useState<LeadFormData | null>(null);
   const [dataSent, setDataSent] = useState(false);
+  
+  // Sample dialog state
+  const [showSampleDialog, setShowSampleDialog] = useState(false);
+  const [isSampleSubmitting, setIsSampleSubmitting] = useState(false);
+  const [sampleSent, setSampleSent] = useState(false);
 
   const form = useForm<LeadFormData>({
     resolver: zodResolver(leadFormSchema),
@@ -117,6 +124,102 @@ const PrePrayLanding = () => {
     setShowThankYou(false);
     setSavedLeadData(null);
     setDataSent(false);
+  };
+
+  const sampleForm = useForm<LeadFormData>({
+    resolver: zodResolver(leadFormSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      email: "",
+      agreeToTerms: false,
+      agreeToMarketing: false,
+    },
+  });
+
+  const onSampleSubmit = async (data: LeadFormData) => {
+    setIsSampleSubmitting(true);
+    try {
+      // 1. Save lead to database
+      const { error: leadError } = await supabase.from("leads").insert({
+        name: data.name,
+        phone: data.phone,
+        email: data.email,
+        source: "pre-pray-sample",
+        status: "קיבל דוגמית",
+        agreed_to_terms: data.agreeToTerms,
+        agreed_to_marketing: data.agreeToMarketing,
+      });
+
+      if (leadError) throw leadError;
+
+      // 2. Add to mailing lists only if agreed and email doesn't exist
+      if (data.agreeToMarketing) {
+        // Check and add to content_subscribers
+        const { data: existingContentSub } = await supabase
+          .from("content_subscribers")
+          .select("email")
+          .eq("email", data.email)
+          .single();
+
+        if (!existingContentSub) {
+          await supabase.from("content_subscribers").insert({
+            email: data.email,
+            first_name: data.name,
+            is_subscribed: true,
+            consent: true,
+            source: "pre-pray-sample",
+          });
+        }
+
+        // Check and add to story_subscribers
+        const { data: existingStorySub } = await supabase
+          .from("story_subscribers")
+          .select("email")
+          .eq("email", data.email)
+          .single();
+
+        if (!existingStorySub) {
+          await supabase.from("story_subscribers").insert({
+            email: data.email,
+            first_name: data.name,
+            is_subscribed: true,
+          });
+        }
+      }
+
+      // 3. Send the sample email with attachments
+      const { error: emailError } = await supabase.functions.invoke("send-prepray-sample", {
+        body: {
+          email: data.email,
+          firstName: data.name,
+        },
+      });
+
+      if (emailError) throw emailError;
+
+      setSampleSent(true);
+      toast({
+        title: "✅ המתנה בדרך אליך!",
+        description: "בדקי את תיבת המייל שלך",
+      });
+
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setShowSampleDialog(false);
+        setSampleSent(false);
+        sampleForm.reset();
+      }, 3000);
+    } catch (error) {
+      console.error("Error sending sample:", error);
+      toast({
+        title: "❌ שגיאה",
+        description: "אופס, משהו השתבש. נסי שוב או צרי קשר איתי.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSampleSubmitting(false);
+    }
   };
 
   const onSubmit = async (data: LeadFormData) => {
@@ -781,6 +884,26 @@ const PrePrayLanding = () => {
           </div>
         </section>
 
+        {/* Not Sure? - Free Sample Section */}
+        <section className="py-16 md:py-20 bg-gradient-to-r from-purple-light/10 via-white to-[#E5F5F5]/30">
+          <div className="container max-w-3xl px-4 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-[#5FA6A6] mb-4 font-alef">
+              עוד לא בטוחה שהבנת אם מתאים לך?
+            </h2>
+            <p className="text-lg text-purple-dark mb-8 font-heebo">
+              קבלי טעימה מהתוכנית – היום הראשון במתנה, בלי התחייבות
+            </p>
+            <Button
+              onClick={() => setShowSampleDialog(true)}
+              variant="outline"
+              className="border-2 border-[#5FA6A6] text-[#5FA6A6] hover:bg-[#5FA6A6] hover:text-white text-xl py-6 px-10 transition-all duration-300"
+            >
+              <Gift className="ml-2 h-6 w-6" />
+              לקבלת היום הראשון במתנה
+            </Button>
+          </div>
+        </section>
+
         {/* FAQ Section */}
         <section className="py-16 md:py-24">
           <div className="container max-w-4xl px-4">
@@ -872,6 +995,154 @@ const PrePrayLanding = () => {
             </div>
           </div>
         </section>
+
+        {/* Sample Dialog */}
+        <Dialog open={showSampleDialog} onOpenChange={setShowSampleDialog}>
+          <DialogContent className="max-w-md" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl text-center font-alef text-[#5FA6A6]">
+                קבלי את היום הראשון במתנה 🎁
+              </DialogTitle>
+              <DialogDescription className="text-center font-heebo">
+                השאירי פרטים ונשלח לך את התוכן של היום הראשון ישירות למייל
+              </DialogDescription>
+            </DialogHeader>
+
+            {!sampleSent ? (
+              <Form {...sampleForm}>
+                <form onSubmit={sampleForm.handleSubmit(onSampleSubmit)} className="space-y-4">
+                  <FormField
+                    control={sampleForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold text-purple-dark">שם מלא</FormLabel>
+                        <FormControl>
+                          <Input placeholder="הזיני את שמך המלא" {...field} disabled={isSampleSubmitting} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={sampleForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold text-purple-dark">אימייל</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="your.email@example.com"
+                            {...field}
+                            disabled={isSampleSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={sampleForm.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold text-purple-dark">טלפון</FormLabel>
+                        <FormControl>
+                          <Input placeholder="05X-XXXXXXX" {...field} disabled={isSampleSubmitting} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-3 pt-2">
+                    <FormField
+                      control={sampleForm.control}
+                      name="agreeToTerms"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSampleSubmitting}
+                              className="mt-1"
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer">
+                              אני מאשר/ת שקראתי ואני מסכימ/ה ל
+                              <Link
+                                to="/pre-pray-terms"
+                                className="text-[#5FA6A6] hover:text-[#4a8585] underline mr-1"
+                                target="_blank"
+                              >
+                                תנאי השימוש ומדיניות הפרטיות
+                              </Link>
+                            </FormLabel>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={sampleForm.control}
+                      name="agreeToMarketing"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSampleSubmitting}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer">
+                              אני מאשר/ת קבלת דיוור שבועי לתוכן לימודי והצעות מסחריות נוספות
+                            </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isSampleSubmitting}
+                    className="w-full bg-[#5FA6A6] text-white py-4 text-lg font-bold hover:bg-[#4a8585] transition-all duration-300"
+                  >
+                    {isSampleSubmitting ? (
+                      <>
+                        <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                        שולח...
+                      </>
+                    ) : (
+                      <>
+                        <Gift className="ml-2 h-5 w-5" />
+                        שלחי לי את המתנה
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            ) : (
+              <div className="text-center space-y-4 py-8">
+                <div className="flex justify-center">
+                  <div className="bg-green-100 rounded-full p-4">
+                    <CheckCircle2 className="w-12 h-12 text-green-600" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-purple-darkest font-alef">המתנה בדרך אליך! 🎉</h3>
+                <p className="text-purple-dark font-heebo">בדקי את תיבת המייל שלך</p>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
