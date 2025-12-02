@@ -259,7 +259,7 @@ const PrePrayLanding = () => {
       }
 
       // שמירת הנתונים ב-localStorage כגיבוי
-      localStorage.setItem("leadData", JSON.stringify(data));
+      localStorage.setItem("prePrayLeadData", JSON.stringify(data));
 
       toast({
         title: "✅ הפרטים נשמרו בהצלחה",
@@ -267,9 +267,7 @@ const PrePrayLanding = () => {
       });
 
       setTimeout(() => {
-        navigate("/pre-pray-payment", {
-          state: { leadData: data },
-        });
+        window.location.href = "https://coach.ruthprissman.co.il/pre-pray-payment";
       }, 1000);
     } catch (error) {
       console.error("Error saving lead:", error);
