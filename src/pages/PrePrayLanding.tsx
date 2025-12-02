@@ -140,39 +140,25 @@ const PrePrayLanding = () => {
   const onSampleSubmit = async (data: LeadFormData) => {
     setIsSampleSubmitting(true);
     try {
-      // 1. Save lead to database
-      const { error: leadError } = await supabase.from("leads").insert({
-        name: data.name,
-        phone: data.phone,
-        email: data.email,
-        source: "pre-pray-sample",
-        status: "קיבל דוגמית",
-        agreed_to_terms: data.agreeToTerms,
-        agreed_to_marketing: data.agreeToMarketing,
-      });
+      // 1. Add to content_subscribers (always add, regardless of marketing consent)
+      const { data: existingContentSub } = await supabase
+        .from("content_subscribers")
+        .select("email")
+        .eq("email", data.email)
+        .single();
 
-      if (leadError) throw leadError;
+      if (!existingContentSub) {
+        await supabase.from("content_subscribers").insert({
+          email: data.email,
+          first_name: data.name,
+          is_subscribed: true,
+          consent: data.agreeToTerms,
+          source: "pre-pray-sample",
+        });
+      }
 
-      // 2. Add to mailing lists only if agreed and email doesn't exist
+      // 2. If agreed to marketing, also add to story_subscribers
       if (data.agreeToMarketing) {
-        // Check and add to content_subscribers
-        const { data: existingContentSub } = await supabase
-          .from("content_subscribers")
-          .select("email")
-          .eq("email", data.email)
-          .single();
-
-        if (!existingContentSub) {
-          await supabase.from("content_subscribers").insert({
-            email: data.email,
-            first_name: data.name,
-            is_subscribed: true,
-            consent: true,
-            source: "pre-pray-sample",
-          });
-        }
-
-        // Check and add to story_subscribers
         const { data: existingStorySub } = await supabase
           .from("story_subscribers")
           .select("email")
