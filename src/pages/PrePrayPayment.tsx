@@ -9,7 +9,11 @@ export default function PrePrayPayment() {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // ניסיון לקבל נתונים מ-state או מ-localStorage
+  // קריאת שם מ-URL query parameter (למגיעות מהמייל)
+  const searchParams = new URLSearchParams(location.search);
+  const nameFromUrl = searchParams.get('name');
+  
+  // ניסיון לקבל נתונים מ-state או מ-localStorage (למגיעות מדף הנחיתה)
   let leadData = location.state?.leadData;
   
   if (!leadData) {
@@ -23,16 +27,8 @@ export default function PrePrayPayment() {
     }
   }
 
-  useEffect(() => {
-    // אם אין נתוני ליד גם ב-localStorage, נחזיר לדף הראשי
-    if (!leadData) {
-      navigate('/pre-pray', { replace: true });
-    }
-  }, [leadData, navigate]);
-
-  if (!leadData) {
-    return null;
-  }
+  // עדיפות: שם מה-URL (מייל) > שם מ-localStorage (דף נחיתה) > null
+  const name = nameFromUrl || leadData?.name || null;
 
   return (
     <>
@@ -73,7 +69,7 @@ export default function PrePrayPayment() {
               {prePrayPaymentContent.hero.title}
             </h1>
             <p className="text-xl text-white drop-shadow-md mb-2">
-              שלום {leadData.name}! 👋
+              {name ? `שלום ${name}! 👋` : 'ברוכה הבאה! 👋'}
             </p>
             <p className="text-lg text-white/90 drop-shadow-md">
               {prePrayPaymentContent.hero.subtitle}
