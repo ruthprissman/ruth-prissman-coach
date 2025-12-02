@@ -74,18 +74,31 @@ const handler = async (req: Request): Promise<Response> => {
       margin: 0 auto;
       padding: 20px;
       background-color: #f9f9f9;
+      direction: rtl;
+      text-align: right;
     }
     .container {
       background-color: #ffffff;
       border-radius: 12px;
       padding: 30px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      direction: rtl;
+      text-align: right;
     }
     h1 {
       color: #5FA6A6;
       font-size: 26px;
       margin-bottom: 20px;
       text-align: center;
+      direction: rtl;
+    }
+    h3 {
+      direction: rtl;
+      text-align: right;
+    }
+    p {
+      direction: rtl;
+      text-align: right;
     }
     .content-section {
       background-color: #f0f9f9;
@@ -93,6 +106,8 @@ const handler = async (req: Request): Promise<Response> => {
       border-radius: 8px;
       margin: 20px 0;
       border-right: 4px solid #5FA6A6;
+      direction: rtl;
+      text-align: right;
     }
     .icon {
       font-size: 24px;
@@ -101,6 +116,8 @@ const handler = async (req: Request): Promise<Response> => {
     .item {
       margin: 15px 0;
       padding-right: 10px;
+      direction: rtl;
+      text-align: right;
     }
     .divider {
       border-top: 2px solid #e0e0e0;
@@ -111,10 +128,14 @@ const handler = async (req: Request): Promise<Response> => {
       padding: 20px;
       border-radius: 8px;
       margin: 20px 0;
+      direction: rtl;
+      text-align: right;
     }
     .step {
       margin: 12px 0;
       font-size: 16px;
+      direction: rtl;
+      text-align: right;
     }
     .cta-section {
       text-align: center;
@@ -122,6 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
       padding: 25px;
       background: linear-gradient(135deg, #5FA6A6 0%, #8C4FB9 100%);
       border-radius: 12px;
+      direction: rtl;
     }
     .cta-button {
       display: inline-block;
@@ -144,6 +166,7 @@ const handler = async (req: Request): Promise<Response> => {
       margin-top: 30px;
       font-size: 16px;
       color: #666;
+      direction: rtl;
     }
     .footer {
       text-align: center;
@@ -152,6 +175,7 @@ const handler = async (req: Request): Promise<Response> => {
       border-top: 1px solid #e0e0e0;
       color: #888;
       font-size: 14px;
+      direction: rtl;
     }
   </style>
 </head>
