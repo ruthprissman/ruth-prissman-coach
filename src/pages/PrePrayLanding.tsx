@@ -885,22 +885,28 @@ const PrePrayLanding = () => {
         </section>
 
         {/* Not Sure? - Free Sample Section */}
-        <section className="py-16 md:py-20 bg-gradient-to-r from-purple-light/10 via-white to-[#E5F5F5]/30">
-          <div className="container max-w-3xl px-4 text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-[#5FA6A6] mb-4 font-alef">
+        <section className="py-20 md:py-24 bg-gradient-to-br from-[#8C4FB9]/5 via-[#5FA6A6]/5 to-[#E5F5F5] border-y-4 border-[#5FA6A6]/20">
+          <div className="container max-w-4xl px-4 text-center">
+            <div className="mb-8">
+              <Gift className="w-16 h-16 mx-auto mb-6 text-[#8C4FB9]" />
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#5FA6A6] mb-6 font-alef">
               עוד לא בטוחה שהבנת אם מתאים לך?
             </h2>
-            <p className="text-lg text-purple-dark mb-8 font-heebo">
+            <p className="text-xl md:text-2xl text-purple-dark mb-10 font-heebo leading-relaxed max-w-2xl mx-auto">
               קבלי טעימה מהתוכנית – היום הראשון במתנה, בלי התחייבות
             </p>
             <Button
               onClick={() => setShowSampleDialog(true)}
-              variant="outline"
-              className="border-2 border-[#5FA6A6] text-[#5FA6A6] hover:bg-[#5FA6A6] hover:text-white text-xl py-6 px-10 transition-all duration-300"
+              size="lg"
+              className="bg-gradient-to-r from-[#8C4FB9] to-[#5FA6A6] text-white text-xl md:text-2xl py-8 px-12 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 font-bold"
             >
-              <Gift className="ml-2 h-6 w-6" />
-              לקבלת היום הראשון במתנה
+              <Gift className="ml-3 h-7 w-7" />
+              לקבלת היום הראשון במתנה 🎁
             </Button>
+            <p className="text-sm text-purple-dark/70 mt-6 font-heebo">
+              * ללא התחייבות | ללא תשלום | ישירות למייל שלך
+            </p>
           </div>
         </section>
 
