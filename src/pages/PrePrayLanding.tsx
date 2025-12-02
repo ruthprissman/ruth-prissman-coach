@@ -991,11 +991,11 @@ const PrePrayLanding = () => {
         {/* Sample Dialog */}
         <Dialog open={showSampleDialog} onOpenChange={setShowSampleDialog}>
           <DialogContent className="max-w-md" dir="rtl">
-            <DialogHeader>
-              <DialogTitle className="text-2xl text-center font-alef text-[#5FA6A6]">
+            <DialogHeader className="text-right">
+              <DialogTitle className="text-2xl text-right font-alef text-[#5FA6A6]">
                 קבלי את היום הראשון במתנה 🎁
               </DialogTitle>
-              <DialogDescription className="text-center font-heebo">
+              <DialogDescription className="text-right font-heebo">
                 השאירי פרטים ונשלח לך את התוכן של היום הראשון ישירות למייל
               </DialogDescription>
             </DialogHeader>
@@ -1007,12 +1007,12 @@ const PrePrayLanding = () => {
                     control={sampleForm.control}
                     name="name"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base font-semibold text-purple-dark">שם מלא</FormLabel>
+                      <FormItem className="text-right">
+                        <FormLabel className="text-base font-semibold text-purple-dark text-right">שם מלא</FormLabel>
                         <FormControl>
-                          <Input placeholder="הזיני את שמך המלא" {...field} disabled={isSampleSubmitting} />
+                          <Input placeholder="הזיני את שמך המלא" {...field} disabled={isSampleSubmitting} className="text-right" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-right" />
                       </FormItem>
                     )}
                   />
@@ -1021,17 +1021,18 @@ const PrePrayLanding = () => {
                     control={sampleForm.control}
                     name="email"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base font-semibold text-purple-dark">אימייל</FormLabel>
+                      <FormItem className="text-right">
+                        <FormLabel className="text-base font-semibold text-purple-dark text-right">אימייל</FormLabel>
                         <FormControl>
                           <Input
                             type="email"
                             placeholder="your.email@example.com"
                             {...field}
                             disabled={isSampleSubmitting}
+                            className="text-right"
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-right" />
                       </FormItem>
                     )}
                   />
@@ -1040,12 +1041,12 @@ const PrePrayLanding = () => {
                     control={sampleForm.control}
                     name="phone"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base font-semibold text-purple-dark">טלפון</FormLabel>
+                      <FormItem className="text-right">
+                        <FormLabel className="text-base font-semibold text-purple-dark text-right">טלפון</FormLabel>
                         <FormControl>
-                          <Input placeholder="05X-XXXXXXX" {...field} disabled={isSampleSubmitting} />
+                          <Input placeholder="05X-XXXXXXX" {...field} disabled={isSampleSubmitting} className="text-right" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-right" />
                       </FormItem>
                     )}
                   />
@@ -1055,7 +1056,7 @@ const PrePrayLanding = () => {
                       control={sampleForm.control}
                       name="agreeToTerms"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormItem className="flex flex-row-reverse items-start gap-3 space-y-0">
                           <FormControl>
                             <Checkbox
                               checked={field.value}
@@ -1064,8 +1065,8 @@ const PrePrayLanding = () => {
                               className="mt-1"
                             />
                           </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer">
+                          <div className="space-y-1 leading-none text-right flex-1">
+                            <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer text-right">
                               אני מאשר/ת שקראתי ואני מסכימ/ה ל
                               <Link
                                 to="/pre-pray-terms"
@@ -1075,7 +1076,7 @@ const PrePrayLanding = () => {
                                 תנאי השימוש ומדיניות הפרטיות
                               </Link>
                             </FormLabel>
-                            <FormMessage />
+                            <FormMessage className="text-right" />
                           </div>
                         </FormItem>
                       )}
@@ -1085,7 +1086,7 @@ const PrePrayLanding = () => {
                       control={sampleForm.control}
                       name="agreeToMarketing"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormItem className="flex flex-row-reverse items-start gap-3 space-y-0">
                           <FormControl>
                             <Checkbox
                               checked={field.value}
@@ -1093,8 +1094,8 @@ const PrePrayLanding = () => {
                               disabled={isSampleSubmitting}
                             />
                           </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer">
+                          <div className="space-y-1 leading-none text-right flex-1">
+                            <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer text-right">
                               אני מאשר/ת קבלת דיוור שבועי לתוכן לימודי והצעות מסחריות נוספות
                             </FormLabel>
                           </div>
