@@ -185,26 +185,30 @@ const UnsubscribePage: React.FC = () => {
       const supabase = supabaseClient();
       
       if (values.listType === 'general' || values.listType === 'all') {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('content_subscribers')
           .select('id')
           .eq('email', values.email)
           .single();
           
         if (data) {
-          await supabase
+          const { error: updateError } = await supabase
             .from('content_subscribers')
             .update({ 
               is_subscribed: true,
             })
             .eq('email', values.email);
+          
+          if (updateError) throw updateError;
         } else {
-          await supabase
+          const { error: insertError } = await supabase
             .from('content_subscribers')
             .insert({ 
               email: values.email, 
               is_subscribed: true 
             });
+          
+          if (insertError) throw insertError;
         }
       }
       
@@ -216,19 +220,23 @@ const UnsubscribePage: React.FC = () => {
           .single();
           
         if (data) {
-          await supabase
+          const { error: updateError } = await supabase
             .from('story_subscribers')
             .update({ 
               is_subscribed: true,
             })
             .eq('email', values.email);
+          
+          if (updateError) throw updateError;
         } else {
-          await supabase
+          const { error: insertError } = await supabase
             .from('story_subscribers')
             .insert({ 
               email: values.email, 
               is_subscribed: true 
             });
+          
+          if (insertError) throw insertError;
         }
       }
       
