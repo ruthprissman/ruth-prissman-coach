@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { encode as base64Encode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 
@@ -27,36 +26,12 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("BREVO_API_KEY is not configured");
     }
 
-    // Get files from public URL
+    // File download links (no attachment - too large for edge function memory)
     const baseUrl = "https://coach.ruthprissman.co.il/pre-pray-samples";
     const mp3Url = `${baseUrl}/Day1.mp3`;
     const pdfUrl = `${baseUrl}/Day1.pdf`;
 
-    console.log(`Fetching files from: ${mp3Url} and ${pdfUrl}`);
-
-    // Fetch files as base64
-    const [mp3Response, pdfResponse] = await Promise.all([
-      fetch(mp3Url),
-      fetch(pdfUrl),
-    ]);
-
-    if (!mp3Response.ok) {
-      throw new Error(`Failed to fetch MP3: ${mp3Response.status}`);
-    }
-    if (!pdfResponse.ok) {
-      throw new Error(`Failed to fetch PDF: ${pdfResponse.status}`);
-    }
-
-    const [mp3Buffer, pdfBuffer] = await Promise.all([
-      mp3Response.arrayBuffer(),
-      pdfResponse.arrayBuffer(),
-    ]);
-
-    // Use Deno's base64 encoder to handle large files without stack overflow
-    const mp3Base64 = base64Encode(new Uint8Array(mp3Buffer));
-    const pdfBase64 = base64Encode(new Uint8Array(pdfBuffer));
-
-    console.log(`Files fetched successfully. MP3 size: ${mp3Buffer.byteLength}, PDF size: ${pdfBuffer.byteLength}`);
+    console.log(`Using file links: ${mp3Url} and ${pdfUrl}`);
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -117,6 +92,21 @@ const handler = async (req: Request): Promise<Response> => {
       padding-right: 10px;
       direction: rtl;
       text-align: right;
+    }
+    .download-btn {
+      display: inline-block;
+      background-color: #5FA6A6;
+      color: #ffffff !important;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      margin: 8px 0;
+      transition: all 0.3s;
+    }
+    .download-btn:hover {
+      background-color: #4d8f8f;
     }
     .divider {
       border-top: 2px solid #e0e0e0;
@@ -192,17 +182,19 @@ const handler = async (req: Request): Promise<Response> => {
     
     <div class="content-section">
       <p style="font-weight: bold; font-size: 18px; margin-bottom: 15px;">
-        מצורפים אליך התכנים של היום הראשון מתוך התוכנית "דקה לפני התפילה – ברכות השחר":
+        התכנים של היום הראשון מתוך התוכנית "דקה לפני התפילה – ברכות השחר":
       </p>
       
       <div class="item">
         <span class="icon">📄</span>
-        <strong>דף עבודה</strong> – "הנותן לשכוי בינה"
+        <strong>דף עבודה</strong> – "הנותן לשכוי בינה"<br>
+        <a href="${pdfUrl}" class="download-btn" style="color: #ffffff;">להורדת דף העבודה</a>
       </div>
       
       <div class="item">
         <span class="icon">🎧</span>
-        <strong>הקלטה מלווה</strong> – 2 דקות להתחברות
+        <strong>הקלטה מלווה</strong> – 2 דקות להתחברות<br>
+        <a href="${mp3Url}" class="download-btn" style="color: #ffffff;">להורדת ההקלטה</a>
       </div>
     </div>
     
@@ -271,7 +263,7 @@ const handler = async (req: Request): Promise<Response> => {
 </html>
     `;
 
-    // Send email via Brevo
+    // Send email via Brevo - with download links instead of attachments
     const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -286,16 +278,6 @@ const handler = async (req: Request): Promise<Response> => {
         to: [{ email, name: firstName }],
         subject: "היום הראשון שלך במתנה – דקה לפני התפילה 🎁",
         htmlContent,
-        attachment: [
-          {
-            name: "Day1.pdf",
-            content: pdfBase64,
-          },
-          {
-            name: "Day1.mp3",
-            content: mp3Base64,
-          },
-        ],
       }),
     });
 
