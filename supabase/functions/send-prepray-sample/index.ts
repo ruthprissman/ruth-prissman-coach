@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 
@@ -51,8 +52,9 @@ const handler = async (req: Request): Promise<Response> => {
       pdfResponse.arrayBuffer(),
     ]);
 
-    const mp3Base64 = btoa(String.fromCharCode(...new Uint8Array(mp3Buffer)));
-    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
+    // Use Deno's base64 encoder to handle large files without stack overflow
+    const mp3Base64 = base64Encode(new Uint8Array(mp3Buffer));
+    const pdfBase64 = base64Encode(new Uint8Array(pdfBuffer));
 
     console.log(`Files fetched successfully. MP3 size: ${mp3Buffer.byteLength}, PDF size: ${pdfBuffer.byteLength}`);
 
