@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,12 +29,35 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("BREVO_API_KEY is not configured");
     }
 
-    // File download links (no attachment - too large for edge function memory)
-    const baseUrl = "https://coach.ruthprissman.co.il/pre-pray-samples";
-    const mp3Url = `${baseUrl}/Day1.mp3`;
-    const pdfUrl = `${baseUrl}/Day1.pdf`;
+    // Initialize Supabase client
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    console.log(`Using file links: ${mp3Url} and ${pdfUrl}`);
+    // Get file URLs from storage
+    const { data: mp3Data } = supabase.storage
+      .from("pre-pray-samples")
+      .getPublicUrl("Day1.mp3");
+
+    const { data: pdfData } = supabase.storage
+      .from("pre-pray-samples")
+      .getPublicUrl("Day1.pdf");
+
+    if (!mp3Data?.publicUrl || !pdfData?.publicUrl) {
+      throw new Error("Failed to get file URLs from storage");
+    }
+
+    // Fetch files as base64
+    const [mp3Response, pdfResponse] = await Promise.all([
+      fetch(mp3Data.publicUrl),
+      fetch(pdfData.publicUrl),
+    ]);
+
+    const [mp3Buffer, pdfBuffer] = await Promise.all([
+      mp3Response.arrayBuffer(),
+      pdfResponse.arrayBuffer(),
+    ]);
+
+    const mp3Base64 = btoa(String.fromCharCode(...new Uint8Array(mp3Buffer)));
+    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -92,21 +118,6 @@ const handler = async (req: Request): Promise<Response> => {
       padding-right: 10px;
       direction: rtl;
       text-align: right;
-    }
-    .download-btn {
-      display: inline-block;
-      background-color: #5FA6A6;
-      color: #ffffff !important;
-      padding: 12px 24px;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 16px;
-      margin: 8px 0;
-      transition: all 0.3s;
-    }
-    .download-btn:hover {
-      background-color: #4d8f8f;
     }
     .divider {
       border-top: 2px solid #e0e0e0;
@@ -182,19 +193,17 @@ const handler = async (req: Request): Promise<Response> => {
     
     <div class="content-section">
       <p style="font-weight: bold; font-size: 18px; margin-bottom: 15px;">
-        התכנים של היום הראשון מתוך התוכנית "דקה לפני התפילה – ברכות השחר":
+        מצורפים אליך התכנים של היום הראשון מתוך התוכנית "דקה לפני התפילה – ברכות השחר":
       </p>
       
       <div class="item">
         <span class="icon">📄</span>
-        <strong>דף עבודה</strong> – "הנותן לשכוי בינה"<br>
-        <a href="${pdfUrl}" class="download-btn" style="color: #ffffff;">להורדת דף העבודה</a>
+        <strong>דף עבודה</strong> – "הנותן לשכוי בינה"
       </div>
       
       <div class="item">
         <span class="icon">🎧</span>
-        <strong>הקלטה מלווה</strong> – 2 דקות להתחברות<br>
-        <a href="${mp3Url}" class="download-btn" style="color: #ffffff;">להורדת ההקלטה</a>
+        <strong>הקלטה מלווה</strong> – 2 דקות להתחברות
       </div>
     </div>
     
@@ -263,7 +272,7 @@ const handler = async (req: Request): Promise<Response> => {
 </html>
     `;
 
-    // Send email via Brevo - with download links instead of attachments
+    // Send email via Brevo
     const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -278,6 +287,16 @@ const handler = async (req: Request): Promise<Response> => {
         to: [{ email, name: firstName }],
         subject: "היום הראשון שלך במתנה – דקה לפני התפילה 🎁",
         htmlContent,
+        attachment: [
+          {
+            name: "Day1.pdf",
+            content: pdfBase64,
+          },
+          {
+            name: "Day1.mp3",
+            content: mp3Base64,
+          },
+        ],
       }),
     });
 
