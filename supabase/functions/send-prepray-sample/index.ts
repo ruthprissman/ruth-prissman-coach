@@ -15,6 +15,20 @@ interface RequestBody {
   firstName: string;
 }
 
+// Helper function to convert ArrayBuffer to Base64 safely (in chunks to avoid stack overflow)
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000; // 32KB chunks
+  let binary = '';
+  
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+  
+  return btoa(binary);
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -50,8 +64,9 @@ const handler = async (req: Request): Promise<Response> => {
       pdfResponse.arrayBuffer(),
     ]);
 
-    const mp3Base64 = btoa(String.fromCharCode(...new Uint8Array(mp3Buffer)));
-    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
+    // Convert to Base64 safely using chunked processing
+    const mp3Base64 = arrayBufferToBase64(mp3Buffer);
+    const pdfBase64 = arrayBufferToBase64(pdfBuffer);
 
     const htmlContent = `
 <!DOCTYPE html>
