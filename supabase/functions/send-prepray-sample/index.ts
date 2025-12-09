@@ -32,23 +32,17 @@ const handler = async (req: Request): Promise<Response> => {
     // Initialize Supabase client
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Get file URLs from storage
-    const { data: mp3Data } = supabase.storage
-      .from("pre-pray-samples")
-      .getPublicUrl("Day1.mp3");
+    // Use public URLs directly
+    const baseUrl = "https://coach.ruthprissman.co.il/pre-pray-samples";
+    const mp3Url = `${baseUrl}/Day1.mp3`;
+    const pdfUrl = `${baseUrl}/Day1.pdf`;
 
-    const { data: pdfData } = supabase.storage
-      .from("pre-pray-samples")
-      .getPublicUrl("Day1.pdf");
-
-    if (!mp3Data?.publicUrl || !pdfData?.publicUrl) {
-      throw new Error("Failed to get file URLs from storage");
-    }
+    console.log(`Using file links: ${mp3Url} and ${pdfUrl}`);
 
     // Fetch files as base64
     const [mp3Response, pdfResponse] = await Promise.all([
-      fetch(mp3Data.publicUrl),
-      fetch(pdfData.publicUrl),
+      fetch(mp3Url),
+      fetch(pdfUrl),
     ]);
 
     const [mp3Buffer, pdfBuffer] = await Promise.all([
