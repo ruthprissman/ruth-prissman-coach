@@ -1,5 +1,6 @@
 import { generatePrayerLandingEmailHTML } from '@/utils/emailTemplates/landing/prayer';
 import { generatePrayerGuideEmailHTML } from '@/utils/emailTemplates/landing/prayerGuide';
+import { generatePrePrayEmailHTML } from '@/utils/emailTemplates/landing/prePray';
 
 export interface LandingPageConfig {
   id: string;
@@ -23,8 +24,14 @@ export const landingPages: LandingPageConfig[] = [
     publicPath: '/prayer-guide',
     defaultEmailSubject: 'המדריך שלך בדרך! – להורדה: להתפלל כשאין זמן',
     generateHtml: generatePrayerGuideEmailHTML
+  },
+  {
+    id: 'pre-pray',
+    name: 'דקה לפני העמידה',
+    publicPath: '/pre-pray',
+    defaultEmailSubject: 'התפילה שלך היא מטלה או מתנה? 🙏',
+    generateHtml: generatePrePrayEmailHTML
   }
-  // כאן אפשר להוסיף דפי נחיתה נוספים בעתיד
 ];
 
 export function getLandingPageById(id: string): LandingPageConfig | undefined {
