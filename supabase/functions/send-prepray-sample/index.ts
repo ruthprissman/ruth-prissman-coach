@@ -1,9 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,27 +26,25 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("BREVO_API_KEY is not configured");
     }
 
-    // Initialize Supabase client
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    // Get files from public URL
+    const baseUrl = "https://coach.ruthprissman.co.il/pre-pray-samples";
+    const mp3Url = `${baseUrl}/Day1.mp3`;
+    const pdfUrl = `${baseUrl}/Day1.pdf`;
 
-    // Get file URLs from storage
-    const { data: mp3Data } = supabase.storage
-      .from("pre-pray-samples")
-      .getPublicUrl("Day1.mp3");
-
-    const { data: pdfData } = supabase.storage
-      .from("pre-pray-samples")
-      .getPublicUrl("Day1.pdf");
-
-    if (!mp3Data?.publicUrl || !pdfData?.publicUrl) {
-      throw new Error("Failed to get file URLs from storage");
-    }
+    console.log(`Fetching files from: ${mp3Url} and ${pdfUrl}`);
 
     // Fetch files as base64
     const [mp3Response, pdfResponse] = await Promise.all([
-      fetch(mp3Data.publicUrl),
-      fetch(pdfData.publicUrl),
+      fetch(mp3Url),
+      fetch(pdfUrl),
     ]);
+
+    if (!mp3Response.ok) {
+      throw new Error(`Failed to fetch MP3: ${mp3Response.status}`);
+    }
+    if (!pdfResponse.ok) {
+      throw new Error(`Failed to fetch PDF: ${pdfResponse.status}`);
+    }
 
     const [mp3Buffer, pdfBuffer] = await Promise.all([
       mp3Response.arrayBuffer(),
@@ -58,6 +53,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     const mp3Base64 = btoa(String.fromCharCode(...new Uint8Array(mp3Buffer)));
     const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
+
+    console.log(`Files fetched successfully. MP3 size: ${mp3Buffer.byteLength}, PDF size: ${pdfBuffer.byteLength}`);
 
     const htmlContent = `
 <!DOCTYPE html>
