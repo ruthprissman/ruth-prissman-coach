@@ -26,7 +26,13 @@ import {
   AlignRight,
   Heading1,
   Heading2,
-  FileText
+  FileText,
+  Paperclip,
+  X,
+  File,
+  FileAudio,
+  FileImage,
+  Upload
 } from 'lucide-react';
 
 interface EmailTemplate {
@@ -40,6 +46,18 @@ interface EmailTemplate {
 interface Subscriber {
   email: string;
   first_name: string | null;
+}
+
+interface AttachmentFile {
+  id: string;
+  file: File;
+  name: string;
+  size: number;
+  type: string;
+  uploading: boolean;
+  uploaded: boolean;
+  url?: string;
+  error?: string;
 }
 
 export default function MarketingEmailSender() {
@@ -68,6 +86,14 @@ export default function MarketingEmailSender() {
   // Subscribers
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loadingSubscribers, setLoadingSubscribers] = useState(false);
+  
+  // Attachments
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
+  const [uploadingAttachments, setUploadingAttachments] = useState(false);
+  
+  // Max file size for email: 10MB per file, 25MB total
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const MAX_TOTAL_SIZE = 25 * 1024 * 1024; // 25MB
 
   useEffect(() => {
     fetchTemplates();
@@ -121,6 +147,177 @@ export default function MarketingEmailSender() {
       fetchSubscribers();
     }
   }, [sendMode]);
+
+  // File attachment handlers
+  const compressImage = async (file: File, maxWidth = 1200, quality = 0.8): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = document.createElement('img');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              // Create a new Blob with the file name stored separately
+              const compressedFile = new Blob([blob], { type: 'image/jpeg' }) as File;
+              Object.defineProperty(compressedFile, 'name', { value: file.name });
+              Object.defineProperty(compressedFile, 'lastModified', { value: Date.now() });
+              resolve(compressedFile as unknown as File);
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return <FileImage className="h-4 w-4" />;
+    if (type.startsWith('audio/')) return <FileAudio className="h-4 w-4" />;
+    if (type.includes('pdf')) return <FileText className="h-4 w-4" />;
+    return <File className="h-4 w-4" />;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const currentTotalSize = attachments.reduce((sum, a) => sum + a.size, 0);
+    const newAttachments: AttachmentFile[] = [];
+
+    for (const file of Array.from(files)) {
+      // Check individual file size
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: 'קובץ גדול מדי',
+          description: `${file.name} גדול מ-10MB. אנא בחר קובץ קטן יותר.`,
+          variant: 'destructive',
+        });
+        continue;
+      }
+
+      // Check total size
+      const newTotalSize = currentTotalSize + newAttachments.reduce((s, a) => s + a.size, 0) + file.size;
+      if (newTotalSize > MAX_TOTAL_SIZE) {
+        toast({
+          title: 'גודל כולל חורג',
+          description: 'סך כל הקבצים לא יכול לעלות על 25MB',
+          variant: 'destructive',
+        });
+        break;
+      }
+
+      newAttachments.push({
+        id: crypto.randomUUID(),
+        file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        uploading: false,
+        uploaded: false,
+      });
+    }
+
+    if (newAttachments.length > 0) {
+      setAttachments(prev => [...prev, ...newAttachments]);
+    }
+
+    // Reset input
+    e.target.value = '';
+  };
+
+  const uploadAttachment = async (attachment: AttachmentFile): Promise<string | null> => {
+    try {
+      let fileToUpload = attachment.file;
+
+      // Compress images if needed
+      if (attachment.type.startsWith('image/') && attachment.size > 500 * 1024) {
+        fileToUpload = await compressImage(attachment.file, 1200, 0.7);
+        console.log(`Image compressed from ${attachment.size} to ${fileToUpload.size}`);
+      }
+
+      const fileExt = attachment.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `email-attachments/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('site_file')
+        .upload(filePath, fileToUpload);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('site_file')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading attachment:', error);
+      return null;
+    }
+  };
+
+  const uploadAllAttachments = async (): Promise<Array<{ filename: string; url: string }>> => {
+    const uploadedFiles: Array<{ filename: string; url: string }> = [];
+    
+    setUploadingAttachments(true);
+    
+    for (const attachment of attachments) {
+      if (attachment.uploaded && attachment.url) {
+        uploadedFiles.push({ filename: attachment.name, url: attachment.url });
+        continue;
+      }
+
+      setAttachments(prev => 
+        prev.map(a => a.id === attachment.id ? { ...a, uploading: true } : a)
+      );
+
+      const url = await uploadAttachment(attachment);
+      
+      if (url) {
+        uploadedFiles.push({ filename: attachment.name, url });
+        setAttachments(prev => 
+          prev.map(a => a.id === attachment.id ? { ...a, uploading: false, uploaded: true, url } : a)
+        );
+      } else {
+        setAttachments(prev => 
+          prev.map(a => a.id === attachment.id ? { ...a, uploading: false, error: 'שגיאה בהעלאה' } : a)
+        );
+      }
+    }
+    
+    setUploadingAttachments(false);
+    return uploadedFiles;
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
+  };
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplateId(templateId);
@@ -314,6 +511,16 @@ export default function MarketingEmailSender() {
 
     setSending(true);
     try {
+      // Upload attachments first
+      let uploadedAttachments: Array<{ filename: string; url: string }> = [];
+      if (attachments.length > 0) {
+        toast({
+          title: 'מעלה קבצים...',
+          description: `מעלה ${attachments.length} קבצים`,
+        });
+        uploadedAttachments = await uploadAllAttachments();
+      }
+
       const htmlContent = generateEmailHTML();
       
       const { error } = await supabase.functions.invoke('send-email', {
@@ -321,8 +528,11 @@ export default function MarketingEmailSender() {
           emailList,
           subject,
           htmlContent,
-          senderName: 'רות פריסמן',
-          senderEmail: 'ruth@ruthprissman.co.il',
+          sender: {
+            name: 'רות פריסמן',
+            email: 'ruth@ruthprissman.co.il',
+          },
+          attachments: uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
         },
       });
 
@@ -330,8 +540,11 @@ export default function MarketingEmailSender() {
 
       toast({
         title: 'נשלח בהצלחה',
-        description: `המייל נשלח ל-${emailList.length} נמענים`,
+        description: `המייל נשלח ל-${emailList.length} נמענים${uploadedAttachments.length > 0 ? ` עם ${uploadedAttachments.length} קבצים` : ''}`,
       });
+      
+      // Clear attachments after successful send
+      setAttachments([]);
     } catch (error) {
       console.error('Error sending email:', error);
       toast({
@@ -471,6 +684,77 @@ export default function MarketingEmailSender() {
             </Card>
           </div>
         </div>
+
+        {/* Attachments */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Paperclip className="h-5 w-5" />
+              קבצים מצורפים
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-4">
+              <Label 
+                htmlFor="file-upload" 
+                className="flex items-center gap-2 px-4 py-2 border border-dashed border-border rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
+              >
+                <Upload className="h-4 w-4" />
+                בחר קבצים
+              </Label>
+              <Input
+                id="file-upload"
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.mp3,.wav,.m4a,.jpg,.jpeg,.png,.gif,.webp"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <span className="text-sm text-muted-foreground">
+                PDF, מסמכים, תמונות, שמע (עד 10MB לקובץ, 25MB סה"כ)
+              </span>
+            </div>
+
+            {attachments.length > 0 && (
+              <div className="space-y-2">
+                {attachments.map((attachment) => (
+                  <div 
+                    key={attachment.id}
+                    className="flex items-center gap-3 p-3 bg-accent/30 rounded-lg"
+                  >
+                    {getFileIcon(attachment.type)}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{attachment.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatFileSize(attachment.size)}
+                        {attachment.uploaded && <span className="text-green-600 mr-2">✓ הועלה</span>}
+                        {attachment.error && <span className="text-destructive mr-2">{attachment.error}</span>}
+                      </p>
+                    </div>
+                    {attachment.uploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeAttachment(attachment.id)}
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  סה"כ: {formatFileSize(attachments.reduce((sum, a) => sum + a.size, 0))}
+                  {attachments.some(a => a.type.startsWith('image/')) && (
+                    <span className="mr-2">(תמונות ידחסו אוטומטית)</span>
+                  )}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Sending options */}
         <Card>
