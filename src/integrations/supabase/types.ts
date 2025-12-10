@@ -613,6 +613,53 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_email_drafts: {
+        Row: {
+          background_gradient: string | null
+          blocks: Json
+          created_at: string
+          id: string
+          name: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          background_gradient?: string | null
+          blocks?: Json
+          created_at?: string
+          id?: string
+          name: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          background_gradient?: string | null
+          blocks?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_email_drafts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           email: string | null

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { BlocksList } from '@/components/admin/email-builder/BlocksList';
@@ -18,13 +18,11 @@ import {
   Loader2, 
   Send, 
   Eye, 
-  Edit3, 
   Plus, 
   Type, 
   Image, 
   MousePointer, 
   Minus, 
-  AlignRight,
   Heading1,
   Heading2,
   FileText,
@@ -33,7 +31,10 @@ import {
   File,
   FileAudio,
   FileImage,
-  Upload
+  Upload,
+  Save,
+  FolderOpen,
+  Trash2
 } from 'lucide-react';
 
 interface EmailTemplate {
@@ -59,6 +60,19 @@ interface AttachmentFile {
   uploaded: boolean;
   url?: string;
   error?: string;
+}
+
+interface MarketingDraft {
+  id: string;
+  name: string;
+  subject: string | null;
+  template_id: string | null;
+  blocks: EmailBlock[];
+  background_gradient: string | null;
+  status: string;
+  sent_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function MarketingEmailSender() {
@@ -92,12 +106,22 @@ export default function MarketingEmailSender() {
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
   
+  // Draft management
+  const [savedDrafts, setSavedDrafts] = useState<MarketingDraft[]>([]);
+  const [loadingDrafts, setLoadingDrafts] = useState(false);
+  const [draftName, setDraftName] = useState('');
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
+  
   // Max file size for email: 10MB per file, 25MB total
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   const MAX_TOTAL_SIZE = 25 * 1024 * 1024; // 25MB
 
   useEffect(() => {
     fetchTemplates();
+    fetchDrafts();
   }, []);
 
   const fetchTemplates = async () => {
@@ -118,6 +142,26 @@ export default function MarketingEmailSender() {
       });
     } finally {
       setLoadingTemplates(false);
+    }
+  };
+
+  const fetchDrafts = async () => {
+    setLoadingDrafts(true);
+    try {
+      const { data, error } = await supabase
+        .from('marketing_email_drafts')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      
+      if (error) throw error;
+      setSavedDrafts((data || []).map(d => ({
+        ...d,
+        blocks: Array.isArray(d.blocks) ? d.blocks as unknown as EmailBlock[] : []
+      })));
+    } catch (error) {
+      console.error('Error fetching drafts:', error);
+    } finally {
+      setLoadingDrafts(false);
     }
   };
 
@@ -149,6 +193,135 @@ export default function MarketingEmailSender() {
     }
   }, [sendMode]);
 
+  // Draft management functions
+  const saveDraft = async () => {
+    if (!draftName.trim()) {
+      toast({
+        title: 'שגיאה',
+        description: 'יש להזין שם לטיוטה',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSavingDraft(true);
+    try {
+      const draftData = {
+        name: draftName.trim(),
+        subject: subject || null,
+        template_id: selectedTemplateId || null,
+        blocks: JSON.parse(JSON.stringify(blocks)),
+        background_gradient: backgroundGradient,
+        status: 'draft',
+      };
+
+      if (currentDraftId) {
+        // Update existing draft
+        const { error } = await supabase
+          .from('marketing_email_drafts')
+          .update(draftData)
+          .eq('id', currentDraftId);
+        
+        if (error) throw error;
+        toast({ title: 'הטיוטה עודכנה בהצלחה' });
+      } else {
+        // Create new draft
+        const { data, error } = await supabase
+          .from('marketing_email_drafts')
+          .insert([draftData])
+          .select()
+          .single();
+        
+        if (error) throw error;
+        setCurrentDraftId(data.id);
+        toast({ title: 'הטיוטה נשמרה בהצלחה' });
+      }
+
+      setShowSaveDialog(false);
+      fetchDrafts();
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast({
+        title: 'שגיאה בשמירה',
+        description: 'לא ניתן לשמור את הטיוטה',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  const loadDraft = (draft: MarketingDraft) => {
+    setSubject(draft.subject || '');
+    setSelectedTemplateId(draft.template_id || '');
+    setBlocks(draft.blocks || []);
+    setBackgroundGradient(draft.background_gradient || 'transparent');
+    setCurrentDraftId(draft.id);
+    setDraftName(draft.name);
+    setShowLoadDialog(false);
+    toast({ title: `נטען: ${draft.name}` });
+  };
+
+  const deleteDraft = async (draftId: string) => {
+    try {
+      const { error } = await supabase
+        .from('marketing_email_drafts')
+        .delete()
+        .eq('id', draftId);
+      
+      if (error) throw error;
+      
+      if (currentDraftId === draftId) {
+        setCurrentDraftId(null);
+        setDraftName('');
+      }
+      
+      toast({ title: 'הטיוטה נמחקה' });
+      fetchDrafts();
+    } catch (error) {
+      console.error('Error deleting draft:', error);
+      toast({
+        title: 'שגיאה במחיקה',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const markDraftAsSent = async () => {
+    if (!currentDraftId) return;
+    
+    try {
+      await supabase
+        .from('marketing_email_drafts')
+        .update({ 
+          status: 'sent', 
+          sent_at: new Date().toISOString() 
+        })
+        .eq('id', currentDraftId);
+      
+      fetchDrafts();
+    } catch (error) {
+      console.error('Error marking draft as sent:', error);
+    }
+  };
+
+  const openSaveDialog = () => {
+    if (!draftName && subject) {
+      setDraftName(subject);
+    }
+    setShowSaveDialog(true);
+  };
+
+  const createNewEmail = () => {
+    setSubject('');
+    setBlocks([]);
+    setSelectedTemplateId('');
+    setBackgroundGradient('transparent');
+    setCurrentDraftId(null);
+    setDraftName('');
+    setAttachments([]);
+  };
+
   // File attachment handlers
   const compressImage = async (file: File, maxWidth = 1200, quality = 0.8): Promise<File> => {
     return new Promise((resolve) => {
@@ -172,7 +345,6 @@ export default function MarketingEmailSender() {
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              // Create a new Blob with the file name stored separately
               const compressedFile = new Blob([blob], { type: 'image/jpeg' }) as File;
               Object.defineProperty(compressedFile, 'name', { value: file.name });
               Object.defineProperty(compressedFile, 'lastModified', { value: Date.now() });
@@ -212,7 +384,6 @@ export default function MarketingEmailSender() {
     const newAttachments: AttachmentFile[] = [];
 
     for (const file of Array.from(files)) {
-      // Check individual file size
       if (file.size > MAX_FILE_SIZE) {
         toast({
           title: 'קובץ גדול מדי',
@@ -222,7 +393,6 @@ export default function MarketingEmailSender() {
         continue;
       }
 
-      // Check total size
       const newTotalSize = currentTotalSize + newAttachments.reduce((s, a) => s + a.size, 0) + file.size;
       if (newTotalSize > MAX_TOTAL_SIZE) {
         toast({
@@ -248,7 +418,6 @@ export default function MarketingEmailSender() {
       setAttachments(prev => [...prev, ...newAttachments]);
     }
 
-    // Reset input
     e.target.value = '';
   };
 
@@ -256,7 +425,6 @@ export default function MarketingEmailSender() {
     try {
       let fileToUpload = attachment.file;
 
-      // Compress images if needed
       if (attachment.type.startsWith('image/') && attachment.size > 500 * 1024) {
         fileToUpload = await compressImage(attachment.file, 1200, 0.7);
         console.log(`Image compressed from ${attachment.size} to ${fileToUpload.size}`);
@@ -552,6 +720,11 @@ export default function MarketingEmailSender() {
         description: `המייל נשלח ל-${emailList.length} נמענים${uploadedAttachments.length > 0 ? ` עם ${uploadedAttachments.length} קבצים` : ''}`,
       });
       
+      // Mark draft as sent if we have one
+      if (currentDraftId && sendMode === 'all') {
+        await markDraftAsSent();
+      }
+      
       // Clear attachments after successful send
       setAttachments([]);
     } catch (error) {
@@ -576,15 +749,61 @@ export default function MarketingEmailSender() {
     { type: 'footer', label: 'פוטר', icon: <FileText className="h-4 w-4" /> },
   ];
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('he-IL', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <AdminLayout title="מייל שיווקי מותאם">
       <div className="space-y-6" dir="rtl">
         {/* Header with template selection and subject */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5" />
-              הגדרות מייל
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Send className="h-5 w-5" />
+                הגדרות מייל
+                {currentDraftId && (
+                  <span className="text-sm font-normal text-muted-foreground">
+                    ({draftName})
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={createNewEmail}
+                  className="gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  חדש
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowLoadDialog(true)}
+                  className="gap-1"
+                >
+                  <FolderOpen className="h-4 w-4" />
+                  טען
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openSaveDialog}
+                  className="gap-1"
+                >
+                  <Save className="h-4 w-4" />
+                  שמור
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -985,6 +1204,101 @@ export default function MarketingEmailSender() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Save Draft Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>שמירת מייל</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>שם המייל</Label>
+              <Input
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                placeholder="הזן שם לשמירה..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+              ביטול
+            </Button>
+            <Button onClick={saveDraft} disabled={savingDraft}>
+              {savingDraft ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  שומר...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  שמור
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Load Draft Dialog */}
+      <Dialog open={showLoadDialog} onOpenChange={setShowLoadDialog}>
+        <DialogContent dir="rtl" className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>מיילים שמורים</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {loadingDrafts ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : savedDrafts.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                אין מיילים שמורים
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {savedDrafts.map((draft) => (
+                  <div 
+                    key={draft.id}
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/30 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{draft.name}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{formatDate(draft.updated_at)}</span>
+                        {draft.status === 'sent' ? (
+                          <span className="text-green-600">✓ נשלח</span>
+                        ) : (
+                          <span className="text-amber-600">טיוטה</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => loadDraft(draft)}
+                      >
+                        טען
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteDraft(draft.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
