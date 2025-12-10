@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { BlocksList } from '@/components/admin/email-builder/BlocksList';
-import { BlockEditor } from '@/components/admin/email-builder/BlockEditor';
+
 import { EmailPreview } from '@/components/admin/email-builder/EmailPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -661,18 +661,132 @@ export default function MarketingEmailSender() {
               </CardContent>
             </Card>
 
-            {/* Block editor dialog */}
-            <Dialog open={editingBlockIndex !== null} onOpenChange={(open) => !open && setEditingBlockIndex(null)}>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+            {/* Simple content editor dialog */}
+            <Dialog open={editingBlockIndex !== null && blocks[editingBlockIndex]?.type !== 'spacer'} onOpenChange={(open) => !open && setEditingBlockIndex(null)}>
+              <DialogContent className="max-w-md" dir="rtl">
                 <DialogHeader>
-                  <DialogTitle>עריכת בלוק</DialogTitle>
+                  <DialogTitle>
+                    {editingBlockIndex !== null && blocks[editingBlockIndex] && (
+                      <>
+                        {blocks[editingBlockIndex].type === 'header' && 'עריכת כותרת ראשית'}
+                        {blocks[editingBlockIndex].type === 'subtitle' && 'עריכת כותרת משנה'}
+                        {blocks[editingBlockIndex].type === 'text' && 'עריכת טקסט'}
+                        {blocks[editingBlockIndex].type === 'cta' && 'עריכת כפתור'}
+                        {blocks[editingBlockIndex].type === 'image' && 'עריכת תמונה'}
+                        {blocks[editingBlockIndex].type === 'footer' && 'עריכת כותרת תחתונה'}
+                      </>
+                    )}
+                  </DialogTitle>
                 </DialogHeader>
+                
                 {editingBlockIndex !== null && blocks[editingBlockIndex] && (
-                  <BlockEditor
-                    block={blocks[editingBlockIndex]}
-                    onUpdate={(block) => updateBlock(editingBlockIndex, block)}
-                    onClose={() => setEditingBlockIndex(null)}
-                  />
+                  <div className="space-y-4">
+                    {/* Text block - large textarea */}
+                    {blocks[editingBlockIndex].type === 'text' && (
+                      <Textarea
+                        value={blocks[editingBlockIndex].content || ''}
+                        onChange={(e) => updateBlock(editingBlockIndex, { ...blocks[editingBlockIndex], content: e.target.value })}
+                        placeholder="הזן טקסט..."
+                        className="min-h-[150px] text-right"
+                        dir="rtl"
+                      />
+                    )}
+                    
+                    {/* Header/subtitle/footer - single input */}
+                    {['header', 'subtitle', 'footer'].includes(blocks[editingBlockIndex].type) && (
+                      <Input
+                        value={blocks[editingBlockIndex].content || ''}
+                        onChange={(e) => updateBlock(editingBlockIndex, { ...blocks[editingBlockIndex], content: e.target.value })}
+                        placeholder="הזן כותרת..."
+                        className="text-right"
+                        dir="rtl"
+                      />
+                    )}
+                    
+                    {/* CTA - text + URL */}
+                    {blocks[editingBlockIndex].type === 'cta' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>טקסט הכפתור</Label>
+                          <Input
+                            value={blocks[editingBlockIndex].content || ''}
+                            onChange={(e) => updateBlock(editingBlockIndex, { ...blocks[editingBlockIndex], content: e.target.value })}
+                            placeholder="לחץ כאן"
+                            className="text-right"
+                            dir="rtl"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>קישור</Label>
+                          <Input
+                            value={blocks[editingBlockIndex].buttonUrl || ''}
+                            onChange={(e) => updateBlock(editingBlockIndex, { ...blocks[editingBlockIndex], buttonUrl: e.target.value })}
+                            placeholder="https://..."
+                            dir="ltr"
+                          />
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Image - URL + upload */}
+                    {blocks[editingBlockIndex].type === 'image' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>העלאת תמונה</Label>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              
+                              const fileExt = file.name.split('.').pop();
+                              const fileName = `${Date.now()}.${fileExt}`;
+                              const filePath = `email-images/${fileName}`;
+                              
+                              const { error: uploadError } = await supabase.storage
+                                .from('email-attachments')
+                                .upload(filePath, file);
+                              
+                              if (uploadError) {
+                                toast({ title: 'שגיאה בהעלאה', variant: 'destructive' });
+                                return;
+                              }
+                              
+                              const { data: { publicUrl } } = supabase.storage
+                                .from('email-attachments')
+                                .getPublicUrl(filePath);
+                              
+                              updateBlock(editingBlockIndex, { ...blocks[editingBlockIndex], imageUrl: publicUrl });
+                              toast({ title: 'התמונה הועלתה בהצלחה' });
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>או הזן כתובת URL</Label>
+                          <Input
+                            value={blocks[editingBlockIndex].imageUrl || ''}
+                            onChange={(e) => updateBlock(editingBlockIndex, { ...blocks[editingBlockIndex], imageUrl: e.target.value })}
+                            placeholder="https://..."
+                            dir="ltr"
+                          />
+                        </div>
+                        {blocks[editingBlockIndex].imageUrl && (
+                          <div className="mt-2">
+                            <img 
+                              src={blocks[editingBlockIndex].imageUrl} 
+                              alt="תצוגה מקדימה" 
+                              className="max-h-32 rounded border"
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
+                    
+                    <Button onClick={() => setEditingBlockIndex(null)} className="w-full">
+                      סיום
+                    </Button>
+                  </div>
                 )}
               </DialogContent>
             </Dialog>
