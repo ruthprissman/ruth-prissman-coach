@@ -410,12 +410,20 @@ export default function MarketingEmailSender() {
         .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
         .join('; ');
 
+      // Convert markdown-style links [text](url) to HTML anchor tags
+      const processMarkdownLinks = (text: string): string => {
+        return text.replace(
+          /\[([^\]]+)\]\(([^)]+)\)/g,
+          '<a href="$2" style="color: #0066cc; text-decoration: underline;">$1</a>'
+        );
+      };
+
       switch (block.type) {
         case 'header':
         case 'subtitle':
         case 'text':
         case 'footer':
-          const content = (block.content || '').replace(/\n/g, '<br/>');
+          const content = processMarkdownLinks((block.content || '').replace(/\n/g, '<br/>'));
           return `<div style="${styleString}">${content}</div>`;
 
         case 'image':

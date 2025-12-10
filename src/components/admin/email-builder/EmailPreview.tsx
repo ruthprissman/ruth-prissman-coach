@@ -5,6 +5,14 @@ interface EmailPreviewProps {
   backgroundGradient?: string;
 }
 
+// Convert markdown-style links [text](url) to HTML anchor tags
+const processMarkdownLinks = (content: string): string => {
+  return content.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" style="color: #0066cc; text-decoration: underline;">$1</a>'
+  );
+};
+
 export function EmailPreview({ blocks, backgroundGradient = 'transparent' }: EmailPreviewProps) {
   const generateBlockHTML = (block: EmailBlock): string => {
     const styles = {
@@ -27,7 +35,7 @@ export function EmailPreview({ blocks, backgroundGradient = 'transparent' }: Ema
       case 'subtitle':
       case 'text':
       case 'footer':
-        const content = (block.content || '').replace(/\n/g, '<br/>');
+        const content = processMarkdownLinks((block.content || '').replace(/\n/g, '<br/>'));
         return `<div style="${styleString}">${content}</div>`;
 
       case 'image':
