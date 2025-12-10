@@ -227,17 +227,10 @@ const handler = async (req: Request): Promise<Response> => {
     <div class="steps">
       <h3 style="color: #5FA6A6; margin-bottom: 15px;">✨ מה עושים עם התכנים?</h3>
       
-      <div class="step">
-        <strong>1.</strong> קראי את דף העבודה (2-3 דקות)
-      </div>
-      
-      <div class="step">
-        <strong>2.</strong> הקשיבי להקלטה בזמן נוח לך (2 דקות)
-      </div>
-      
-      <div class="step">
-        <strong>3.</strong> בתפילת הבוקר – שימי לב לברכה הזו ותנסי לחוש אותה מחדש
-      </div>
+      <p style="text-align: center; font-size: 16px; line-height: 1.8;">
+        פשוט קוראים ומאזינים, לא משנה הסדר<br>
+        ומגיעים לתפילה עם חוויה אחרת
+      </p>
     </div>
     
     <div class="divider"></div>
