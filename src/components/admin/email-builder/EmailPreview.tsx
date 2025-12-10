@@ -74,9 +74,11 @@ export function EmailPreview({ blocks, backgroundGradient = 'transparent' }: Ema
   };
 
   const previewHTML = `
-    <div style="direction: rtl; padding: 20px;">
-      <div style="max-width: 600px; margin: 0 auto; background: ${backgroundGradient}; border-radius: 8px;">
-        ${blocks.map(generateBlockHTML).join('')}
+    <div style="direction: rtl; padding: 20px; background: #ffffff;">
+      <div style="max-width: 650px; margin: 0 auto; background: ${backgroundGradient}; border-radius: 8px; padding: 10px;">
+        <div style="max-width: 600px; margin: 0 auto;">
+          ${blocks.map(generateBlockHTML).join('')}
+        </div>
       </div>
     </div>
   `;
