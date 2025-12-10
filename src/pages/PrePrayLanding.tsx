@@ -1056,7 +1056,15 @@ const PrePrayLanding = () => {
                       control={sampleForm.control}
                       name="agreeToTerms"
                       render={({ field }) => (
-                        <FormItem className="flex items-start gap-3 space-y-0 justify-end">
+                        <FormItem className="flex flex-row-reverse items-start gap-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSampleSubmitting}
+                              className="mt-1"
+                            />
+                          </FormControl>
                           <div className="space-y-1 leading-none text-right flex-1">
                             <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer text-right">
                               אני מאשר/ת שקראתי ואני מסכימ/ה ל
@@ -1070,14 +1078,6 @@ const PrePrayLanding = () => {
                             </FormLabel>
                             <FormMessage className="text-right" />
                           </div>
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              disabled={isSampleSubmitting}
-                              className="mt-1"
-                            />
-                          </FormControl>
                         </FormItem>
                       )}
                     />
@@ -1086,20 +1086,21 @@ const PrePrayLanding = () => {
                       control={sampleForm.control}
                       name="agreeToMarketing"
                       render={({ field }) => (
-                        <FormItem className="flex items-start gap-3 space-y-0 justify-end">
+                        <FormItem className="flex flex-row-reverse items-start gap-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isSampleSubmitting}
+                              className="mt-1"
+                            />
+                          </FormControl>
                           <div className="space-y-1 leading-none text-right flex-1">
                             <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer text-right">
                               אני מאשר/ת קבלת דיוור שבועי לתוכן לימודי והצעות מסחריות נוספות
                             </FormLabel>
                             <FormMessage className="text-right" />
                           </div>
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              disabled={isSampleSubmitting}
-                            />
-                          </FormControl>
                         </FormItem>
                       )}
                     />
