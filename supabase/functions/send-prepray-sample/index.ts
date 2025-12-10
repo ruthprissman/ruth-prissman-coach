@@ -206,13 +206,13 @@ const handler = async (req: Request): Promise<Response> => {
       </p>
       
       <div class="item">
-        <span class="icon">📄</span>
-        <strong>דף עבודה</strong> – "הנותן לשכוי בינה"
+        <span class="icon">🎧</span>
+        <strong>קובץ שמע להאזנה</strong> – 2 דקות להתחברות
       </div>
       
       <div class="item">
-        <span class="icon">🎧</span>
-        <strong>הקלטה מלווה</strong> – 2 דקות להתחברות
+        <span class="icon">📄</span>
+        <strong>קובץ PDF- לקריאה נוחה</strong> – "הנותן לשכוי בינה"
       </div>
     </div>
     
