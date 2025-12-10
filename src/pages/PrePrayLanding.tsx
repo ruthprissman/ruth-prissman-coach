@@ -1051,12 +1051,12 @@ const PrePrayLanding = () => {
                     )}
                   />
 
-                  <div className="space-y-3 pt-2">
+                  <div className="space-y-3 pt-2" dir="rtl">
                     <FormField
                       control={sampleForm.control}
                       name="agreeToTerms"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row-reverse items-start gap-3 space-y-0">
+                        <FormItem className="flex items-start gap-3 space-y-0">
                           <FormControl>
                             <Checkbox
                               checked={field.value}
@@ -1066,7 +1066,7 @@ const PrePrayLanding = () => {
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none text-right flex-1">
-                            <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer text-right">
+                            <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer">
                               אני מאשר/ת שקראתי ואני מסכימ/ה ל
                               <Link
                                 to="/pre-pray-terms"
@@ -1076,7 +1076,7 @@ const PrePrayLanding = () => {
                                 תנאי השימוש ומדיניות הפרטיות
                               </Link>
                             </FormLabel>
-                            <FormMessage className="text-right" />
+                            <FormMessage />
                           </div>
                         </FormItem>
                       )}
@@ -1086,7 +1086,7 @@ const PrePrayLanding = () => {
                       control={sampleForm.control}
                       name="agreeToMarketing"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row-reverse items-start gap-3 space-y-0">
+                        <FormItem className="flex items-start gap-3 space-y-0">
                           <FormControl>
                             <Checkbox
                               checked={field.value}
@@ -1096,10 +1096,10 @@ const PrePrayLanding = () => {
                             />
                           </FormControl>
                           <div className="space-y-1 leading-none text-right flex-1">
-                            <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer text-right">
+                            <FormLabel className="text-sm text-purple-dark font-normal cursor-pointer">
                               אני מאשר/ת קבלת דיוור שבועי לתוכן לימודי והצעות מסחריות נוספות
                             </FormLabel>
-                            <FormMessage className="text-right" />
+                            <FormMessage />
                           </div>
                         </FormItem>
                       )}
