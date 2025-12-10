@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { BlocksList } from '@/components/admin/email-builder/BlocksList';
@@ -660,16 +661,21 @@ export default function MarketingEmailSender() {
               </CardContent>
             </Card>
 
-            {/* Block editor */}
-            {editingBlockIndex !== null && blocks[editingBlockIndex] && (
-              <div className="mt-4">
-                <BlockEditor
-                  block={blocks[editingBlockIndex]}
-                  onUpdate={(block) => updateBlock(editingBlockIndex, block)}
-                  onClose={() => setEditingBlockIndex(null)}
-                />
-              </div>
-            )}
+            {/* Block editor dialog */}
+            <Dialog open={editingBlockIndex !== null} onOpenChange={(open) => !open && setEditingBlockIndex(null)}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
+                <DialogHeader>
+                  <DialogTitle>עריכת בלוק</DialogTitle>
+                </DialogHeader>
+                {editingBlockIndex !== null && blocks[editingBlockIndex] && (
+                  <BlockEditor
+                    block={blocks[editingBlockIndex]}
+                    onUpdate={(block) => updateBlock(editingBlockIndex, block)}
+                    onClose={() => setEditingBlockIndex(null)}
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Preview */}
