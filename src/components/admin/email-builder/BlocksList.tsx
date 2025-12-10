@@ -10,9 +10,10 @@ interface BlocksListProps {
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
   onDuplicate: (index: number) => void;
+  editOnly?: boolean;
 }
 
-export function BlocksList({ blocks, onMoveUp, onMoveDown, onEdit, onDelete, onDuplicate }: BlocksListProps) {
+export function BlocksList({ blocks, onMoveUp, onMoveDown, onEdit, onDelete, onDuplicate, editOnly = false }: BlocksListProps) {
   const getBlockLabel = (block: EmailBlock) => {
     switch (block.type) {
       case 'header': return 'כותרת';
@@ -74,33 +75,37 @@ export function BlocksList({ blocks, onMoveUp, onMoveDown, onEdit, onDelete, onD
             </div>
 
             <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onMoveUp(index)}
-                disabled={index === 0}
-                className="h-8 w-8"
-              >
-                <ArrowUp className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onMoveDown(index)}
-                disabled={index === blocks.length - 1}
-                className="h-8 w-8"
-              >
-                <ArrowDown className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDuplicate(index)}
-                className="h-8 w-8"
-                title="העתק בלוק"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
+              {!editOnly && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onMoveUp(index)}
+                    disabled={index === 0}
+                    className="h-8 w-8"
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onMoveDown(index)}
+                    disabled={index === blocks.length - 1}
+                    className="h-8 w-8"
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onDuplicate(index)}
+                    className="h-8 w-8"
+                    title="העתק בלוק"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
@@ -109,14 +114,16 @@ export function BlocksList({ blocks, onMoveUp, onMoveDown, onEdit, onDelete, onD
               >
                 <Edit className="h-4 w-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onDelete(index)}
-                className="h-8 w-8 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              {!editOnly && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onDelete(index)}
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
 

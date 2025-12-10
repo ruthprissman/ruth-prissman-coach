@@ -614,29 +614,31 @@ export default function MarketingEmailSender() {
         </Card>
 
         {/* Main editor area */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Add blocks panel */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">הוספת בלוקים</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {blockTypes.map(({ type, label, icon }) => (
-                  <Button
-                    key={type}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addBlock(type)}
-                    className="w-full justify-start gap-2"
-                  >
-                    {icon}
-                    {label}
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
+        <div className={`grid grid-cols-1 gap-6 ${selectedTemplateId ? 'lg:grid-cols-10' : 'lg:grid-cols-12'}`}>
+          {/* Add blocks panel - only show when no template is loaded */}
+          {!selectedTemplateId && (
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">הוספת בלוקים</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {blockTypes.map(({ type, label, icon }) => (
+                    <Button
+                      key={type}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addBlock(type)}
+                      className="w-full justify-start gap-2"
+                    >
+                      {icon}
+                      {label}
+                    </Button>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Blocks list */}
           <div className="lg:col-span-4">
@@ -653,6 +655,7 @@ export default function MarketingEmailSender() {
                   onEdit={setEditingBlockIndex}
                   onDelete={deleteBlock}
                   onDuplicate={duplicateBlock}
+                  editOnly={!!selectedTemplateId}
                 />
               </CardContent>
             </Card>
