@@ -578,12 +578,30 @@ export default function MarketingEmailSender() {
         .map(([key, value]) => `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${value}`)
         .join('; ');
 
-      // Convert markdown-style links [text](url) to HTML anchor tags
-      const processMarkdownLinks = (text: string): string => {
-        return text.replace(
+      // Convert markdown-style formatting to HTML
+      const processMarkdownFormatting = (text: string): string => {
+        let result = text;
+        
+        // Bold: **text** (must come before italic)
+        result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        
+        // Underline: __text__
+        result = result.replace(/__([^_]+)__/g, '<u>$1</u>');
+        
+        // Italic: *text* (must come after bold)
+        result = result.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        
+        // Highlighted text: ==text==
+        result = result.replace(/==([^=]+)==/g, 
+          '<span style="color: #0066cc; font-weight: bold;">$1</span>');
+        
+        // Links: [text](url)
+        result = result.replace(
           /\[([^\]]+)\]\(([^)]+)\)/g,
           '<a href="$2" style="color: #0066cc; text-decoration: underline;">$1</a>'
         );
+        
+        return result;
       };
 
       switch (block.type) {
@@ -591,7 +609,7 @@ export default function MarketingEmailSender() {
         case 'subtitle':
         case 'text':
         case 'footer':
-          const content = processMarkdownLinks((block.content || '').replace(/\n/g, '<br/>'));
+          const content = processMarkdownFormatting((block.content || '').replace(/\n/g, '<br/>'));
           return `<div style="${styleString}">${content}</div>`;
 
         case 'image':
