@@ -5,12 +5,30 @@ interface EmailPreviewProps {
   backgroundGradient?: string;
 }
 
-// Convert markdown-style links [text](url) to HTML anchor tags
-const processMarkdownLinks = (content: string): string => {
-  return content.replace(
+// Convert markdown-style formatting to HTML
+const processMarkdownFormatting = (content: string): string => {
+  let result = content;
+  
+  // Bold: **text** (must come before italic)
+  result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  
+  // Underline: __text__
+  result = result.replace(/__([^_]+)__/g, '<u>$1</u>');
+  
+  // Italic: *text* (must come after bold)
+  result = result.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  
+  // Highlighted text: ==text==
+  result = result.replace(/==([^=]+)==/g, 
+    '<span style="color: #0066cc; font-weight: bold;">$1</span>');
+  
+  // Links: [text](url)
+  result = result.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
     '<a href="$2" style="color: #0066cc; text-decoration: underline;">$1</a>'
   );
+  
+  return result;
 };
 
 export function EmailPreview({ blocks, backgroundGradient = 'transparent' }: EmailPreviewProps) {
@@ -35,7 +53,7 @@ export function EmailPreview({ blocks, backgroundGradient = 'transparent' }: Ema
       case 'subtitle':
       case 'text':
       case 'footer':
-        const content = processMarkdownLinks((block.content || '').replace(/\n/g, '<br/>'));
+        const content = processMarkdownFormatting((block.content || '').replace(/\n/g, '<br/>'));
         return `<div style="${styleString}">${content}</div>`;
 
       case 'image':
