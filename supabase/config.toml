@@ -72,5 +72,8 @@ verify_jwt = false
 [functions.send-prepray-sample]
 verify_jwt = false
 
+[functions.send-marketing-email]
+verify_jwt = false
+
 [edge-runtime]
 policy = "per_worker"

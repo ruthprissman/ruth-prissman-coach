@@ -718,7 +718,7 @@ export default function MarketingEmailSender() {
 
       const htmlContent = generateEmailHTML();
       
-      const { error } = await supabase.functions.invoke('send-email', {
+      const { error } = await supabase.functions.invoke('send-marketing-email', {
         body: {
           emailList,
           subject,
