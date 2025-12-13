@@ -57,7 +57,7 @@ export default function PrePrayPayment() {
         <div className="container max-w-4xl px-4 py-8">
           <Button
             variant="ghost"
-            onClick={() => navigate('/pre-pray')}
+            onClick={() => navigate('/pre-pray?cancelled=true')}
             className="mb-6 flex items-center gap-2 text-purple-dark hover:text-[#5FA6A6]"
           >
             <ArrowRight className="h-5 w-5" />

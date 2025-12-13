@@ -71,6 +71,18 @@ const PrePrayLanding = () => {
 
   // בדיקה אם המשתמש חזר מדף תשלום
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const wasCancelled = urlParams.get('cancelled') === 'true';
+    
+    // אם חזרו דרך כפתור "חזרה לדף הקודם" - מנקים הכל ומתחילים מחדש
+    if (wasCancelled) {
+      localStorage.removeItem("prePrayLeadData");
+      localStorage.removeItem("prePrayDataSent");
+      window.history.replaceState({}, '', '/pre-pray');
+      window.scrollTo(0, 0);
+      return; // לא מציגים מסך תודה - מציגים טופס ריק
+    }
+    
     const savedData = localStorage.getItem("prePrayLeadData");
     const alreadySent = localStorage.getItem("prePrayDataSent");
 
