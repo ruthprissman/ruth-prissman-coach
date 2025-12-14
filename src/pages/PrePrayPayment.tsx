@@ -76,7 +76,7 @@ export default function PrePrayPayment() {
             </p>
           </div>
           
-          {/* כפתור בדיקה - מוסתר. להחזרה: הסירי את הקומנטריה
+          {/* כפתור בדיקה */}
           <div className="flex justify-center mb-4">
             <Button
               onClick={() => {
@@ -89,7 +89,6 @@ export default function PrePrayPayment() {
               מעבר לדף תודה (בדיקה)
             </Button>
           </div>
-          */}
 
           {/* Secure Payment Badge */}
           <div className="flex items-center justify-center gap-2 text-green-400 drop-shadow-md mb-6 bg-white/20 backdrop-blur-sm py-2 px-4 rounded-full">
