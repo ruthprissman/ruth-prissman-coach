@@ -52,7 +52,7 @@ const PrePrayLanding = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [savedLeadData, setSavedLeadData] = useState<LeadFormData | null>(null);
-  const [dataSent, setDataSent] = useState(false);
+  
   
   // Sample dialog state
   const [showSampleDialog, setShowSampleDialog] = useState(false);
@@ -72,105 +72,32 @@ const PrePrayLanding = () => {
 
   // בדיקה אם המשתמש חזר מדף תשלום
   useEffect(() => {
-    const checkForReturnFromPayment = async () => {
-      console.log("=== PrePray Landing useEffect ===");
-      console.log("URL:", window.location.href);
-      console.log("localStorage prePrayLeadData:", localStorage.getItem("prePrayLeadData"));
-      console.log("localStorage prePrayDataSent:", localStorage.getItem("prePrayDataSent"));
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      const wasCancelled = urlParams.get('cancelled') === 'true';
-      const emailFromUrl = urlParams.get('email');
-      
-      // אם חזרו דרך כפתור "חזרה לדף הקודם" - מנקים הכל ומתחילים מחדש
-      if (wasCancelled) {
-        console.log("Cancelled - cleaning up localStorage");
-        localStorage.removeItem("prePrayLeadData");
-        localStorage.removeItem("prePrayDataSent");
-        window.history.replaceState({}, '', '/pre-pray');
-        window.scrollTo(0, 0);
-        return;
-      }
-      
-      // קודם בודקים localStorage
-      const savedData = localStorage.getItem("prePrayLeadData");
-      const alreadySent = localStorage.getItem("prePrayDataSent");
-
-      let leadData = null;
-
-      if (savedData) {
-        try {
-          leadData = JSON.parse(savedData);
-          console.log("Parsed lead data from localStorage:", leadData);
-        } catch (error) {
-          console.error("Error parsing saved lead data:", error);
-        }
-      }
-
-      // אם אין נתונים ב-localStorage אבל יש email ב-URL - מביאים מהדאטאבייס
-      if (!leadData && emailFromUrl) {
-        console.log("No localStorage data, fetching from database with email:", emailFromUrl);
-        try {
-          const { data, error } = await supabase
-            .from('leads')
-            .select('name, email, phone')
-            .eq('email', emailFromUrl)
-            .eq('source', 'pre-pray-landing')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-
-          if (data && !error) {
-            leadData = data;
-            console.log("Fetched lead data from database:", leadData);
-            // שומרים ב-localStorage לשימוש עתידי
-            localStorage.setItem("prePrayLeadData", JSON.stringify(leadData));
-          } else {
-            console.error("Error fetching lead from database:", error);
-          }
-        } catch (error) {
-          console.error("Error fetching lead data:", error);
-        }
-      }
-
-      if (leadData) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const wasCancelled = urlParams.get('cancelled') === 'true';
+    
+    // אם חזרו דרך כפתור "חזרה לדף הקודם" - מנקים הכל ומתחילים מחדש
+    if (wasCancelled) {
+      localStorage.removeItem("prePrayLeadData");
+      localStorage.removeItem("prePrayDataSent");
+      window.history.replaceState({}, '', '/pre-pray');
+      window.scrollTo(0, 0);
+      return;
+    }
+    
+    // בודקים אם יש נתונים ב-localStorage (חזרה מתשלום)
+    const savedData = localStorage.getItem("prePrayLeadData");
+    if (savedData) {
+      try {
+        const leadData = JSON.parse(savedData);
         setSavedLeadData(leadData);
         setShowThankYou(true);
-
-        // שליחה אוטומטית לאפליקציה החיצונית (רק פעם אחת)
-        console.log("Checking if should send:", { alreadySent, dataSent, hasEmail: !!leadData.email });
-        if (!alreadySent && !dataSent && leadData.email) {
-          console.log("שולח נתונים לאפליקציה החיצונית...");
-
-          fetch("https://wkgwyrosmcmocivivugr.supabase.co/functions/v1/register_customer", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              full_name: leadData.name,
-              email: leadData.email,
-              phone: leadData.phone,
-            }),
-          })
-            .then((response) => {
-              if (response.ok) {
-                console.log("✅ הנתונים נשלחו בהצלחה לאפליקציה החיצונית");
-                localStorage.setItem("prePrayDataSent", "true");
-                setDataSent(true);
-              } else {
-                console.error("❌ שגיאה בשליחת נתונים:", response.status);
-              }
-            })
-            .catch((error) => {
-              console.error("❌ שגיאה בחיבור לאפליקציה החיצונית:", error);
-            });
-        }
+      } catch (error) {
+        console.error("Error parsing saved lead data:", error);
       }
-      
-      window.scrollTo(0, 0);
-    };
-
-    checkForReturnFromPayment();
-  }, [dataSent]);
+    }
+    
+    window.scrollTo(0, 0);
+  }, []);
 
   const scrollToForm = () => {
     const element = document.getElementById("lead-form-section");
@@ -184,7 +111,6 @@ const PrePrayLanding = () => {
     localStorage.removeItem("prePrayDataSent");
     setShowThankYou(false);
     setSavedLeadData(null);
-    setDataSent(false);
   };
 
   const sampleForm = useForm<LeadFormData>({
@@ -321,6 +247,31 @@ const PrePrayLanding = () => {
 
       // שמירת הנתונים ב-localStorage כגיבוי
       localStorage.setItem("prePrayLeadData", JSON.stringify(data));
+
+      // שליחת נתוני הליד לאפליקציה החיצונית לפני המעבר לתשלום
+      try {
+        const response = await fetch(
+          "https://wkgwyrosmcmocivivugr.supabase.co/functions/v1/register_customer",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              full_name: data.name,
+              email: data.email,
+              phone: data.phone,
+            }),
+          }
+        );
+
+        if (response.ok) {
+          console.log("✅ נתוני הליד נשלחו בהצלחה לאפליקציה החיצונית");
+        } else {
+          console.error("❌ שגיאה בשליחת נתונים לאפליקציה החיצונית:", await response.text());
+        }
+      } catch (fetchError) {
+        // לא לעצור את התהליך אם הקריאה נכשלה - רק לוג
+        console.error("❌ שגיאה בקריאה לאפליקציה החיצונית:", fetchError);
+      }
 
       toast({
         title: "✅ הפרטים נשמרו בהצלחה",
