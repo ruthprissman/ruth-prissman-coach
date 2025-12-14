@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getRedirectUrl } from "@/utils/urlUtils";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -289,7 +290,7 @@ const PrePrayLanding = () => {
       });
 
       setTimeout(() => {
-        window.location.href = "https://coach.ruthprissman.co.il/pre-pray-payment";
+        window.location.href = getRedirectUrl("pre-pray-payment");
       }, 1000);
     } catch (error) {
       console.error("Error saving lead:", error);
