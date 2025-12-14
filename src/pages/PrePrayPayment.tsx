@@ -76,20 +76,6 @@ export default function PrePrayPayment() {
             </p>
           </div>
           
-          {/* כפתור בדיקה */}
-          <div className="flex justify-center mb-4">
-            <Button
-              onClick={() => {
-                localStorage.setItem('prePrayLeadData', JSON.stringify(leadData));
-                navigate('/pre-pray');
-              }}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-bold"
-            >
-              <CheckCircle className="ml-2 h-5 w-5" />
-              מעבר לדף תודה (בדיקה)
-            </Button>
-          </div>
-
           {/* Secure Payment Badge */}
           <div className="flex items-center justify-center gap-2 text-green-400 drop-shadow-md mb-6 bg-white/20 backdrop-blur-sm py-2 px-4 rounded-full">
             <Lock className="h-5 w-5" />
