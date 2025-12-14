@@ -71,11 +71,17 @@ const PrePrayLanding = () => {
 
   // בדיקה אם המשתמש חזר מדף תשלום
   useEffect(() => {
+    console.log("=== PrePray Landing useEffect ===");
+    console.log("URL:", window.location.href);
+    console.log("localStorage prePrayLeadData:", localStorage.getItem("prePrayLeadData"));
+    console.log("localStorage prePrayDataSent:", localStorage.getItem("prePrayDataSent"));
+    
     const urlParams = new URLSearchParams(window.location.search);
     const wasCancelled = urlParams.get('cancelled') === 'true';
     
     // אם חזרו דרך כפתור "חזרה לדף הקודם" - מנקים הכל ומתחילים מחדש
     if (wasCancelled) {
+      console.log("Cancelled - cleaning up localStorage");
       localStorage.removeItem("prePrayLeadData");
       localStorage.removeItem("prePrayDataSent");
       window.history.replaceState({}, '', '/pre-pray');
@@ -89,10 +95,12 @@ const PrePrayLanding = () => {
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
+        console.log("Parsed lead data:", parsedData);
         setSavedLeadData(parsedData);
         setShowThankYou(true);
 
         // שליחה אוטומטית לאפליקציה החיצונית (רק פעם אחת)
+        console.log("Checking if should send:", { alreadySent, dataSent, hasEmail: !!parsedData.email });
         if (!alreadySent && !dataSent && parsedData.email) {
           console.log("שולח נתונים לאפליקציה החיצונית...");
 
