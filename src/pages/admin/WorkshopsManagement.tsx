@@ -21,7 +21,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import FileUploadField from '@/components/admin/FileUploadField';
 
@@ -111,7 +111,7 @@ const WorkshopsManagement: React.FC = () => {
   const { data: workshops = [], isLoading } = useQuery({
     queryKey: ['workshops'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient()
         .from('workshops')
         .select('*')
         .order('date', { ascending: false });
@@ -127,7 +127,7 @@ const WorkshopsManagement: React.FC = () => {
     queryFn: async () => {
       if (!selectedWorkshop?.id) return [];
       
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient()
         .from('registrations')
         .select('*')
         .eq('workshop_id', selectedWorkshop.id)
@@ -155,7 +155,7 @@ const WorkshopsManagement: React.FC = () => {
         const fileExtension = worksheetFile.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExtension}`;
         
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabaseClient().storage
           .from('workshop_files')
           .upload(fileName, worksheetFile);
 
@@ -166,7 +166,7 @@ const WorkshopsManagement: React.FC = () => {
         worksheetFileSize = worksheetFile.size;
       }
       
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('workshops')
         .insert([{
           title: data.title,
@@ -234,13 +234,13 @@ const WorkshopsManagement: React.FC = () => {
         
         // Delete old file if exists
         if (editingWorkshop?.worksheet_file_path) {
-          await supabase.storage
+          await supabaseClient().storage
             .from('workshop_files')
             .remove([editingWorkshop.worksheet_file_path]);
         }
 
         // Upload new file
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabaseClient().storage
           .from('workshop_files')
           .upload(fileName, worksheetFile);
 
@@ -251,7 +251,7 @@ const WorkshopsManagement: React.FC = () => {
         updateData.worksheet_file_size = worksheetFile.size;
       }
       
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('workshops')
         .update(updateData)
         .eq('id', id);
@@ -282,9 +282,9 @@ const WorkshopsManagement: React.FC = () => {
   // Toggle active status mutation
   const toggleActiveMutation = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('workshops')
-        .update({ 
+        .update({
           is_active,
           updated_at: new Date().toISOString(),
         })
@@ -312,7 +312,7 @@ const WorkshopsManagement: React.FC = () => {
   // Delete workshop mutation
   const deleteWorkshopMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('workshops')
         .delete()
         .eq('id', id);
@@ -340,7 +340,7 @@ const WorkshopsManagement: React.FC = () => {
   const sendInvitationsMutation = useMutation({
     mutationFn: async ({ workshopId, zoomLink, subject, body, attachWorksheet }: { workshopId: string; zoomLink: string; subject: string; body: string; attachWorksheet?: boolean }) => {
       // First update the workshop with the current subject and body
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseClient()
         .from('workshops')
         .update({
           invitation_subject: subject,
@@ -351,7 +351,7 @@ const WorkshopsManagement: React.FC = () => {
       if (updateError) throw updateError;
 
       // Then send the invitations
-      const { data, error } = await supabase.functions.invoke('send-workshop-invitations', {
+      const { data, error } = await supabaseClient().functions.invoke('send-workshop-invitations', {
         body: {
           workshopId,
           zoomLink,

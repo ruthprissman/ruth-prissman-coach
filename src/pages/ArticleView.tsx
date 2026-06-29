@@ -14,6 +14,7 @@ import { format, parseISO } from 'date-fns';
 import { he } from 'date-fns/locale';
 import MarkdownPreview from '@/components/admin/articles/MarkdownPreview';
 import { processMarkdownContent } from '@/utils/contentFormatter';
+import DOMPurify from 'dompurify';
 
 const ARTICLE_DEFAULT_IMAGE = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/stories_img//content-tree.PNG';
 
@@ -255,8 +256,8 @@ const ArticleView = () => {
               
               <div className="prose prose-lg max-w-none">
                 {article.content_markdown?.startsWith('<') ? (
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: processMarkdownContent(article.content_markdown) }} 
+                  <div
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(processMarkdownContent(article.content_markdown)) }}
                     className="text-gray-800 leading-relaxed article-html-content"
                   />
                 ) : (

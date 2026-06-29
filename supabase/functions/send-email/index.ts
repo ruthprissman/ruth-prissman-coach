@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
+import { isRequestFromAdmin, isServiceRoleRequest, forbidden } from "../_shared/auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -64,10 +65,24 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailData: EmailRequest = await req.json();
+
+    // SECURITY: this endpoint sends arbitrary HTML through the Brevo account. Enforce that
+    // the sender is one of our own verified addresses, and that anonymous callers (public
+    // registration-confirmation flows) may only send to a SINGLE recipient. Bulk sending
+    // to many recipients requires an authenticated admin.
+    const ALLOWED_SENDERS = ['ruth@ruthprissman.co.il', 'ruthprissman@gmail.com'];
+    const senderEmail = (emailData.sender?.email ?? '').toLowerCase().trim();
+    const recipientCount = Array.isArray(emailData.emailList) ? emailData.emailList.length : 0;
+    const callerIsAdmin = isServiceRoleRequest(req) || await isRequestFromAdmin(req);
+    if (!ALLOWED_SENDERS.includes(senderEmail)) {
+      return forbidden(corsHeaders);
+    }
+    if (!callerIsAdmin && recipientCount !== 1) {
+      return forbidden(corsHeaders);
+    }
+
     console.log('Received email request:', {
       emailListLength: emailData.emailList?.length,
-      subject: emailData.subject,
-      sender: emailData.sender,
       contentLength: emailData.htmlContent?.length,
       hasAttachments: !!emailData.attachments && emailData.attachments.length > 0
     });
@@ -318,9 +333,8 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error('Error in send-email function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        message: error.message 
+      JSON.stringify({
+        error: 'Internal server error'
       }),
       { 
         status: 500, 

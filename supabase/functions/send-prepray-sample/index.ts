@@ -10,6 +10,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Escape untrusted input before interpolating it into email HTML.
+const escapeHtml = (s: string): string =>
+  (s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+
 interface RequestBody {
   email: string;
   firstName: string;
@@ -37,7 +41,16 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { email, firstName }: RequestBody = await req.json();
-    console.log(`Sending pre-pray sample to: ${email}`);
+    console.log("Sending pre-pray sample");
+
+    // Basic input validation.
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid email" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!BREVO_API_KEY) {
       throw new Error("BREVO_API_KEY is not configured");
@@ -193,7 +206,7 @@ const handler = async (req: Request): Promise<Response> => {
     <h1>היום הראשון שלך במתנה – דקה לפני התפילה 🎁</h1>
     
     <p style="font-size: 18px; text-align: center; color: #5FA6A6; font-weight: bold;">
-      שלום ${firstName},
+      שלום ${escapeHtml(firstName)},
     </p>
     
     <p style="font-size: 16px; text-align: center;">
@@ -325,7 +338,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: "Failed to send email",
       }),
       {
         status: 500,

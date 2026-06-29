@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseClient } from '@/lib/supabaseClient';
 import {
   Select,
   SelectContent,
@@ -88,7 +88,7 @@ const EmailComposer: React.FC = () => {
   // Load email items
   const loadEmailItems = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient()
         .from('email_items')
         .select('*')
         .order('updated_at', { ascending: false })
@@ -109,7 +109,7 @@ const EmailComposer: React.FC = () => {
   // Load templates
   const loadTemplates = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient()
         .from('email_templates')
         .select('*')
         .order('created_at', { ascending: false });
@@ -203,7 +203,7 @@ const EmailComposer: React.FC = () => {
 
     try {
       console.log('[generateLinksBlock] Fetching links for ref:', linksRef);
-      const { data: links, error } = await supabase
+      const { data: links, error } = await supabaseClient()
         .from('static_links')
         .select('*')
         .eq('list_type', linksRef)
@@ -333,7 +333,7 @@ const EmailComposer: React.FC = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       
-      const { error } = await supabase.storage
+      const { error } = await supabaseClient().storage
         .from('site_imgs')
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -342,11 +342,11 @@ const EmailComposer: React.FC = () => {
 
       if (error) throw error;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = supabaseClient().storage
         .from('site_imgs')
         .getPublicUrl(fileName);
 
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseClient()
         .from('email_items')
         .update({ hero_image_url: publicUrl })
         .eq('id', currentItem.id);
@@ -378,7 +378,7 @@ const EmailComposer: React.FC = () => {
     if (!currentItem) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('email_items')
         .update({ hero_image_url: null })
         .eq('id', currentItem.id);
@@ -631,7 +631,7 @@ const EmailComposer: React.FC = () => {
     setIsLoading(true);
     try {
       // Load item
-      const { data: itemData, error: itemError } = await supabase
+      const { data: itemData, error: itemError } = await supabaseClient()
         .from('email_items')
         .select('*')
         .eq('id', selectedItemId)
@@ -642,7 +642,7 @@ const EmailComposer: React.FC = () => {
       setEditableSubject(itemData.subject || '');
 
       // Load template
-      const { data: templateData, error: templateError } = await supabase
+      const { data: templateData, error: templateError } = await supabaseClient()
         .from('email_templates')
         .select('*')
         .eq('id', selectedTemplateId)
@@ -705,7 +705,7 @@ const EmailComposer: React.FC = () => {
       }
       
       // Update email_items
-      const { data: updatedItem, error: updateError } = await supabase
+      const { data: updatedItem, error: updateError } = await supabaseClient()
         .from('email_items')
         .update({
           render_html: finalHtml,
@@ -723,7 +723,7 @@ const EmailComposer: React.FC = () => {
 
       if (!legacyId) {
         // Insert new
-        const { data: newContent, error: insertError } = await supabase
+        const { data: newContent, error: insertError } = await supabaseClient()
           .from('professional_content')
           .insert({
             title: currentItem.title,
@@ -741,13 +741,13 @@ const EmailComposer: React.FC = () => {
         legacyId = newContent.id;
 
         // Update email_items with legacy_prof_content_id
-        await supabase
+        await supabaseClient()
           .from('email_items')
           .update({ legacy_prof_content_id: legacyId })
           .eq('id', currentItem.id);
       } else {
         // Update existing
-        const { error: legacyUpdateError } = await supabase
+        const { error: legacyUpdateError } = await supabaseClient()
           .from('professional_content')
           .update({
             title: currentItem.title,
@@ -810,7 +810,7 @@ const EmailComposer: React.FC = () => {
     setIsLoading(true);
     try {
       console.log('[sendTest] Sending test email with subject:', editableSubject);
-      const { error } = await supabase.functions.invoke('send-email', {
+      const { error } = await supabaseClient().functions.invoke('send-email', {
         body: {
           emailList: ['ruth@ruthprissman.co.il'],
           subject: editableSubject,
@@ -861,7 +861,7 @@ const EmailComposer: React.FC = () => {
 
     try {
       // Get all subscribed recipients
-      const { data: subscribers, error: subsError } = await supabase
+      const { data: subscribers, error: subsError } = await supabaseClient()
         .from('content_subscribers')
         .select('email')
         .eq('is_subscribed', true);
@@ -880,7 +880,7 @@ const EmailComposer: React.FC = () => {
       }
 
       // Use existing edge function
-      const { error } = await supabase.functions.invoke('send-email', {
+      const { error } = await supabaseClient().functions.invoke('send-email', {
         body: {
           emailList: recipients,
           subject: editableSubject,

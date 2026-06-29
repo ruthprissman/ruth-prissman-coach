@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
+import { isRequestFromAdmin, forbidden } from "../_shared/auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,10 +39,15 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { 
-      status: 405, 
-      headers: corsHeaders 
+    return new Response('Method not allowed', {
+      status: 405,
+      headers: corsHeaders
     });
+  }
+
+  // SECURITY: sending workshop invitations is admin-only.
+  if (!(await isRequestFromAdmin(req))) {
+    return forbidden(corsHeaders);
   }
 
   try {
@@ -262,7 +268,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error('Error in send-workshop-invitations function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'Internal server error' }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },

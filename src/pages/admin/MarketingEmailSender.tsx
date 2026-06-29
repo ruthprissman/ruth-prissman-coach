@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { BlocksList } from '@/components/admin/email-builder/BlocksList';
 
 import { EmailPreview } from '@/components/admin/email-builder/EmailPreview';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseClient } from '@/lib/supabaseClient';
 import { useToast } from '@/hooks/use-toast';
 import { EmailBlock, BlockType, DEFAULT_BLOCK_STYLES, EmailBlockStyles } from '@/types/emailBlock';
 import { 
@@ -126,7 +126,7 @@ export default function MarketingEmailSender() {
 
   const fetchTemplates = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient()
         .from('email_templates')
         .select('*')
         .order('name');
@@ -148,7 +148,7 @@ export default function MarketingEmailSender() {
   const fetchDrafts = async () => {
     setLoadingDrafts(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient()
         .from('marketing_email_drafts')
         .select('*')
         .order('updated_at', { ascending: false });
@@ -168,7 +168,7 @@ export default function MarketingEmailSender() {
   const fetchSubscribers = async () => {
     setLoadingSubscribers(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient()
         .from('content_subscribers')
         .select('email, first_name')
         .eq('is_subscribed', true);
@@ -217,7 +217,7 @@ export default function MarketingEmailSender() {
 
       if (currentDraftId) {
         // Update existing draft
-        const { error } = await supabase
+        const { error } = await supabaseClient()
           .from('marketing_email_drafts')
           .update(draftData)
           .eq('id', currentDraftId);
@@ -226,7 +226,7 @@ export default function MarketingEmailSender() {
         toast({ title: 'הטיוטה עודכנה בהצלחה' });
       } else {
         // Create new draft
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient()
           .from('marketing_email_drafts')
           .insert([draftData])
           .select()
@@ -264,7 +264,7 @@ export default function MarketingEmailSender() {
 
   const deleteDraft = async (draftId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('marketing_email_drafts')
         .delete()
         .eq('id', draftId);
@@ -291,11 +291,11 @@ export default function MarketingEmailSender() {
     if (!currentDraftId) return;
     
     try {
-      await supabase
+      await supabaseClient()
         .from('marketing_email_drafts')
-        .update({ 
-          status: 'sent', 
-          sent_at: new Date().toISOString() 
+        .update({
+          status: 'sent',
+          sent_at: new Date().toISOString()
         })
         .eq('id', currentDraftId);
       
@@ -434,13 +434,13 @@ export default function MarketingEmailSender() {
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
       const filePath = `email-attachments/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabaseClient().storage
         .from('site_file')
         .upload(filePath, fileToUpload);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = supabaseClient().storage
         .from('site_file')
         .getPublicUrl(filePath);
 
@@ -718,7 +718,7 @@ export default function MarketingEmailSender() {
 
       const htmlContent = generateEmailHTML();
       
-      const { error } = await supabase.functions.invoke('send-marketing-email', {
+      const { error } = await supabaseClient().functions.invoke('send-marketing-email', {
         body: {
           emailList,
           subject,
@@ -989,16 +989,16 @@ export default function MarketingEmailSender() {
                               const fileName = `${Date.now()}.${fileExt}`;
                               const filePath = `email-images/${fileName}`;
                               
-                              const { error: uploadError } = await supabase.storage
+                              const { error: uploadError } = await supabaseClient().storage
                                 .from('email-attachments')
                                 .upload(filePath, file);
-                              
+
                               if (uploadError) {
                                 toast({ title: 'שגיאה בהעלאה', variant: 'destructive' });
                                 return;
                               }
-                              
-                              const { data: { publicUrl } } = supabase.storage
+
+                              const { data: { publicUrl } } = supabaseClient().storage
                                 .from('email-attachments')
                                 .getPublicUrl(filePath);
                               

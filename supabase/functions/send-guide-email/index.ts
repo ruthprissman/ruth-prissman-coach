@@ -8,6 +8,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Escape untrusted input before interpolating it into email HTML.
+const escapeHtml = (s: string): string =>
+  (s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+
 interface EmailRequest {
   email: string;
   firstName: string;
@@ -27,7 +31,24 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { email, firstName, pdfUrl }: EmailRequest = await req.json();
 
-    console.log('Sending guide email to:', email);
+    // SECURITY: pdfUrl is fetched server-side; restrict it to our own public storage bucket
+    // to prevent SSRF (server-side request forgery) to arbitrary internal/external URLs.
+    const ALLOWED_PDF_PREFIX = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid email' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (typeof pdfUrl !== 'string' || !pdfUrl.startsWith(ALLOWED_PDF_PREFIX)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid file URL' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Sending guide email');
 
     // Fetch signature image and convert to base64
     const signatureUrl = 'https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/public/site_imgs/ruth-signature.png';
@@ -177,7 +198,7 @@ const handler = async (req: Request): Promise<Response> => {
       <h1 class="title">החוברת כאן! – להתפלל כשאין זמן</h1>
       
       <div class="content">
-        <p>שלום ${firstName},</p>
+        <p>שלום ${escapeHtml(firstName)},</p>
         
         <p>שמחה שהצטרפת 💜</p>
         
@@ -283,9 +304,9 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error('Error in send-guide-email function:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message 
+      JSON.stringify({
+        success: false,
+        error: 'Failed to send email'
       }),
       {
         status: 500,

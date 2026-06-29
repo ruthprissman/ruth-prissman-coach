@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseClient } from '@/lib/supabaseClient';
 import {
   Dialog,
   DialogContent,
@@ -115,7 +115,7 @@ export const EditLeadDialog: React.FC<EditLeadDialogProps> = ({
         updated_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('leads')
         .update(updateData)
         .eq('id', lead.id);

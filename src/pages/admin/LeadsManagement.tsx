@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseClient } from '@/lib/supabaseClient';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { EditLeadDialog } from '@/components/admin/EditLeadDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -134,7 +134,7 @@ const LeadsManagement: React.FC = () => {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient()
         .from('leads')
         .select('*')
         .order('created_at', { ascending: false });
@@ -210,7 +210,7 @@ const LeadsManagement: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('leads')
         .insert([{
           name: newLead.name,
@@ -243,7 +243,7 @@ const LeadsManagement: React.FC = () => {
   // Update lead status
   const handleStatusUpdate = async (leadId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('leads')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', leadId);
@@ -269,7 +269,7 @@ const LeadsManagement: React.FC = () => {
   // Delete lead
   const handleDeleteLead = async (leadId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseClient()
         .from('leads')
         .delete()
         .eq('id', leadId);

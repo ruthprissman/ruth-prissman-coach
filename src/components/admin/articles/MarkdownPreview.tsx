@@ -1,6 +1,7 @@
 
 import React from 'react';
 import MarkdownIt from 'markdown-it';
+import DOMPurify from 'dompurify';
 
 interface MarkdownPreviewProps {
   markdown: string;
@@ -21,8 +22,9 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({
 }) => {
   if (!markdown) return <div className={`prose max-w-none ${className}`}></div>;
   
-  // Process the markdown while preserving paragraphs for column layout
-  const html = mdParser.render(markdown);
+  // Process the markdown while preserving paragraphs for column layout.
+  // Sanitize the result: markdown-it runs with html:true, so raw HTML can pass through.
+  const html = DOMPurify.sanitize(mdParser.render(markdown));
   
   return (
     <div 

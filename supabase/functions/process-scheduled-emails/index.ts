@@ -12,6 +12,20 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // SECURITY: this endpoint should only be triggered by the scheduled cron job.
+  // When CRON_SECRET is configured, require the matching 'x-cron-secret' header.
+  // (Activate by: 1) setting the CRON_SECRET function secret, 2) adding that header to the
+  //  cron job's net.http_post call. Until configured it stays permissive to avoid breaking
+  //  the existing daily job — but note schedule-email is already admin-only, so the only
+  //  effect of an unauthenticated call here is sending already-scheduled, legitimate mail.)
+  const cronSecret = Deno.env.get('CRON_SECRET');
+  if (cronSecret && req.headers.get('x-cron-secret') !== cronSecret) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
+  }
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -62,7 +76,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Call the existing send-email function
         const sendEmailResponse = await supabaseClient.functions.invoke('send-email', {
           body: {
-            recipients: scheduledEmail.recipients,
+            emailList: scheduledEmail.recipients,
             subject: scheduledEmail.subject,
             htmlContent: scheduledEmail.html_content,
             sender: {
@@ -147,8 +161,8 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error('Error in process-scheduled-emails function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message || 'שגיאה לא צפויה'
+      JSON.stringify({
+        error: 'Internal server error'
       }),
       {
         status: 500,

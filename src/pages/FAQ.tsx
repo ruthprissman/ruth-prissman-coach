@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import markdownit from 'markdown-it';
+import DOMPurify from 'dompurify';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -130,7 +131,7 @@ export default function FAQ() {
                     </AccordionTrigger>
                     <AccordionContent className="font-heebo text-right leading-relaxed">
                       <div 
-                        dangerouslySetInnerHTML={{ __html: renderMarkdown(item.answer) }} 
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderMarkdown(item.answer)) }}
                         className="py-2 px-2 prose prose-sm max-w-none rtl:text-right"
                       />
                     </AccordionContent>
