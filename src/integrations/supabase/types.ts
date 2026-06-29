@@ -1236,6 +1236,15 @@ export type Database = {
     }
     Functions: {
       clean_expired_publication_locks: { Args: never; Returns: number }
+      content_subscriber_email_exists: {
+        Args: { _email: string }
+        Returns: boolean
+      }
+      is_admin: { Args: never; Returns: boolean }
+      story_subscriber_email_exists: {
+        Args: { _email: string }
+        Returns: boolean
+      }
     }
     Enums: {
       content_type: "article" | "poem" | "humor"
