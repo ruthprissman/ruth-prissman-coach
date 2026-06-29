@@ -31,10 +31,10 @@ const listTypeNames: Record<string, string> = {
 
 const UnsubscribePage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState<'input' | 'confirm' | 'success' | 'notFound' | 'resubscribed' | 'alreadyUnsubscribed'>('input');
+  const [step, setStep] = useState<'input' | 'confirm' | 'success' | 'notFound' | 'resubscribed' | 'alreadyUnsubscribed' | 'processing'>('input');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailError, setEmailError] = useState('');
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -51,7 +51,7 @@ const UnsubscribePage: React.FC = () => {
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const email = e.target.value;
     form.setValue('email', email);
-    
+
     if (email && !validateEmail(email)) {
       setEmailError('נא להזין כתובת אימייל תקינה');
     } else {
@@ -62,95 +62,75 @@ const UnsubscribePage: React.FC = () => {
   useEffect(() => {
     const email = searchParams.get('email');
     const list = searchParams.get('list');
-    
+
     if (email) {
       form.setValue('email', email);
     }
-    
+
     if (list && ['general', 'stories', 'all'].includes(list)) {
       form.setValue('listType', list as 'general' | 'stories' | 'all');
     }
   }, [searchParams, form]);
+
+  // One-click secure unsubscribe via a tokenized link from an email.
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (!token) return;
+
+    const action = searchParams.get('action') === 'resubscribe' ? 'resubscribe' : 'unsubscribe';
+    const list = (searchParams.get('list') as 'general' | 'stories' | 'all') || 'all';
+    setStep('processing');
+
+    (async () => {
+      try {
+        const { data, error } = await supabaseClient().functions.invoke('unsubscribe', {
+          body: { token, action, list },
+        });
+        if (error) throw error;
+
+        if (!data?.found) {
+          setStep('notFound');
+          return;
+        }
+        if (action === 'resubscribe') {
+          setStep('resubscribed');
+          return;
+        }
+        setStep(data.alreadyDone ? 'alreadyUnsubscribed' : 'success');
+      } catch (err) {
+        console.error('Error processing unsubscribe token:', err);
+        toast.error('אירעה שגיאה בתהליך ההסרה מרשימת התפוצה');
+        setStep('input');
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const selectedListType = form.watch('listType');
   const selectedListName = listTypeNames[selectedListType] || '';
 
   const handleUnsubscribe = async (values: FormValues) => {
     setIsSubmitting(true);
-    
+
     try {
-      let isAlreadyUnsubscribed = false;
-      let emailExists = false;
-      
-      const supabase = supabaseClient();
-      
-      if (values.listType === 'general' || values.listType === 'all') {
-        const { data: generalData } = await supabase
-          .from('content_subscribers')
-          .select('email, is_subscribed')
-          .eq('email', values.email)
-          .maybeSingle();
-          
-        if (generalData) {
-          emailExists = true;
-          if (!generalData.is_subscribed) {
-            isAlreadyUnsubscribed = true;
-          }
-        }
-      }
-      
-      if (!emailExists && (values.listType === 'stories' || values.listType === 'all')) {
-        const { data: storiesData } = await supabase
-          .from('story_subscribers')
-          .select('email, is_subscribed')
-          .eq('email', values.email)
-          .maybeSingle();
-          
-        if (storiesData) {
-          emailExists = true;
-          if (!storiesData.is_subscribed) {
-            isAlreadyUnsubscribed = true;
-          }
-        }
-      }
-      
-      if (!emailExists) {
+      const { data, error } = await supabaseClient().functions.invoke('unsubscribe', {
+        body: { email: values.email, list: values.listType, action: 'unsubscribe' },
+      });
+
+      if (error) throw error;
+
+      if (!data?.found) {
         setStep('notFound');
         return;
       }
-      
-      if (isAlreadyUnsubscribed) {
+
+      if (data.alreadyDone) {
         setStep('alreadyUnsubscribed');
         return;
       }
-      
-      if (values.listType === 'general' || values.listType === 'all') {
-        const { error: generalError } = await supabase
-          .from('content_subscribers')
-          .update({ 
-            is_subscribed: false, 
-            unsubscribed_at: new Date().toISOString() 
-          })
-          .eq('email', values.email);
-          
-        if (generalError) throw generalError;
-      }
-      
-      if (values.listType === 'stories' || values.listType === 'all') {
-        const { error: storiesError } = await supabase
-          .from('story_subscribers')
-          .update({ 
-            is_subscribed: false, 
-            unsubscribed_at: new Date().toISOString() 
-          })
-          .eq('email', values.email);
-          
-        if (storiesError) throw storiesError;
-      }
-      
+
       setStep('success');
       toast.success('הסרת המנוי בוצעה בהצלחה');
-      
     } catch (error) {
       console.error('Error unsubscribing:', error);
       toast.error('אירעה שגיאה בתהליך ההסרה מרשימת התפוצה');
@@ -162,87 +142,34 @@ const UnsubscribePage: React.FC = () => {
   const handleConfirm = () => {
     const values = form.getValues();
     const email = values.email;
-    
+
     if (!email) {
       setEmailError('נא להזין כתובת אימייל');
       return;
     }
-    
+
     if (!validateEmail(email)) {
       setEmailError('נא להזין כתובת אימייל תקינה');
       return;
     }
-    
+
     setEmailError('');
     setStep('confirm');
   };
-  
+
   const handleResubscribe = async () => {
     setIsSubmitting(true);
     const values = form.getValues();
-    
+
     try {
-      const supabase = supabaseClient();
-      
-      if (values.listType === 'general' || values.listType === 'all') {
-        const { data } = await supabase
-          .from('content_subscribers')
-          .select('id')
-          .eq('email', values.email)
-          .single();
-          
-        if (data) {
-          const { error: updateError } = await supabase
-            .from('content_subscribers')
-            .update({ 
-              is_subscribed: true,
-            })
-            .eq('email', values.email);
-          
-          if (updateError) throw updateError;
-        } else {
-          const { error: insertError } = await supabase
-            .from('content_subscribers')
-            .insert({ 
-              email: values.email, 
-              is_subscribed: true 
-            });
-          
-          if (insertError) throw insertError;
-        }
-      }
-      
-      if (values.listType === 'stories' || values.listType === 'all') {
-        const { data } = await supabase
-          .from('story_subscribers')
-          .select('id')
-          .eq('email', values.email)
-          .single();
-          
-        if (data) {
-          const { error: updateError } = await supabase
-            .from('story_subscribers')
-            .update({ 
-              is_subscribed: true,
-            })
-            .eq('email', values.email);
-          
-          if (updateError) throw updateError;
-        } else {
-          const { error: insertError } = await supabase
-            .from('story_subscribers')
-            .insert({ 
-              email: values.email, 
-              is_subscribed: true 
-            });
-          
-          if (insertError) throw insertError;
-        }
-      }
-      
+      const { data, error } = await supabaseClient().functions.invoke('unsubscribe', {
+        body: { email: values.email, list: values.listType, action: 'resubscribe' },
+      });
+
+      if (error) throw error;
+
       setStep('resubscribed');
       toast.success('נרשמת מחדש בהצלחה!');
-      
     } catch (error) {
       console.error('Error resubscribing:', error);
       toast.error('אירעה שגיאה בתהליך הרישום מחדש');
@@ -258,7 +185,7 @@ const UnsubscribePage: React.FC = () => {
         <meta name="description" content="אם ברצונך להסיר את עצמך מרשימת התפוצה של רות פריסמן, תוכלי לעשות זאת כאן במהירות ובקלות." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      
+
       <Navigation />
       <main className="flex-grow">
         <div className="container mx-auto px-4 py-16 md:py-24 max-w-md">
@@ -272,7 +199,13 @@ const UnsubscribePage: React.FC = () => {
               </h1>
               <div className="w-16 h-1 bg-gold rounded-full"></div>
             </div>
-            
+
+            {step === 'processing' && (
+              <div className="text-center py-8">
+                <p className="text-gray-600">מעבד את הבקשה שלך...</p>
+              </div>
+            )}
+
             {step === 'input' && (
               <Form {...form}>
                 <form className="space-y-6">
@@ -283,9 +216,9 @@ const UnsubscribePage: React.FC = () => {
                       <FormItem>
                         <FormLabel>כתובת אימייל</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             type="text"
-                            placeholder="הזן את כתובת האימייל שלך" 
+                            placeholder="הזן את כתובת האימייל שלך"
                             value={field.value}
                             onChange={handleEmailChange}
                             dir="ltr"
@@ -299,7 +232,7 @@ const UnsubscribePage: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="space-y-2">
                     <FormLabel>בחר רשימת תפוצה:</FormLabel>
                     <div className="space-y-2">
@@ -314,7 +247,7 @@ const UnsubscribePage: React.FC = () => {
                         />
                         <label htmlFor="general" className="text-sm text-gray-700">תוכן כללי</label>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2 space-x-reverse">
                         <input
                           type="radio"
@@ -326,7 +259,7 @@ const UnsubscribePage: React.FC = () => {
                         />
                         <label htmlFor="stories" className="text-sm text-gray-700">סיפורים קצרים</label>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2 space-x-reverse">
                         <input
                           type="radio"
@@ -340,9 +273,9 @@ const UnsubscribePage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
-                  <Button 
-                    type="button" 
+
+                  <Button
+                    type="button"
                     onClick={handleConfirm}
                     className="w-full bg-red-500 hover:bg-red-600 text-white"
                   >
@@ -351,7 +284,7 @@ const UnsubscribePage: React.FC = () => {
                 </form>
               </Form>
             )}
-            
+
             {step === 'confirm' && (
               <div className="space-y-6">
                 <div className="p-4 bg-amber-50/90 border border-amber-200 rounded-md">
@@ -367,18 +300,18 @@ const UnsubscribePage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex space-x-3 space-x-reverse">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => setStep('input')}
                     className="flex-1"
                   >
                     חזרה
                   </Button>
-                  <Button 
-                    type="button" 
+                  <Button
+                    type="button"
                     onClick={() => handleUnsubscribe(form.getValues())}
                     className="flex-1 bg-red-500 hover:bg-red-600 text-white"
                     disabled={isSubmitting}
@@ -388,25 +321,25 @@ const UnsubscribePage: React.FC = () => {
                 </div>
               </div>
             )}
-            
+
             {step === 'success' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-center mb-4">
                   <CheckCircle className="h-16 w-16 text-green-500" />
                 </div>
-                
+
                 <div className="text-center">
                   <h3 className="text-xl font-medium text-gray-900 mb-2">
                     המנוי הוסר בהצלחה
                   </h3>
                   <p className="text-gray-600 mb-6">
-                    המנוי שלך לרשימת "<strong>{selectedListName}</strong>" הוסר בהצלחה. 
+                    המנוי שלך לרשימת "<strong>{selectedListName}</strong>" הוסר בהצלחה.
                     <br />אנו מקווים לראות אותך שוב בעתיד! 😊
                   </p>
-                  
+
                   <div className="space-y-3">
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       onClick={handleResubscribe}
                       className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                       disabled={isSubmitting}
@@ -414,10 +347,10 @@ const UnsubscribePage: React.FC = () => {
                       <ArrowRight className="ml-2 h-4 w-4" />
                       {isSubmitting ? 'מבצע רישום...' : 'רוצה להצטרף חזרה? לחץ כאן להרשמה מחדש'}
                     </Button>
-                    
+
                     <Link to="/">
-                      <Button 
-                        type="button" 
+                      <Button
+                        type="button"
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                       >
                         <Home className="ml-2 h-4 w-4" />
@@ -428,13 +361,13 @@ const UnsubscribePage: React.FC = () => {
                 </div>
               </div>
             )}
-            
+
             {step === 'resubscribed' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-center mb-4">
                   <CheckCircle className="h-16 w-16 text-green-500" />
                 </div>
-                
+
                 <div className="text-center">
                   <h3 className="text-xl font-medium text-gray-900 mb-2">
                     נרשמת בהצלחה!
@@ -443,10 +376,10 @@ const UnsubscribePage: React.FC = () => {
                     נרשמת בהצלחה לרשימת "<strong>{selectedListName}</strong>".
                     <br />אנו שמחים לראות אותך שוב! 😊
                   </p>
-                  
+
                   <Link to="/">
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                     >
                       <Home className="ml-2 h-4 w-4" />
@@ -456,7 +389,7 @@ const UnsubscribePage: React.FC = () => {
                 </div>
               </div>
             )}
-            
+
             {step === 'alreadyUnsubscribed' && (
               <div className="space-y-6">
                 <div className="p-4 bg-blue-50/90 border border-blue-200 rounded-md">
@@ -471,10 +404,10 @@ const UnsubscribePage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
-                  <Button 
-                    type="button" 
+                  <Button
+                    type="button"
                     onClick={handleResubscribe}
                     className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                     disabled={isSubmitting}
@@ -482,10 +415,10 @@ const UnsubscribePage: React.FC = () => {
                     <ArrowRight className="ml-2 h-4 w-4" />
                     {isSubmitting ? 'מבצע רישום...' : 'רוצה להצטרף חזרה? לחץ כאן להרשמה מחדש'}
                   </Button>
-                  
+
                   <Link to="/">
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       variant="outline"
                       className="w-full"
                     >
@@ -496,7 +429,7 @@ const UnsubscribePage: React.FC = () => {
                 </div>
               </div>
             )}
-            
+
             {step === 'notFound' && (
               <div className="space-y-6">
                 <div className="p-4 bg-red-50/90 border border-red-200 rounded-md">
@@ -510,19 +443,19 @@ const UnsubscribePage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
-                  <Button 
-                    type="button" 
+                  <Button
+                    type="button"
                     onClick={() => setStep('input')}
                     className="w-full"
                   >
                     חזרה לטופס
                   </Button>
-                  
+
                   <Link to="/">
-                    <Button 
-                      type="button" 
+                    <Button
+                      type="button"
                       variant="outline"
                       className="w-full"
                     >
@@ -533,15 +466,15 @@ const UnsubscribePage: React.FC = () => {
                 </div>
               </div>
             )}
-            
+
           </div>
-          
+
           <div className="text-center text-sm text-gray-500">
             <p>לשאלות או בעיות, אנא <Link to="/contact" className="text-purple-600 hover:text-purple-700 underline">צור קשר</Link>.</p>
           </div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );

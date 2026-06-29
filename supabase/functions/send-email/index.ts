@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 import { isRequestFromAdmin, isServiceRoleRequest, forbidden } from "../_shared/auth.ts";
 import { checkRateLimit, clientIp, tooManyRequests } from "../_shared/rateLimit.ts";
+import { adminClient, personalizeUnsubscribe } from "../_shared/unsubscribe.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -259,6 +260,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Send email to each recipient individually
+    const db = adminClient();
     let successCount = 0;
     let failureCount = 0;
     const errors: any[] = [];
@@ -275,7 +277,7 @@ const handler = async (req: Request): Promise<Response> => {
           },
           to: [{ email: email }], // Single recipient
           subject: emailData.subject,
-          htmlContent: emailData.htmlContent
+          htmlContent: await personalizeUnsubscribe(db, emailData.htmlContent, email)
         };
 
         // Add attachments if any were successfully processed

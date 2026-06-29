@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { isRequestFromAdmin, forbidden } from "../_shared/auth.ts";
+import { adminClient, personalizeUnsubscribe } from "../_shared/unsubscribe.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -176,6 +177,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log(`🚀 Starting parallel batch sending: ${totalEmails} emails in ${totalBatches} batches of ${BATCH_SIZE}`);
 
+    const db = adminClient();
     let successCount = 0;
     let failureCount = 0;
     const errors: Array<{ email: string; error: string }> = [];
@@ -198,7 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
               },
               to: [{ email: email }],
               subject: emailData.subject,
-              htmlContent: emailData.htmlContent
+              htmlContent: await personalizeUnsubscribe(db, emailData.htmlContent, email)
             };
 
             if (brevoAttachments && brevoAttachments.length > 0) {
