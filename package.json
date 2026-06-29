@@ -63,7 +63,7 @@
     "grapesjs-preset-newsletter": "^1.0.2",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.2.4",
-    "jspdf": "^3.0.1",
+    "jspdf": "^4.2.1",
     "kosher-zmanim": "^0.8.2",
     "lucide-react": "^0.462.0",
     "markdown-it": "^14.1.0",
