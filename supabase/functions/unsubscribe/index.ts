@@ -30,16 +30,21 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method !== 'POST') return json(405, { error: 'Method not allowed' });
 
   try {
-    const { token, email, list = 'general', action = 'unsubscribe' }: Body = await req.json();
+    const body: Body = await req.json();
+    const token = body.token;
+    const email = body.email;
+    // Whitelist enum-like inputs.
+    const action = body.action === 'resubscribe' ? 'resubscribe' : 'unsubscribe';
+    const list = (body.list === 'stories' || body.list === 'all') ? body.list : 'general';
     const db = adminClient();
     const ip = clientIp(req);
     const targetSubscribed = action === 'resubscribe'; // desired is_subscribed value
 
-    const applyTo = (current: boolean) => {
-      const patch: Record<string, unknown> = { is_subscribed: targetSubscribed };
-      if (!targetSubscribed) patch.unsubscribed_at = new Date().toISOString();
-      return patch;
-    };
+    const applyTo = () => ({
+      is_subscribed: targetSubscribed,
+      // Clear the timestamp on resubscribe so the row isn't left in a contradictory state.
+      unsubscribed_at: targetSubscribed ? null : new Date().toISOString(),
+    });
 
     // -------- Token mode: secure one-click from an email link --------
     if (token) {
@@ -58,7 +63,7 @@ const handler = async (req: Request): Promise<Response> => {
           if (data.is_subscribed === targetSubscribed) {
             alreadyDone = true;
           } else {
-            await db.from(table).update(applyTo(data.is_subscribed)).eq('unsubscribe_token', token);
+            await db.from(table).update(applyTo()).eq('unsubscribe_token', token);
           }
         }
       }
@@ -94,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
           if (data.is_subscribed === targetSubscribed) {
             alreadyDone = true;
           } else {
-            await db.from(table).update(applyTo(data.is_subscribed)).ilike('email', pattern);
+            await db.from(table).update(applyTo()).ilike('email', pattern);
           }
         }
       }

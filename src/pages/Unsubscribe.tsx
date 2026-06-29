@@ -168,6 +168,11 @@ const UnsubscribePage: React.FC = () => {
 
       if (error) throw error;
 
+      if (!data?.found) {
+        setStep('notFound');
+        return;
+      }
+
       setStep('resubscribed');
       toast.success('נרשמת מחדש בהצלחה!');
     } catch (error) {
@@ -243,6 +248,7 @@ const UnsubscribePage: React.FC = () => {
                           value="general"
                           checked={form.watch('listType') === 'general'}
                           onChange={() => form.setValue('listType', 'general')}
+                          name="listType"
                           className="w-4 h-4 text-purple-600"
                         />
                         <label htmlFor="general" className="text-sm text-gray-700">תוכן כללי</label>
@@ -255,6 +261,7 @@ const UnsubscribePage: React.FC = () => {
                           value="stories"
                           checked={form.watch('listType') === 'stories'}
                           onChange={() => form.setValue('listType', 'stories')}
+                          name="listType"
                           className="w-4 h-4 text-purple-600"
                         />
                         <label htmlFor="stories" className="text-sm text-gray-700">סיפורים קצרים</label>
@@ -267,6 +274,7 @@ const UnsubscribePage: React.FC = () => {
                           value="all"
                           checked={form.watch('listType') === 'all'}
                           onChange={() => form.setValue('listType', 'all')}
+                          name="listType"
                           className="w-4 h-4 text-purple-600"
                         />
                         <label htmlFor="all" className="text-sm text-gray-700">הסרה מכל הרשימות</label>
