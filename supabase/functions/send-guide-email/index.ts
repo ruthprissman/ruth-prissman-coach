@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { checkRateLimit, clientIp, tooManyRequests } from "../_shared/rateLimit.ts";
 
 const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
@@ -46,6 +47,13 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ success: false, error: 'Invalid file URL' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Rate limit: throttle per source IP and per target email to prevent mail-bombing / quota drain.
+    const ip = clientIp(req);
+    if (!(await checkRateLimit('guide-email-ip', ip, 5, 600)) ||
+        !(await checkRateLimit('guide-email-email', email.toLowerCase(), 3, 3600))) {
+      return tooManyRequests(corsHeaders);
     }
 
     console.log('Sending guide email');

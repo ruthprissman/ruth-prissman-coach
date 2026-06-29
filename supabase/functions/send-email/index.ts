@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
 import { isRequestFromAdmin, isServiceRoleRequest, forbidden } from "../_shared/auth.ts";
+import { checkRateLimit, clientIp, tooManyRequests } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -79,6 +80,13 @@ const handler = async (req: Request): Promise<Response> => {
     }
     if (!callerIsAdmin && recipientCount !== 1) {
       return forbidden(corsHeaders);
+    }
+    // Rate limit the public (non-admin) single-recipient path by source IP.
+    if (!callerIsAdmin) {
+      const ip = clientIp(req);
+      if (!(await checkRateLimit('send-email-public-ip', ip, 5, 600))) {
+        return tooManyRequests(corsHeaders);
+      }
     }
 
     console.log('Received email request:', {
