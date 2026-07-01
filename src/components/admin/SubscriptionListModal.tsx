@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, BookOpen, BookText, Calendar, Mail } from 'lucide-react';
+import { Users, BookOpen, BookText, Calendar, Mail, Download } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { formatDateTimeInIsrael } from '@/utils/dateUtils';
 
