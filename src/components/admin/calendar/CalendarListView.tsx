@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { format, isToday, isTomorrow, addDays, addMinutes } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
+import { he } from 'date-fns/locale/he';
 import { Calendar, Clock, Check, X, Lock, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
