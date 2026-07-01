@@ -252,6 +252,19 @@ export const SubscriptionListModal: React.FC<SubscriptionListModalProps> = ({ is
                 />
               </div>
 
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportToCSV(storySubscribers, 'story_subscribers')}
+                  disabled={storySubscribers.length === 0}
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  ייצוא לאקסל (CSV)
+                </Button>
+              </div>
+
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">מנויים פעילים ({getActiveSubscribers(storySubscribers).length})</h3>
