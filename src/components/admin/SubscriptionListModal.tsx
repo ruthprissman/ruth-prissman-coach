@@ -11,6 +11,7 @@ import { supabaseClient } from '@/lib/supabaseClient';
 import { formatDateTimeInIsrael } from '@/utils/dateUtils';
 
 interface Subscriber {
+  [key: string]: any;
   id: number;
   email: string;
   first_name?: string;
@@ -18,6 +19,32 @@ interface Subscriber {
   is_subscribed: boolean;
   unsubscribed_at?: string;
 }
+
+const exportToCSV = (rows: Subscriber[], filename: string) => {
+  if (!rows.length) return;
+  const headers = Array.from(
+    rows.reduce((set, r) => {
+      Object.keys(r).forEach(k => set.add(k));
+      return set;
+    }, new Set<string>())
+  );
+  const escape = (v: any) => {
+    if (v === null || v === undefined) return '';
+    const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+  const csv = [
+    headers.join(','),
+    ...rows.map(r => headers.map(h => escape(r[h])).join(',')),
+  ].join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 interface SubscriptionListModalProps {
   isOpen: boolean;
