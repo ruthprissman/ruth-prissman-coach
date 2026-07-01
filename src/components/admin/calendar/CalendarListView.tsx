@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { format, isToday, isTomorrow, addDays, addMinutes } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
+import { he } from 'date-fns/locale/he';
 import { Calendar, Clock, Check, X, Lock, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -73,7 +74,7 @@ const CalendarListView: React.FC<CalendarListViewProps> = ({
     } else if (isTomorrow(date)) {
       return 'מחר';
     } else if (date < addDays(new Date(), 7)) {
-      return format(date, 'EEEE', { locale: require('date-fns/locale/he') });
+      return format(date, 'EEEE', { locale: he });
     } else {
       return format(date, 'dd/MM/yyyy');
     }

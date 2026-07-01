@@ -130,7 +130,7 @@ const AddMeetingToFutureSessionsDialog: React.FC<AddMeetingToFutureSessionsDialo
     try {
       // נשתמש ב-date-fns-tz כדי להמיר תמיד ל-Asia/Jerusalem
       // dateTimeStr אמור להיות בפורמט ISO
-      const { formatInTimeZone } = require('date-fns-tz');
+      
       // נבנה Date מה-string (יכול להיות עם Z או עם אופסט)
       const dateObj = new Date(dateTimeStr);
       // נוציא פורמט ISO עם אופסט +03:00 כמו שהיינו רוצים ב-DB (שקול לזמן ישראל)

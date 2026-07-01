@@ -31,8 +31,8 @@ export interface EmailDeliveryStats {
  */
 class PublicationService {
   private static instance: PublicationService;
-  private timerId: NodeJS.Timeout | null = null;
-  private processingTimeoutId: NodeJS.Timeout | null = null;
+  private timerId: ReturnType<typeof setTimeout> | null = null;
+  private processingTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private isRunning = false;
   private checkInterval = 60000; // Check every minute
   private accessToken?: string;

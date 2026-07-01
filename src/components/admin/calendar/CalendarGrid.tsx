@@ -631,7 +631,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             {slot.notes}
           </span>
           {/* Debug info - only show in development */}
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.DEV && (
             <>
               <span className="ml-1 text-[10px] text-purple-700">
                 {slot.fromFutureSession ? "fromFutureSession" : ""}
@@ -642,7 +642,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             </>
           )}
         </div>
-        {process.env.NODE_ENV === 'development' && (
+        {import.meta.env.DEV && (
           <>
             <div className="text-[10px] opacity-40">
               hour: {slot.hour}, date: {slot.date}
