@@ -74,7 +74,7 @@ const CalendarListView: React.FC<CalendarListViewProps> = ({
     } else if (isTomorrow(date)) {
       return 'מחר';
     } else if (date < addDays(new Date(), 7)) {
-      return format(date, 'EEEE', { locale: require('date-fns/locale/he') });
+      return format(date, 'EEEE', { locale: he });
     } else {
       return format(date, 'dd/MM/yyyy');
     }

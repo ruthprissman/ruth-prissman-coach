@@ -224,7 +224,7 @@ const ExpensesTable: React.FC<ExpensesTableProps> = ({
       </div>
 
       {/* Debug info */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <div className="mt-4 p-2 bg-gray-100 text-xs">
           <div>Total data items: {data.length}</div>
           <div>Filtered items: {filteredData.length}</div>

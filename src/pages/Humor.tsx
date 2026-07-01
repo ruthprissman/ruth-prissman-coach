@@ -20,19 +20,19 @@ const Humor = () => {
       setLoading(true);
       try {
         // Added logging for Supabase client initialization
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.log('[humor page] Initializing Supabase client');
         }
 
         const supabase = supabaseClient();
 
         // Added logging for Supabase client details
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.log('[humor page] Supabase client initialized:', supabase);
         }
 
         // Added logging before running the query
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.log('[humor page] Running query for humor content');
         }
 
@@ -53,7 +53,7 @@ const Humor = () => {
         if (error) throw error;
 
         // Development mode logging for raw Supabase data
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.log('[humor page] Raw Supabase data:', data);
         }
 
@@ -76,7 +76,7 @@ const Humor = () => {
         });
 
         // Development mode logging for published content
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.log(`[humor page] Found ${publishedContent.length} published humor items`);
           
           if (publishedContent.length === 0) {

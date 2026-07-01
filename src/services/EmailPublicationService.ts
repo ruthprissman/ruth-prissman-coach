@@ -221,7 +221,7 @@ export class EmailPublicationService {
       console.log('[Email Publication] Using Supabase Edge Function URL: ' + this.supabaseEdgeFunctionUrl);
       
       // For debugging only: Send to first 2 subscribers in development
-      const recipientsToSend = process.env.NODE_ENV === 'development' 
+      const recipientsToSend = import.meta.env.DEV 
         ? subscribers.slice(0, 2) 
         : subscribers;
       
