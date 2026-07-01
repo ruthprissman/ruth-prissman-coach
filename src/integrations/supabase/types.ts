@@ -159,6 +159,7 @@ export type Database = {
           is_subscribed: boolean | null
           joined_at: string | null
           source: string | null
+          unsubscribe_token: string
           unsubscribed_at: string | null
         }
         Insert: {
@@ -169,6 +170,7 @@ export type Database = {
           is_subscribed?: boolean | null
           joined_at?: string | null
           source?: string | null
+          unsubscribe_token?: string
           unsubscribed_at?: string | null
         }
         Update: {
@@ -179,33 +181,7 @@ export type Database = {
           is_subscribed?: boolean | null
           joined_at?: string | null
           source?: string | null
-          unsubscribed_at?: string | null
-        }
-        Relationships: []
-      }
-      content_subscribers_TEST: {
-        Row: {
-          email: string
-          first_name: string | null
-          id: number
-          is_subscribed: boolean | null
-          joined_at: string | null
-          unsubscribed_at: string | null
-        }
-        Insert: {
-          email: string
-          first_name?: string | null
-          id?: number
-          is_subscribed?: boolean | null
-          joined_at?: string | null
-          unsubscribed_at?: string | null
-        }
-        Update: {
-          email?: string
-          first_name?: string | null
-          id?: number
-          is_subscribed?: boolean | null
-          joined_at?: string | null
+          unsubscribe_token?: string
           unsubscribed_at?: string | null
         }
         Relationships: []
@@ -752,6 +728,27 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: number
+          identifier: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: never
+          identifier: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: never
+          identifier?: string
+        }
+        Relationships: []
+      }
       registrations: {
         Row: {
           created_at: string
@@ -1045,6 +1042,7 @@ export type Database = {
           id: number
           is_subscribed: boolean | null
           joined_at: string | null
+          unsubscribe_token: string
           unsubscribed_at: string | null
         }
         Insert: {
@@ -1053,6 +1051,7 @@ export type Database = {
           id?: number
           is_subscribed?: boolean | null
           joined_at?: string | null
+          unsubscribe_token?: string
           unsubscribed_at?: string | null
         }
         Update: {
@@ -1061,6 +1060,7 @@ export type Database = {
           id?: number
           is_subscribed?: boolean | null
           joined_at?: string | null
+          unsubscribe_token?: string
           unsubscribed_at?: string | null
         }
         Relationships: []
@@ -1169,6 +1169,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      unsubscribe_log: {
+        Row: {
+          action: string
+          created_at: string
+          email: string | null
+          id: number
+          ip: string | null
+          list_type: string | null
+          method: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          email?: string | null
+          id?: never
+          ip?: string | null
+          list_type?: string | null
+          method: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          email?: string | null
+          id?: never
+          ip?: string | null
+          list_type?: string | null
+          method?: string
+        }
+        Relationships: []
       }
       workshops: {
         Row: {

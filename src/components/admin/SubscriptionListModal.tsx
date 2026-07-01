@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, BookOpen, BookText, Calendar, Mail } from 'lucide-react';
+import { Users, BookOpen, BookText, Calendar, Mail, Download } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { formatDateTimeInIsrael } from '@/utils/dateUtils';
 
 interface Subscriber {
+  [key: string]: any;
   id: number;
   email: string;
   first_name?: string;
@@ -18,6 +19,32 @@ interface Subscriber {
   is_subscribed: boolean;
   unsubscribed_at?: string;
 }
+
+const exportToCSV = (rows: Subscriber[], filename: string) => {
+  if (!rows.length) return;
+  const headers = Array.from(
+    rows.reduce((set, r) => {
+      Object.keys(r).forEach(k => set.add(k));
+      return set;
+    }, new Set<string>())
+  );
+  const escape = (v: any) => {
+    if (v === null || v === undefined) return '';
+    const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+    return `"${s.replace(/"/g, '""')}"`;
+  };
+  const csv = [
+    headers.join(','),
+    ...rows.map(r => headers.map(h => escape(r[h])).join(',')),
+  ].join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 interface SubscriptionListModalProps {
   isOpen: boolean;
@@ -171,6 +198,19 @@ export const SubscriptionListModal: React.FC<SubscriptionListModalProps> = ({ is
                 />
               </div>
 
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportToCSV(contentSubscribers, 'content_subscribers')}
+                  disabled={contentSubscribers.length === 0}
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  ייצוא לאקסל (CSV)
+                </Button>
+              </div>
+
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">מנויים פעילים ({getActiveSubscribers(contentSubscribers).length})</h3>
@@ -210,6 +250,19 @@ export const SubscriptionListModal: React.FC<SubscriptionListModalProps> = ({ is
                   icon={<Mail />}
                   color="text-blue-600"
                 />
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportToCSV(storySubscribers, 'story_subscribers')}
+                  disabled={storySubscribers.length === 0}
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  ייצוא לאקסל (CSV)
+                </Button>
               </div>
 
               <div className="space-y-4">
