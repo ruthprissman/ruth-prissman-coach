@@ -21,21 +21,28 @@ export async function isRequestFromAdmin(req: Request): Promise<boolean> {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-    if (!supabaseUrl || !anonKey) return false;
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseUrl || !anonKey || !serviceKey) return false;
 
-    // The anon key by itself is a valid JWT but not a *user* token — getUser() returns
-    // null for it, so anonymous callers are correctly rejected here.
-    const client = createClient(supabaseUrl, anonKey, {
+    const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
       auth: { persistSession: false, autoRefreshToken: false },
     });
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user?.email) return false;
 
-    const { data: userData, error: userErr } = await client.auth.getUser();
-    if (userErr || !userData?.user) return false;
-
-    const { data: isAdmin, error: rpcErr } = await client.rpc('is_admin');
-    if (rpcErr) return false;
-    return isAdmin === true;
+    // Use service role to check admin membership so we can revoke EXECUTE
+    // on is_admin() from anon/authenticated (Supabase linter finding).
+    const adminClient = createClient(supabaseUrl, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: row, error: qErr } = await adminClient
+      .from('admins')
+      .select('id')
+      .eq('email', userData.user.email)
+      .maybeSingle();
+    if (qErr) return false;
+    return !!row;
   } catch (_e) {
     return false;
   }
