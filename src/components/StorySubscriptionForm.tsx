@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
+import { forwardSubscriptionToClearlySend } from '@/utils/externalSubscribeWebhook';
 
 export function StorySubscriptionForm() {
   const [email, setEmail] = useState('');
@@ -44,6 +45,8 @@ export function StorySubscriptionForm() {
             .from('story_subscribers')
             .update({ is_subscribed: true })
             .eq('email', email);
+
+          forwardSubscriptionToClearlySend({ list: 'stories', email });
             
           toast({
             title: "הצלחה",
@@ -55,6 +58,8 @@ export function StorySubscriptionForm() {
         await supabase
           .from('story_subscribers')
           .insert({ email, is_subscribed: true });
+
+        forwardSubscriptionToClearlySend({ list: 'stories', email });
           
         toast({
           title: "הצלחה",
