@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowDown, Check, FileText, Mail, Users, ListOrdered, Lightbulb, Shield } from 'lucide-react';
+import { forwardSubscriptionToClearlySend } from '@/utils/externalSubscribeWebhook';
 
 const PrayerGuideLanding = () => {
   const { toast } = useToast();
@@ -133,6 +134,7 @@ const PrayerGuideLanding = () => {
             .eq('email', trimmedEmail);
 
           if (updateError) throw updateError;
+          forwardSubscriptionToClearlySend({ list: 'content', email: trimmedEmail, first_name: trimmedName, name: trimmedName, source: 'lp-prayer-guide' });
         }
       } else {
         // New subscriber
@@ -147,6 +149,7 @@ const PrayerGuideLanding = () => {
           });
 
         if (insertError) throw insertError;
+        forwardSubscriptionToClearlySend({ list: 'content', email: trimmedEmail, first_name: trimmedName, name: trimmedName, source: 'lp-prayer-guide' });
       }
 
       // Send email with PDF
