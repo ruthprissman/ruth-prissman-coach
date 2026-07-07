@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getRedirectUrl } from "@/utils/urlUtils";
+import { forwardSubscriptionToClearlySend } from "@/utils/externalSubscribeWebhook";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -142,6 +143,7 @@ const PrePrayLanding = () => {
           consent: data.agreeToTerms,
           source: "pre-pray-sample",
         });
+        forwardSubscriptionToClearlySend({ list: "content", email: data.email, first_name: data.name, name: data.name, phone: data.phone, source: "pre-pray-sample" });
       }
 
       // 2. If agreed to marketing, also add to story_subscribers
@@ -158,6 +160,7 @@ const PrePrayLanding = () => {
             first_name: data.name,
             is_subscribed: true,
           });
+          forwardSubscriptionToClearlySend({ list: "stories", email: data.email, first_name: data.name, name: data.name, phone: data.phone, source: "pre-pray-sample" });
         }
       }
 
@@ -227,6 +230,7 @@ const PrePrayLanding = () => {
             consent: true,
             source: "pre-pray-landing",
           });
+          forwardSubscriptionToClearlySend({ list: "content", email: data.email, first_name: data.name, name: data.name, phone: data.phone, source: "pre-pray-landing" });
         }
 
         // הוספה ל-story_subscribers (סיפורים)
@@ -242,6 +246,7 @@ const PrePrayLanding = () => {
             first_name: data.name,
             is_subscribed: true,
           });
+          forwardSubscriptionToClearlySend({ list: "stories", email: data.email, first_name: data.name, name: data.name, phone: data.phone, source: "pre-pray-landing" });
         }
       }
 

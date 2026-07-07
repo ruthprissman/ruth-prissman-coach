@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { forwardSubscriptionToClearlySend } from "@/utils/externalSubscribeWebhook";
 
 const Subscribe = () => {
   const [firstName, setFirstName] = useState("");
@@ -76,6 +77,13 @@ const Subscribe = () => {
 
         if (contentError) {
           console.error("Error subscribing to content:", contentError);
+        } else {
+          forwardSubscriptionToClearlySend({
+            list: "content",
+            email: email.trim(),
+            first_name: firstName.trim() || undefined,
+            name: firstName.trim() || undefined,
+          });
         }
       }
 
@@ -97,6 +105,13 @@ const Subscribe = () => {
 
         if (storiesError) {
           console.error("Error subscribing to stories:", storiesError);
+        } else {
+          forwardSubscriptionToClearlySend({
+            list: "stories",
+            email: email.trim(),
+            first_name: firstName.trim() || undefined,
+            name: firstName.trim() || undefined,
+          });
         }
       }
 
