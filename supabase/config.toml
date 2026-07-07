@@ -78,5 +78,9 @@ verify_jwt = false
 [functions.unsubscribe]
 verify_jwt = false
 
+[functions.forward-subscription]
+verify_jwt = false
+
+
 [edge-runtime]
 policy = "per_worker"
