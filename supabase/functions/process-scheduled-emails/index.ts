@@ -12,14 +12,10 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // SECURITY: this endpoint should only be triggered by the scheduled cron job.
-  // When CRON_SECRET is configured, require the matching 'x-cron-secret' header.
-  // (Activate by: 1) setting the CRON_SECRET function secret, 2) adding that header to the
-  //  cron job's net.http_post call. Until configured it stays permissive to avoid breaking
-  //  the existing daily job — but note schedule-email is already admin-only, so the only
-  //  effect of an unauthenticated call here is sending already-scheduled, legitimate mail.)
+  // SECURITY: only the scheduled cron job (which supplies the shared CRON_SECRET) may
+  // trigger this function. If the secret is missing or the header does not match, reject.
   const cronSecret = Deno.env.get('CRON_SECRET');
-  if (cronSecret && req.headers.get('x-cron-secret') !== cronSecret) {
+  if (!cronSecret || req.headers.get('x-cron-secret') !== cronSecret) {
     return new Response(
       JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
