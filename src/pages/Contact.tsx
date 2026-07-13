@@ -118,8 +118,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: 'url(https://www.dropbox.com/scl/fi/mn961lxdmrzb3hu61jr8c/clear-background.jpg?rlkey=te75ba634sz277355u5onqvuy&st=qxb55gpi&raw=1)' }}>
+    <div className="min-h-screen flex flex-col">
       <Helmet>
         <title>צור קשר - רות פריסמן | אימון רגשי בגישת קוד הנפש</title>
         <meta name="description" content="צור קשר עם רות פריסמן – מאמנת אישית בגישה טיפולית. ניתן לפנות לתיאום פגישה, שיחה או ייעוץ אישי בטלפון, מייל או וואטסאפ." />

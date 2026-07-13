@@ -238,10 +238,7 @@ const Stories = () => {
       </Helmet>
       
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0 opacity-20" 
-        style={{ 
-          backgroundImage: "url('https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/clear-background.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzaXRlX2ltZ3MvY2xlYXItYmFja2dyb3VuZC5wbmciLCJpYXQiOjE3NDExMDE0OTMsImV4cCI6MjM3MTgyMTQ5M30.k9JPVqmzmFtfxa8jbYpr1Hi3T4l2ZaHQZdPy2gGpgvk')" 
-        }}
+        className="absolute inset-0 z-0 opacity-20"
       />
       
       <Navigation />
