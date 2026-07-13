@@ -10,8 +10,7 @@ const NotFound = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <div 
-        className="min-h-screen bg-cover bg-center bg-fixed relative" 
-        style={{ backgroundImage: 'url(https://uwqwlltrfvokjlaufguz.supabase.co/storage/v1/object/sign/site_imgs/clear-background.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJzaXRlX2ltZ3MvY2xlYXItYmFja2dyb3VuZC5wbmciLCJpYXQiOjE3NDExMDE0OTMsImV4cCI6MjM3MTgyMTQ5M30.k9JPVqmzmFtfxa8jbYpr1Hi3T4l2ZaHQZdPy2gGpgvk)' }}
+        className="min-h-screen relative"
       >
         <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px]"></div>
         
