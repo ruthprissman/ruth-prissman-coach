@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
+import { compressImage } from '@/utils/imageCompression';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -288,7 +289,7 @@ const ArticleEditor: React.FC = () => {
       const { data, error } = await supabase
         .storage
         .from('stories_img')
-        .upload(filePath, file, {
+        .upload(filePath, await compressImage(file), {
           cacheControl: '3600',
           upsert: true
         });

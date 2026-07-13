@@ -1,4 +1,5 @@
 import { supabaseClient } from '@/lib/supabaseClient';
+import { compressImage } from '@/utils/imageCompression';
 
 /**
  * Uploads the signature image to Supabase Storage if it doesn't exist yet
@@ -28,7 +29,7 @@ export const uploadSignatureToStorage = async (): Promise<string> => {
     // Upload to Supabase Storage
     const { error } = await supabase.storage
       .from('site_imgs')
-      .upload(fileName, blob, {
+      .upload(fileName, await compressImage(blob), {
         contentType: 'image/png',
         upsert: true
       });

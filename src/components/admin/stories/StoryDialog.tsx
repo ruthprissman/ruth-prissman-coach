@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { compressImage } from '@/utils/imageCompression';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -172,7 +173,7 @@ const StoryDialog: React.FC<StoryDialogProps> = ({ isOpen, onClose, storyId }) =
         const { data: imageData, error: imageError } = await supabase
           .storage
           .from(imageBucketName)
-          .upload(imageFileName, imageFile, {
+          .upload(imageFileName, await compressImage(imageFile), {
             cacheControl: '3600',
             upsert: false
           });

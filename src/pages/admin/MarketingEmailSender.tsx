@@ -12,6 +12,7 @@ import { BlocksList } from '@/components/admin/email-builder/BlocksList';
 
 import { EmailPreview } from '@/components/admin/email-builder/EmailPreview';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { compressImage } from '@/utils/imageCompression';
 import { useToast } from '@/hooks/use-toast';
 import { EmailBlock, BlockType, DEFAULT_BLOCK_STYLES, EmailBlockStyles } from '@/types/emailBlock';
 import { 
@@ -436,7 +437,7 @@ export default function MarketingEmailSender() {
 
       const { error: uploadError } = await supabaseClient().storage
         .from('site_file')
-        .upload(filePath, fileToUpload);
+        .upload(filePath, await compressImage(fileToUpload));
 
       if (uploadError) throw uploadError;
 
@@ -991,7 +992,7 @@ export default function MarketingEmailSender() {
                               
                               const { error: uploadError } = await supabaseClient().storage
                                 .from('email-attachments')
-                                .upload(filePath, file);
+                                .upload(filePath, await compressImage(file));
 
                               if (uploadError) {
                                 toast({ title: 'שגיאה בהעלאה', variant: 'destructive' });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { compressImage } from '@/utils/imageCompression';
 import { Save, FileText, Trash2, Plus, Eye, Palette, Upload } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -368,7 +369,7 @@ const EmailItemsEditor: React.FC = () => {
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from('site_imgs')
-        .upload(fileName, file, {
+        .upload(fileName, await compressImage(file), {
           cacheControl: '3600',
           upsert: false
         });

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { GradientPicker } from './GradientPicker';
 import { supabase } from '@/integrations/supabase/client';
+import { compressImage } from '@/utils/imageCompression';
 import { useState } from 'react';
 import { Loader2, Upload, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -52,7 +53,7 @@ export function BlockEditor({ block, onUpdate, onClose }: BlockEditorProps) {
 
       const { error: uploadError, data } = await supabase.storage
         .from('site_imgs')
-        .upload(filePath, file);
+        .upload(filePath, await compressImage(file));
 
       if (uploadError) throw uploadError;
 

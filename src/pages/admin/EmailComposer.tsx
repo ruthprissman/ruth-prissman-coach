@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { compressImage } from '@/utils/imageCompression';
 import {
   Select,
   SelectContent,
@@ -335,7 +336,7 @@ const EmailComposer: React.FC = () => {
       
       const { error } = await supabaseClient().storage
         .from('site_imgs')
-        .upload(fileName, file, {
+        .upload(fileName, await compressImage(file), {
           cacheControl: '3600',
           upsert: false
         });

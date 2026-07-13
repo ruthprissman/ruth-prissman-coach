@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Upload, Check, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { compressImage } from '@/utils/imageCompression';
 
 interface UploadSignatureDialogProps {
   isOpen: boolean;
@@ -56,7 +57,7 @@ const UploadSignatureDialog: React.FC<UploadSignatureDialogProps> = ({
       // Upload to site_imgs bucket
       const { data, error } = await supabase.storage
         .from('site_imgs')
-        .upload(fileName, file, {
+        .upload(fileName, await compressImage(file), {
           cacheControl: '3600',
           upsert: true // This will replace the existing file if it exists
         });
